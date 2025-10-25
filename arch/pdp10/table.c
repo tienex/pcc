@@ -200,7 +200,7 @@ struct optab table[] = {
 		NAREG|NASL,	RESC1,
 		"	move A1,UL\n", },
 
-/* convert long long to unsigned char - XXX - signed char */
+/* convert long long to unsigned char - Note: Signed char conversion not yet implemented */
 { SCONV,	INAREG,
 	SAREG|SAREG|SNAME|SOREG,	TLL,
 	SANY,	TCHAR|TUCHAR,
@@ -208,7 +208,7 @@ struct optab table[] = {
 		"	move A1,UL\n"
 		"	andi A1,0777\n", },
 
-/* convert long long to short - XXX - signed short */
+/* convert long long to short - Note: Signed short conversion not yet implemented */
 { SCONV,	INAREG,
 	SAREG|SAREG|SNAME|SOREG,	TLL,
 	SANY,	TSHORT|TUSHORT,
@@ -724,7 +724,7 @@ struct optab table[] = {
  * DIV/MOD/MUL 
  * These can be done way more efficient.
  */
-/* long long div. XXX - work only with unsigned */
+/* long long div. Note: Currently handles unsigned division only */
 { DIV,	INBREG,
 	SBREG|SNAME|SOREG,	TLL,
 	SBREG|SNAME|SOREG,	TLL,
@@ -732,7 +732,7 @@ struct optab table[] = {
 		"	dmove A2,AL ; dmove A1,[ .long 0,0 ]\n"
 		"	ddiv A1,AR\n", },
 
-/* long long div. with constant. XXX - work only with unsigned */
+/* long long div. with constant. Note: Currently handles unsigned division only */
 { DIV,	INBREG,
 	SBREG|SNAME|SOREG,	TLL,
 	SCON,	TLL,
@@ -740,7 +740,7 @@ struct optab table[] = {
 		"	dmove A2,AL ; dmove A1,[ .long 0,0 ]\n"
 		"	ddiv A1,ZP\n", },
 
-/* Simple divide. XXX - fix so next reg can be free */
+/* Simple divide. Note: Could be optimized to allow next register to be freed */
 { DIV,	INAREG|INAREG|FOREFF,
 	SAREG|SAREG,	TWORD|TCHAR|TUCHAR|TSHORT|TUSHORT,
 	SAREG|SAREG,	TWORD|TCHAR|TUCHAR|TSHORT|TUSHORT,
@@ -925,7 +925,7 @@ struct optab table[] = {
 		"ZR", },
 
 { OPLOG,	FORCC,  
-	SAREG|SAREG,	TLL|TDOUBLE, /* XXX - does double work here? */
+	SAREG|SAREG,	TLL|TDOUBLE, /* Note: Verify double type handling */
 	SAREG|SAREG|SOREG|SNAME,	TLL|TDOUBLE,
 		0,	RESCC,
 		"ZQ", },

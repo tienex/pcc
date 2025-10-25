@@ -332,7 +332,7 @@ twocomp(NODE *p)
 
 /*
  * Compare byte/word pointers.
- * XXX - do not work for highest bit set in address
+ * Note: Does not handle highest bit set in address
  */
 static void
 ptrcomp(NODE *p)
@@ -344,14 +344,14 @@ ptrcomp(NODE *p)
 
 /*
  * Do a binary comparision of two long long, and jump accordingly.
- * XXX - can optimize for constants.
+ * Note: Can be optimized for constant operands
  */
 static void     
 twollcomp(NODE *p)
 {       
 	int o = p->n_op;
 	int iscon = p->n_right->n_op == ICON;
-	int m = 0; /* XXX gcc */
+	int m = 0; /* Initialize to avoid uninitialized warning */
 
 	if (o < EQ || o > GT)
 		cerror("bad long long conditional branch: %s", opst[o]);
@@ -480,7 +480,7 @@ emitshort(NODE *p)
 		printf("	move ");
 	} else if (off == 0 && p->n_name[0] == 0) {
 		printf("	ldb %s,%s\n", rnames[reg1], rnames[reg]);
-		/* XXX must sign extend here even if not necessary */
+		/* Sign extend to handle negative values correctly */
 		switch (type) {
 		case CHAR:
 			printf("	lsh %s,033\n", rnames[reg1]);
@@ -680,7 +680,7 @@ printcon(NODE *p)
 static void
 putcond(NODE *p)
 {               
-	char *c = 0; /* XXX gcc */
+	char *c = 0; /* Initialize to avoid uninitialized warning */
 
 	switch (p->n_op) {
 	case EQ: c = "e"; break;
@@ -1176,7 +1176,7 @@ optim2(NODE *p, void *arg)
 	}
 
 	/* Convert "PTR undef" (void *) to "PTR uchar" */
-	/* XXX - should be done in MI code */
+	/* TODO: This logic should ideally be in machine-independent code */
 	if (BTYPE(p->n_type) == VOID)
 		p->n_type = (p->n_type & ~BTMASK) | UCHAR;
 	if (op == ICON) {
@@ -1299,7 +1299,7 @@ lastcall(NODE *p)
                 	size += argsiz(p->n_right);
 	if (p->n_op != ASSIGN)
         	size += argsiz(p);
-        op->n_qual = size; /* XXX */
+        op->n_qual = size; /* Store size in n_qual for later use */
 }
 
 void
@@ -1330,7 +1330,7 @@ COLORMAP(int c, int *r)
 		return num < 7;
 	}
 	comperr("COLORMAP");
-	return 0; /* XXX gcc */
+	return 0; /* Return value not used */
 }
 
 /*

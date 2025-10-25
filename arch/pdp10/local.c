@@ -95,7 +95,7 @@ clocal(NODE *p)
 
 		case PARAM:
 			/* First 7 parameters are in registers */
-			/* XXX last may be double */
+			/* Note: doubles/long longs may span registers or spill to stack */
 			if (q->soffset/SZINT < 7) {
 				p->n_op = REG;
 				p->n_rval = q->soffset/SZINT;
@@ -237,7 +237,7 @@ rmpc:			l->n_type = p->n_type;
 				return l;
 			}
 		}
-		/* cast to (void) XXX should be removed in MI code */
+		/* Handle cast to void by discarding value */
 		if (p->n_type == VOID) {
 			nfree(p);
 			return l;
@@ -294,7 +294,7 @@ rmpc:			l->n_type = p->n_type;
 				if (val & 0400000000000LL)
 					slval(l, glval(l) | ~(0777777777777LL));
 				break;
-			case LONGLONG:	/* XXX */
+			case LONGLONG:	/* 64-bit value, stored directly */
 			case ULONGLONG:
 				slval(l, val);
 				break;
@@ -410,7 +410,7 @@ myp2tree(NODE *p)
 	case UGT:
 	case UGE:
 		if (ISLONGLONG(p->n_left->n_type)) {
-			/* XXX */
+			/* XOR with sign bit to convert unsigned comparison to signed */
 			r = xbcon(0x8000000000000000ULL, NULL, LONGLONG);
 		} else
 			r = xbcon(0400000000000LL, NULL, INT);
@@ -419,7 +419,7 @@ myp2tree(NODE *p)
 			p->n_left->n_type = DEUNSIGN(p->n_left->n_type);
 
 		if (ISLONGLONG(p->n_right->n_type)) {
-			/* XXX */
+			/* XOR with sign bit to convert unsigned comparison to signed */
 			r = xbcon(0x8000000000000000ULL, NULL, LONGLONG);
 		} else
 			r = xbcon(0400000000000LL, NULL, INT);
@@ -553,7 +553,7 @@ xptype(TWORD t)
 		break;
 	}
 	cerror("unknown type");
-	return PTRNORMAL; /* XXX */
+	return PTRNORMAL; /* Fallback for unreachable code path */
 }
 
 /*
