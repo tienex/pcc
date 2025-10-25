@@ -47,16 +47,44 @@
  *	- short is 16 bits.
  */
 
-#ifdef FDFLOAT
+#if defined(FDFLOAT) || defined(PDP10FLOAT)
 
+#ifdef FDFLOAT
 /*
- * Supports F- and D-float, used in DEC machines.
+ * Supports F- and D-float, used in DEC VAX machines.
  *
  * XXX - assumes that:
  *	- long long is (at least) 64 bits
  *	- int is at least 32 bits.
  *	- short is 16 bits.
  */
+#endif
+
+#ifdef PDP10FLOAT
+/*
+ * Supports PDP-10 36-bit floating point format.
+ *
+ * Single precision (36-bit): sign(1) + exponent(8, excess-128) + fraction(27)
+ * Double precision (72-bit): sign(1) + exponent(8, excess-1024) + fraction(62)
+ *
+ * The fraction has an implied binary point between bit 8 and bit 9.
+ * Floating point zero is represented as all zeros.
+ * Negatives are represented in two's complement.
+ *
+ * XXX - assumes that:
+ *	- long long is (at least) 64 bits
+ *	- int is at least 32 bits.
+ *	- short is 16 bits.
+ */
+#endif
+
+/*
+ * Map fd1-fd4 to the fp[] array elements.
+ */
+#define fd1	fp[0]
+#define fd2	fp[1]
+#define fd3	fp[2]
+#define fd4	fp[3]
 
 /*
  * Useful macros to manipulate the float.
@@ -67,6 +95,7 @@
 #define DEXPSET(w,e)	((w).fd1 = (((e) & 0377) << 7) | ((w).fd1 & 0100177))
 #define DMANTH(w)	((w).fd1 & 0177)
 #define DMANTHSET(w,m)	((w).fd1 = ((m) & 0177) | ((w).fd1 & 0177600))
+#define EXPBIAS		128
 
 typedef unsigned int lword;
 typedef unsigned long long dword;
@@ -88,9 +117,11 @@ nulldf(void)
 /*
  * Convert a (u)longlong to dfloat.
  * XXX - fails on too large (> 55 bits) numbers.
+ * For FDFLOAT/PDP10FLOAT, we ignore the type parameter and always
+ * return double precision.
  */
-SF
-soft_cast(CONSZ ll, TWORD t)
+static SF
+soft_cast_internal(CONSZ ll, TWORD t)
 {
 	int i;
 	SF rv;
@@ -102,7 +133,7 @@ soft_cast(CONSZ ll, TWORD t)
 		DSIGNSET(rv,1), ll = -ll;
 	for (i = 0; ll > 0; i++, ll <<= 1)
 		;
-	DEXPSET(rv, 192-i);
+	DEXPSET(rv, (64+EXPBIAS)-i);
 	DMANTHSET(rv, ll >> 56);
 	rv.fd2 = ll >> 40;
 	rv.fd3 = ll >> 24;
@@ -113,8 +144,8 @@ soft_cast(CONSZ ll, TWORD t)
 /*
  * multiply two dfloat. Use chop, not round.
  */
-SF
-soft_mul(SF p1, SF p2)
+static SF
+soft_mul_internal(SF p1, SF p2)
 {
 	SF rv;
 	lword a1[2], a2[2], res[4];
@@ -143,7 +174,7 @@ soft_mul(SF p1, SF p2)
 
 	rv.fd1 = 0;
 	DSIGNSET(rv, DSIGN(p1) ^ DSIGN(p2));
-	DEXPSET(rv, DEXP(p1) + DEXP(p2) - 128);
+	DEXPSET(rv, DEXP(p1) + DEXP(p2) - EXPBIAS);
 	if (res[3] & 0x8000) {
 		res[3] = (res[3] << 8) | (res[2] >> 24);
 		res[2] = (res[2] << 8) | (res[1] >> 24);
@@ -159,8 +190,8 @@ soft_mul(SF p1, SF p2)
 	return rv;
 }
 
-SF
-soft_div(SF t, SF n)
+static SF
+soft_div_internal(SF t, SF n)
 {
 	SF rv;
 	dword T, N, K;
@@ -183,7 +214,7 @@ soft_div(SF t, SF n)
 	}
 	rv.fd1 = 0;
 	DSIGNSET(rv, DSIGN(t) ^ DSIGN(n));
-	DEXPSET(rv, DEXP(t) - DEXP(n) + 128 + c);
+	DEXPSET(rv, DEXP(t) - DEXP(n) + EXPBIAS + c);
 	DMANTHSET(rv, K >> 48);
 	rv.fd2 = K >> 32;
 	rv.fd3 = K >> 16;
@@ -260,7 +291,7 @@ CONSZ
 soft_val(SF sf)
 {
 	CONSZ mant;
-	int exp = DEXP(sf) - 128;
+	int exp = DEXP(sf) - EXPBIAS;
 
 	mant = SHL(1,55) | SHL(DMANTH(sf), 48) |
             SHL(sf.fd2, 32) | SHL(sf.fd3, 16) | sf.fd4;
@@ -272,15 +303,15 @@ soft_val(SF sf)
 	return mant;
 }
 
-SF
-soft_plus(SF x1, SF x2)
+static SF
+soft_plus_internal(SF x1, SF x2)
 {
 	cerror("soft_plus");
 	return x1;
 }
 
-SF
-soft_minus(SF x1, SF x2)
+static SF
+soft_minus_internal(SF x1, SF x2)
 {
 	cerror("soft_minus");
 	return x1;
@@ -347,26 +378,62 @@ floatcon(char *s)
 	}
 
 
-	flexp = soft_cast(1, INT);
-	exp5 = soft_cast(5, INT);
+	flexp = soft_cast_internal(1, INT);
+	exp5 = soft_cast_internal(5, INT);
 	bexp = exp;
-	fl = soft_cast(mant, INT);
+	fl = soft_cast_internal(mant, INT);
 
 	for (; exp; exp >>= 1) {
 		if (exp&01)
-			flexp = soft_mul(flexp, exp5);
-		exp5 = soft_mul(exp5, exp5);
+			flexp = soft_mul_internal(flexp, exp5);
+		exp5 = soft_mul_internal(exp5, exp5);
 	}
 	if (negexp<0)
-		fl = soft_div(fl, flexp);
+		fl = soft_div_internal(fl, flexp);
 	else
-		fl = soft_mul(fl, flexp);
+		fl = soft_mul_internal(fl, flexp);
 
 	DEXPSET(fl, DEXP(fl) + negexp*bexp);
 	p = block(FCON, NIL, NIL, DOUBLE, 0, 0); /* XXX type */
 	p->n_dcon = fl;
 	return p;
 }
+
+/*
+ * Wrapper functions to match the common interface defined in softfloat.h
+ */
+SFP
+soft_cast(CONSZ v, TWORD t)
+{
+	static SF result;
+	result = soft_cast_internal(v, t);
+	return &result;
+}
+
+SF
+soft_mul(SF x1, SF x2, TWORD t)
+{
+	return soft_mul_internal(x1, x2);
+}
+
+SF
+soft_div(SF x1, SF x2, TWORD t)
+{
+	return soft_div_internal(x1, x2);
+}
+
+SF
+soft_plus(SF x1, SF x2, TWORD t)
+{
+	return soft_plus_internal(x1, x2);
+}
+
+SF
+soft_minus(SF x1, SF x2, TWORD t)
+{
+	return soft_minus_internal(x1, x2);
+}
+
 #else
 
 /*

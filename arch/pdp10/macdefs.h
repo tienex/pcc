@@ -113,6 +113,17 @@ typedef long long OFFSZ;
 #undef	FIELDOPS		/* no bit-field instructions */
 #define TARGET_ENDIAN TARGET_BE
 
+/*
+ * Floating-point format definitions for softfloat library.
+ *
+ * PDP-10 has a proprietary 36-bit floating-point format:
+ *   Single precision (36-bit): sign(1) + exponent(8, excess-128) + fraction(27)
+ *   Double precision (72-bit): sign(1) + exponent(8, excess-1024) + fraction(62)
+ *
+ * We use native PDP-10 floating-point format for proper code generation.
+ */
+#define PDP10FLOAT	/* Use native PDP-10 floating-point format */
+
 /* Definitions mostly used in pass2 */
 
 #define BYTEOFF(x)	((x)&03)
