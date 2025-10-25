@@ -1342,6 +1342,28 @@ mflags(char *str)
 }
 
 /*
+ * Check for other names of the xasm constraints registers.
+ * Map register names to register numbers for inline assembly constraints.
+ */
+int
+xasmconstregs(char *s)
+{
+	int i;
+	char buf[4];
+
+	/* Match register names: r0-r17 or just 0-17 */
+	for (i = 0; i < 18; i++) {
+		if (strcmp(&rnames[i][1], s) == 0)  /* Skip '%' prefix */
+			return i;
+		/* Also allow just the number */
+		snprintf(buf, sizeof(buf), "%d", i);
+		if (strcmp(buf, s) == 0)
+			return i;
+	}
+	return -1;
+}
+
+/*
  * Do something target-dependent for xasm arguments.
  * Supposed to find target-specific constraints and rewrite them.
  */

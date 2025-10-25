@@ -157,6 +157,12 @@ P1ND *builtin_frame_address(const struct bitable *, P1ND *a);
 P1ND *builtin_cfa(const struct bitable *, P1ND *a);
 #undef P1ND
 
+/*
+ * Extended assembler support.
+ */
+int xasmconstregs(char *);
+#define XASMCONSTREGS(x)	xasmconstregs(x)
+
 /* Definitions mostly used in pass2 */
 
 #define BYTEOFF(x)	((x)&03)

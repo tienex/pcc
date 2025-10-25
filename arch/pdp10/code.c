@@ -51,6 +51,11 @@ setseg(int seg, char *name)
 	case STRNG:
 	case RDATA: name = ".section .rodata"; break;
 	case UDATA: break;
+	case PICLDATA:
+	case PICDATA: name = ".section .data.rel.rw,\"aw\",@progbits"; break;
+	case PICRDATA: name = ".section .data.rel.ro,\"aw\",@progbits"; break;
+	case TLSDATA: name = ".section .tdata,\"awT\",@progbits"; break;
+	case TLSUDATA: name = ".section .tbss,\"awT\",@nobits"; break;
 	case CTORS: name = ".section .ctors,\"aw\",@progbits"; break;
 	case DTORS: name = ".section .dtors,\"aw\",@progbits"; break;
 	case NMSEG:
