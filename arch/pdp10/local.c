@@ -53,6 +53,10 @@ static struct symtab *newfun(char *name, TWORD type);
 #define	PTRSHORT	3
 static int xptype(TWORD t);
 
+/* Variables for bitfield initialization */
+static int inbits;
+static CONSZ xinval;
+
 NODE *
 clocal(NODE *p)
 {
@@ -285,6 +289,7 @@ rmpc:			l->n_type = p->n_type;
 				slval(l, val & 0777777777777LL);
 				break;
 			case INT:
+			case BOOL:
 				slval(l, val & 0777777777777LL);
 				if (val & 0400000000000LL)
 					slval(l, glval(l) | ~(0777777777777LL));
@@ -296,6 +301,7 @@ rmpc:			l->n_type = p->n_type;
 			case VOID:
 				break;
 			case DOUBLE:
+			case LDOUBLE:
 			case FLOAT:
 				l->n_op = FCON;
 				l->n_dcon = 0;
@@ -524,11 +530,13 @@ xptype(TWORD t)
 	case LONGLONG:
 	case FLOAT:
 	case DOUBLE:
+	case LDOUBLE:
 	case STRTY:
 	case UNIONTY:
 	case UNSIGNED:
 	case ULONG:
 	case ULONGLONG:
+	case BOOL:
 		return PTRNORMAL;
 	case VOID:
 	case CHAR:
@@ -595,12 +603,14 @@ offcon(OFFSZ off, TWORD t, union dimfun *d, struct attr *ap)
 	case UNSIGNED:
 	case LONG:
 	case ULONG:
+	case BOOL:
 	case STRTY:
 	case UNIONTY:
 	case LONGLONG:
 	case ULONGLONG:
 	case FLOAT:
 	case DOUBLE:
+	case LDOUBLE:
 		break;
 
 	case SHORT:
@@ -646,8 +656,13 @@ spalloc(NODE *t, NODE *p, OFFSZ off)
 		p = buildtree(MUL, p, bcon(off/SZCHAR));
 		p = buildtree(PLUS, p, bcon(3));
 		p = buildtree(RS, p, bcon(2));
-	} else
-		cerror("roundsp");
+	} else {
+		/* Round up to next byte boundary */
+		off = (off + SZCHAR - 1) / SZCHAR * SZCHAR;
+		p = buildtree(MUL, p, bcon(off/SZCHAR));
+		p = buildtree(PLUS, p, bcon(3));
+		p = buildtree(RS, p, bcon(2));
+	}
 
 	/* save the address of sp */
 	sp = block(REG, NIL, NIL, PTR+INT, t->n_df, t->n_sue);
@@ -836,23 +851,67 @@ defzero(struct symtab *sp)
 
 /*
  * set fsz bits in sequence to zero.
+ * PDP-10 uses 9-bit bytes and is big-endian.
  */
 void
 zbits(OFFSZ off, int fsz)
 {
-	cerror("zbits");
+	int m;
+
+#ifdef PCC_DEBUG
+	if (idebug)
+		printf("zbits off %lld, fsz %d inbits %d\n", off, fsz, inbits);
+#endif
+	/* Big-endian logic */
+	if ((m = (inbits % SZCHAR))) {
+		m = SZCHAR - m;
+		if (fsz < m) {
+			inbits += fsz;
+			xinval <<= fsz;
+			return;
+		} else {
+			fsz -= m;
+			xinval <<= m;
+			printf("\t.byte\t0%o\n", (int)(xinval & SZMASK(SZCHAR)));
+			xinval = inbits = 0;
+		}
+	}
+	if (fsz >= SZCHAR) {
+		printf("\t.space\t%d\n", fsz/SZCHAR);
+		fsz -= (fsz/SZCHAR) * SZCHAR;
+	}
+	if (fsz) {
+		xinval = 0;
+		inbits = fsz;
+	}
 }
 
 /*
  * Initialize a bitfield.
+ * PDP-10 uses 9-bit bytes and is big-endian.
  */
 void
 infld(CONSZ off, int fsz, CONSZ val)
 {
-//	if (idebug)
-//		printf("infld off %lld, fsz %d, val %lld inbits %d\n",
-//		    off, fsz, val, inbits);
-	cerror("infld");
+#ifdef PCC_DEBUG
+	if (idebug)
+		printf("infld off %lld, fsz %d, val %lld inbits %d\n",
+		    off, fsz, val, inbits);
+#endif
+	val &= SZMASK(fsz);
+	/* Big-endian logic */
+	while (fsz + inbits >= SZCHAR) {
+		int shsz = SZCHAR-inbits;
+		xinval = (xinval << shsz) | (val >> (fsz - shsz));
+		printf("\t.byte\t0%o\n", (int)(xinval & SZMASK(SZCHAR)));
+		fsz -= shsz;
+		val &= SZMASK(fsz);
+		xinval = inbits = 0;
+	}
+	if (fsz) {
+		xinval = (xinval << fsz) | val;
+		inbits += fsz;
+	}
 }
 
 /*
