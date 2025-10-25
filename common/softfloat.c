@@ -245,43 +245,62 @@ soft_isz(SF sf)
 int
 soft_cmp_eq(SF x1, SF x2)
 {
-	cerror("soft_cmp_eq");
-	return 0;
+	/* Check if both are zero */
+	if (DEXP(x1) == 0 && DEXP(x2) == 0)
+		return 1;
+
+	/* Compare all fields */
+	return (x1.fd1 == x2.fd1 && x1.fd2 == x2.fd2 &&
+	        x1.fd3 == x2.fd3 && x1.fd4 == x2.fd4);
 }
 
 int
 soft_cmp_ne(SF x1, SF x2)
 {
-	cerror("soft_cmp_ne");
-	return 0;
+	return !soft_cmp_eq(x1, x2);
 }
 
 int
 soft_cmp_le(SF x1, SF x2)
 {
-	cerror("soft_cmp_le");
-	return 0;
+	int s1 = DSIGN(x1), s2 = DSIGN(x2);
+
+	/* Handle zeros */
+	if (DEXP(x1) == 0 && DEXP(x2) == 0)
+		return 1;
+
+	/* Different signs: negative < positive */
+	if (s1 && !s2) return 1;
+	if (!s1 && s2) return 0;
+
+	/* Same sign: compare magnitudes */
+	if (s1) {  /* both negative */
+		return !(x1.fd1 < x2.fd1 || (x1.fd1 == x2.fd1 &&
+		         (x1.fd2 < x2.fd2 || (x1.fd2 == x2.fd2 &&
+		         (x1.fd3 < x2.fd3 || (x1.fd3 == x2.fd3 && x1.fd4 < x2.fd4))))));
+	} else {  /* both positive */
+		return (x1.fd1 < x2.fd1 || (x1.fd1 == x2.fd1 &&
+		        (x1.fd2 < x2.fd2 || (x1.fd2 == x2.fd2 &&
+		        (x1.fd3 < x2.fd3 || (x1.fd3 == x2.fd3 && x1.fd4 <= x2.fd4))))));
+	}
 }
 
 int
 soft_cmp_lt(SF x1, SF x2)
 {
-	cerror("soft_cmp_lt");
-	return 0;
+	return soft_cmp_le(x1, x2) && !soft_cmp_eq(x1, x2);
 }
 
 int
 soft_cmp_ge(SF x1, SF x2)
 {
-	cerror("soft_cmp_ge");
-	return 0;
+	return !soft_cmp_lt(x1, x2);
 }
 
 int
 soft_cmp_gt(SF x1, SF x2)
 {
-	cerror("soft_cmp_gt");
-	return 0;
+	return !soft_cmp_le(x1, x2);
 }
 
 /*
@@ -306,25 +325,119 @@ soft_val(SF sf)
 static SF
 soft_plus_internal(SF x1, SF x2)
 {
-	cerror("soft_plus");
-	return x1;
+	/*
+	 * Basic floating-point addition for FDFLOAT/PDP10FLOAT.
+	 * This is a simplified implementation that handles common cases.
+	 * For full IEEE compliance, would need proper rounding, denormals, etc.
+	 */
+	SF result;
+	int exp1, exp2, exp_diff;
+	long long mant1, mant2;
+	int sign1, sign2;
+
+	/* Handle zeros */
+	if (DEXP(x1) == 0) return x2;
+	if (DEXP(x2) == 0) return x1;
+
+	exp1 = DEXP(x1);
+	exp2 = DEXP(x2);
+	sign1 = DSIGN(x1);
+	sign2 = DSIGN(x2);
+
+	/* Extract mantissas with implied leading bit */
+	mant1 = (1LL << 55) | (((long long)DMANTH(x1)) << 48) |
+	        (((long long)x1.fd2) << 32) | (((long long)x1.fd3) << 16) | x1.fd4;
+	mant2 = (1LL << 55) | (((long long)DMANTH(x2)) << 48) |
+	        (((long long)x2.fd2) << 32) | (((long long)x2.fd3) << 16) | x2.fd4;
+
+	/* Align exponents */
+	exp_diff = exp1 - exp2;
+	if (exp_diff > 0) {
+		mant2 >>= exp_diff;
+		result = x1;
+	} else if (exp_diff < 0) {
+		mant1 >>= -exp_diff;
+		result = x2;
+	} else {
+		result = x1;
+	}
+
+	/* Add or subtract based on signs */
+	if (sign1 == sign2) {
+		mant1 += mant2;
+	} else {
+		if (mant1 >= mant2) {
+			mant1 -= mant2;
+		} else {
+			mant1 = mant2 - mant1;
+			DSIGNSET(result, sign2);
+		}
+	}
+
+	/* Normalize result */
+	while (mant1 >= (1LL << 56)) {
+		mant1 >>= 1;
+		DEXPSET(result, DEXP(result) + 1);
+	}
+	while (mant1 < (1LL << 55) && mant1 != 0) {
+		mant1 <<= 1;
+		DEXPSET(result, DEXP(result) - 1);
+	}
+
+	/* Check for zero result */
+	if (mant1 == 0) {
+		result.fd1 = result.fd2 = result.fd3 = result.fd4 = 0;
+		return result;
+	}
+
+	/* Pack result */
+	DMANTHSET(result, (mant1 >> 48) & 0177);
+	result.fd2 = (mant1 >> 32) & 0xffff;
+	result.fd3 = (mant1 >> 16) & 0xffff;
+	result.fd4 = mant1 & 0xffff;
+
+	return result;
 }
 
 static SF
 soft_minus_internal(SF x1, SF x2)
 {
-	cerror("soft_minus");
-	return x1;
+	/* Negate x2 and add */
+	DSIGNSET(x2, !DSIGN(x2));
+	return soft_plus_internal(x1, x2);
 }
 
 /*
  * Convert a hex constant to floating point number.
+ * Uses strtosf() which already handles hex float format via gdtoa.
  */
 NODE *
 fhexcon(char *s)
 {
-	cerror("fhexcon");
-	return NULL;
+	NODE *p;
+	SF sf;
+	TWORD t;
+
+	/* Determine the type from suffix (f/F/l/L) */
+	t = DOUBLE;  /* default */
+	for (char *c = s; *c; c++) {
+		if (*c == 'f' || *c == 'F') {
+			t = FLOAT;
+			break;
+		} else if (*c == 'l' || *c == 'L') {
+			t = LDOUBLE;
+			break;
+		}
+	}
+
+	/* Parse the hex float using strtosf() */
+	sf = strtosf(s, t);
+
+	/* Create FCON node */
+	p = block(FCON, NIL, NIL, t, 0, 0);
+	p->n_dcon = sf;
+
+	return p;
 }
 
 /*
@@ -1989,6 +2102,41 @@ vals2fp(unsigned short *fp, int k, int exp, uint32_t *mant)
 	}
 	if (k & SF_Neg)
 		fp[4] |= 0x8000;
+
+	if (k & (SFEXCP_ALLmask & ~(SFEXCP_Inexlo|SFEXCP_Inexhi)))
+		fprintf(stderr, "vals2fp: unhandled2 %x\n", k);
+#elif defined(FDFLOAT) || defined(PDP10FLOAT)
+	/*
+	 * PDP-10/VAX format: sign(1) + exp(8) + mantissa(55 with implied 1)
+	 * Stored in 4 shorts: fd1 contains sign|exp|mant[6:0], fd2-fd4 have rest
+	 */
+	unsigned long long m;
+
+	switch (k & SF_kmask) {
+	case SF_Zero:
+		break; /* already 0 */
+
+	case SF_Normal:
+		/* Combine mantissa from two 32-bit words into 64-bit value */
+		m = ((unsigned long long)mant[1] << 32) | mant[0];
+
+		/* Adjust exponent (gdtoa gives biased exponent) */
+		exp += EXPBIAS;
+
+		/* Pack into fd1-fd4 format */
+		fp[0] = ((exp & 0377) << 7) | ((m >> 57) & 0177);  /* fd1: exp + high 7 bits */
+		fp[1] = (m >> 41) & 0xffff;  /* fd2: next 16 bits */
+		fp[2] = (m >> 25) & 0xffff;  /* fd3: next 16 bits */
+		fp[3] = (m >> 9) & 0xffff;   /* fd4: next 16 bits */
+		break;
+
+	default:
+		fprintf(stderr, "vals2fp: unhandled %x\n", k);
+		break;
+	}
+
+	if (k & SF_Neg)
+		fp[0] |= 0x8000;  /* Set sign bit in fd1 */
 
 	if (k & (SFEXCP_ALLmask & ~(SFEXCP_Inexlo|SFEXCP_Inexhi)))
 		fprintf(stderr, "vals2fp: unhandled2 %x\n", k);

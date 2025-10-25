@@ -448,7 +448,7 @@ myp2tree(NODE *p)
 				/* Emit the constant in the data segment */
 				locctr(DATA, sp);
 				defloc(sp);
-				ninval(0, sp->stype, p->n_dcon);
+				ninval(0, tsize(sp->stype, sp->sdf, sp->sap), p);
 				locctr(PROG, sp);
 			}
 
@@ -864,8 +864,44 @@ infld(CONSZ off, int fsz, CONSZ val)
 int
 ninval(CONSZ off, int fsz, NODE *p)
 {
-	cerror("ninval");
-	return 0;
+	SF *sfp;
+	CONSZ val;
+
+	switch (p->n_type) {
+	case LONGLONG:
+	case ULONGLONG:
+		/* Split 64-bit value into two 36-bit words */
+		val = glval(p);
+		/* High word */
+		printf("\t.word\t0%llo\n", (val >> 36) & 0xfffffffffLL);
+		/* Low word */
+		printf("\t.word\t0%llo\n", val & 0xfffffffffLL);
+		break;
+
+	case FLOAT:
+		/* 36-bit single precision from softfloat structure */
+		sfp = (SF *)&p->n_dcon;
+		/* Combine fd1 and upper 20 bits of fd2 into 36-bit word */
+		printf("\t.word\t0%llo\n",
+		    (((CONSZ)sfp->fd1) << 20) | (((CONSZ)sfp->fd2) << 4) | (((CONSZ)(sfp->fd3 >> 12)) & 0xf));
+		break;
+
+	case DOUBLE:
+	case LDOUBLE:
+		/* 72-bit double precision from softfloat structure */
+		sfp = (SF *)&p->n_dcon;
+		/* First 36-bit word: fd1 (16) + fd2 (16) + upper 4 bits of fd3 */
+		printf("\t.word\t0%llo\n",
+		    (((CONSZ)sfp->fd1) << 20) | (((CONSZ)sfp->fd2) << 4) | (((CONSZ)(sfp->fd3 >> 12)) & 0xf));
+		/* Second 36-bit word: lower 12 bits of fd3 + fd4 (16) + pad (8) */
+		printf("\t.word\t0%llo\n",
+		    (((CONSZ)(sfp->fd3 & 0xfff)) << 24) | (((CONSZ)sfp->fd4) << 8));
+		break;
+
+	default:
+		return 0;
+	}
+	return 1;
 }
 
 
