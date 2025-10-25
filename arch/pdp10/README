@@ -1,9 +1,109 @@
+PDP-10 Backend for PCC
+======================
+
+This is the PDP-10 target backend for the Portable C Compiler (PCC).
+It supports both native PDP-10 type sizes and an experimental power-of-2
+mode for better portability.
 
 
-PDP10 C calling convention
---------------------------
-Register 1-7 are argument registers.  Types of sizes up to 36 bits are
-given in one register, two otherwise.  CHAR and SHORT are given as INTs.
+Type Size Modes
+---------------
+
+The PDP-10 backend can be compiled in two modes:
+
+1. Native PDP-10 mode (default):
+   - CHAR:     9 bits (unsigned by default)
+   - SHORT:    18 bits
+   - INT:      36 bits
+   - LONG:     36 bits
+   - LONGLONG: 72 bits
+   - FLOAT:    36 bits (PDP-10 native format)
+   - DOUBLE:   72 bits (PDP-10 native format)
+   - POINTER:  36 bits
+   - Word-addressed memory (4 bytes per word)
+
+2. Power-of-2 mode (compile with -DPDP10_POW2):
+   - CHAR:     8 bits (signed by default)
+   - SHORT:    16 bits
+   - INT:      32 bits
+   - LONG:     64 bits
+   - LONGLONG: 64 bits
+   - FLOAT:    32 bits (IEEE 754)
+   - DOUBLE:   64 bits (IEEE 754)
+   - POINTER:  64 bits
+   - Byte-addressed memory (8 bytes per word)
+
+
+Runtime Configuration
+---------------------
+
+The backend supports runtime configuration via -m flags:
+
+  -masm=<format>   Set assembly output format
+                   - gnu (default): GNU assembler syntax
+                   - midas: MIDAS assembler syntax (ITS/MIT)
+
+  -mabi=<format>   Set ABI/object file format
+                   - elf (default): ELF object format
+                   - macho: Mach-O object format (Darwin/macOS)
+                   - pecoff (or pe): PE/COFF format (Windows)
+                   - none: Generic format (MIDAS-style)
+
+  -mpow2           EXPERIMENTAL: Enable runtime power-of-2 type mode
+                   (see "Experimental POW2 Mode" below)
+
+
+Assembly Output Formats
+-----------------------
+
+GNU assembler format (default):
+  - Standard .text, .data, .bss sections
+  - C-style labels (name:)
+  - ELF/Mach-O/PE-COFF directives when applicable
+
+MIDAS assembler format:
+  - LOC directives for segment switching
+  - Double-colon labels (name::)
+  - Compatible with ITS/TOPS-20 MIDAS assembler
+
+
+Experimental POW2 Mode (-mpow2)
+-------------------------------
+
+WARNING: The -mpow2 runtime flag is EXPERIMENTAL and has significant
+limitations. It is intended for cross-compilation experiments only.
+
+When -mpow2 is used, the compiler ATTEMPTS to generate code using
+power-of-2 type sizes instead of native PDP-10 sizes, but this mode
+has fundamental architectural limitations:
+
+KNOWN LIMITATIONS:
+  1. Type sizes (SZCHAR, SZINT, etc.) remain fixed at compile time
+  2. Struct member offsets are calculated using compile-time sizes
+  3. Multi-character constants (makecc) use compile-time byte size
+  4. Array indexing may be incorrect for some types
+  5. The szty() macro uses compile-time sizes in most code paths
+
+WHAT WORKS:
+  - Runtime type size query functions (pdp10_szchar(), etc.)
+  - Runtime register allocation (pdp10_szty())
+  - Runtime byte offset calculation (pdp10_byteoff())
+  - Runtime word-addressing mode (pdp10_is_word_addressed())
+
+RECOMMENDATION:
+  For correct POW2 mode, recompile the entire compiler with -DPDP10_POW2
+  instead of using the -mpow2 runtime flag.
+
+The runtime -mpow2 flag exists only for experimental purposes and to
+demonstrate the architectural challenges of runtime type size switching
+in PCC.
+
+
+PDP-10 C Calling Convention
+---------------------------
+
+Register 1-7 are argument registers. Types of sizes up to 36 bits are
+given in one register, two otherwise. CHAR and SHORT are given as INTs.
 
 If the argument that would end up in register 7 requires two registers,
 it is saved on the stack instead and no more registers would end up
@@ -12,9 +112,62 @@ on the stack.
 struct return: a hidden argument containing the address of the struct
 is stored as the first argument _on_the_stack_, never in register.
 
-struct argument: always saved on stack, and terminates the list 
+struct argument: always saved on stack, and terminates the list
 of arguments that are kept in registers.
 
 In case of debugging all arguments are saved on stack in the function.
 
 All variadic arguments are always saved on the stack.
+
+
+Register Allocation
+-------------------
+
+The PDP-10 has 16 general-purpose registers (0-17 octal):
+  R0:       Reserved (special addressing constraints)
+  R1-R7:    Argument registers / temporaries
+  R10-R15:  Permanent registers (callee-saved)
+  R16 (FP): Frame pointer
+  R17 (SP): Stack pointer
+
+Register pairs (for 72-bit or 64-bit values):
+  XR1-XR14: Consecutive register pairs for double-word values
+
+
+Floating-Point Support
+----------------------
+
+Native mode uses PDP-10's proprietary floating-point format via softfloat.
+POW2 mode can use IEEE 754 floating-point (implementation pending).
+
+
+Thread-Local Storage and PIC
+-----------------------------
+
+The backend supports TLS and PIC segments:
+  - TLSDATA, TLSUDATA: Thread-local storage
+  - PICDATA, PICRDATA, PICLDATA: Position-independent code
+
+These are primarily useful for modern OS ports (Linux, *BSD) running
+under PDP-10 emulation.
+
+
+Cross-Compilation
+-----------------
+
+The PDP-10 backend is designed to work correctly as a cross-compiler
+from modern hosts (Linux, macOS, Windows) to PDP-10 targets.
+
+Example cross-compilation:
+  $ pcc -target pdp10 -masm=gnu -mabi=elf -o program.o program.c
+  $ pcc -target pdp10 -masm=midas -mabi=none -o program.s program.c
+
+
+For More Information
+--------------------
+
+See the PCC documentation and the source files in arch/pdp10/:
+  - macdefs.h: Architecture definitions and runtime configuration
+  - code.c: Code generation and runtime helper functions
+  - local2.c: Instruction selection and optimization
+  - table.c: Instruction templates

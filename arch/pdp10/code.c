@@ -38,11 +38,12 @@
 #endif
 
 /*
- * Runtime configuration for assembly output and ABI.
- * Defaults to GNU assembler with ELF ABI.
+ * Runtime configuration for assembly output, ABI, and type sizes.
+ * Defaults to GNU assembler with ELF ABI and native PDP-10 types.
  */
 int pdp10_asmfmt = PDP10_ASM_GNU;
 int pdp10_abi = PDP10_ABI_ELF;
+int pdp10_pow2 = 0;  /* 0 = native PDP-10 types, 1 = power-of-2 types */
 
 /*
  * Print out assembler segment name.
@@ -650,4 +651,118 @@ builtin_cfa(const struct bitable *bt, NODE *a)
 
 	/* CFA = FP + 2 (2 words: saved FP + return address) */
 	return block(PLUS, f, bcon(2), INCREF(PTR+VOID), 0, 0);
+}
+
+/*
+ * Runtime type size helpers.
+ * These functions return type sizes that respect the pdp10_pow2 runtime flag.
+ *
+ * EXPERIMENTAL: When pdp10_pow2 is enabled, returns power-of-2 sizes
+ * (8/16/32/64 bit) instead of native PDP-10 sizes (9/18/36/72 bit).
+ *
+ * LIMITATION: These are only used in code generation. Struct layouts and
+ * other frontend calculations still use the compile-time SZCHAR, SZINT, etc.
+ */
+
+int
+pdp10_szchar(void)
+{
+	return pdp10_pow2 ? 8 : 9;
+}
+
+int
+pdp10_szshort(void)
+{
+	return pdp10_pow2 ? 16 : 18;
+}
+
+int
+pdp10_szint(void)
+{
+	return pdp10_pow2 ? 32 : 36;
+}
+
+int
+pdp10_szlong(void)
+{
+	return pdp10_pow2 ? 64 : 36;
+}
+
+int
+pdp10_szfloat(void)
+{
+	return pdp10_pow2 ? 32 : 36;
+}
+
+int
+pdp10_szdouble(void)
+{
+	return pdp10_pow2 ? 64 : 72;
+}
+
+int
+pdp10_szpointer(void)
+{
+	return pdp10_pow2 ? 64 : 36;
+}
+
+int
+pdp10_is_word_addressed(void)
+{
+	/* Native PDP-10 mode is word-addressed, POW2 mode is byte-addressed */
+	return !pdp10_pow2;
+}
+
+/*
+ * Runtime byte offset calculation.
+ * In native mode: 4 bytes per word (9-bit bytes), so offset & 3
+ * In POW2 mode: 8 bytes per word (8-bit bytes), so offset & 7
+ */
+int
+pdp10_byteoff(OFFSZ offset)
+{
+	return pdp10_pow2 ? (offset & 7) : (offset & 3);
+}
+
+/*
+ * Check if offset is word-aligned.
+ * Returns 1 if aligned, 0 if not.
+ */
+int
+pdp10_wdal(OFFSZ offset)
+{
+	return pdp10_byteoff(offset) == 0;
+}
+
+/*
+ * Runtime version of szty() - determines how many registers needed for a type.
+ * Respects pdp10_pow2 flag for correct register allocation.
+ *
+ * PDP-10 has 36-bit registers.
+ * Native mode: FLOAT=36, DOUBLE=72, LONGLONG=72
+ * POW2 mode: FLOAT=32, DOUBLE=64, LONG=64, LONGLONG=64, POINTER=64
+ */
+int
+pdp10_szty(TWORD t)
+{
+	if (pdp10_pow2) {
+		/* POW2 mode: 64-bit types need 2 registers */
+		switch (t) {
+		case DOUBLE:
+		case LONG:
+		case ULONG:
+		case LONGLONG:
+		case ULONGLONG:
+			return 2;
+		default:
+			/* Pointers are 64-bit in POW2 mode */
+			if (ISPTR(t))
+				return 2;
+			return 1;
+		}
+	} else {
+		/* Native mode: Only DOUBLE and LONGLONG need 2 registers */
+		return (t == DOUBLE || t == FLOAT ||
+		        t == LONGLONG || t == ULONGLONG) ? 2 : 1;
+	}
 }

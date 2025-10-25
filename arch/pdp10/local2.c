@@ -1341,7 +1341,7 @@ COLORMAP(int c, int *r)
  * Supports:
  *   -masm=<format>   - Set assembly syntax (gnu, midas)
  *   -mabi=<format>   - Set ABI/object format (elf, macho, pecoff, none)
- *   -mpow2           - Enable power-of-2 type mode (compile-time only)
+ *   -mpow2           - EXPERIMENTAL: Enable runtime power-of-2 type mode
  */
 void
 mflags(char *str)
@@ -1367,7 +1367,12 @@ mflags(char *str)
 		else
 			fprintf(stderr, "pcc: unknown ABI '%s' (use 'elf', 'macho', 'pecoff', or 'none')\n", str);
 	} else if (strcmp(str, "pow2") == 0) {
-		fprintf(stderr, "pcc: -mpow2 is a compile-time option (use -DPDP10_POW2)\n");
+		pdp10_pow2 = 1;
+		fprintf(stderr, "pcc: EXPERIMENTAL -mpow2 mode enabled (power-of-2 types)\n");
+		fprintf(stderr, "pcc: WARNING: This mode has known limitations:\n");
+		fprintf(stderr, "pcc:   - Struct layouts use compile-time type sizes\n");
+		fprintf(stderr, "pcc:   - May produce incorrect code for complex types\n");
+		fprintf(stderr, "pcc:   - Use for testing/experimental purposes only\n");
 	} else {
 		fprintf(stderr, "pcc: unknown PDP-10 option '%s'\n", str);
 	}

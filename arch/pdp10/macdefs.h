@@ -50,7 +50,15 @@
 #define PDP10_ABI_NONE   3  /* Generic/MIDAS format */
 
 #ifdef PDP10_POW2
-/* Power-of-2 mode: Standard 8/16/32/64 bit types for portable code */
+/*
+ * Power-of-2 mode: Standard 8/16/32/64 bit types for portable code
+ * NOTE: These are COMPILE-TIME settings. The -mpow2 runtime flag provides
+ * experimental runtime mode switching but has significant limitations:
+ * - Type sizes here (SZCHAR, SZINT, etc.) remain fixed at compile time
+ * - makecc() macro cannot be changed at runtime
+ * - Struct layouts use compile-time sizes
+ * - Only code generation attempts to respect runtime mode
+ */
 #define makecc(val,i)	lastcon = (lastcon<<8)|((val<<24)>>24)
 #define ARGINIT		32	/* # bits below fp where arguments start */
 #define AUTOINIT	32	/* # bits above fp where automatics start */
@@ -224,11 +232,35 @@ int xasmconstregs(char *);
 #define XASMCONSTREGS(x)	xasmconstregs(x)
 
 /*
- * Runtime configuration globals for assembly format and ABI.
+ * Runtime configuration globals for assembly format, ABI, and type sizes.
  * Can be set via mflags() or other configuration mechanisms.
+ *
+ * EXPERIMENTAL: pdp10_pow2 mode
+ * When enabled, attempts to use power-of-2 type sizes (8/16/32/64 bit)
+ * instead of native PDP-10 sizes (9/18/36/72 bit) for code generation.
+ *
+ * LIMITATIONS:
+ * - Struct layouts are still computed using compile-time type sizes
+ * - Only affects code generation, not frontend type calculations
+ * - May produce incorrect code for complex types
+ * - Intended for experimental cross-compilation scenarios
  */
 extern int pdp10_asmfmt;  /* Assembly syntax: PDP10_ASM_* */
 extern int pdp10_abi;     /* ABI/Object format: PDP10_ABI_* */
+extern int pdp10_pow2;    /* EXPERIMENTAL: Use power-of-2 type sizes */
+
+/* Runtime type size helpers (respect pdp10_pow2 flag) */
+int pdp10_szchar(void);
+int pdp10_szshort(void);
+int pdp10_szint(void);
+int pdp10_szlong(void);
+int pdp10_szfloat(void);
+int pdp10_szdouble(void);
+int pdp10_szpointer(void);
+int pdp10_is_word_addressed(void);
+int pdp10_byteoff(OFFSZ offset);
+int pdp10_wdal(OFFSZ offset);
+int pdp10_szty(TWORD t);
 
 /* Definitions mostly used in pass2 */
 
@@ -240,6 +272,10 @@ extern int pdp10_abi;     /* ABI/Object format: PDP10_ABI_* */
 #define STOSTARG(p)
 #define genfcall(a,b)	gencall(a,b)
 
+/*
+ * WARNING: This macro uses compile-time type sizes.
+ * For runtime POW2-aware code, use pdp10_szty() instead.
+ */
 #define	szty(t)	(((t) == DOUBLE || (t) == FLOAT || \
 	(t) == LONGLONG || (t) == ULONGLONG) ? 2 : 1)
 
