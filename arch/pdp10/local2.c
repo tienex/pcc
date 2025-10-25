@@ -1336,9 +1336,41 @@ COLORMAP(int c, int *r)
 /*
  * Target-dependent command-line options.
  */
+/*
+ * Handle machine-specific command-line flags.
+ * Supports:
+ *   -masm=<format>   - Set assembly syntax (gnu, midas)
+ *   -mabi=<format>   - Set ABI/object format (elf, macho, pecoff, none)
+ *   -mpow2           - Enable power-of-2 type mode (compile-time only)
+ */
 void
 mflags(char *str)
 {
+	if (strncmp(str, "asm=", 4) == 0) {
+		str += 4;
+		if (strcmp(str, "gnu") == 0)
+			pdp10_asmfmt = PDP10_ASM_GNU;
+		else if (strcmp(str, "midas") == 0)
+			pdp10_asmfmt = PDP10_ASM_MIDAS;
+		else
+			fprintf(stderr, "pcc: unknown assembly format '%s' (use 'gnu' or 'midas')\n", str);
+	} else if (strncmp(str, "abi=", 4) == 0) {
+		str += 4;
+		if (strcmp(str, "elf") == 0)
+			pdp10_abi = PDP10_ABI_ELF;
+		else if (strcmp(str, "macho") == 0)
+			pdp10_abi = PDP10_ABI_MACHO;
+		else if (strcmp(str, "pecoff") == 0 || strcmp(str, "pe") == 0)
+			pdp10_abi = PDP10_ABI_PECOFF;
+		else if (strcmp(str, "none") == 0)
+			pdp10_abi = PDP10_ABI_NONE;
+		else
+			fprintf(stderr, "pcc: unknown ABI '%s' (use 'elf', 'macho', 'pecoff', or 'none')\n", str);
+	} else if (strcmp(str, "pow2") == 0) {
+		fprintf(stderr, "pcc: -mpow2 is a compile-time option (use -DPDP10_POW2)\n");
+	} else {
+		fprintf(stderr, "pcc: unknown PDP-10 option '%s'\n", str);
+	}
 }
 
 /*

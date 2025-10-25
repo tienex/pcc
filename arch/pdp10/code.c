@@ -37,33 +37,142 @@
 #define talloc p1alloc
 #endif
 
+/*
+ * Runtime configuration for assembly output and ABI.
+ * Defaults to GNU assembler with ELF ABI.
+ */
+int pdp10_asmfmt = PDP10_ASM_GNU;
+int pdp10_abi = PDP10_ABI_ELF;
 
 /*
  * Print out assembler segment name.
+ * Supports multiple assembly syntaxes and object formats at runtime.
  */
 void
 setseg(int seg, char *name)
 {
+	static int lastseg = -1;
+
+	if (pdp10_asmfmt == PDP10_ASM_MIDAS) {
+		/* MIDAS assembler syntax (ITS/MIT) */
+		if (seg == lastseg)
+			return;
+		lastseg = seg;
+
+		switch (seg) {
+		case PROG: printf("\tLOC 100\n"); break;
+		case DATA: printf("\tLOC 0\n"); break;
+		case LDATA: printf("\tLOC 0\n"); break;
+		case STRNG:
+		case RDATA: printf("\tLOC 200\n"); break;  /* Read-only data */
+		case UDATA: printf("\tLOC 300\n"); break;  /* BSS */
+		case NMSEG:
+			printf("\tLOC %s\n", name);
+			return;
+		default:
+			/* PIC/TLS not typically used in MIDAS */
+			printf("\tLOC 100\n");
+			break;
+		}
+		return;
+	}
+
+	/* GNU assembler syntax - select directives based on ABI */
 	switch (seg) {
 	case PROG: name = ".text"; break;
 	case DATA:
 	case LDATA: name = ".data"; break;
 	case STRNG:
 	case RDATA: name = ".section .rodata"; break;
-	case UDATA: break;
+	case UDATA: name = ".bss"; break;
+
 	case PICLDATA:
-	case PICDATA: name = ".section .data.rel.rw,\"aw\",@progbits"; break;
-	case PICRDATA: name = ".section .data.rel.ro,\"aw\",@progbits"; break;
-	case TLSDATA: name = ".section .tdata,\"awT\",@progbits"; break;
-	case TLSUDATA: name = ".section .tbss,\"awT\",@nobits"; break;
-	case CTORS: name = ".section .ctors,\"aw\",@progbits"; break;
-	case DTORS: name = ".section .dtors,\"aw\",@progbits"; break;
+	case PICDATA:
+		switch (pdp10_abi) {
+		case PDP10_ABI_ELF:
+			name = ".section .data.rel.rw,\"aw\",@progbits"; break;
+		case PDP10_ABI_MACHO:
+			name = ".section __DATA,__data"; break;
+		case PDP10_ABI_PECOFF:
+			name = ".section .data"; break;
+		default:
+			name = ".data"; break;
+		}
+		break;
+
+	case PICRDATA:
+		switch (pdp10_abi) {
+		case PDP10_ABI_ELF:
+			name = ".section .data.rel.ro,\"aw\",@progbits"; break;
+		case PDP10_ABI_MACHO:
+			name = ".section __DATA,__const"; break;
+		case PDP10_ABI_PECOFF:
+			name = ".section .rdata"; break;
+		default:
+			name = ".section .rodata"; break;
+		}
+		break;
+
+	case TLSDATA:
+		switch (pdp10_abi) {
+		case PDP10_ABI_ELF:
+			name = ".section .tdata,\"awT\",@progbits"; break;
+		case PDP10_ABI_MACHO:
+			name = ".section __DATA,__thread_data,thread_local_regular"; break;
+		case PDP10_ABI_PECOFF:
+			name = ".section .tls$"; break;
+		default:
+			name = ".data"; break;
+		}
+		break;
+
+	case TLSUDATA:
+		switch (pdp10_abi) {
+		case PDP10_ABI_ELF:
+			name = ".section .tbss,\"awT\",@nobits"; break;
+		case PDP10_ABI_MACHO:
+			name = ".section __DATA,__thread_bss,thread_local_zerofill"; break;
+		case PDP10_ABI_PECOFF:
+			name = ".section .tls$"; break;
+		default:
+			name = ".bss"; break;
+		}
+		break;
+
+	case CTORS:
+		switch (pdp10_abi) {
+		case PDP10_ABI_ELF:
+			name = ".section .ctors,\"aw\",@progbits"; break;
+		case PDP10_ABI_MACHO:
+			name = ".section __DATA,__mod_init_func,mod_init_funcs"; break;
+		case PDP10_ABI_PECOFF:
+			name = ".section .ctors"; break;
+		default:
+			name = ".data"; break;
+		}
+		break;
+
+	case DTORS:
+		switch (pdp10_abi) {
+		case PDP10_ABI_ELF:
+			name = ".section .dtors,\"aw\",@progbits"; break;
+		case PDP10_ABI_MACHO:
+			name = ".section __DATA,__mod_term_func,mod_term_funcs"; break;
+		case PDP10_ABI_PECOFF:
+			name = ".section .dtors"; break;
+		default:
+			name = ".data"; break;
+		}
+		break;
+
 	case NMSEG:
 		printf("\t.section %s\n", name);
 		return;
+
 	default:
 		cerror("setseg: unknown segment %d", seg);
 	}
+
 	if (name != NULL)
 		printf("\t%s\n", name);
 }
@@ -71,6 +180,7 @@ setseg(int seg, char *name)
 /*
  * Define everything needed to print out some data (or text).
  * This means segment, alignment, visibility, etc.
+ * Supports both MIDAS and GNU assembler syntax.
  */
 void
 defloc(struct symtab *sp)
@@ -80,26 +190,69 @@ defloc(struct symtab *sp)
 	static int lastloc = -1;
 	TWORD t;
 	int s;
+	char *name;
 
 	if (sp == NULL) {
 		lastloc = -1;
 		return;
 	}
+
+	name = getexname(sp);
 	t = sp->stype;
 	s = ISFTN(t) ? PROG : ISCON(cqual(t, sp->squal)) ? RDATA : DATA;
-	if (nextsect) {
-		printf("	.section %s\n", nextsect);
-		nextsect = NULL;
-		s = -1;
-	} else if (s != lastloc)
-		printf("	.%s\n", loctbl[s]);
-	lastloc = s;
-	if (sp->sclass == EXTDEF)
-		printf("	.globl %s\n", getexname(sp));
-	if (sp->slevel == 0)
-		printf("%s:\n", getexname(sp));
-	else
-		printf(LABFMT ":\n", sp->soffset);
+
+	if (pdp10_asmfmt == PDP10_ASM_MIDAS) {
+		/* MIDAS syntax */
+		if (nextsect) {
+			printf("\tLOC %s\n", nextsect);
+			nextsect = NULL;
+			s = -1;
+		} else if (s != lastloc) {
+			switch (s) {
+			case PROG: printf("\tLOC 100\n"); break;
+			case DATA: printf("\tLOC 0\n"); break;
+			case RDATA: printf("\tLOC 200\n"); break;
+			}
+		}
+		lastloc = s;
+
+		/* Global symbols in MIDAS use :: */
+		if (sp->sclass == EXTDEF)
+			printf(".GLOBAL %s\n", name);  /* MIDAS export */
+
+		if (sp->slevel == 0)
+			printf("%s::\n", name);  /* MIDAS label */
+		else
+			printf("L%d:\n", sp->soffset);  /* Local label */
+	} else {
+		/* GNU syntax */
+		if (nextsect) {
+			printf("	.section %s\n", nextsect);
+			nextsect = NULL;
+			s = -1;
+		} else if (s != lastloc)
+			printf("	.%s\n", loctbl[s]);
+		lastloc = s;
+
+		if (sp->sclass == EXTDEF) {
+			printf("	.globl %s\n", name);
+			/* Add type/size annotations for ELF */
+			if (pdp10_abi == PDP10_ABI_ELF) {
+				if (ISFTN(sp->stype)) {
+					printf("	.type %s,@function\n", name);
+				} else {
+					printf("	.type %s,@object\n", name);
+					printf("	.size %s,%d\n", name,
+					    (int)tsize(sp->stype, sp->sdf, sp->sap)/SZCHAR);
+				}
+			}
+		}
+
+		if (sp->slevel == 0)
+			printf("%s:\n", name);
+		else
+			printf(LABFMT ":\n", sp->soffset);
+	}
 }
 
 int structrettemp;  /* temp for struct return pointer */

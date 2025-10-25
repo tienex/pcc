@@ -29,21 +29,62 @@
  */
 
 /*
- * Convert (multi-)character constant to integer.
- * Assume: If only one value; store at left side (char size), otherwise 
- * treat it as an integer.
+ * PDP-10 Configuration Options:
+ *
+ * Type Size Mode (compile-time):
+ *   PDP10_POW2     - Use power-of-2 types (8/16/32/64 bit) for portability
+ *   (default)      - Use native PDP-10 types (9/18/36/72 bit)
+ *
+ * Assembly Syntax and ABI (runtime-selectable):
+ *   See pdp10_asmfmt and pdp10_abi global variables
  */
+
+/* Assembly syntax formats */
+#define PDP10_ASM_GNU    0  /* GNU assembler syntax (default) */
+#define PDP10_ASM_MIDAS  1  /* MIDAS assembler syntax (ITS/MIT) */
+
+/* ABI/Object formats */
+#define PDP10_ABI_ELF    0  /* ELF object format (Linux/BSD) */
+#define PDP10_ABI_MACHO  1  /* Mach-O object format (Darwin/macOS) */
+#define PDP10_ABI_PECOFF 2  /* PE/COFF object format (Windows) */
+#define PDP10_ABI_NONE   3  /* Generic/MIDAS format */
+
+#ifdef PDP10_POW2
+/* Power-of-2 mode: Standard 8/16/32/64 bit types for portable code */
+#define makecc(val,i)	lastcon = (lastcon<<8)|((val<<24)>>24)
+#define ARGINIT		32	/* # bits below fp where arguments start */
+#define AUTOINIT	32	/* # bits above fp where automatics start */
+#define SZCHAR		8
+#define SZBOOL		8
+#define SZINT		32
+#define SZFLOAT		32
+#define SZDOUBLE	64
+#define SZLDOUBLE	64
+#define SZLONG		64
+#define SZSHORT		16
+#define SZPOINT(x)	64
+#define SZLONGLONG	64
+#define ALCHAR		8
+#define ALBOOL		8
+#define ALINT		32
+#define ALFLOAT		32
+#define ALDOUBLE	64
+#define ALLDOUBLE	64
+#define ALLONG		64
+#define ALLONGLONG	64
+#define ALSHORT		16
+#define ALPOINT		64
+#define ALSTRUCT	32
+#define ALSTACK		64
+#undef WORD_ADDRESSED
+#else
+/* Native PDP-10 mode: Traditional 9/18/36/72 bit types */
 #define makecc(val,i) {			\
 	if (i == 0) { lastcon = val;	\
 	} else if (i == 1) { lastcon = (lastcon << 9) | val; lastcon <<= 18; \
 	} else { lastcon |= (val << (27 - (i * 9))); } }
-
 #define ARGINIT		36	/* # bits below fp where arguments start */
 #define AUTOINIT	36	/* # bits above fp where automatics start */
-
-/*
- * Storage space requirements
- */
 #define SZCHAR		9
 #define SZBOOL		36
 #define SZINT		36
@@ -54,10 +95,6 @@
 #define SZSHORT		18
 #define SZPOINT(x)	36
 #define SZLONGLONG	72
-
-/*
- * Alignment constraints
- */
 #define ALCHAR		9
 #define ALBOOL		36
 #define ALINT		36
@@ -69,11 +106,34 @@
 #define ALSHORT		18
 #define ALPOINT		36
 #define ALSTRUCT	36
-#define ALSTACK		36 
+#define ALSTACK		36
+#define	WORD_ADDRESSED
+#endif /* PDP10_POW2 */ 
 
 /*
- * Max values.
+ * Min/Max values.
  */
+#ifdef PDP10_POW2
+/* Power-of-2 mode values */
+#define	MIN_CHAR	-128
+#define	MAX_CHAR	127
+#define	MAX_UCHAR	255
+#define	MIN_SHORT	-32768
+#define	MAX_SHORT	32767
+#define	MAX_USHORT	65535
+#define	MIN_INT		(-0x7fffffff-1)
+#define	MAX_INT		0x7fffffff
+#define	MAX_UNSIGNED	0xffffffffU
+#define	MIN_LONG	0x8000000000000000LL
+#define	MAX_LONG	0x7fffffffffffffffLL
+#define	MAX_ULONG	0xffffffffffffffffULL
+#define	MIN_LONGLONG	0x8000000000000000LL
+#define	MAX_LONGLONG	0x7fffffffffffffffLL
+#define	MAX_ULONGLONG	0xffffffffffffffffULL
+#undef	CHAR_UNSIGNED
+#define	BOOL_TYPE	UCHAR
+#else
+/* Native PDP-10 mode values */
 #define	MIN_CHAR	-256
 #define	MAX_CHAR	255
 #define	MAX_UCHAR	511
@@ -86,15 +146,15 @@
 #define	MIN_LONG	(-0377777777777LL-1)
 #define	MAX_LONG	0377777777777LL
 #define	MAX_ULONG	0777777777777ULL
-#define	MIN_LONGLONG	(000777777777777777777777LL-1)	/* Note: Cross-compilation constant */
-#define	MAX_LONGLONG	000777777777777777777777LL	/* Note: Cross-compilation constant */
-#define	MAX_ULONGLONG	001777777777777777777777ULL	/* Note: Cross-compilation constant */
-
-/* Default char is unsigned */
-#define TARGET_STDARGS
+#define	MIN_LONGLONG	(000777777777777777777777LL-1)
+#define	MAX_LONGLONG	000777777777777777777777LL
+#define	MAX_ULONGLONG	001777777777777777777777ULL
 #define	CHAR_UNSIGNED
 #define	BOOL_TYPE	INT
-#define	WORD_ADDRESSED
+#endif
+
+/* Common defines */
+#define TARGET_STDARGS
 
 /*
  * Use large-enough types.
@@ -162,6 +222,13 @@ P1ND *builtin_cfa(const struct bitable *, P1ND *a);
  */
 int xasmconstregs(char *);
 #define XASMCONSTREGS(x)	xasmconstregs(x)
+
+/*
+ * Runtime configuration globals for assembly format and ABI.
+ * Can be set via mflags() or other configuration mechanisms.
+ */
+extern int pdp10_asmfmt;  /* Assembly syntax: PDP10_ASM_* */
+extern int pdp10_abi;     /* ABI/Object format: PDP10_ABI_* */
 
 /* Definitions mostly used in pass2 */
 
