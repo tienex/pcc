@@ -424,7 +424,41 @@ myp2tree(NODE *p)
 		p->n_op -= (ULT-LT);
 		break;
 	case FCON:
-		cerror("fix float constants");
+		/*
+		 * PDP-10 cannot load floating-point constants directly.
+		 * Convert FCON to a NAME node referencing a static constant.
+		 * The constant will be emitted in the data segment by ninval().
+		 */
+		{
+			struct symtab *sp;
+			NODE *l;
+			char buf[32];
+			static int fcnum = 0;
+
+			/* Create a unique static symbol for this constant */
+			snprintf(buf, sizeof(buf), "__fcon%d", fcnum++);
+			sp = lookup(buf, SLBLNAME);
+			if (sp->soffset == 0) {
+				sp->soffset = getlab();
+				sp->sclass = STATIC;
+				sp->stype = p->n_type;
+				sp->sdf = p->n_df;
+				sp->sap = p->n_ap;
+
+				/* Emit the constant in the data segment */
+				locctr(DATA, sp);
+				defloc(sp);
+				ninval(0, sp->stype, p->n_dcon);
+				locctr(PROG, sp);
+			}
+
+			/* Replace FCON with NAME reference */
+			l = block(NAME, NIL, NIL, p->n_type, p->n_df, p->n_ap);
+			l->n_sp = sp;
+			*p = *l;
+			nfree(l);
+		}
+		break;
 	}
 }
 

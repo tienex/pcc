@@ -124,6 +124,35 @@ typedef long long OFFSZ;
  */
 #define PDP10FLOAT	/* Use native PDP-10 floating-point format */
 
+/*
+ * Variadic argument support
+ * PDP-10 always passes variadic arguments on the stack, making implementation simple.
+ */
+#define TARGET_VALIST
+#define TARGET_STDARGS
+#define TARGET_BUILTINS							\
+	{ "__builtin_stdarg_start", pdp10_builtin_stdarg_start,	\
+						0, 2, 0, VOID },	\
+	{ "__builtin_va_start", pdp10_builtin_stdarg_start,		\
+						0, 2, 0, VOID },	\
+	{ "__builtin_va_arg", pdp10_builtin_va_arg, BTNORVAL|BTNOPROTO, \
+							2, 0, 0 },	\
+	{ "__builtin_va_end", pdp10_builtin_va_end, 0, 1, 0, VOID },	\
+	{ "__builtin_va_copy", pdp10_builtin_va_copy, 0, 2, 0, VOID },
+
+#ifdef LANG_CXX
+#define P1ND struct node
+#else
+#define P1ND struct p1node
+#endif
+struct node;
+struct bitable;
+P1ND *pdp10_builtin_stdarg_start(const struct bitable *, P1ND *a);
+P1ND *pdp10_builtin_va_arg(const struct bitable *, P1ND *a);
+P1ND *pdp10_builtin_va_end(const struct bitable *, P1ND *a);
+P1ND *pdp10_builtin_va_copy(const struct bitable *, P1ND *a);
+#undef P1ND
+
 /* Definitions mostly used in pass2 */
 
 #define BYTEOFF(x)	((x)&03)
