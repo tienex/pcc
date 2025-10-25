@@ -192,7 +192,35 @@ eoftn(int regs, int autos, int retlab)
 void
 hopcode(int f, int o)
 {
-	cerror("hopcode: f %d %d", f, o);
+	char *str;
+
+	switch (o) {
+	case PLUS:
+		str = "add";
+		break;
+	case MINUS:
+		str = "sub";
+		break;
+	case AND:
+		str = "and";
+		break;
+	case OR:
+		str = "ior";
+		break;
+	case ER:
+		str = "xor";
+		break;
+	default:
+		comperr("hopcode: unknown op %d", o);
+		str = "UNKNOWN";
+		break;
+	}
+
+	/* Output instruction with format suffix */
+	if (f == 'C')
+		printf("%si", str);  /* Immediate forms: addi, subi, etc. */
+	else
+		printf("%s", str);   /* Register forms: add, sub, etc. */
 }
 
 char *

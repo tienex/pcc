@@ -138,7 +138,11 @@ typedef long long OFFSZ;
 	{ "__builtin_va_arg", pdp10_builtin_va_arg, BTNORVAL|BTNOPROTO, \
 							2, 0, 0 },	\
 	{ "__builtin_va_end", pdp10_builtin_va_end, 0, 1, 0, VOID },	\
-	{ "__builtin_va_copy", pdp10_builtin_va_copy, 0, 2, 0, VOID },
+	{ "__builtin_va_copy", pdp10_builtin_va_copy, 0, 2, 0, VOID },	\
+	{ "__builtin_return_address", pdp10_builtin_return_address,	\
+						0, 1, 0, PTR+VOID },	\
+	{ "__builtin_frame_address", pdp10_builtin_frame_address,	\
+						0, 1, 0, PTR+VOID },
 
 #ifdef LANG_CXX
 #define P1ND struct node
@@ -151,6 +155,8 @@ P1ND *pdp10_builtin_stdarg_start(const struct bitable *, P1ND *a);
 P1ND *pdp10_builtin_va_arg(const struct bitable *, P1ND *a);
 P1ND *pdp10_builtin_va_end(const struct bitable *, P1ND *a);
 P1ND *pdp10_builtin_va_copy(const struct bitable *, P1ND *a);
+P1ND *pdp10_builtin_return_address(const struct bitable *, P1ND *a);
+P1ND *pdp10_builtin_frame_address(const struct bitable *, P1ND *a);
 #undef P1ND
 
 /* Definitions mostly used in pass2 */

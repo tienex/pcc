@@ -374,10 +374,76 @@ pdp10_builtin_va_copy(const struct bitable *bt, NODE *a)
 }
 
 /*
- * XXX - fix genswitch.
+ * Return 0 to use default if-else chain for switch statements.
+ * Could be optimized with jump tables for dense switches, but
+ * if-else chains work correctly for all cases.
  */
 int
 mygenswitch(int num, TWORD type, struct swents **p, int n)
 {
 	return 0;
+}
+
+/*
+ * __builtin_return_address(level)
+ * Returns the return address at the given frame level.
+ * Level 0 is the current function's return address.
+ */
+NODE *
+pdp10_builtin_return_address(const struct bitable *bt, NODE *a)
+{
+	int nframes;
+	NODE *f;
+
+	if (a->n_op != ICON) {
+		uerror("__builtin_return_address requires constant argument");
+		return bcon(0);
+	}
+
+	nframes = (int)glval(a);
+	tfree(a);
+
+	/* Start with frame pointer (R16) */
+	f = block(REG, NIL, NIL, PTR+VOID, 0, 0);
+	regno(f) = FPREG;
+
+	/* Walk up the frame chain */
+	while (nframes--)
+		f = block(UMUL, f, NIL, PTR+VOID, 0, 0);
+
+	/* Return address is at offset 1 from frame pointer */
+	f = block(PLUS, f, bcon(1), INCREF(PTR+VOID), 0, 0);
+	f = buildtree(UMUL, f, NIL);
+
+	return f;
+}
+
+/*
+ * __builtin_frame_address(level)
+ * Returns the frame pointer at the given frame level.
+ * Level 0 is the current function's frame pointer.
+ */
+NODE *
+pdp10_builtin_frame_address(const struct bitable *bt, NODE *a)
+{
+	int nframes;
+	NODE *f;
+
+	if (a->n_op != ICON) {
+		uerror("__builtin_frame_address requires constant argument");
+		return bcon(0);
+	}
+
+	nframes = (int)glval(a);
+	tfree(a);
+
+	/* Start with frame pointer (R16) */
+	f = block(REG, NIL, NIL, PTR+VOID, 0, 0);
+	regno(f) = FPREG;
+
+	/* Walk up the frame chain */
+	while (nframes--)
+		f = block(UMUL, f, NIL, PTR+VOID, 0, 0);
+
+	return f;
 }
