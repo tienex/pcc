@@ -38,11 +38,66 @@
 #endif
 
 /*
- * Runtime configuration for assembly output and ABI.
- * Defaults to GNU assembler with ELF ABI.
+ * Runtime configuration for assembly output, ABI, and type sizes.
+ * Defaults to GNU assembler with ELF ABI and native PDP-10 types.
  */
 int pdp10_asmfmt = PDP10_ASM_GNU;
 int pdp10_abi = PDP10_ABI_ELF;
+int pdp10_pow2 = 0;  /* 0 = native PDP-10 types, 1 = power-of-2 types */
+
+/* External reference to PCC core type size table */
+extern short sztable[];
+
+/*
+ * Initialize runtime type system.
+ * This function updates the PCC core type size table (sztable[])
+ * to match the selected type mode (native PDP-10 or power-of-2).
+ *
+ * CRITICAL: This must be called BEFORE any type size calculations!
+ * It modifies the global sztable[] used by tsize() and struct layouts.
+ *
+ * sztable[] indices (from cc/ccom/pass1.h):
+ * [0]=unused, [1]=BOOL, [2-3]=CHAR/UCHAR, [4-5]=SHORT/USHORT,
+ * [6-7]=INT/UINT, [8-9]=LONG/ULONG, [10-11]=LONGLONG/ULONGLONG,
+ * [12]=FLOAT, [13]=DOUBLE, [14]=LDOUBLE
+ */
+void
+pdp10_init_runtime_types(void)
+{
+	if (pdp10_pow2) {
+		/* Power-of-2 mode: 8/16/32/64 bit types */
+		sztable[1] = 8;    /* BOOL */
+		sztable[2] = 8;    /* CHAR */
+		sztable[3] = 8;    /* UCHAR */
+		sztable[4] = 16;   /* SHORT */
+		sztable[5] = 16;   /* USHORT */
+		sztable[6] = 32;   /* INT */
+		sztable[7] = 32;   /* UINT */
+		sztable[8] = 64;   /* LONG */
+		sztable[9] = 64;   /* ULONG */
+		sztable[10] = 64;  /* LONGLONG */
+		sztable[11] = 64;  /* ULONGLONG */
+		sztable[12] = 32;  /* FLOAT */
+		sztable[13] = 64;  /* DOUBLE */
+		sztable[14] = 64;  /* LDOUBLE */
+	} else {
+		/* Native PDP-10 mode: 9/18/36/72 bit types */
+		sztable[1] = 36;   /* BOOL */
+		sztable[2] = 9;    /* CHAR */
+		sztable[3] = 9;    /* UCHAR */
+		sztable[4] = 18;   /* SHORT */
+		sztable[5] = 18;   /* USHORT */
+		sztable[6] = 36;   /* INT */
+		sztable[7] = 36;   /* UINT */
+		sztable[8] = 36;   /* LONG */
+		sztable[9] = 36;   /* ULONG */
+		sztable[10] = 72;  /* LONGLONG */
+		sztable[11] = 72;  /* ULONGLONG */
+		sztable[12] = 36;  /* FLOAT */
+		sztable[13] = 72;  /* DOUBLE */
+		sztable[14] = 72;  /* LDOUBLE */
+	}
+}
 
 /*
  * Print out assembler segment name.
@@ -651,3 +706,8 @@ builtin_cfa(const struct bitable *bt, NODE *a)
 	/* CFA = FP + 2 (2 words: saved FP + return address) */
 	return block(PLUS, f, bcon(2), INCREF(PTR+VOID), 0, 0);
 }
+
+/*
+ * NOTE: All type size queries are now handled by runtime-aware macros
+ * in macdefs.h (SZCHAR, SZINT, SZPOINT, etc.). No helper functions needed!
+ */

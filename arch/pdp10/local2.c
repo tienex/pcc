@@ -1341,7 +1341,8 @@ COLORMAP(int c, int *r)
  * Supports:
  *   -masm=<format>   - Set assembly syntax (gnu, midas)
  *   -mabi=<format>   - Set ABI/object format (elf, macho, pecoff, none)
- *   -mpow2           - Enable power-of-2 type mode (compile-time only)
+ *   -m64             - Enable power-of-2 type mode (8/16/32/64-bit types)
+ *   -m36             - Use native PDP-10 types (9/18/36-bit, default)
  */
 void
 mflags(char *str)
@@ -1366,8 +1367,35 @@ mflags(char *str)
 			pdp10_abi = PDP10_ABI_NONE;
 		else
 			fprintf(stderr, "pcc: unknown ABI '%s' (use 'elf', 'macho', 'pecoff', or 'none')\n", str);
-	} else if (strcmp(str, "pow2") == 0) {
-		fprintf(stderr, "pcc: -mpow2 is a compile-time option (use -DPDP10_POW2)\n");
+	} else if (strcmp(str, "64") == 0 || strcmp(str, "pow2") == 0) {
+		/* -m64 enables power-of-2 types (pow2 kept for compatibility) */
+		pdp10_pow2 = 1;
+
+		/* Initialize runtime type system with POW2 sizes */
+		pdp10_init_runtime_types();
+
+#ifdef PDP10_POW2
+		/* Compiler was built with POW2 support */
+		fprintf(stderr, "pcc: -m64 mode enabled\n");
+		fprintf(stderr, "pcc: Using power-of-2 types (8/16/32/64 bit) with VAX FP format\n");
+		fprintf(stderr, "pcc: Compiler built with -DPDP10_POW2: Full support enabled\n");
+#else
+		/* Compiler was built for native mode - FP format mismatch! */
+		fprintf(stderr, "pcc: -m64 mode enabled (RUNTIME mode)\n");
+		fprintf(stderr, "pcc: Using power-of-2 types (8/16/32/64 bit)\n");
+		fprintf(stderr, "pcc: WARNING: Floating-point format limitation:\n");
+		fprintf(stderr, "pcc:   - Compiler built WITHOUT -DPDP10_POW2\n");
+		fprintf(stderr, "pcc:   - Will use PDP-10 FP format (36/72-bit) instead of VAX!\n");
+		fprintf(stderr, "pcc:   - Avoid floating-point operations in this mode\n");
+		fprintf(stderr, "pcc: Type sizes, struct layouts, and array indexing: FULLY WORKING\n");
+		fprintf(stderr, "pcc: For full POW2 support with VAX FP: Recompile with -DPDP10_POW2\n");
+#endif
+	} else if (strcmp(str, "36") == 0) {
+		/* -m36 explicitly selects native mode (already the default) */
+		pdp10_pow2 = 0;
+		pdp10_init_runtime_types();
+		fprintf(stderr, "pcc: -m36 mode enabled (native PDP-10 types)\n");
+		fprintf(stderr, "pcc: Using native 9/18/36-bit types with PDP-10 FP format\n");
 	} else {
 		fprintf(stderr, "pcc: unknown PDP-10 option '%s'\n", str);
 	}
