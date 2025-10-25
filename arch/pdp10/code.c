@@ -390,7 +390,7 @@ mygenswitch(int num, TWORD type, struct swents **p, int n)
  * Level 0 is the current function's return address.
  */
 NODE *
-pdp10_builtin_return_address(const struct bitable *bt, NODE *a)
+builtin_return_address(const struct bitable *bt, NODE *a)
 {
 	int nframes;
 	NODE *f;
@@ -424,7 +424,7 @@ pdp10_builtin_return_address(const struct bitable *bt, NODE *a)
  * Level 0 is the current function's frame pointer.
  */
 NODE *
-pdp10_builtin_frame_address(const struct bitable *bt, NODE *a)
+builtin_frame_address(const struct bitable *bt, NODE *a)
 {
 	int nframes;
 	NODE *f;
@@ -446,4 +446,25 @@ pdp10_builtin_frame_address(const struct bitable *bt, NODE *a)
 		f = block(UMUL, f, NIL, PTR+VOID, 0, 0);
 
 	return f;
+}
+
+/*
+ * __builtin_dwarf_cfa()
+ * Returns the Canonical Frame Address (CFA) - the value of the stack pointer
+ * in the calling function. This is used for DWARF debugging information.
+ * For PDP-10, the CFA is the frame pointer plus 2 (skipping saved FP and return addr).
+ */
+NODE *
+builtin_cfa(const struct bitable *bt, NODE *a)
+{
+	NODE *f;
+
+	tfree(a);  /* CFA takes no arguments */
+
+	/* Start with frame pointer (R16) */
+	f = block(REG, NIL, NIL, PTR+VOID, 0, 0);
+	regno(f) = FPREG;
+
+	/* CFA = FP + 2 (2 words: saved FP + return address) */
+	return block(PLUS, f, bcon(2), INCREF(PTR+VOID), 0, 0);
 }
