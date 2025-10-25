@@ -184,13 +184,24 @@ typedef long long OFFSZ;
 /*
  * Floating-point format definitions for softfloat library.
  *
- * PDP-10 has a proprietary 36-bit floating-point format:
+ * Native PDP-10 mode: PDP-10 proprietary 36/72-bit format
  *   Single precision (36-bit): sign(1) + exponent(8, excess-128) + fraction(27)
  *   Double precision (72-bit): sign(1) + exponent(8, excess-1024) + fraction(62)
  *
- * We use native PDP-10 floating-point format for proper code generation.
+ * Power-of-2 mode: VAX F/D floating-point format
+ *   F-floating (32-bit): Compatible with 32-bit float
+ *   D-floating (64-bit): Compatible with 64-bit double
+ *
+ * VAX format is preferred over IEEE 754 for POW2 mode because:
+ * - Similar architecture philosophy to PDP-10
+ * - Better match for cross-compilation scenarios
+ * - Already implemented in PCC softfloat
  */
+#ifdef PDP10_POW2
+#define FDFLOAT		/* Use VAX F/D floating-point format for POW2 mode */
+#else
 #define PDP10FLOAT	/* Use native PDP-10 floating-point format */
+#endif
 
 /*
  * Variadic argument support
@@ -239,11 +250,22 @@ int xasmconstregs(char *);
  * When enabled, attempts to use power-of-2 type sizes (8/16/32/64 bit)
  * instead of native PDP-10 sizes (9/18/36/72 bit) for code generation.
  *
- * LIMITATIONS:
- * - Struct layouts are still computed using compile-time type sizes
- * - Only affects code generation, not frontend type calculations
- * - May produce incorrect code for complex types
- * - Intended for experimental cross-compilation scenarios
+ * WHAT WORKS:
+ * - Register allocation now uses runtime pdp10_szty()
+ * - Argument register assignment uses runtime sizes
+ * - Register class selection (PCLASS/RETREG) uses runtime sizes
+ *
+ * CRITICAL LIMITATIONS:
+ * - Struct layouts use compile-time type sizes (INCORRECT in POW2 mode!)
+ * - Floating-point format is COMPILE-TIME ONLY
+ *   * If compiler built with -DPDP10_POW2: uses FDFLOAT (VAX, correct)
+ *   * If compiler built without: uses PDP10FLOAT (36/72-bit, WRONG!)
+ *   The -mpow2 runtime flag cannot change FP format!
+ * - Array indexing uses compile-time element sizes
+ * - Multi-character constants use compile-time byte size
+ * - Frontend type calculations use compile-time sizes
+ *
+ * RECOMMENDATION: Recompile PCC with -DPDP10_POW2 for correct POW2 support.
  */
 extern int pdp10_asmfmt;  /* Assembly syntax: PDP10_ASM_* */
 extern int pdp10_abi;     /* ABI/Object format: PDP10_ABI_* */
@@ -385,8 +407,8 @@ int pdp10_szty(TWORD t);
         { R14, R15, XR13, -1 },
 
 /* Return a register class based on the type of the node */
-#define PCLASS(p) (szty(p->n_type) == 2 ? SBREG : SAREG)
-#define RETREG(x) (szty(x) == 2 ? XR1 : R1)
+#define PCLASS(p) (pdp10_szty((p)->n_type) == 2 ? SBREG : SAREG)
+#define RETREG(x) (pdp10_szty(x) == 2 ? XR1 : R1)
 #define DECRA(x,y)      (((x) >> (y*6)) & 63)   /* decode encoded regs */
 #define ENCRD(x)        (x)             /* Encode dest reg in n_reg */
 #define ENCRA1(x)       ((x) << 6)      /* A1 */

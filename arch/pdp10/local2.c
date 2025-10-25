@@ -437,7 +437,7 @@ constput(NODE *p)
 			printf("hrlzi %s,0%llo", rnames[reg], val >> 18);
 		} else {
 			printf("move %s,[ .long 0%llo]", rnames[reg],
-			    szty(p->n_right->n_type) > 1 ? val :
+			    pdp10_szty(p->n_right->n_type) > 1 ? val :
 			    val & 0777777777777LL);
 		}
 		/* Can have more tests here, hrloi etc */
@@ -1269,7 +1269,7 @@ myoptim(struct interpass *ip)
 int
 gclass(TWORD t)
 {
-	return (szty(t) == 2 ? CLASSB : CLASSA);
+	return (pdp10_szty(t) == 2 ? CLASSB : CLASSA);
 }
 
 static int
@@ -1279,7 +1279,7 @@ argsiz(NODE *p)
 
 	if (t == STRTY || t == UNIONTY)
 		return attr_find(p->n_ap, ATTR_P2STRUCT)->iarg(0)/(SZINT/SZCHAR);
-	return szty(t);
+	return pdp10_szty(t);
 }
 
 /*
@@ -1368,11 +1368,23 @@ mflags(char *str)
 			fprintf(stderr, "pcc: unknown ABI '%s' (use 'elf', 'macho', 'pecoff', or 'none')\n", str);
 	} else if (strcmp(str, "pow2") == 0) {
 		pdp10_pow2 = 1;
+#ifdef PDP10_POW2
+		/* Compiler was built with POW2 support - runtime flag just confirms */
+		fprintf(stderr, "pcc: -mpow2 mode enabled (compiler built with -DPDP10_POW2)\n");
+		fprintf(stderr, "pcc: Using power-of-2 types (8/16/32/64 bit) with VAX FP format\n");
+		fprintf(stderr, "pcc: Note: This is redundant when compiler is already built for POW2\n");
+#else
+		/* Compiler was built for native mode - runtime flag creates mismatch! */
 		fprintf(stderr, "pcc: EXPERIMENTAL -mpow2 mode enabled (power-of-2 types)\n");
-		fprintf(stderr, "pcc: WARNING: This mode has known limitations:\n");
-		fprintf(stderr, "pcc:   - Struct layouts use compile-time type sizes\n");
-		fprintf(stderr, "pcc:   - May produce incorrect code for complex types\n");
-		fprintf(stderr, "pcc:   - Use for testing/experimental purposes only\n");
+		fprintf(stderr, "pcc: ERROR: This compiler was built WITHOUT -DPDP10_POW2!\n");
+		fprintf(stderr, "pcc: CRITICAL PROBLEMS:\n");
+		fprintf(stderr, "pcc:   - Floating-point: Will use PDP-10 (36/72-bit) instead of VAX!\n");
+		fprintf(stderr, "pcc:   - Struct layouts: Will use 9/18/36-bit offsets instead of 8/16/32!\n");
+		fprintf(stderr, "pcc:   - Array indexing: Will use wrong element sizes!\n");
+		fprintf(stderr, "pcc:   - WILL PRODUCE COMPLETELY BROKEN CODE!\n");
+		fprintf(stderr, "pcc: REQUIRED ACTION: Recompile PCC itself with -DPDP10_POW2\n");
+		fprintf(stderr, "pcc: This flag is for testing only and does NOT work correctly.\n");
+#endif
 	} else {
 		fprintf(stderr, "pcc: unknown PDP-10 option '%s'\n", str);
 	}

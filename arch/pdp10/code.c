@@ -348,7 +348,7 @@ bfcode(struct symtab **sp, int cnt)
 				ecomp(p);
 			}
 		}
-		n += szty(sp[i]->stype);
+		n += pdp10_szty(sp[i]->stype);
 	}
 }
 
@@ -374,7 +374,7 @@ mkreg(NODE *p, int n)
 	NODE *r;
 
 	r = block(REG, NIL, NIL, p->n_type, p->n_df, p->n_ap);
-	if (szty(p->n_type) == 2)
+	if (pdp10_szty(p->n_type) == 2)
 		n += 16;
 	r->n_rval = n;
 	return r;
@@ -394,7 +394,7 @@ fixargs(NODE *p)
 		r = p->n_right;
 		if (r->n_op == STARG)
 			regnum = 9; /* end of register list */
-		else if (regnum + szty(r->n_type) > 8)
+		else if (regnum + pdp10_szty(r->n_type) > 8)
 			p->n_right = block(FUNARG, r, NIL, r->n_type,
 			    r->n_df, r->n_ap);
 		else
@@ -411,7 +411,7 @@ fixargs(NODE *p)
 		}
 		r = p;
 	}
-	regnum += szty(r->n_type);
+	regnum += pdp10_szty(r->n_type);
 }
 
 

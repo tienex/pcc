@@ -28,10 +28,15 @@ The PDP-10 backend can be compiled in two modes:
    - INT:      32 bits
    - LONG:     64 bits
    - LONGLONG: 64 bits
-   - FLOAT:    32 bits (IEEE 754)
-   - DOUBLE:   64 bits (IEEE 754)
+   - FLOAT:    32 bits (VAX F-floating format)
+   - DOUBLE:   64 bits (VAX D-floating format)
    - POINTER:  64 bits
    - Byte-addressed memory (8 bytes per word)
+
+   Note: VAX floating-point format is used instead of IEEE 754 because:
+   - It's already implemented in PCC's softfloat library
+   - Similar architecture philosophy to PDP-10
+   - Better compatibility for cross-compilation scenarios
 
 
 Runtime Configuration
@@ -77,22 +82,42 @@ When -mpow2 is used, the compiler ATTEMPTS to generate code using
 power-of-2 type sizes instead of native PDP-10 sizes, but this mode
 has fundamental architectural limitations:
 
-KNOWN LIMITATIONS:
-  1. Type sizes (SZCHAR, SZINT, etc.) remain fixed at compile time
-  2. Struct member offsets are calculated using compile-time sizes
-  3. Multi-character constants (makecc) use compile-time byte size
-  4. Array indexing may be incorrect for some types
-  5. The szty() macro uses compile-time sizes in most code paths
+TWO SCENARIOS:
 
-WHAT WORKS:
+Scenario 1: PCC compiled WITH -DPDP10_POW2 (CORRECT configuration):
+  - Uses compile-time power-of-2 types (8/16/32/64 bit)
+  - Uses VAX F/D floating-point format (32/64 bit)
+  - All type sizes, struct layouts, and FP operations are correct
+  - The -mpow2 runtime flag is redundant but harmless
+
+Scenario 2: PCC compiled WITHOUT -DPDP10_POW2 + runtime -mpow2 (BROKEN!):
+  - Register allocation: Uses runtime pdp10_szty() (WORKS)
+  - Argument passing: Uses runtime sizes (WORKS)
+  - Floating-point: Uses PDP-10 format (36/72-bit) (WRONG - should be VAX!)
+  - Struct layouts: Uses native offsets (9/18/36-bit) (WRONG - should be 8/16/32!)
+  - Array indexing: Uses native element sizes (WRONG!)
+  - Multi-character constants: Uses 9-bit bytes (WRONG - should be 8-bit!)
+  - Result: COMPLETELY BROKEN CODE
+
+WHAT WORKS IN SCENARIO 2:
   - Runtime type size query functions (pdp10_szchar(), etc.)
   - Runtime register allocation (pdp10_szty())
   - Runtime byte offset calculation (pdp10_byteoff())
   - Runtime word-addressing mode (pdp10_is_word_addressed())
+  - Register class selection (PCLASS, RETREG)
+  - Argument register allocation
+
+WHAT DOESN'T WORK IN SCENARIO 2:
+  - Floating-point operations (PDP-10 format vs expected VAX format)
+  - Struct layouts (9/18/36-bit offsets vs expected 8/16/32-bit)
+  - Array indexing (wrong element sizes)
+  - Multi-character constants (9-bit vs 8-bit bytes)
+  - Essentially EVERYTHING except simple integer register operations
 
 RECOMMENDATION:
-  For correct POW2 mode, recompile the entire compiler with -DPDP10_POW2
-  instead of using the -mpow2 runtime flag.
+  The -mpow2 runtime flag is for TESTING ONLY. For actual POW2 support,
+  you MUST recompile PCC itself with -DPDP10_POW2. The runtime flag will
+  detect this and warn you appropriately.
 
 The runtime -mpow2 flag exists only for experimental purposes and to
 demonstrate the architectural challenges of runtime type size switching
@@ -137,8 +162,18 @@ Register pairs (for 72-bit or 64-bit values):
 Floating-Point Support
 ----------------------
 
-Native mode uses PDP-10's proprietary floating-point format via softfloat.
-POW2 mode can use IEEE 754 floating-point (implementation pending).
+Native mode (default):
+  - Uses PDP-10's proprietary 36/72-bit floating-point format
+  - Implemented via PCC's softfloat library with PDP10FLOAT
+
+Power-of-2 mode (compile with -DPDP10_POW2):
+  - Uses VAX F-floating (32-bit) and D-floating (64-bit) formats
+  - Implemented via PCC's softfloat library with FDFLOAT
+  - VAX format chosen for better PDP-10 compatibility than IEEE 754
+
+Note: The floating-point format is a COMPILE-TIME choice. Using the runtime
+-mpow2 flag does NOT change the floating-point format and will produce
+incorrect code. Always recompile with -DPDP10_POW2 for correct POW2 support.
 
 
 Thread-Local Storage and PIC
