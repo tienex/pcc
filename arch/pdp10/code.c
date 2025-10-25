@@ -39,6 +39,31 @@
 
 
 /*
+ * Print out assembler segment name.
+ */
+void
+setseg(int seg, char *name)
+{
+	switch (seg) {
+	case PROG: name = ".text"; break;
+	case DATA:
+	case LDATA: name = ".data"; break;
+	case STRNG:
+	case RDATA: name = ".section .rodata"; break;
+	case UDATA: break;
+	case CTORS: name = ".section .ctors,\"aw\",@progbits"; break;
+	case DTORS: name = ".section .dtors,\"aw\",@progbits"; break;
+	case NMSEG:
+		printf("\t.section %s\n", name);
+		return;
+	default:
+		cerror("setseg: unknown segment %d", seg);
+	}
+	if (name != NULL)
+		printf("\t%s\n", name);
+}
+
+/*
  * Define everything needed to print out some data (or text).
  * This means segment, alignment, visibility, etc.
  */
