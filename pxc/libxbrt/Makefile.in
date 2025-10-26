@@ -1,0 +1,60 @@
+#	$Id$
+#
+# Makefile.in for Xbase++ Runtime Library
+#
+VPATH=@srcdir@
+srcdir=@srcdir@
+top_srcdir=@top_srcdir@
+top_builddir=@top_builddir@
+prefix = @prefix@
+exec_prefix = @exec_prefix@
+libdir = @libdir@
+includedir = @includedir@
+CC = @CC@
+AR = ar
+RANLIB = @RANLIB@
+CFLAGS = @CFLAGS@ @ADD_CFLAGS@
+CPPFLAGS = @CPPFLAGS@ @ADD_CPPFLAGS@ \
+	-I$(srcdir) -I$(top_builddir)
+INSTALL = @INSTALL@
+INSTALL_DATA = @INSTALL_DATA@
+
+OBJS=	value.o string.o numeric.o array.o datetime.o io.o
+
+DEST=libxbrt.a
+
+all: $(DEST)
+
+$(DEST): $(OBJS)
+	$(AR) rcs $@ $(OBJS)
+	$(RANLIB) $@
+
+value.o: $(srcdir)/value.c $(srcdir)/xbrt.h
+	$(CC) $(CFLAGS) $(CPPFLAGS) -c $(srcdir)/value.c
+
+string.o: $(srcdir)/string.c $(srcdir)/xbrt.h
+	$(CC) $(CFLAGS) $(CPPFLAGS) -c $(srcdir)/string.c
+
+numeric.o: $(srcdir)/numeric.c $(srcdir)/xbrt.h
+	$(CC) $(CFLAGS) $(CPPFLAGS) -c $(srcdir)/numeric.c
+
+array.o: $(srcdir)/array.c $(srcdir)/xbrt.h
+	$(CC) $(CFLAGS) $(CPPFLAGS) -c $(srcdir)/array.c
+
+datetime.o: $(srcdir)/datetime.c $(srcdir)/xbrt.h
+	$(CC) $(CFLAGS) $(CPPFLAGS) -c $(srcdir)/datetime.c
+
+io.o: $(srcdir)/io.c $(srcdir)/xbrt.h
+	$(CC) $(CFLAGS) $(CPPFLAGS) -c $(srcdir)/io.c
+
+install: all
+	test -z "$(DESTDIR)$(libdir)" || mkdir -p "$(DESTDIR)$(libdir)"
+	test -z "$(DESTDIR)$(includedir)/pxc" || mkdir -p "$(DESTDIR)$(includedir)/pxc"
+	$(INSTALL_DATA) $(DEST) $(DESTDIR)$(libdir)
+	$(INSTALL_DATA) $(srcdir)/xbrt.h $(DESTDIR)$(includedir)/pxc
+
+clean:
+	rm -f $(OBJS) $(DEST)
+
+distclean: clean
+	rm -f Makefile

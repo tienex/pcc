@@ -1286,7 +1286,8 @@ if test "$enable_pxc" = "yes"; then
 	CONFIG_MAKEFILES="$CONFIG_MAKEFILES
 		pxc/Makefile
 		pxc/pxc/Makefile
-		pxc/pxccom/Makefile"
+		pxc/pxccom/Makefile
+		pxc/libxbrt/Makefile"
 fi
 
 AC_CONFIG_FILES([$CONFIG_MAKEFILES])
