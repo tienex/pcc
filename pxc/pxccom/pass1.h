@@ -188,6 +188,7 @@ typedef struct node {
 #define N_FOR     26    /* FOR loop */
 #define N_RETURN  27    /* RETURN */
 #define N_BLOCK   28    /* Statement block */
+#define N_ARGLIST 29    /* Argument list */
 
 /* Global variables */
 extern int lineno;          /* Current line number */
@@ -227,6 +228,8 @@ SYMTAB *lookup_builtin(char *name);
 
 /* codegen.c */
 void codegen_init(void);
+void codegen_set_output(FILE *fp);
+void codegen_header(FILE *out);
 void codegen_function(SYMTAB *func, struct node *body);
 
 /* semantic.c */

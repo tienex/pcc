@@ -14,7 +14,7 @@
 #include "y.tab.h"
 
 /* Track line and column */
-int lineno = 1;
+extern int lineno;
 static int column = 1;
 
 /* Update column position */
@@ -43,7 +43,7 @@ HEXDIGIT        [0-9a-fA-F]
 
 %%
 
-    /* Comments - C-style /* ... */ */
+    /* Comments - C-style block comments */
 "/*" {
 	BEGIN(COMMENT);
 }

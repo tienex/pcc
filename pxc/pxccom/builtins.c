@@ -145,7 +145,6 @@ static BUILTIN builtins[] = {
 	{ "ALERT",      1, 3,  NULL },  /* Alert dialog */
 	{ "TONE",       1, 2,  NULL },  /* Sound tone */
 	{ "INKEY",      0, 1,  NULL },  /* Get key */
-	{ "CHR",        1, 1,  NULL },  /* Character from code */
 	{ "GETENV",     1, 1,  NULL },  /* Get environment variable */
 	{ "SETPOS",     2, 2,  NULL },  /* Set cursor position */
 	{ "ROW",        0, 0,  NULL },  /* Get cursor row */
