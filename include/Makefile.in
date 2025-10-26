@@ -18,17 +18,12 @@ VERSION = @PACKAGE_VERSION@
 PCCINCDIR = $(libdir)/pcc/$(TARGET)/$(VERSION)/include
 
 HEADERS = stddef.h stdarg.h stdbool.h stdint.h limits.h float.h
-BITS_HEADERS = bits/floatn.h
 
 all:
 
 install:
 	test -z "$(DESTDIR)$(PCCINCDIR)" || mkdir -p "$(DESTDIR)$(PCCINCDIR)"
-	test -z "$(DESTDIR)$(PCCINCDIR)/bits" || mkdir -p "$(DESTDIR)$(PCCINCDIR)/bits"
 	for header in $(HEADERS); do \
-		$(INSTALL_DATA) $(srcdir)/$$header $(DESTDIR)$(PCCINCDIR)/$$header; \
-	done
-	for header in $(BITS_HEADERS); do \
 		$(INSTALL_DATA) $(srcdir)/$$header $(DESTDIR)$(PCCINCDIR)/$$header; \
 	done
 
