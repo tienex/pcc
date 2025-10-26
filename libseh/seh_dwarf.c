@@ -28,6 +28,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "seh.h"
+#include "seh_helpers.h"
 
 /*
  * DWARF Exception Handling Support for SEH
