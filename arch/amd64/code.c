@@ -40,7 +40,7 @@
 #define	tfree p1tfree
 #endif
 
-static x86asm_ctx_t *asm_ctx = NULL;
+x86asm_ctx_t *asm_ctx = NULL;
 
 static int nsse, ngpr, nrsp, rsaoff;
 static int thissse, thisgpr, thisrsp;

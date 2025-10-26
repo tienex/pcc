@@ -26,6 +26,7 @@
 
 
 #include "pass1.h"
+#include "x86asm.h"
 
 /*	this file contains code which is dependent on the target machine */
 
@@ -482,14 +483,22 @@ defzero(struct symtab *sp)
 	int al;
 	char *name;
 
+	if (!asm_ctx) return;
+
 	if ((name = sp->soname) == NULL)
 		name = exname(sp->sname);
 	al = talign(sp->stype, sp->sap)/SZCHAR;
 	off = (int)tsize(sp->stype, sp->sdf, sp->sap);
 	SETOFF(off,SZCHAR);
 	off /= SZCHAR;
-	printf("\t.align %d\n", al);
-	printf("%s:\t.blkb %d\n", name, off);
+	x86asm_align(asm_ctx, al);
+	x86asm_label(asm_ctx, name, 0);
+	/* Use directive for .blkb (block bytes) */
+	{
+		char directive[32];
+		snprintf(directive, sizeof(directive), "%d", off);
+		x86asm_directive(asm_ctx, "blkb", directive);
+	}
 }
 
 static int stdcall;

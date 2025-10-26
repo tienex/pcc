@@ -365,6 +365,11 @@ P1ND *amd64_builtin_va_copy(const struct bitable *, P1ND *a);
 extern int mcmodel;
 extern int apx_enabled;
 
+/* libx86asm context for assembly generation */
+struct x86asm_ctx;
+typedef struct x86asm_ctx x86asm_ctx_t;
+extern x86asm_ctx_t *asm_ctx;
+
 /* floating point definitions */
 #define USE_IEEEFP_32
 #define FLT_PREFIX      IEEEFP_32

@@ -30,7 +30,7 @@
 # include "pass1.h"
 # include "x86asm.h"
 
-static x86asm_ctx_t *asm_ctx = NULL;
+x86asm_ctx_t *asm_ctx = NULL;
 
 /*
  * Print out assembler segment name.

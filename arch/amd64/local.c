@@ -27,6 +27,7 @@
 
 
 #include "pass1.h"
+#include "x86asm.h"
 
 #ifndef LANG_CXX
 #define	NODE P1ND
@@ -794,6 +795,9 @@ defzero(struct symtab *sp)
 	int al;
 	OFFSZ off;
 	char *name;
+	char labelbuf[32];
+
+	if (!asm_ctx) return;
 
 	name = getexname(sp);
 	off = tsize(sp->stype, sp->sdf, sp->sap);
@@ -801,29 +805,26 @@ defzero(struct symtab *sp)
 	off /= SZCHAR;
 	al = talign(sp->stype, sp->sap)/SZCHAR;
 
+	/* Get symbol name or label */
+	if (sp->slevel == 0) {
+		snprintf(labelbuf, sizeof(labelbuf), "%s", name);
+	} else {
+		snprintf(labelbuf, sizeof(labelbuf), LABFMT, sp->soffset);
+	}
+
 #ifdef MACHOABI
 	if (sp->sclass == STATIC) {
+		/* Mach-O uses .zerofill for static BSS - keep as printf for now */
 		al = ispow2(al);
-		printf("\t.zerofill __DATA,__bss,");
-		if (sp->slevel == 0) {
-			printf("%s", name);
-		} else
-			printf(LABFMT, sp->soffset);
-		printf(",%lld,%d\n", off, al);
+		printf("\t.zerofill __DATA,__bss,%s,%lld,%d\n", labelbuf, off, al);
 	} else {
-		printf("\t.comm %s,0%llo,%d\n", name, off, al);
+		x86asm_comm(asm_ctx, labelbuf, off, al);
 	}
 #else
 	if (sp->sclass == STATIC) {
-		if (sp->slevel == 0) {
-			printf("\t.local %s\n", name);
-		} else
-			printf("\t.local " LABFMT "\n", sp->soffset);
+		x86asm_local(asm_ctx, labelbuf);
 	}
-	if (sp->slevel == 0) {
-		printf("\t.comm %s,0%llo,%d\n", name, off, al);
-	} else
-		printf("\t.comm " LABFMT ",0%llo,%d\n", sp->soffset, off, al);
+	x86asm_comm(asm_ctx, labelbuf, off, al);
 #endif
 }
 

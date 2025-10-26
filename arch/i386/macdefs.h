@@ -447,11 +447,16 @@ int xasmconstregs(char *);
 struct stub {
 	struct { struct stub *q_forw, *q_back; } link;
 	char *name;
-};    
+};
 extern struct stub stublist;
 extern struct stub nlplist;
 void addstub(struct stub *list, char *name);
 #endif
+
+/* libx86asm context for assembly generation */
+struct x86asm_ctx;
+typedef struct x86asm_ctx x86asm_ctx_t;
+extern x86asm_ctx_t *asm_ctx;
 
 /* -m flags */
 extern int msettings;
