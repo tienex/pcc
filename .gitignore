@@ -39,3 +39,5 @@ configure
 *.out
 a.out
 core
+seh_helpers_test
+seh_cxx_test

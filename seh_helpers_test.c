@@ -56,20 +56,20 @@ void test_specific_exception_filter(void) {
 void test_nested_seh(void) {
     printf("Test 4: Nested SEH blocks\n");
 
-    SEH_TRY {
+    SEH_TRY_ID(1) {
         printf("  Outer try block\n");
 
-        SEH_TRY {
+        SEH_TRY_ID(2) {
             printf("    Inner try block\n");
             RaiseException(EXCEPTION_ACCESS_VIOLATION, 0);
-        } SEH_EXCEPT(EXCEPTION_FILTER_ACCESS_VIOLATION) {
+        } SEH_EXCEPT_ID(2, EXCEPTION_FILTER_ACCESS_VIOLATION) {
             printf("    Inner except handler\n");
-        } SEH_END;
+        } SEH_END_ID(2);
 
         printf("  Back in outer try\n");
-    } SEH_EXCEPT(EXCEPTION_FILTER_ALL) {
+    } SEH_EXCEPT_ID(1, EXCEPTION_FILTER_ALL) {
         printf("  Outer except handler (shouldn't reach)\n");
-    } SEH_END;
+    } SEH_END_ID(1);
 
     printf("  Test 4 completed\n\n");
 }

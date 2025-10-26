@@ -42,14 +42,30 @@
 /*
  * Manual __try / __except implementation
  *
- * Usage:
+ * Basic usage (non-nested):
  *   SEH_TRY {
  *       // Protected code
  *   } SEH_EXCEPT(filter_expression) {
  *       // Exception handler
  *   } SEH_END
+ *
+ * For nested SEH blocks, use the _ID versions with unique identifiers:
+ *   SEH_TRY_ID(1) {
+ *       SEH_TRY_ID(2) {
+ *           // inner protected code
+ *       } SEH_EXCEPT_ID(2, EXCEPTION_FILTER_ALL) {
+ *           // inner handler
+ *       } SEH_END_ID(2)
+ *   } SEH_EXCEPT_ID(1, EXCEPTION_FILTER_ALL) {
+ *       // outer handler
+ *   } SEH_END_ID(1)
  */
 
+/* Helper macros to create unique labels */
+#define _SEH_CONCAT_IMPL(a, b) a##b
+#define _SEH_CONCAT(a, b) _SEH_CONCAT_IMPL(a, b)
+
+/* Basic macros (non-nested) */
 #define SEH_TRY \
 	do { \
 		struct _seh_registration _seh_reg; \
@@ -72,17 +88,44 @@
 		_seh_unregister(&_seh_reg); \
 	} while (0)
 
+/* ID-based macros (for nested blocks) */
+#define SEH_TRY_ID(id) \
+	do { \
+		struct _seh_registration _SEH_CONCAT(_seh_reg_, id); \
+		int _SEH_CONCAT(_seh_filter_result_, id); \
+		_seh_register(&_SEH_CONCAT(_seh_reg_, id), NULL, \
+		              (void*)&&_SEH_CONCAT(_seh_filter_label_, id)); \
+		if (setjmp(_SEH_CONCAT(_seh_reg_, id).jmpbuf) == 0) {
+
+#define SEH_EXCEPT_ID(id, filter_expr) \
+		} else { \
+			goto _SEH_CONCAT(_seh_handler_label_, id); \
+		} \
+		goto _SEH_CONCAT(_seh_end_label_, id); \
+		_SEH_CONCAT(_seh_filter_label_, id): \
+		_SEH_CONCAT(_seh_filter_result_, id) = (filter_expr); \
+		return _SEH_CONCAT(_seh_filter_result_, id); \
+		_SEH_CONCAT(_seh_handler_label_, id):
+
+#define SEH_END_ID(id) \
+		_SEH_CONCAT(_seh_end_label_, id): \
+		_seh_unregister(&_SEH_CONCAT(_seh_reg_, id)); \
+	} while (0)
+
 /*
  * Manual __try / __finally implementation
  *
- * Usage:
+ * Basic usage (non-nested):
  *   SEH_TRY_FINALLY {
  *       // Protected code
  *   } SEH_FINALLY {
  *       // Cleanup code (always executes)
  *   } SEH_END_FINALLY
+ *
+ * For nested blocks, use the _ID versions with unique identifiers.
  */
 
+/* Basic macros (non-nested) */
 #define SEH_TRY_FINALLY \
 	do { \
 		struct _seh_registration _seh_reg; \
@@ -101,6 +144,28 @@
 		_seh_unregister(&_seh_reg); \
 		if (_seh_abnormal) \
 			longjmp(_seh_reg.jmpbuf, 1); \
+	} while (0)
+
+/* ID-based macros (for nested blocks) */
+#define SEH_TRY_FINALLY_ID(id) \
+	do { \
+		struct _seh_registration _SEH_CONCAT(_seh_reg_, id); \
+		int _SEH_CONCAT(_seh_abnormal_, id) = 0; \
+		_seh_register(&_SEH_CONCAT(_seh_reg_, id), \
+		              (void*)&&_SEH_CONCAT(_seh_finally_label_, id), NULL); \
+		if (setjmp(_SEH_CONCAT(_seh_reg_, id).jmpbuf) != 0) \
+			_SEH_CONCAT(_seh_abnormal_, id) = 1;
+
+#define SEH_FINALLY_ID(id) \
+		goto _SEH_CONCAT(_seh_finally_label_, id); \
+		_SEH_CONCAT(_seh_finally_label_, id): \
+		{
+
+#define SEH_END_FINALLY_ID(id) \
+		} \
+		_seh_unregister(&_SEH_CONCAT(_seh_reg_, id)); \
+		if (_SEH_CONCAT(_seh_abnormal_, id)) \
+			longjmp(_SEH_CONCAT(_seh_reg_, id).jmpbuf, 1); \
 	} while (0)
 
 /*
@@ -126,6 +191,7 @@ GetExceptionInformation(void)
  */
 
 #define AbnormalTermination() (_seh_abnormal)
+#define AbnormalTermination_ID(id) (_SEH_CONCAT(_seh_abnormal_, id))
 
 /*
  * Simplified exception raising
