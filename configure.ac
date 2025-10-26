@@ -799,6 +799,7 @@ BUILD_LIBTHREAD=no
 BUILD_LIBSTDBIT=no
 BUILD_LIBCKDINT=no
 BUILD_LIBDECIMAL=no
+BUILD_LIBMETAWARE=yes  # Always build MetaWare extensions
 PORTABLE_LIBS=""
 
 if test "$have_uchar" = "no"; then
@@ -836,11 +837,16 @@ if test "$have_decimal" = "no"; then
     AC_MSG_NOTICE([Will build portable libdecimal (IEEE 754-2008 decimal FP)])
 fi
 
+# Always build MetaWare extensions library (it's opt-in via header)
+PORTABLE_LIBS="$PORTABLE_LIBS libmetaware"
+AC_MSG_NOTICE([Will build MetaWare High C extensions library (libmetaware)])
+
 AC_SUBST(BUILD_LIBUNICODE)
 AC_SUBST(BUILD_LIBTHREAD)
 AC_SUBST(BUILD_LIBSTDBIT)
 AC_SUBST(BUILD_LIBCKDINT)
 AC_SUBST(BUILD_LIBDECIMAL)
+AC_SUBST(BUILD_LIBMETAWARE)
 AC_SUBST(PORTABLE_LIBS)
 
 # Checks for library functions.
@@ -1109,6 +1115,7 @@ echo "Build portable Threading library . ${BUILD_LIBTHREAD}"
 echo "Build portable Bit utils library . ${BUILD_LIBSTDBIT}"
 echo "Build portable Checked int library ${BUILD_LIBCKDINT}"
 echo "Build portable Decimal FP library  ${BUILD_LIBDECIMAL}"
+echo "Build MetaWare extensions library  ${BUILD_LIBMETAWARE}"
 echo
 echo "Configure finished.  Do 'make && make install' to compile and install.
 "

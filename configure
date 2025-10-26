@@ -663,6 +663,7 @@ targosver
 targos
 ALLOCA
 PORTABLE_LIBS
+BUILD_LIBMETAWARE
 BUILD_LIBDECIMAL
 BUILD_LIBCKDINT
 BUILD_LIBSTDBIT
@@ -5967,6 +5968,7 @@ BUILD_LIBTHREAD=no
 BUILD_LIBSTDBIT=no
 BUILD_LIBCKDINT=no
 BUILD_LIBDECIMAL=no
+BUILD_LIBMETAWARE=yes  # Always build MetaWare extensions
 PORTABLE_LIBS=""
 
 if test "$have_uchar" = "no"; then
@@ -6018,6 +6020,12 @@ printf "%s\n" "#define NEED_LIBDECIMAL 1" >>confdefs.h
     { printf "%s\n" "$as_me:${as_lineno-$LINENO}: Will build portable libdecimal (IEEE 754-2008 decimal FP)" >&5
 printf "%s\n" "$as_me: Will build portable libdecimal (IEEE 754-2008 decimal FP)" >&6;}
 fi
+
+# Always build MetaWare extensions library (it's opt-in via header)
+PORTABLE_LIBS="$PORTABLE_LIBS libmetaware"
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: Will build MetaWare High C extensions library (libmetaware)" >&5
+printf "%s\n" "$as_me: Will build MetaWare High C extensions library (libmetaware)" >&6;}
+
 
 
 
@@ -7788,6 +7796,7 @@ echo "Build portable Threading library . ${BUILD_LIBTHREAD}"
 echo "Build portable Bit utils library . ${BUILD_LIBSTDBIT}"
 echo "Build portable Checked int library ${BUILD_LIBCKDINT}"
 echo "Build portable Decimal FP library  ${BUILD_LIBDECIMAL}"
+echo "Build MetaWare extensions library  ${BUILD_LIBMETAWARE}"
 echo
 echo "Configure finished.  Do 'make && make install' to compile and install.
 "
