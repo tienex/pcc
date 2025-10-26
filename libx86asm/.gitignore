@@ -1,6 +1,7 @@
 # Compiled binaries
 test_x86asm
 example
+section_demo
 simple_demo
 apx_demo
 multi_format_demo
@@ -17,6 +18,7 @@ test_addressing_*.asm
 test_simd_*.asm
 strlen_*.asm
 vec_add_*.asm
+sections_*.asm
 demo_output.asm
 apx_output.asm
 addressing.asm
