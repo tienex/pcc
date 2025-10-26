@@ -33,7 +33,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-char xxxvers[] = "FORTRAN 90 DRIVER, VERSION 2.0 (with F66/F77 compatibility)\n";
+char xxxvers[] = "FORTRAN 90 DRIVER, VERSION 2.0 (with F66/F77/F95 compatibility)\n";
 
 #include <sys/wait.h>
 
@@ -108,7 +108,7 @@ static flag debugflag	= NO;
 static flag verbose	= NO;
 static flag fortonly	= NO;
 static flag macroflag	= NO;
-static int f_std	= 90;	/* Fortran standard: 66, 77, or 90 */
+static int f_std	= 90;	/* Fortran standard: 66, 77, 90, or 95 */
 
 static char *setdoto(char *), *lastchar(char *), *lastfield(char *);
 static void intrupt(int);
@@ -177,7 +177,7 @@ main(int argc, char **argv)
 				}
 				break;
 
-			case 's': /* -std=f66, -std=f77, -std=f90 */
+			case 's': /* -std=f66, -std=f77, -std=f90, -std=f95 */
 				if (strncmp(s, "std=", 4) == 0) {
 					if (strcmp(s+4, "f66") == 0 || strcmp(s+4, "fortran66") == 0) {
 						f_std = 66;
@@ -188,6 +188,9 @@ main(int argc, char **argv)
 					} else if (strcmp(s+4, "f90") == 0 || strcmp(s+4, "fortran90") == 0) {
 						f_std = 90;
 						addarg(ffary, &ffmax, "-std=f90");
+					} else if (strcmp(s+4, "f95") == 0 || strcmp(s+4, "fortran95") == 0) {
+						f_std = 95;
+						addarg(ffary, &ffmax, "-std=f95");
 					} else {
 						fatal1("unknown standard '%s'", s+4);
 					}
