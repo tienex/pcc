@@ -489,6 +489,22 @@ AC_ARG_ENABLE(native,
 		[Build the compiler as a native rather than cross-build compiler]),
 	[native=$enableval], [])
 
+# Bootstrap options
+bootstrap_stage=0
+AC_ARG_ENABLE(bootstrap,
+	AS_HELP_STRING([--enable-bootstrap],
+		[Enable bootstrap build verification]),
+	[bootstrap=$enableval], [bootstrap=no])
+AC_ARG_WITH(bootstrap-stage,
+	AS_HELP_STRING([--with-bootstrap-stage=N],
+		[Set bootstrap stage number (default: 0)]),
+	[bootstrap_stage=$withval], [])
+if test "$bootstrap" = "yes" -o "$bootstrap_stage" != "0"; then
+	AC_DEFINE_UNQUOTED(BOOTSTRAP_STAGE, $bootstrap_stage,
+		[Bootstrap stage number])
+fi
+AC_SUBST(bootstrap_stage)
+
 # Setup for ubuntu multiarch
 multiarch_path=
 case x$multiarch in

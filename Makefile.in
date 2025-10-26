@@ -27,3 +27,26 @@ distclean:
 	done
 	rm -rf Makefile config.log stamp-h1 config.status \
 	    configure.lineno config.h autom4te.cache
+
+# Bootstrap targets
+bootstrap:
+	@echo "Starting multi-stage bootstrap..."
+	@if [ ! -x ./bootstrap.sh ]; then \
+		echo "Error: bootstrap.sh not found or not executable"; \
+		exit 1; \
+	fi
+	./bootstrap.sh --stages=3 --compare-stages
+
+bootstrap-quick:
+	@echo "Starting quick bootstrap (2 stages)..."
+	./bootstrap.sh --stages=2
+
+bootstrap-full:
+	@echo "Starting full bootstrap with verification..."
+	./bootstrap.sh --stages=3 --compare-stages
+
+bootstrap-clean:
+	@echo "Cleaning bootstrap directories..."
+	rm -rf bootstrap-build
+
+.PHONY: bootstrap bootstrap-quick bootstrap-full bootstrap-clean
