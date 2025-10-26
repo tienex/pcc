@@ -1254,6 +1254,7 @@ CONFIG_MAKEFILES="Makefile
 		libdecimal/Makefile
 		libmetaware/Makefile
 		libblocks/Makefile
+<<<<<<< HEAD
 		libpascal/Makefile
 		libwirth/Makefile
 		libbliss/Makefile
@@ -1374,6 +1375,10 @@ if test "$enable_cobol" = "yes"; then
 fi
 
 AC_CONFIG_FILES([$CONFIG_MAKEFILES])
+=======
+		libcobol/Makefile
+])
+>>>>>>> 1748df8 (Add comprehensive COBOL runtime library (libcobol))
 AC_OUTPUT
 
 eval "exec_prefix=$exec_prefix"
