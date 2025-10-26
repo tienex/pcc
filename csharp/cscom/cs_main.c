@@ -15,11 +15,13 @@ static struct {
 	char *input_file;
 	char *output_file;
 	char *module_name;
+	char *lang_version_str;
 	int optimize_level;
 	int enable_arc;
 	int enable_unsafe;
 	int emit_debug_info;
 	int verbose;
+	int show_features;
 	enum cs_arch target_arch;
 	enum cs_endian target_endian;
 	int language_version;
@@ -27,20 +29,28 @@ static struct {
 	.input_file = NULL,
 	.output_file = "output.csm",
 	.module_name = NULL,
+	.lang_version_str = NULL,
 	.optimize_level = 1,
 	.enable_arc = 1,
 	.enable_unsafe = 0,
 	.emit_debug_info = 1,
 	.verbose = 0,
+	.show_features = 0,
 	.target_arch = CS_ARCH_NEUTRAL,
 	.target_endian = CS_ENDIAN_LITTLE,
-	.language_version = CS_VERSION_30,
+	.language_version = CS_VERSION_DEFAULT,
 };
 
 static void print_version(void) {
-	printf("C# 3.0 Compiler (PCC Edition) version 1.0\n");
+	printf("C# Compiler (PCC Edition) version 2.0\n");
+	printf("Supports C# 1.0 through C# 12.0\n");
 	printf("Architecture-neutral and endian-neutral compiler\n");
 	printf("With shared ARC support\n");
+	printf("\nSupported language versions:\n");
+	printf("  1.0, 2.0, 3.0, 4.0, 5.0, 6.0\n");
+	printf("  7.0, 7.1, 7.2, 7.3\n");
+	printf("  8.0, 9.0, 10.0, 11.0, 12.0\n");
+	printf("  latest (defaults to 12.0)\n");
 }
 
 static void print_usage(const char *progname) {
@@ -48,12 +58,15 @@ static void print_usage(const char *progname) {
 	printf("Options:\n");
 	printf("  -o <file>         Output file (default: output.csm)\n");
 	printf("  -m <name>         Module name\n");
+	printf("  -langversion:<v>  C# language version (1.0-12.0, default: latest)\n");
+	printf("                    Examples: -langversion:3.0, -langversion:7.3\n");
 	printf("  -O <level>        Optimization level (0-3, default: 1)\n");
 	printf("  -farc             Enable ARC (default)\n");
 	printf("  -fno-arc          Disable ARC\n");
 	printf("  -funsafe          Enable unsafe code\n");
 	printf("  -g                Emit debug information\n");
 	printf("  -v                Verbose output\n");
+	printf("  --features        Show available language features and exit\n");
 	printf("  --arch=<arch>     Target architecture:\n");
 	printf("                      neutral (default), x86, x86-64, arm, arm64,\n");
 	printf("                      mips, ppc, riscv, wasm\n");
@@ -61,6 +74,10 @@ static void print_usage(const char *progname) {
 	printf("                      little (default), big\n");
 	printf("  --version         Print version information\n");
 	printf("  --help            Print this help message\n");
+	printf("\nExamples:\n");
+	printf("  %s -langversion:2.0 program.cs     # Compile as C# 2.0\n", progname);
+	printf("  %s -langversion:7.3 --features     # Show C# 7.3 features\n", progname);
+	printf("  %s -o app.csm app.cs                # Compile with latest C#\n", progname);
 }
 
 static enum cs_arch parse_arch(const char *arch_str) {
@@ -104,6 +121,7 @@ static int parse_options(int argc, char **argv) {
 	static struct option long_options[] = {
 		{"arch", required_argument, 0, 'a'},
 		{"endian", required_argument, 0, 'e'},
+		{"features", no_argument, 0, 'F'},
 		{"version", no_argument, 0, 'V'},
 		{"help", no_argument, 0, 'h'},
 		{0, 0, 0, 0}
@@ -139,6 +157,9 @@ static int parse_options(int argc, char **argv) {
 		case 'e':
 			options.target_endian = parse_endian(optarg);
 			break;
+		case 'F':
+			options.show_features = 1;
+			break;
 		case 'V':
 			print_version();
 			exit(0);
@@ -148,6 +169,22 @@ static int parse_options(int argc, char **argv) {
 		default:
 			return -1;
 		}
+	}
+
+	/* Parse language version from remaining args */
+	for (int i = 1; i < argc; i++) {
+		if (strncmp(argv[i], "-langversion:", 13) == 0) {
+			options.lang_version_str = argv[i] + 13;
+			options.language_version = cs_version_parse(options.lang_version_str);
+			break;
+		}
+	}
+
+	/* If just showing features, don't require input file */
+	if (options.show_features) {
+		cs_version_set_current(options.language_version);
+		cs_print_available_features();
+		exit(0);
 	}
 
 	if (optind >= argc) {
@@ -174,16 +211,19 @@ static int compile(void) {
 		printf("Compiling %s to %s\n", options.input_file,
 		       options.output_file);
 		printf("Module: %s\n", options.module_name);
+		printf("Language Version: C# %s\n",
+		       cs_version_to_string(options.language_version));
 		printf("Target: %s (%s)\n",
 		       cs_arch_to_string(options.target_arch),
 		       cs_endian_to_string(options.target_endian));
 		printf("ARC: %s\n", options.enable_arc ? "enabled" : "disabled");
+		printf("\n");
 	}
 
 	/* Initialize compiler */
 	cs_init();
 	cs_arc_enabled = options.enable_arc;
-	cs_language_version = options.language_version;
+	cs_version_set_current(options.language_version);
 
 	/* Initialize scanner */
 	cs_scanner_init(options.input_file);
