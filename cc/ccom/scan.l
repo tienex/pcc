@@ -201,7 +201,8 @@ extern void yyset_lineno (int);
 
 %%
 
-int lineno, issyshdr;
+/* lineno is defined in mip/common.c and declared extern in pass1.h */
+int issyshdr;
 
 int
 yywrap(void)
@@ -840,14 +841,8 @@ bad:
 int pragma_allpacked;
 int pragma_packed, pragma_aligned;
 
-/* Watcom pragma aux support */
-struct pragma_aux_info {
-	char *symbol;      /* Symbol name this pragma applies to */
-	char *parm_regs;   /* Parameter register list */
-	char *value_reg;   /* Return value register */
-	char *modify_regs; /* Modified register list */
-	int is_caller;     /* Caller cleans stack */
-} pragma_aux_pending;
+/* Watcom pragma aux support - struct defined in pass1.h */
+struct pragma_aux_info pragma_aux_pending;
 
 /* Calling convention definitions */
 #define MAX_CALLING_CONVENTIONS 64
