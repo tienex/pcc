@@ -1,0 +1,35 @@
+# Makefile for C# Driver
+
+VPATH = @srcdir@
+srcdir = @srcdir@
+top_srcdir = @top_srcdir@
+top_builddir = @top_builddir@
+prefix = @prefix@
+exec_prefix = @exec_prefix@
+bindir = @bindir@
+CC = @CC@
+CFLAGS = @CFLAGS@ -I$(srcdir) -I$(top_srcdir)/common
+LDFLAGS = @LDFLAGS@
+INSTALL = @INSTALL@
+INSTALL_PROGRAM = @INSTALL_PROGRAM@
+
+OBJS = csharp.o
+
+CSHARP = csharp
+
+all: $(CSHARP)
+
+$(CSHARP): $(OBJS)
+	$(CC) $(CFLAGS) -o $@ $(OBJS) $(LDFLAGS)
+
+csharp.o: csharp.c
+	$(CC) $(CFLAGS) -c -o $@ $<
+
+clean:
+	rm -f $(OBJS) $(CSHARP)
+
+install: all
+	test -z "$(DESTDIR)$(bindir)" || mkdir -p "$(DESTDIR)$(bindir)"
+	$(INSTALL_PROGRAM) $(CSHARP) $(DESTDIR)$(bindir)/
+
+.PHONY: all clean install

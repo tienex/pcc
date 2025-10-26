@@ -1,0 +1,21 @@
+# Makefile for Common Libraries
+
+VPATH = @srcdir@
+srcdir = @srcdir@
+top_srcdir = @top_srcdir@
+CC = @CC@
+CFLAGS = @CFLAGS@ -I$(srcdir)
+AR = ar
+RANLIB = @RANLIB@
+
+OBJS = cs_module.o
+
+all: $(OBJS)
+
+cs_module.o: cs_module.c cs_module.h
+	$(CC) $(CFLAGS) -c -o $@ $<
+
+clean:
+	rm -f $(OBJS)
+
+.PHONY: all clean
