@@ -650,6 +650,7 @@ ac_includes_default="\
 ac_header_c_list=
 ac_subst_vars='LTLIBOBJS
 LIBOBJS
+gcclibdir
 CF1
 CF0
 CCNAMES
@@ -5833,6 +5834,178 @@ printf "%s\n" "#define VERSSTR $versstr" >>confdefs.h
 
 
 printf "%s\n" "#define TARGSTR $targstr" >>confdefs.h
+
+
+# Find compiler runtime library directory for crtbegin.o/crtend.o (or MSVC equivalent)
+# Supports GCC, Clang, and MSVC
+gcclibdir=""
+
+# Detect compiler type
+cc_type=""
+if test -n "$CC" ; then
+	cc_type=`$CC --version 2>/dev/null | head -1`
+	case "$cc_type" in
+	*clang*|*Clang*|*CLANG*)
+		cc_type="clang"
+		;;
+	*gcc*|*GCC*|*GNU*)
+		cc_type="gcc"
+		;;
+	*Microsoft*|*MSVC*|*msvc*)
+		cc_type="msvc"
+		;;
+	*)
+		# Default: try gcc if CC not set or unrecognized
+		cc_type="gcc"
+		;;
+	esac
+else
+	# No CC set, try to auto-detect
+	if command -v gcc >/dev/null 2>&1; then
+		cc_type="gcc"
+	elif command -v clang >/dev/null 2>&1; then
+		cc_type="clang"
+	elif command -v cl.exe >/dev/null 2>&1; then
+		cc_type="msvc"
+	else
+		cc_type="gcc"  # fallback
+	fi
+fi
+
+# Find library directory based on compiler type
+case "$cc_type" in
+gcc)
+	# GCC: Find version and library directory
+	gccver=`$CC -dumpversion 2>/dev/null || gcc -dumpversion 2>/dev/null | cut -d. -f1`
+	if test -n "$gccver" ; then
+		case "$target_cpu" in
+		x86_64|amd64)
+			gcclibdir="/usr/lib/gcc/x86_64-linux-gnu/$gccver"
+			;;
+		i?86)
+			gcclibdir="/usr/lib/gcc/i686-linux-gnu/$gccver"
+			;;
+		aarch64|arm64)
+			gcclibdir="/usr/lib/gcc/aarch64-linux-gnu/$gccver"
+			;;
+		arm*)
+			gcclibdir="/usr/lib/gcc/arm-linux-gnueabihf/$gccver"
+			;;
+		esac
+	fi
+	# Fallback for GCC
+	if test -z "$gcclibdir" ; then
+		gcclibdir="/usr/lib/gcc/x86_64-linux-gnu/4.4"
+	fi
+	;;
+
+clang)
+	# Clang: Find version and library directory
+	clangver=`$CC --version 2>/dev/null | head -1 | sed 's/.*version \([0-9]*\)\..*/\1/'`
+	if test -z "$clangver" ; then
+		clangver=`clang --version 2>/dev/null | head -1 | sed 's/.*version \([0-9]*\)\..*/\1/'`
+	fi
+
+	# Try to find Clang's resource directory
+	if test -n "$clangver" ; then
+		case "$target_os" in
+		*darwin*|*macos*)
+			# macOS: Clang uses Xcode or CommandLineTools paths
+			if test -d "/Library/Developer/CommandLineTools/usr/lib/clang/$clangver" ; then
+				gcclibdir="/Library/Developer/CommandLineTools/usr/lib/clang/$clangver/lib/darwin"
+			elif test -d "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/$clangver" ; then
+				gcclibdir="/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/$clangver/lib/darwin"
+			fi
+			;;
+		*linux*)
+			# Linux: Clang often uses GCC's libraries for compatibility
+			# First try clang's own runtime
+			if test -d "/usr/lib/clang/$clangver/lib/linux" ; then
+				gcclibdir="/usr/lib/clang/$clangver/lib/linux"
+			elif test -d "/usr/lib/llvm-$clangver/lib/clang/$clangver/lib/linux" ; then
+				gcclibdir="/usr/lib/llvm-$clangver/lib/clang/$clangver/lib/linux"
+			else
+				# Fall back to GCC's crtbegin.o for Clang on Linux
+				gccver=`gcc -dumpversion 2>/dev/null | cut -d. -f1`
+				if test -n "$gccver" ; then
+					case "$target_cpu" in
+					x86_64|amd64)
+						gcclibdir="/usr/lib/gcc/x86_64-linux-gnu/$gccver"
+						;;
+					i?86)
+						gcclibdir="/usr/lib/gcc/i686-linux-gnu/$gccver"
+						;;
+					esac
+				fi
+			fi
+			;;
+		*bsd*)
+			# BSD: Check /usr/lib/clang
+			if test -d "/usr/lib/clang/$clangver" ; then
+				gcclibdir="/usr/lib/clang/$clangver/lib"
+			fi
+			;;
+		esac
+	fi
+
+	# Fallback for Clang (use GCC's on Linux)
+	if test -z "$gcclibdir" ; then
+		case "$target_os" in
+		*linux*)
+			gcclibdir="/usr/lib/gcc/x86_64-linux-gnu/4.4"
+			;;
+		*darwin*)
+			gcclibdir="/Library/Developer/CommandLineTools/usr/lib/clang/13/lib/darwin"
+			;;
+		*)
+			gcclibdir="/usr/lib"
+			;;
+		esac
+	fi
+	;;
+
+msvc)
+	# MSVC: Find Visual Studio installation
+	# Check common Visual Studio paths
+	if test -d "C:/Program Files (x86)/Microsoft Visual Studio/2022/Community/VC/Tools/MSVC" ; then
+		msvcver=`ls "C:/Program Files (x86)/Microsoft Visual Studio/2022/Community/VC/Tools/MSVC" | tail -1`
+		case "$target_cpu" in
+		x86_64|amd64)
+			gcclibdir="C:/Program Files (x86)/Microsoft Visual Studio/2022/Community/VC/Tools/MSVC/$msvcver/lib/x64"
+			;;
+		i?86)
+			gcclibdir="C:/Program Files (x86)/Microsoft Visual Studio/2022/Community/VC/Tools/MSVC/$msvcver/lib/x86"
+			;;
+		esac
+	elif test -d "C:/Program Files (x86)/Microsoft Visual Studio/2019/Community/VC/Tools/MSVC" ; then
+		msvcver=`ls "C:/Program Files (x86)/Microsoft Visual Studio/2019/Community/VC/Tools/MSVC" | tail -1`
+		case "$target_cpu" in
+		x86_64|amd64)
+			gcclibdir="C:/Program Files (x86)/Microsoft Visual Studio/2019/Community/VC/Tools/MSVC/$msvcver/lib/x64"
+			;;
+		i?86)
+			gcclibdir="C:/Program Files (x86)/Microsoft Visual Studio/2019/Community/VC/Tools/MSVC/$msvcver/lib/x86"
+			;;
+		esac
+	elif test -d "C:/Program Files/Microsoft Visual Studio/2022/Community/VC/Tools/MSVC" ; then
+		msvcver=`ls "C:/Program Files/Microsoft Visual Studio/2022/Community/VC/Tools/MSVC" | tail -1`
+		case "$target_cpu" in
+		x86_64|amd64)
+			gcclibdir="C:/Program Files/Microsoft Visual Studio/2022/Community/VC/Tools/MSVC/$msvcver/lib/x64"
+			;;
+		i?86)
+			gcclibdir="C:/Program Files/Microsoft Visual Studio/2022/Community/VC/Tools/MSVC/$msvcver/lib/x86"
+			;;
+		esac
+	fi
+
+	# Fallback for MSVC
+	if test -z "$gcclibdir" ; then
+		gcclibdir="C:/Program Files (x86)/Microsoft Visual Studio/14.0/VC/lib"
+	fi
+	;;
+esac
+
 
 
 ac_config_files="$ac_config_files Makefile cc/Makefile cc/cc/Makefile cc/cpp/Makefile cc/ccom/Makefile cc/cxxcom/Makefile cc/driver/Makefile f77/Makefile f77/f77/Makefile f77/fcom/Makefile pascal/Makefile pascal/pascal/Makefile pascal/pcom/Makefile common/abi/Makefile"

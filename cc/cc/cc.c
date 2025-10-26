@@ -215,11 +215,14 @@ char *cppmdadd[] = CPPMDADD;
 #ifndef LIBDIR
 #define LIBDIR		"/usr/lib/"
 #endif
+#ifndef GCCLIBDIR
+#define GCCLIBDIR	"/usr/lib/gcc/x86_64-linux-gnu/4.4/"
+#endif
 #ifndef DEFLIBDIRS	/* default library search paths */
 #ifdef MULTIARCH_PATH
-#define DEFLIBDIRS	{ LIBDIR, LIBDIR MULTIARCH_PATH "/", 0 }
+#define DEFLIBDIRS	{ LIBDIR, LIBDIR MULTIARCH_PATH "/", GCCLIBDIR, 0 }
 #else
-#define DEFLIBDIRS	{ LIBDIR, 0 }
+#define DEFLIBDIRS	{ LIBDIR, GCCLIBDIR, 0 }
 #endif
 #endif
 #ifndef DEFLIBS		/* default libraries included */
@@ -1866,6 +1869,10 @@ setup_cpp_flags(void)
 	strlist_append(&sysincdirs, "=" STDINC_MA);
 #endif
 	strlist_append(&sysincdirs, "=" STDINC);
+#ifdef GCCLIBDIR
+	/* Add GCC's include directory for compiler-provided headers like stddef.h */
+	strlist_append(&sysincdirs, GCCLIBDIR "include");
+#endif
 #ifdef PCCINCDIR
 	if (cxxflag)
 		strlist_append(&sysincdirs, "=" PCCINCDIR "/c++");

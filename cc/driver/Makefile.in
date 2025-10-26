@@ -23,10 +23,12 @@ TARGET = @target@
 VERSION = @PACKAGE_VERSION@
 PCCLIBDIR = $(libdir)/pcc/$(TARGET)/$(VERSION)/lib
 PCCINCDIR = $(libdir)/pcc/$(TARGET)/$(VERSION)/include
+GCCLIBDIR = @gcclibdir@
 CFLAGS = @CFLAGS@ @ADD_CFLAGS@
 CPPFLAGS = @CPPFLAGS@ -DLIBEXECDIR=\"$(libexecdir)/\" \
 	@ADD_CPPFLAGS@ -DINCLUDEDIR=\"$(includedir)/\" \
 	-DPCCINCDIR=\"$(PCCINCDIR)/\" -DPCCLIBDIR=\"$(PCCLIBDIR)/\" \
+	-DGCCLIBDIR=\"$(GCCLIBDIR)/\" \
 	-DTARGOS=\"$(TARGOS)\" -DTARGOSVER=$(TARGOSVER) -Dos_$(TARGOS) \
 	-DTARGMACH=\"$(TARGMACH)\" -Dmach_$(TARGMACH) \
 	-I$(top_builddir) -I$(top_srcdir)/os/$(TARGOS) -I$(MIPDIR) -I$(MDIR)
