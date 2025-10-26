@@ -18,6 +18,17 @@ cgram.h
 
 # Generated files from flex/lex
 lex.yy.c
+scan.c
+
+# Generated source files
+external.c
+external.h
+
+# Build tools
+mkext
+cc/cc/cc
+cc/cpp/cpp
+cc/ccom/ccom
 
 # Generated source files
 external.c
