@@ -712,6 +712,12 @@ main(int argc, char *argv[])
 				break;
 			}
 #endif
+#ifdef mach_i386
+			if (strncmp(argp, "-mcmodel=", 9) == 0) {
+				strlist_append(&compiler_flags, argp);
+				break;
+			}
+#endif
 #if defined(mach_arm) || defined(mach_mips) || defined(mach_mips64)
 			if (match(argp, "-mbig-endian")) {
 				bigendian = 1;

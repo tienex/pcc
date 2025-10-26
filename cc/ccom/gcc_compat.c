@@ -99,15 +99,24 @@ static struct kw {
 /* 42 */{ "__cs", NULL, 0 },
 /* 43 */{ "__ds", NULL, 0 },
 /* 44 */{ "__es", NULL, 0 },
-/* 45 */{ "__fs", NULL, 0 },
-/* 46 */{ "__gs", NULL, 0 },
 	/* Raw byte emission */
-/* 47 */{ "__emit", NULL, 0 },
-/* 48 */{ "__emit__", NULL, 0 },
+/* 45 */{ "__emit", NULL, 0 },
+/* 46 */{ "__emit__", NULL, 0 },
 #endif
 #if defined(mach_i86) || defined(mach_i386)
+	/* i386-compatible extensions (also on i86 for forward compat) */
+/* 47 */{ "__far16", NULL, 0 },		/* Watcom: 16-bit far pointer */
 	/* MSVC-style inline assembly (both i86 and i386) */
-/* 49 */{ "__asm", NULL, 0 },		/* Note: conflicts with index 0, handled specially */
+/* 48 */{ "__asm", NULL, 0 },		/* Note: conflicts with index 0, handled specially */
+#endif
+#if defined(mach_i86) || defined(mach_i386) || defined(mach_amd64)
+	/* Segment registers available on all x86 architectures */
+/* 49 */{ "__fs", NULL, 0 },
+/* 50 */{ "__gs", NULL, 0 },
+#endif
+#ifdef mach_amd64
+	/* x86-64 specific extensions */
+/* 51 */{ "__near32", NULL, 0 },		/* 32-bit near pointer for macOS */
 #endif
 	{ NULL, NULL, 0 },
 };
@@ -371,7 +380,6 @@ gcc_keyword(char *str)
 	case 26: /* __near */
 	case 27: /* __huge */
 	case 28: /* __based */
-	case 29: /* __far16 */
 	case 30: /* __segment */
 	case 31: /* __self */
 	/* Calling conventions (32-36) */
@@ -385,20 +393,17 @@ gcc_keyword(char *str)
 	case 38: /* __loadds */
 	case 39: /* __saveregs */
 	case 40: /* __export */
-	/* Segment registers (41-46) */
+	/* Segment registers (41-44) */
 	case 41: /* __ss */
 	case 42: /* __cs */
 	case 43: /* __ds */
 	case 44: /* __es */
-	case 45: /* __fs */
-	case 46: /* __gs */
 		/* Map keyword index to attribute type */
 		switch (i) {
 		case 25: yylval.intval = GCC_ATYP_FAR; break;
 		case 26: yylval.intval = GCC_ATYP_NEAR; break;
 		case 27: yylval.intval = GCC_ATYP_HUGE; break;
 		case 28: yylval.intval = GCC_ATYP_BASED; break;
-		case 29: yylval.intval = GCC_ATYP_FAR16; break;
 		case 30: yylval.intval = GCC_ATYP_SEGMENT; break;
 		case 31: yylval.intval = GCC_ATYP_SELF; break;
 		case 32: yylval.intval = GCC_ATYP_CDECL; break;
@@ -414,30 +419,52 @@ gcc_keyword(char *str)
 		case 42: yylval.intval = GCC_ATYP_CS; break;
 		case 43: yylval.intval = GCC_ATYP_DS; break;
 		case 44: yylval.intval = GCC_ATYP_ES; break;
-		case 45: yylval.intval = GCC_ATYP_FS; break;
-		case 46: yylval.intval = GCC_ATYP_GS; break;
-		case 47: yylval.intval = GCC_ATYP_EMIT; break;
-		case 48: yylval.intval = GCC_ATYP_EMIT; break;
 		}
 		/* Enter attribute mode for parsing */
 		inattr = 1;
 		parlvl = parbal;
 		return C_ATTRIBUTE;
 	/* __emit keyword - emit raw bytes into code stream */
-	case 47: /* __emit */
-	case 48: /* __emit__ */
+	case 45: /* __emit */
+	case 46: /* __emit__ */
 		yylval.intval = GCC_ATYP_EMIT;
 		inattr = 1;
 		parlvl = parbal;
 		return C_ATTRIBUTE;
 #endif
 #if defined(mach_i86) || defined(mach_i386)
+	/* __far16 keyword (Watcom 16-bit far pointer for i386 large model) */
+	case 47: /* __far16 */
+		yylval.intval = GCC_ATYP_FAR16;
+		inattr = 1;
+		parlvl = parbal;
+		return C_ATTRIBUTE;
 	/* MSVC-style __asm keyword */
-	case 49: /* __asm */
+	case 48: /* __asm */
 		/* MSVC __asm is different from GCC __asm (index 0) */
 		/* For now, treat as regular C_ASM but mark for MSVC-style parsing */
 		yylval.intval = GCC_ATYP_ASM_MSVC;
 		return C_ASM;  /* Return C_ASM to trigger inline assembly parsing */
+#endif
+#if defined(mach_i86) || defined(mach_i386) || defined(mach_amd64)
+	/* Segment register keywords (FS/GS available on all x86 architectures) */
+	case 49: /* __fs */
+	case 50: /* __gs */
+		switch (i) {
+		case 49: yylval.intval = GCC_ATYP_FS; break;
+		case 50: yylval.intval = GCC_ATYP_GS; break;
+		}
+		inattr = 1;
+		parlvl = parbal;
+		return C_ATTRIBUTE;
+#endif
+#ifdef mach_amd64
+	/* x86-64 specific extensions */
+	case 51: /* __near32 */
+		yylval.intval = GCC_ATYP_NEAR32;
+		inattr = 1;
+		parlvl = parbal;
+		return C_ATTRIBUTE;
 #endif
 	}
 	cerror("gcc_keyword");
@@ -535,7 +562,6 @@ struct atax {
 	CS(GCC_ATYP_NEAR)	{ A_0ARG, "near" },
 	CS(GCC_ATYP_HUGE)	{ A_0ARG, "huge" },
 	CS(GCC_ATYP_BASED)	{ A_0ARG|A_1ARG|A1_NAME, "based" },
-	CS(GCC_ATYP_FAR16)	{ A_0ARG, "far16" },
 	CS(GCC_ATYP_SEGMENT)	{ A_0ARG, "segment" },
 	CS(GCC_ATYP_SELF)	{ A_0ARG, "self" },
 
@@ -551,21 +577,32 @@ struct atax {
 	CS(GCC_ATYP_SAVEREGS)	{ A_0ARG, "saveregs" },
 	CS(GCC_ATYP_EXPORT)	{ A_0ARG, "export" },
 
-	/* Segment registers */
+	/* Segment registers (i86 only: SS, CS, DS, ES) */
 	CS(GCC_ATYP_SS)		{ A_0ARG, "ss" },
 	CS(GCC_ATYP_CS)		{ A_0ARG, "cs" },
 	CS(GCC_ATYP_DS)		{ A_0ARG, "ds" },
 	CS(GCC_ATYP_ES)		{ A_0ARG, "es" },
-	CS(GCC_ATYP_FS)		{ A_0ARG, "fs" },
-	CS(GCC_ATYP_GS)		{ A_0ARG, "gs" },
 
 	/* Borland/MSVC extensions */
 	CS(GCC_ATYP_EMIT)	{ A_1ARG|A_MANY, "emit" },  /* 1 or more byte arguments */
 #endif
 
 #if defined(mach_i86) || defined(mach_i386)
+	/* i386-compatible extensions (also available on i86 for forward compat) */
+	CS(GCC_ATYP_FAR16)	{ A_0ARG, "far16" },
 	/* MSVC inline assembly */
 	CS(GCC_ATYP_ASM_MSVC)	{ A_0ARG, "asm_msvc" },
+#endif
+
+#if defined(mach_i86) || defined(mach_i386) || defined(mach_amd64)
+	/* Segment registers available on all x86 architectures */
+	CS(GCC_ATYP_FS)		{ A_0ARG, "fs" },
+	CS(GCC_ATYP_GS)		{ A_0ARG, "gs" },
+#endif
+
+#ifdef mach_amd64
+	/* x86-64 specific extensions */
+	CS(GCC_ATYP_NEAR32)	{ A_0ARG, "near32" },
 #endif
 };
 
