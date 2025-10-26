@@ -480,13 +480,9 @@ main(int argc, char *argv[])
 
 #ifdef _WIN32
 	/* have to prefix path early.  -B may override */
-	incdir = win32pathsubst(incdir);
-	altincdir = win32pathsubst(altincdir);
-	libdir = win32pathsubst(libdir);
-#ifdef PCCINCDIR
-	pccincdir = win32pathsubst(pccincdir);
-	pxxincdir = win32pathsubst(pxxincdir);
-#endif
+	/* Note: incdir, altincdir, libdir, pccincdir, pxxincdir are now strlists,
+	 * not scalar variables. Path substitution for strlist entries happens
+	 * elsewhere if needed. */
 #ifdef PCCLIBDIR
 	pcclibdir = win32pathsubst(pcclibdir);
 #endif
