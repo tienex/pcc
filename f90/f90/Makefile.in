@@ -36,7 +36,7 @@ DEST=@BINPREFIX@f90
 
 MIPDIR=$(top_srcdir)/mip
 MDIR=$(top_srcdir)/arch/$(TARGMACH)
-FCOMDIR=$(top_srcdir)/f77/fcom
+FCOMDIR=$(top_srcdir)/f90/fcom
 
 all: $(DEST)
 
