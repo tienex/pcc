@@ -1,0 +1,47 @@
+# Makefile for libbliss (BLISS Runtime Library)
+
+CC = @CC@
+AR = ar
+RANLIB = @RANLIB@
+CFLAGS = @CFLAGS@ -I. -Wall -Wextra -std=c99
+DESTDIR = @DESTDIR@
+prefix = @prefix@
+exec_prefix = @exec_prefix@
+libdir = @libdir@
+includedir = @includedir@
+
+LIB = libbliss.a
+HEADERS = blissrt.h
+OBJS = io.o string.o memory.o runtime.o
+
+all: $(LIB)
+
+$(LIB): $(OBJS)
+	$(AR) rcs $(LIB) $(OBJS)
+	$(RANLIB) $(LIB)
+
+io.o: io.c blissrt.h
+	$(CC) $(CFLAGS) -c io.c -o io.o
+
+string.o: string.c blissrt.h
+	$(CC) $(CFLAGS) -c string.c -o string.o
+
+memory.o: memory.c blissrt.h
+	$(CC) $(CFLAGS) -c memory.c -o memory.o
+
+runtime.o: runtime.c blissrt.h
+	$(CC) $(CFLAGS) -c runtime.c -o runtime.o
+
+install: $(LIB)
+	mkdir -p $(DESTDIR)$(libdir)
+	mkdir -p $(DESTDIR)$(includedir)
+	install -m 644 $(LIB) $(DESTDIR)$(libdir)/
+	install -m 644 $(HEADERS) $(DESTDIR)$(includedir)/
+
+clean:
+	rm -f $(OBJS) $(LIB)
+
+distclean: clean
+	rm -f Makefile
+
+.PHONY: all install clean distclean
