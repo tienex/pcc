@@ -836,6 +836,15 @@ bad:
 int pragma_allpacked;
 int pragma_packed, pragma_aligned;
 
+/* Watcom pragma aux support */
+struct pragma_aux_info {
+	char *symbol;      /* Symbol name this pragma applies to */
+	char *parm_regs;   /* Parameter register list */
+	char *value_reg;   /* Return value register */
+	char *modify_regs; /* Modified register list */
+	int is_caller;     /* Caller cleans stack */
+} pragma_aux_pending;
+
 static int
 pragmas_weak(char *str)
 {
@@ -970,6 +979,102 @@ pragmas_stdc(char *t)
 	return 0; /* Just ignore */
 }
 
+/*
+ * Watcom pragma aux - defines calling conventions and register usage
+ * Syntax: #pragma aux symbol [parm [reg...]] [value [reg]] [modify [reg...]] [caller]
+ */
+static int
+pragmas_aux(char *t)
+{
+	char *tok;
+
+	/* Clear previous pragma aux info */
+	pragma_aux_pending.symbol = NULL;
+	pragma_aux_pending.parm_regs = NULL;
+	pragma_aux_pending.value_reg = NULL;
+	pragma_aux_pending.modify_regs = NULL;
+	pragma_aux_pending.is_caller = 0;
+
+	/* Get symbol name */
+	tok = pragtok(NULL);
+	if (tok == NULL)
+		return 1; /* Error: no symbol name */
+	pragma_aux_pending.symbol = tmpstrdup(tok);
+
+	/* Parse optional keywords */
+	while ((tok = pragtok(NULL)) != NULL) {
+		if (strcmp(tok, "parm") == 0) {
+			/* Parse parameter registers: parm [reg1] [reg2] ... */
+			char regbuf[256] = "";
+			tok = pragtok(NULL);
+			if (tok && *tok == '[') {
+				/* Collect register list until we find something that's not a register spec */
+				while ((tok = pragtok(NULL)) != NULL) {
+					if (*tok == ']') {
+						continue; /* Skip closing bracket */
+					}
+					if (*tok == '[') {
+						continue; /* Skip opening bracket */
+					}
+					/* Check if this is a keyword for next section */
+					if (strcmp(tok, "value") == 0 || strcmp(tok, "modify") == 0 ||
+					    strcmp(tok, "caller") == 0) {
+						/* Put it back by backing up ps */
+						ps -= strlen(tok);
+						break;
+					}
+					/* Accumulate register name */
+					if (regbuf[0])
+						strcat(regbuf, " ");
+					strcat(regbuf, tok);
+				}
+				if (regbuf[0])
+					pragma_aux_pending.parm_regs = tmpstrdup(regbuf);
+			}
+		} else if (strcmp(tok, "value") == 0) {
+			/* Parse return value register: value [reg] */
+			tok = pragtok(NULL);
+			if (tok && *tok == '[') {
+				tok = pragtok(NULL);
+				if (tok && *tok != ']') {
+					pragma_aux_pending.value_reg = tmpstrdup(tok);
+				}
+				/* Skip closing bracket if present */
+				tok = pragtok(NULL);
+			}
+		} else if (strcmp(tok, "modify") == 0) {
+			/* Parse modified registers: modify [reg1 reg2 ...] */
+			char regbuf[256] = "";
+			tok = pragtok(NULL);
+			if (tok && *tok == '[') {
+				while ((tok = pragtok(NULL)) != NULL) {
+					if (*tok == ']')
+						break;
+					if (*tok == '[')
+						continue;
+					if (regbuf[0])
+						strcat(regbuf, " ");
+					strcat(regbuf, tok);
+				}
+				if (regbuf[0])
+					pragma_aux_pending.modify_regs = tmpstrdup(regbuf);
+			}
+		} else if (strcmp(tok, "caller") == 0) {
+			pragma_aux_pending.is_caller = 1;
+		} else if (strcmp(tok, "loadds") == 0) {
+			/* loadds keyword - just accept it */
+		} else if (strcmp(tok, "export") == 0) {
+			/* export keyword - just accept it */
+		} else if (*tok == '=') {
+			/* Inline assembly - skip the rest */
+			break;
+		}
+		/* Ignore other unknown keywords */
+	}
+
+	return 0; /* Success */
+}
+
 struct pragmas {
 	char *name;
 	int (*fun)(char *);
@@ -978,6 +1083,7 @@ struct pragmas {
 	{ "packed", pragmas_alpack },
 	{ "aligned", pragmas_alpack },
 	{ "rename", pragmas_unsupp },
+	{ "aux", pragmas_aux },
 #ifdef GCC_COMPAT
 	{ "GCC", pragmas_gcc },
 #endif

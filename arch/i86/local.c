@@ -590,6 +590,22 @@ fixdef(struct symtab *sp)
 		sp->sflags |= SSTDCALL;
 		stdcall = 0;
 	}
+
+	/* Handle Watcom pragma aux */
+	if (pragma_aux_pending.symbol != NULL &&
+	    strcmp(pragma_aux_pending.symbol, sp->sname) == 0 &&
+	    (sp->sclass != PARAM)) {
+		/* For i86, we primarily care about caller vs callee cleanup */
+		/* Watcom default is callee cleanup unless 'caller' is specified */
+		if (pragma_aux_pending.is_caller) {
+			/* Caller cleanup - this is like cdecl, so don't set SSTDCALL */
+		} else {
+			/* Callee cleanup - this is like stdcall */
+			sp->sflags |= SSTDCALL;
+		}
+		/* Clear the pending pragma aux */
+		pragma_aux_pending.symbol = NULL;
+	}
 }
 
 /*
