@@ -319,7 +319,7 @@ init_platform_specific(const char *os_name, const char *arch_name)
 	linker = LINKER;
 
 	/* Add portable C11/C23 libraries if needed */
-#if defined(NEED_LIBUNICODE) || defined(NEED_LIBTHREAD) || defined(NEED_LIBSTDBIT) || defined(NEED_LIBCKDINT)
+#if defined(NEED_LIBUNICODE) || defined(NEED_LIBTHREAD) || defined(NEED_LIBSTDBIT) || defined(NEED_LIBCKDINT) || defined(NEED_LIBDECIMAL)
 	/* Add library directory for portable C11/C23 libraries */
 #ifdef LIBDIR
 	/* Use configured alternate library directory */
@@ -340,5 +340,10 @@ init_platform_specific(const char *os_name, const char *arch_name)
 #endif
 #ifdef NEED_LIBCKDINT
 	strlist_append(&stdlib_flags, "-lckdint");
+#endif
+#ifdef NEED_LIBDECIMAL
+	strlist_append(&stdlib_flags, "-ldecimal");
+	/* libdecimal uses math functions like sqrt, pow */
+	strlist_append(&stdlib_flags, "-lm");
 #endif
 }

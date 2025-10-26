@@ -766,6 +766,21 @@ AC_CHECK_HEADERS([stdbit.h], [have_stdbit=yes], [have_stdbit=no])
 # Check for C23 checked integer arithmetic (stdckdint.h)
 AC_CHECK_HEADERS([stdckdint.h], [have_stdckdint=yes], [have_stdckdint=no])
 
+# Check for IEEE 754-2008 decimal floating point support
+AC_MSG_CHECKING([for _Decimal64 support])
+AC_COMPILE_IFELSE([
+    AC_LANG_PROGRAM([[
+        #ifndef __STDC_DEC_FP__
+        /* Try to use _Decimal64 anyway */
+        _Decimal64 x;
+        #endif
+    ]], [[
+        _Decimal64 x = 1.0DD;
+        x = x + 1.0DD;
+    ]])
+  ], [have_decimal=yes], [have_decimal=no])
+AC_MSG_RESULT([$have_decimal])
+
 # Check for POSIX threads if C11 threads not available
 PTHREAD_LIBS=""
 if test "$have_threads" = "no"; then
@@ -783,6 +798,7 @@ BUILD_LIBUNICODE=no
 BUILD_LIBTHREAD=no
 BUILD_LIBSTDBIT=no
 BUILD_LIBCKDINT=no
+BUILD_LIBDECIMAL=no
 PORTABLE_LIBS=""
 
 if test "$have_uchar" = "no"; then
@@ -813,10 +829,18 @@ if test "$have_stdckdint" = "no"; then
     AC_MSG_NOTICE([Will build portable libckdint (C23 checked arithmetic)])
 fi
 
+if test "$have_decimal" = "no"; then
+    BUILD_LIBDECIMAL=yes
+    PORTABLE_LIBS="$PORTABLE_LIBS libdecimal"
+    AC_DEFINE(NEED_LIBDECIMAL, 1, [Define if portable libdecimal should be linked])
+    AC_MSG_NOTICE([Will build portable libdecimal (IEEE 754-2008 decimal FP)])
+fi
+
 AC_SUBST(BUILD_LIBUNICODE)
 AC_SUBST(BUILD_LIBTHREAD)
 AC_SUBST(BUILD_LIBSTDBIT)
 AC_SUBST(BUILD_LIBCKDINT)
+AC_SUBST(BUILD_LIBDECIMAL)
 AC_SUBST(PORTABLE_LIBS)
 
 # Checks for library functions.
@@ -1084,6 +1108,7 @@ echo "Build portable Unicode library ... ${BUILD_LIBUNICODE}"
 echo "Build portable Threading library . ${BUILD_LIBTHREAD}"
 echo "Build portable Bit utils library . ${BUILD_LIBSTDBIT}"
 echo "Build portable Checked int library ${BUILD_LIBCKDINT}"
+echo "Build portable Decimal FP library  ${BUILD_LIBDECIMAL}"
 echo
 echo "Configure finished.  Do 'make && make install' to compile and install.
 "

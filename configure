@@ -663,6 +663,7 @@ targosver
 targos
 ALLOCA
 PORTABLE_LIBS
+BUILD_LIBDECIMAL
 BUILD_LIBCKDINT
 BUILD_LIBSTDBIT
 BUILD_LIBTHREAD
@@ -5854,6 +5855,40 @@ fi
 
 done
 
+# Check for IEEE 754-2008 decimal floating point support
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for _Decimal64 support" >&5
+printf %s "checking for _Decimal64 support... " >&6; }
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+
+        #ifndef __STDC_DEC_FP__
+        /* Try to use _Decimal64 anyway */
+        _Decimal64 x;
+        #endif
+
+int
+main (void)
+{
+
+        _Decimal64 x = 1.0DD;
+        x = x + 1.0DD;
+
+  ;
+  return 0;
+}
+
+_ACEOF
+if ac_fn_c_try_compile "$LINENO"
+then :
+  have_decimal=yes
+else $as_nop
+  have_decimal=no
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.beam conftest.$ac_ext
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $have_decimal" >&5
+printf "%s\n" "$have_decimal" >&6; }
+
 # Check for POSIX threads if C11 threads not available
 PTHREAD_LIBS=""
 if test "$have_threads" = "no"; then
@@ -5931,6 +5966,7 @@ BUILD_LIBUNICODE=no
 BUILD_LIBTHREAD=no
 BUILD_LIBSTDBIT=no
 BUILD_LIBCKDINT=no
+BUILD_LIBDECIMAL=no
 PORTABLE_LIBS=""
 
 if test "$have_uchar" = "no"; then
@@ -5972,6 +6008,17 @@ printf "%s\n" "#define NEED_LIBCKDINT 1" >>confdefs.h
     { printf "%s\n" "$as_me:${as_lineno-$LINENO}: Will build portable libckdint (C23 checked arithmetic)" >&5
 printf "%s\n" "$as_me: Will build portable libckdint (C23 checked arithmetic)" >&6;}
 fi
+
+if test "$have_decimal" = "no"; then
+    BUILD_LIBDECIMAL=yes
+    PORTABLE_LIBS="$PORTABLE_LIBS libdecimal"
+
+printf "%s\n" "#define NEED_LIBDECIMAL 1" >>confdefs.h
+
+    { printf "%s\n" "$as_me:${as_lineno-$LINENO}: Will build portable libdecimal (IEEE 754-2008 decimal FP)" >&5
+printf "%s\n" "$as_me: Will build portable libdecimal (IEEE 754-2008 decimal FP)" >&6;}
+fi
+
 
 
 
@@ -7740,6 +7787,7 @@ echo "Build portable Unicode library ... ${BUILD_LIBUNICODE}"
 echo "Build portable Threading library . ${BUILD_LIBTHREAD}"
 echo "Build portable Bit utils library . ${BUILD_LIBSTDBIT}"
 echo "Build portable Checked int library ${BUILD_LIBCKDINT}"
+echo "Build portable Decimal FP library  ${BUILD_LIBDECIMAL}"
 echo
 echo "Configure finished.  Do 'make && make install' to compile and install.
 "
