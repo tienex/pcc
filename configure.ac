@@ -1074,6 +1074,9 @@ AC_CONFIG_FILES([Makefile
 		pascal/Makefile
 		pascal/pascal/Makefile
 		pascal/pcom/Makefile
+		basic/Makefile
+		basic/basic/Makefile
+		basic/pbc/Makefile
 		common/abi/Makefile
 		include/Makefile
 		libunicode/Makefile
