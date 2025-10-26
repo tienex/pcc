@@ -1,0 +1,38 @@
+# Makefile for libblocks (Apple Blocks Runtime)
+
+CC = @CC@
+AR = ar
+RANLIB = @RANLIB@
+CFLAGS = @CFLAGS@ -I. -Wall -Wextra -std=c99
+DESTDIR = @DESTDIR@
+prefix = @prefix@
+exec_prefix = @exec_prefix@
+libdir = @libdir@
+includedir = @includedir@
+
+LIB = libblocks.a
+HEADERS = Block.h Block_macros.h
+OBJS = Block.o
+
+all: $(LIB)
+
+$(LIB): $(OBJS)
+	$(AR) rcs $(LIB) $(OBJS)
+	$(RANLIB) $(LIB)
+
+Block.o: Block.c Block.h
+	$(CC) $(CFLAGS) -c Block.c -o Block.o
+
+install: $(LIB)
+	mkdir -p $(DESTDIR)$(libdir)
+	mkdir -p $(DESTDIR)$(includedir)
+	install -m 644 $(LIB) $(DESTDIR)$(libdir)/
+	install -m 644 $(HEADERS) $(DESTDIR)$(includedir)/
+
+clean:
+	rm -f $(OBJS) $(LIB)
+
+distclean: clean
+	rm -f Makefile
+
+.PHONY: all install clean distclean
