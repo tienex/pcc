@@ -693,6 +693,7 @@ CC
 BINPREFIX
 enable_targets
 enable_archs
+enable_pxc
 enable_bliss
 enable_basic
 enable_f77
@@ -3584,6 +3585,7 @@ enable_pascal=no
 enable_f77=no
 enable_basic=no
 enable_bliss=no
+enable_pxc=no
 
 # Normalize language list (replace spaces with commas)
 enable_languages=`echo "$enable_languages" | tr ' ' ',' | tr -d ' '`
@@ -3611,6 +3613,9 @@ for lang in $enable_languages; do
 	bliss|BLISS)
 		enable_bliss=yes
 		;;
+	pxc|PXC|xbase++|xbasepp|XBASEPP)
+		enable_pxc=yes
+		;;
 	all|ALL)
 		enable_c=yes
 		enable_cxx=yes
@@ -3618,12 +3623,13 @@ for lang in $enable_languages; do
 		enable_f77=yes
 		enable_basic=yes
 		enable_bliss=yes
+		enable_pxc=yes
 		;;
 	"")
 		# Skip empty entries
 		;;
 	*)
-		as_fn_error $? "Unknown language '$lang'. Supported: c, c++, pascal, f77, basic, bliss, all" "$LINENO" 5
+		as_fn_error $? "Unknown language '$lang'. Supported: c, c++, pascal, f77, basic, bliss, pxc, all" "$LINENO" 5
 		;;
 	esac
 done
@@ -3635,6 +3641,7 @@ if test "$enable_c" = "no"; then
 printf "%s\n" "$as_me: WARNING: C language is required and will be enabled" >&2;}
 	enable_c=yes
 fi
+
 
 
 
@@ -6722,6 +6729,14 @@ if test "$enable_bliss" = "yes"; then
 		libbliss/Makefile"
 fi
 
+# Add PXC (Xbase++) if enabled
+if test "$enable_pxc" = "yes"; then
+	CONFIG_MAKEFILES="$CONFIG_MAKEFILES
+		pxc/Makefile
+		pxc/pxc/Makefile
+		pxc/pxccom/Makefile"
+fi
+
 ac_config_files="$ac_config_files $CONFIG_MAKEFILES"
 
 cat >confcache <<\_ACEOF
@@ -8012,6 +8027,7 @@ test "$enable_pascal" = "yes" && ENABLED_LANGUAGES="$ENABLED_LANGUAGES pascal"
 test "$enable_f77" = "yes" && ENABLED_LANGUAGES="$ENABLED_LANGUAGES f77"
 test "$enable_basic" = "yes" && ENABLED_LANGUAGES="$ENABLED_LANGUAGES basic"
 test "$enable_bliss" = "yes" && ENABLED_LANGUAGES="$ENABLED_LANGUAGES bliss"
+test "$enable_pxc" = "yes" && ENABLED_LANGUAGES="$ENABLED_LANGUAGES pxc"
 ENABLED_LANGUAGES=`echo $ENABLED_LANGUAGES | sed 's/^ *//'`
 
 echo

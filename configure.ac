@@ -595,6 +595,7 @@ enable_pascal=no
 enable_f77=no
 enable_basic=no
 enable_bliss=no
+enable_pxc=no
 
 # Normalize language list (replace spaces with commas)
 enable_languages=`echo "$enable_languages" | tr ' ' ',' | tr -d ' '`
@@ -622,6 +623,9 @@ for lang in $enable_languages; do
 	bliss|BLISS)
 		enable_bliss=yes
 		;;
+	pxc|PXC|xbase++|xbasepp|XBASEPP)
+		enable_pxc=yes
+		;;
 	all|ALL)
 		enable_c=yes
 		enable_cxx=yes
@@ -629,12 +633,13 @@ for lang in $enable_languages; do
 		enable_f77=yes
 		enable_basic=yes
 		enable_bliss=yes
+		enable_pxc=yes
 		;;
 	"")
 		# Skip empty entries
 		;;
 	*)
-		AC_MSG_ERROR([Unknown language '$lang'. Supported: c, c++, pascal, f77, basic, bliss, all])
+		AC_MSG_ERROR([Unknown language '$lang'. Supported: c, c++, pascal, f77, basic, bliss, pxc, all])
 		;;
 	esac
 done
@@ -652,6 +657,7 @@ AC_SUBST(enable_pascal)
 AC_SUBST(enable_f77)
 AC_SUBST(enable_basic)
 AC_SUBST(enable_bliss)
+AC_SUBST(enable_pxc)
 
 # Process architecture selection
 if test "$enable_archs" = "auto" -o "$enable_archs" = ""; then
@@ -1275,6 +1281,14 @@ if test "$enable_bliss" = "yes"; then
 		libbliss/Makefile"
 fi
 
+# Add PXC (Xbase++) if enabled
+if test "$enable_pxc" = "yes"; then
+	CONFIG_MAKEFILES="$CONFIG_MAKEFILES
+		pxc/Makefile
+		pxc/pxc/Makefile
+		pxc/pxccom/Makefile"
+fi
+
 AC_CONFIG_FILES([$CONFIG_MAKEFILES])
 AC_OUTPUT
 
@@ -1290,6 +1304,7 @@ test "$enable_pascal" = "yes" && ENABLED_LANGUAGES="$ENABLED_LANGUAGES pascal"
 test "$enable_f77" = "yes" && ENABLED_LANGUAGES="$ENABLED_LANGUAGES f77"
 test "$enable_basic" = "yes" && ENABLED_LANGUAGES="$ENABLED_LANGUAGES basic"
 test "$enable_bliss" = "yes" && ENABLED_LANGUAGES="$ENABLED_LANGUAGES bliss"
+test "$enable_pxc" = "yes" && ENABLED_LANGUAGES="$ENABLED_LANGUAGES pxc"
 ENABLED_LANGUAGES=`echo $ENABLED_LANGUAGES | sed 's/^ *//'`
 
 echo

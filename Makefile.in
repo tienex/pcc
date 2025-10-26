@@ -17,6 +17,7 @@ ENABLE_CXX = @enable_cxx@
 ENABLE_PASCAL = @enable_pascal@
 ENABLE_F77 = @enable_f77@
 ENABLE_BLISS = @enable_bliss@
+ENABLE_PXC = @enable_pxc@
 
 # Architecture and OS target selection
 ENABLE_ARCHS = @enable_archs@
@@ -46,6 +47,7 @@ PASCAL_SUBDIR=	pascal
 F77_SUBDIR=	f77
 BASIC_SUBDIR=	basic
 BLISS_SUBDIR=	bliss
+PXC_SUBDIR=	pxc
 
 # Build subdirectory list based on enabled languages
 # Note: C is always built first for bootstrap
@@ -62,9 +64,12 @@ endif
 ifeq ($(ENABLE_BLISS),yes)
 LANG_SUBDIRS+=	$(BLISS_SUBDIR)
 endif
+ifeq ($(ENABLE_PXC),yes)
+LANG_SUBDIRS+=	$(PXC_SUBDIR)
+endif
 
 ALL_SUBDIRS=	$(PORTABLE_LIBS) $(BASE_SUBDIRS) $(LANG_SUBDIRS)
-DIST_SUBDIRS=	$(BASE_SUBDIRS) $(C_SUBDIR) pascal f77 basic bliss libunicode libthread libstdbit libckdint libdecimal libmetaware libblocks libpascal libwirth libbliss libmangle libgc libexcept libustring libgthread libnet libpccir libunwind libxmath libvtable libcrt libbgi libvm libfs
+DIST_SUBDIRS=	$(BASE_SUBDIRS) $(C_SUBDIR) pascal f77 basic bliss pxc libunicode libthread libstdbit libckdint libdecimal libmetaware libblocks libpascal libwirth libbliss libmangle libgc libexcept libustring libgthread libnet libpccir libunwind libxmath libvtable libcrt libbgi libvm libfs
 
 # Default targets - conditional on bootstrap
 all:
