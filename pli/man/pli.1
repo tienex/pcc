@@ -1,0 +1,175 @@
+.TH PLI 1 "2025" "PCC" "PL/I Compiler"
+.SH NAME
+pli \- PL/I compiler driver for PCC
+.SH SYNOPSIS
+.B pli
+[\fIOPTIONS\fR] \fIfile\fR ...
+.SH DESCRIPTION
+.B pli
+is the driver program for the PCC PL/I compiler. It compiles PL/I and PL/M source files through the compilation pipeline: preprocessing, compilation, assembly, and linking.
+
+The
+.B pli
+command accepts several types of input files and processes them appropriately:
+.IP "\fI.pli\fR, \fI.pl1\fR, \fI.plm\fR" 4
+PL/I or PL/M source files
+.IP "\fI.s\fR" 4
+Assembly source files
+.IP "\fI.o\fR" 4
+Object files
+.PP
+By default,
+.B pli
+compiles source files, assembles them, and links them with the PL/I runtime library to produce an executable named
+.IR a.out .
+
+.SH OPTIONS
+.TP
+.B \-c
+Compile and assemble source files, but do not link. The output is an object file (.o) for each source file.
+.TP
+.B \-S
+Compile only; do not assemble or link. The output is an assembly file (.s) for each source file.
+.TP
+.BI \-o " file"
+Place the output in
+.IR file .
+This applies to the final executable, object file (with \-c), or assembly file (with \-S).
+.TP
+.BI \-d " dialect"
+Set the PL/I dialect. Supported dialects:
+.RS
+.IP \fBpli\fR 12
+Standard PL/I (default)
+.IP \fBplm\fR
+Intel PL/M
+.IP \fBplm86\fR
+PL/M-86
+.IP \fBplm386\fR
+PL/M-386
+.IP \fBplc\fR
+PL/C (teaching dialect)
+.IP \fBsubset\fR
+PL/I Subset G
+.RE
+.TP
+.B \-v
+Verbose mode. Print the commands executed during compilation.
+.TP
+.BI \-l library
+Link with the specified library. For example, \-lm links with the math library.
+.TP
+.BI \-L directory
+Add
+.I directory
+to the library search path.
+.TP
+.BI \-O level
+Set optimization level (0-3). Higher levels enable more optimizations.
+.TP
+.B \-h
+Display help message and exit.
+
+.SH EXAMPLES
+.PP
+Compile a simple PL/I program:
+.RS
+.nf
+pli hello.pli
+./a.out
+.fi
+.RE
+
+.PP
+Compile with a specific output name:
+.RS
+.nf
+pli \-o myprog myprog.pli
+./myprog
+.fi
+.RE
+
+.PP
+Compile multiple files:
+.RS
+.nf
+pli \-o program main.pli util.pli
+.fi
+.RE
+
+.PP
+Compile to object file only:
+.RS
+.nf
+pli \-c module.pli
+.fi
+.RE
+
+.PP
+Generate assembly code:
+.RS
+.nf
+pli \-S program.pli
+cat program.s
+.fi
+.RE
+
+.PP
+Compile PL/M-86 code:
+.RS
+.nf
+pli \-d plm86 \-o firmware firmware.plm
+.fi
+.RE
+
+.PP
+Compile with optimization:
+.RS
+.nf
+pli \-O2 \-o fastprog program.pli
+.fi
+.RE
+
+.SH FILES
+.TP
+.I /usr/local/libexec/plicom
+PL/I compiler proper
+.TP
+.I /usr/local/lib/libpli.a
+PL/I runtime library
+.TP
+.I /usr/local/include/pli_runtime.h
+PL/I runtime library header
+
+.SH ENVIRONMENT
+.TP
+.B TMPDIR
+Directory for temporary files (default: /tmp)
+
+.SH SEE ALSO
+.BR plicom (1),
+.BR cc (1),
+.BR ld (1),
+.BR as (1)
+
+PL/I Language Reference Manual
+.br
+Intel PL/M-86 User's Guide
+.br
+PCC Documentation
+
+.SH DIAGNOSTICS
+The
+.B pli
+command returns 0 on successful compilation, 1 on compilation errors, and 2 on system errors.
+
+Error messages from the compiler proper (plicom) include source file location and diagnostic context.
+
+.SH BUGS
+Report bugs to: https://github.com/pcc/pcc/issues
+
+.SH AUTHOR
+Written as part of the Portable C Compiler (PCC) project.
+
+.SH COPYRIGHT
+Copyright \(co 2025 PCC Project. This is free software; see the source for copying conditions.
