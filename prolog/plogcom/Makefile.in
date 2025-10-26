@@ -31,6 +31,7 @@ INSTALL_PROGRAM = @INSTALL_PROGRAM@
 INSTALL_DATA = @INSTALL_DATA@
 
 OBJS=	main.o error.o symtab.o terms.o builtins.o util.o codegen.o \
+	standards.o iso_builtins.o constraints.o tabling.o swi_extensions.o \
 	scan.o plgram.o
 
 DEST=plogcom$(EXEEXT)
@@ -73,6 +74,21 @@ util.o: $(srcdir)/util.c pass1.h
 
 codegen.o: $(srcdir)/codegen.c pass1.h
 	$(CC) $(DEFS) $(CPPFLAGS) $(CFLAGS) -c $(srcdir)/codegen.c
+
+standards.o: $(srcdir)/standards.c pass1.h standards.h
+	$(CC) $(DEFS) $(CPPFLAGS) $(CFLAGS) -c $(srcdir)/standards.c
+
+iso_builtins.o: $(srcdir)/iso_builtins.c pass1.h standards.h
+	$(CC) $(DEFS) $(CPPFLAGS) $(CFLAGS) -c $(srcdir)/iso_builtins.c
+
+constraints.o: $(srcdir)/constraints.c pass1.h standards.h
+	$(CC) $(DEFS) $(CPPFLAGS) $(CFLAGS) -c $(srcdir)/constraints.c
+
+tabling.o: $(srcdir)/tabling.c pass1.h standards.h
+	$(CC) $(DEFS) $(CPPFLAGS) $(CFLAGS) -c $(srcdir)/tabling.c
+
+swi_extensions.o: $(srcdir)/swi_extensions.c pass1.h standards.h
+	$(CC) $(DEFS) $(CPPFLAGS) $(CFLAGS) -c $(srcdir)/swi_extensions.c
 
 install: all
 	test -z "$(DESTDIR)$(libexecdir)" || mkdir -p "$(DESTDIR)$(libexecdir)"

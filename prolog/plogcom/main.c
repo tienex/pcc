@@ -40,8 +40,19 @@ static void usage(void) {
 	fprintf(stderr, "Usage: %s [options] <input-file>\n", PROGNAME);
 	fprintf(stderr, "\nOptions:\n");
 	fprintf(stderr, "  -o <file>       Specify output file\n");
-	fprintf(stderr, "  -t              Turbo Prolog compatibility mode\n");
-	fprintf(stderr, "  -g              GNU Prolog compatibility mode\n");
+	fprintf(stderr, "  -std <standard> Prolog standard:\n");
+	fprintf(stderr, "                    edinburgh   - Edinburgh Prolog (1977)\n");
+	fprintf(stderr, "                    dec10       - DEC-10 Prolog\n");
+	fprintf(stderr, "                    iso         - ISO Prolog (1995)\n");
+	fprintf(stderr, "                    iso-cor1    - ISO + Corr 1 (2007)\n");
+	fprintf(stderr, "                    iso-cor2    - ISO + Corr 2 (2012)\n");
+	fprintf(stderr, "                    swi         - SWI-Prolog (modern)\n");
+	fprintf(stderr, "                    sicstus     - SICStus Prolog\n");
+	fprintf(stderr, "                    yap         - YAP Prolog\n");
+	fprintf(stderr, "                    gnu         - GNU Prolog (default)\n");
+	fprintf(stderr, "                    turbo       - Turbo Prolog\n");
+	fprintf(stderr, "  -t              Turbo Prolog mode (shorthand)\n");
+	fprintf(stderr, "  -g              GNU Prolog mode (shorthand)\n");
 	fprintf(stderr, "  -O<level>       Optimization level (0-3)\n");
 	fprintf(stderr, "  -W<level>       Warning level (0-3)\n");
 	fprintf(stderr, "  -d              Debug mode\n");
@@ -83,6 +94,7 @@ static void parse_args(int argc, char **argv) {
 	static struct option long_options[] = {
 		{"version", no_argument, 0, 'V'},
 		{"help", no_argument, 0, 'h'},
+		{"std", required_argument, 0, 's'},
 		{"turbo", no_argument, 0, 't'},
 		{"gnu", no_argument, 0, 'g'},
 		{"debug", no_argument, 0, 'd'},
@@ -93,20 +105,49 @@ static void parse_args(int argc, char **argv) {
 		{0, 0, 0, 0}
 	};
 
-	while ((c = getopt_long(argc, argv, "o:tgdO:W:f:vhV",
+	while ((c = getopt_long(argc, argv, "o:s:tgdO:W:f:vhV",
 	                        long_options, &option_index)) != -1) {
 		switch (c) {
 		case 'o':
 			output_filename = strdup(optarg);
 			options.output_file = output_filename;
 			break;
+		case 's':
+			/* Select Prolog standard */
+			if (strcmp(optarg, "edinburgh") == 0)
+				init_standard(PROLOG_EDINBURGH);
+			else if (strcmp(optarg, "dec10") == 0)
+				init_standard(PROLOG_DEC10);
+			else if (strcmp(optarg, "iso") == 0)
+				init_standard(PROLOG_ISO_1995);
+			else if (strcmp(optarg, "iso-cor1") == 0)
+				init_standard(PROLOG_ISO_COR1_2007);
+			else if (strcmp(optarg, "iso-cor2") == 0)
+				init_standard(PROLOG_ISO_COR2_2012);
+			else if (strcmp(optarg, "swi") == 0)
+				init_standard(PROLOG_SWI);
+			else if (strcmp(optarg, "sicstus") == 0)
+				init_standard(PROLOG_SICSTUS);
+			else if (strcmp(optarg, "yap") == 0)
+				init_standard(PROLOG_YAP);
+			else if (strcmp(optarg, "gnu") == 0)
+				init_standard(PROLOG_GNU);
+			else if (strcmp(optarg, "turbo") == 0)
+				init_standard(PROLOG_TURBO);
+			else {
+				fprintf(stderr, "Unknown standard: %s\n", optarg);
+				exit(1);
+			}
+			break;
 		case 't':
 			options.turbo_mode = 1;
 			options.gnu_mode = 0;
+			init_standard(PROLOG_TURBO);
 			break;
 		case 'g':
 			options.gnu_mode = 1;
 			options.turbo_mode = 0;
+			init_standard(PROLOG_GNU);
 			break;
 		case 'd':
 			options.debug = 1;
@@ -213,11 +254,33 @@ int main(int argc, char **argv) {
 	if (open_files() != 0)
 		return 1;
 
+	/* Initialize Prolog standard (if not set via command line) */
+	if (current_standard == PROLOG_ISO_1995 && options.gnu_mode)
+		init_standard(PROLOG_GNU);
+	else if (current_standard == PROLOG_ISO_1995 && options.turbo_mode)
+		init_standard(PROLOG_TURBO);
+
+	/* Print standard info in debug mode */
+	if (options.debug)
+		fprintf(stderr, "Using standard: %s\n", get_standard_name(current_standard));
+
 	/* Initialize symbol table */
 	init_symtab();
 
-	/* Initialize built-in predicates */
-	init_builtins();
+	/* Initialize built-in predicates based on standard */
+	init_builtins();           /* Basic built-ins */
+
+	if (standard_features.iso_builtins)
+		init_iso_builtins();   /* ISO Prolog built-ins */
+
+	if (standard_features.has_constraints)
+		init_constraint_builtins(); /* CLP */
+
+	if (standard_features.has_tabling)
+		init_tabling_builtins();    /* Tabling */
+
+	if (standard_features.swi_extensions)
+		init_swi_builtins();        /* SWI-Prolog */
 
 	/* Parse input */
 	if (options.debug)

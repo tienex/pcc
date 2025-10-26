@@ -10,6 +10,7 @@
 
 #include <stdio.h>
 #include <stdint.h>
+#include "standards.h"
 
 /* Prolog term types */
 typedef enum {
@@ -178,6 +179,25 @@ void generate_wam(FILE *fp);
 /* Built-in predicates */
 void init_builtins(void);
 int is_builtin(char *name, int arity);
+
+/* ISO Prolog built-ins */
+void init_iso_builtins(void);
+void print_iso_categories(FILE *fp);
+
+/* Constraint programming */
+void init_constraint_builtins(void);
+void init_clp_fd_builtins(void);
+void init_clp_r_builtins(void);
+void init_clp_q_builtins(void);
+void init_chr_builtins(void);
+
+/* Tabling */
+void init_tabling_builtins(void);
+int is_tabled_predicate(char *name, int arity);
+
+/* SWI-Prolog extensions */
+void init_swi_builtins(void);
+void print_swi_categories(FILE *fp);
 
 /* Unification (runtime support) */
 int unify(struct term *t1, struct term *t2);
