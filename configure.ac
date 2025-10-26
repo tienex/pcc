@@ -1236,6 +1236,7 @@ CONFIG_MAKEFILES="Makefile
 		libdecimal/Makefile
 		libmetaware/Makefile
 		libblocks/Makefile
+<<<<<<< HEAD
 		libpascal/Makefile
 		libwirth/Makefile
 		libmangle/Makefile
@@ -1318,6 +1319,75 @@ if test "$enable_ocaml" = "yes"; then
 		ocaml/ocaml/Makefile
 		ocaml/ocom/Makefile
 		libocaml/Makefile"
+fi
+
+# Add ALGOL 60+ if enabled
+if test "$enable_algol" = "yes"; then
+	CONFIG_MAKEFILES="$CONFIG_MAKEFILES
+		algol60/Makefile
+		algol60/algol/Makefile
+		algol60/acom/Makefile"
+fi
+
+AC_CONFIG_FILES([$CONFIG_MAKEFILES])
+=======
+		libalgol60/Makefile"
+
+# C language is always included (required for bootstrap)
+CONFIG_MAKEFILES="$CONFIG_MAKEFILES
+		cc/Makefile
+		cc/cc/Makefile
+		cc/cpp/Makefile
+		cc/ccom/Makefile
+		cc/driver/Makefile"
+
+# Add C++ if enabled
+if test "$enable_cxx" = "yes"; then
+	CONFIG_MAKEFILES="$CONFIG_MAKEFILES
+		cc/cxxcom/Makefile"
+fi
+
+# Add Fortran 90 if enabled
+if test "$enable_f77" = "yes"; then
+	CONFIG_MAKEFILES="$CONFIG_MAKEFILES
+		f90/Makefile
+		f90/f90/Makefile
+		f90/fcom/Makefile"
+fi
+
+# Add Pascal if enabled
+if test "$enable_pascal" = "yes"; then
+	CONFIG_MAKEFILES="$CONFIG_MAKEFILES
+		pascal/Makefile
+		pascal/pascal/Makefile
+		pascal/pcom/Makefile"
+fi
+
+# Add BASIC if enabled
+if test "$enable_basic" = "yes"; then
+	CONFIG_MAKEFILES="$CONFIG_MAKEFILES
+		basic/Makefile
+		basic/basic/Makefile
+		basic/pbc/Makefile
+		basic/libbasic/Makefile"
+fi
+
+# Add BLISS if enabled
+if test "$enable_bliss" = "yes"; then
+	CONFIG_MAKEFILES="$CONFIG_MAKEFILES
+		bliss/Makefile
+		bliss/bliss/Makefile
+		bliss/bcom/Makefile
+		libbliss/Makefile"
+fi
+
+# Add PXC (Xbase++) if enabled
+if test "$enable_pxc" = "yes"; then
+	CONFIG_MAKEFILES="$CONFIG_MAKEFILES
+		pxc/Makefile
+		pxc/pxc/Makefile
+		pxc/pxccom/Makefile
+		pxc/libxbrt/Makefile"
 fi
 
 # Add ALGOL 60+ if enabled

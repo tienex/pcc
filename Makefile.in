@@ -38,6 +38,7 @@ bindir = @bindir@
 libdir = @libdir@
 libexecdir = @libexecdir@
 
+<<<<<<< HEAD
 # Base directories (always built)
 BASE_SUBDIRS=	common/abi libx86asm include
 
