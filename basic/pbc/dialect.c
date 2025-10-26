@@ -623,6 +623,528 @@ dialect_features_t iso_features = {
 	.default_real_type = 1,
 };
 
+/* Macintosh QuickBASIC (Microsoft, 1988) */
+dialect_features_t quickbasic_features = {
+	.require_line_numbers = 0,
+	.allow_line_labels = 1,
+	.allow_multistatement = 1,
+
+	.allow_rem_statement = 1,
+	.allow_quote_comment = 1,
+	.allow_inline_comments = 1,
+
+	.allow_long_names = 1,
+	.allow_underscores = 1,
+	.require_type_suffix = 0,
+	.allow_explicit_types = 1,
+	.case_sensitive = 0,
+
+	.allow_string_functions = 1,
+	.allow_string_concat = 1,
+	.allow_fixed_strings = 1,
+	.max_string_length = 32767,
+
+	.allow_integer = 1,
+	.allow_long = 1,
+	.allow_single = 1,
+	.allow_double = 1,
+	.allow_string = 1,
+	.allow_currency = 0,
+	.allow_byte = 0,
+	.allow_boolean = 0,
+	.allow_variant = 0,
+	.allow_udt = 1,  /* TYPE...END TYPE */
+
+	.allow_dynamic_arrays = 1,
+	.allow_multidim_arrays = 1,
+	.default_array_base = 0,
+	.allow_option_base = 1,
+
+	.allow_structured_if = 1,
+	.allow_select_case = 1,
+	.allow_do_loop = 1,
+	.allow_while_wend = 1,
+	.allow_for_next = 1,
+	.allow_for_step = 1,
+	.allow_exit_statement = 1,
+
+	.allow_gosub = 1,
+	.allow_def_fn = 1,
+	.allow_sub_procedures = 1,
+	.allow_function_procedures = 1,
+	.allow_byref_byval = 0,
+	.allow_optional_params = 0,
+	.allow_param_arrays = 0,
+
+	.allow_static = 1,
+	.allow_shared = 1,
+	.allow_common = 1,
+	.allow_local = 1,
+
+	.allow_print_using = 1,
+	.allow_input_prompt = 1,
+	.allow_line_input = 1,
+	.allow_file_io = 1,
+	.allow_binary_files = 1,
+	.allow_random_files = 1,
+
+	.allow_graphics = 1,  /* Mac toolbox graphics */
+	.allow_screen_modes = 0,
+	.allow_sound = 1,
+
+	.allow_peek_poke = 1,
+	.allow_inline_asm = 0,
+	.allow_pointer_ops = 0,
+	.allow_oop = 0,
+
+	.allow_meta_commands = 1,  /* $INCLUDE, etc. */
+	.allow_option_explicit = 0,
+	.allow_option_compare = 0,
+
+	.allow_overloading = 0,
+	.allow_operator_overload = 0,
+	.allow_namespaces = 0,
+	.allow_classes = 0,
+
+	.default_int_size = 16,
+	.default_real_type = 0,
+};
+
+/* Atari ST BASIC (Atari, 1985) - GFA BASIC style */
+dialect_features_t atari_st_features = {
+	.require_line_numbers = 0,  /* GFA allows line-less */
+	.allow_line_labels = 1,
+	.allow_multistatement = 1,
+
+	.allow_rem_statement = 1,
+	.allow_quote_comment = 1,
+	.allow_inline_comments = 1,
+
+	.allow_long_names = 1,
+	.allow_underscores = 1,
+	.require_type_suffix = 0,
+	.allow_explicit_types = 1,
+	.case_sensitive = 0,
+
+	.allow_string_functions = 1,
+	.allow_string_concat = 1,
+	.allow_fixed_strings = 0,
+	.max_string_length = 255,
+
+	.allow_integer = 1,
+	.allow_long = 0,
+	.allow_single = 1,
+	.allow_double = 0,
+	.allow_string = 1,
+	.allow_currency = 0,
+	.allow_byte = 1,
+	.allow_boolean = 0,
+	.allow_variant = 0,
+	.allow_udt = 0,
+
+	.allow_dynamic_arrays = 1,
+	.allow_multidim_arrays = 1,
+	.default_array_base = 0,
+	.allow_option_base = 1,
+
+	.allow_structured_if = 1,
+	.allow_select_case = 1,
+	.allow_do_loop = 1,
+	.allow_while_wend = 1,
+	.allow_for_next = 1,
+	.allow_for_step = 1,
+	.allow_exit_statement = 1,
+
+	.allow_gosub = 1,
+	.allow_def_fn = 1,
+	.allow_sub_procedures = 1,
+	.allow_function_procedures = 1,
+	.allow_byref_byval = 1,
+	.allow_optional_params = 0,
+	.allow_param_arrays = 0,
+
+	.allow_static = 0,
+	.allow_shared = 0,
+	.allow_common = 0,
+	.allow_local = 1,
+
+	.allow_print_using = 0,
+	.allow_input_prompt = 1,
+	.allow_line_input = 1,
+	.allow_file_io = 1,
+	.allow_binary_files = 1,
+	.allow_random_files = 1,
+
+	.allow_graphics = 1,  /* GEM graphics */
+	.allow_screen_modes = 1,
+	.allow_sound = 1,
+
+	.allow_peek_poke = 1,
+	.allow_inline_asm = 1,  /* GFA allows inline ASM */
+	.allow_pointer_ops = 1,
+	.allow_oop = 0,
+
+	.allow_meta_commands = 1,
+	.allow_option_explicit = 0,
+	.allow_option_compare = 0,
+
+	.allow_overloading = 0,
+	.allow_operator_overload = 0,
+	.allow_namespaces = 0,
+	.allow_classes = 0,
+
+	.default_int_size = 16,
+	.default_real_type = 0,
+};
+
+/* Amiga BASIC (Commodore, 1986) */
+dialect_features_t amiga_features = {
+	.require_line_numbers = 1,  /* Traditional line-numbered */
+	.allow_line_labels = 0,
+	.allow_multistatement = 1,
+
+	.allow_rem_statement = 1,
+	.allow_quote_comment = 0,
+	.allow_inline_comments = 1,
+
+	.allow_long_names = 0,  /* 2-char var names */
+	.allow_underscores = 0,
+	.require_type_suffix = 1,
+	.allow_explicit_types = 0,
+	.case_sensitive = 0,
+
+	.allow_string_functions = 1,
+	.allow_string_concat = 1,
+	.allow_fixed_strings = 0,
+	.max_string_length = 255,
+
+	.allow_integer = 1,
+	.allow_long = 0,
+	.allow_single = 1,
+	.allow_double = 1,
+	.allow_string = 1,
+	.allow_currency = 0,
+	.allow_byte = 0,
+	.allow_boolean = 0,
+	.allow_variant = 0,
+	.allow_udt = 0,
+
+	.allow_dynamic_arrays = 0,
+	.allow_multidim_arrays = 1,
+	.default_array_base = 0,
+	.allow_option_base = 1,
+
+	.allow_structured_if = 0,
+	.allow_select_case = 0,
+	.allow_do_loop = 0,
+	.allow_while_wend = 1,
+	.allow_for_next = 1,
+	.allow_for_step = 1,
+	.allow_exit_statement = 0,
+
+	.allow_gosub = 1,
+	.allow_def_fn = 1,
+	.allow_sub_procedures = 1,  /* SUB/FUNCTION added later */
+	.allow_function_procedures = 1,
+	.allow_byref_byval = 0,
+	.allow_optional_params = 0,
+	.allow_param_arrays = 0,
+
+	.allow_static = 1,
+	.allow_shared = 1,
+	.allow_common = 0,
+	.allow_local = 1,
+
+	.allow_print_using = 1,
+	.allow_input_prompt = 1,
+	.allow_line_input = 1,
+	.allow_file_io = 1,
+	.allow_binary_files = 1,
+	.allow_random_files = 1,
+
+	.allow_graphics = 1,  /* Amiga custom graphics */
+	.allow_screen_modes = 1,
+	.allow_sound = 1,
+
+	.allow_peek_poke = 1,
+	.allow_inline_asm = 0,
+	.allow_pointer_ops = 0,
+	.allow_oop = 0,
+
+	.allow_meta_commands = 0,
+	.allow_option_explicit = 0,
+	.allow_option_compare = 0,
+
+	.allow_overloading = 0,
+	.allow_operator_overload = 0,
+	.allow_namespaces = 0,
+	.allow_classes = 0,
+
+	.default_int_size = 16,
+	.default_real_type = 0,
+};
+
+/* DEC BASIC-PLUS/BASIC-PLUS-2 (Digital Equipment Corp, 1970s-1980s) */
+dialect_features_t dec_features = {
+	.require_line_numbers = 1,  /* Traditional line numbers */
+	.allow_line_labels = 1,
+	.allow_multistatement = 1,  /* \ separator */
+
+	.allow_rem_statement = 1,
+	.allow_quote_comment = 0,  /* ! comments */
+	.allow_inline_comments = 1,
+
+	.allow_long_names = 1,  /* 31 chars */
+	.allow_underscores = 1,
+	.require_type_suffix = 0,
+	.allow_explicit_types = 1,
+	.case_sensitive = 0,
+
+	.allow_string_functions = 1,
+	.allow_string_concat = 1,
+	.allow_fixed_strings = 1,
+	.max_string_length = 0,  /* Dynamic */
+
+	.allow_integer = 1,
+	.allow_long = 1,
+	.allow_single = 1,
+	.allow_double = 1,
+	.allow_string = 1,
+	.allow_currency = 0,
+	.allow_byte = 1,
+	.allow_boolean = 0,
+	.allow_variant = 0,
+	.allow_udt = 1,  /* RECORD */
+
+	.allow_dynamic_arrays = 1,
+	.allow_multidim_arrays = 1,
+	.default_array_base = 0,
+	.allow_option_base = 0,
+
+	.allow_structured_if = 1,
+	.allow_select_case = 1,
+	.allow_do_loop = 1,
+	.allow_while_wend = 1,
+	.allow_for_next = 1,
+	.allow_for_step = 1,
+	.allow_exit_statement = 1,
+
+	.allow_gosub = 1,
+	.allow_def_fn = 1,
+	.allow_sub_procedures = 1,
+	.allow_function_procedures = 1,
+	.allow_byref_byval = 1,
+	.allow_optional_params = 1,
+	.allow_param_arrays = 0,
+
+	.allow_static = 0,
+	.allow_shared = 0,
+	.allow_common = 1,  /* MAP/COMMON */
+	.allow_local = 1,
+
+	.allow_print_using = 1,
+	.allow_input_prompt = 1,
+	.allow_line_input = 1,
+	.allow_file_io = 1,
+	.allow_binary_files = 1,
+	.allow_random_files = 1,
+
+	.allow_graphics = 1,  /* VT graphics */
+	.allow_screen_modes = 0,
+	.allow_sound = 0,
+
+	.allow_peek_poke = 1,
+	.allow_inline_asm = 0,
+	.allow_pointer_ops = 0,
+	.allow_oop = 0,
+
+	.allow_meta_commands = 1,
+	.allow_option_explicit = 0,
+	.allow_option_compare = 0,
+
+	.allow_overloading = 0,
+	.allow_operator_overload = 0,
+	.allow_namespaces = 0,
+	.allow_classes = 0,
+
+	.default_int_size = 32,
+	.default_real_type = 0,
+};
+
+/* HP BASIC (Hewlett-Packard, 1980s) - HP 2000/HP 3000 */
+dialect_features_t hp_features = {
+	.require_line_numbers = 1,
+	.allow_line_labels = 0,
+	.allow_multistatement = 1,
+
+	.allow_rem_statement = 1,
+	.allow_quote_comment = 0,  /* ! comments */
+	.allow_inline_comments = 1,
+
+	.allow_long_names = 1,
+	.allow_underscores = 1,
+	.require_type_suffix = 0,
+	.allow_explicit_types = 1,
+	.case_sensitive = 0,
+
+	.allow_string_functions = 1,
+	.allow_string_concat = 1,
+	.allow_fixed_strings = 0,
+	.max_string_length = 255,
+
+	.allow_integer = 1,
+	.allow_long = 0,
+	.allow_single = 1,
+	.allow_double = 1,
+	.allow_string = 1,
+	.allow_currency = 0,
+	.allow_byte = 0,
+	.allow_boolean = 0,
+	.allow_variant = 0,
+	.allow_udt = 0,
+
+	.allow_dynamic_arrays = 1,
+	.allow_multidim_arrays = 1,
+	.default_array_base = 1,  /* HP BASIC uses 1-based by default */
+	.allow_option_base = 1,
+
+	.allow_structured_if = 0,
+	.allow_select_case = 0,
+	.allow_do_loop = 0,
+	.allow_while_wend = 0,
+	.allow_for_next = 1,
+	.allow_for_step = 1,
+	.allow_exit_statement = 0,
+
+	.allow_gosub = 1,
+	.allow_def_fn = 1,
+	.allow_sub_procedures = 1,
+	.allow_function_procedures = 1,
+	.allow_byref_byval = 0,
+	.allow_optional_params = 0,
+	.allow_param_arrays = 0,
+
+	.allow_static = 0,
+	.allow_shared = 0,
+	.allow_common = 1,
+	.allow_local = 1,
+
+	.allow_print_using = 1,
+	.allow_input_prompt = 1,
+	.allow_line_input = 1,
+	.allow_file_io = 1,
+	.allow_binary_files = 0,
+	.allow_random_files = 1,
+
+	.allow_graphics = 1,
+	.allow_screen_modes = 0,
+	.allow_sound = 0,
+
+	.allow_peek_poke = 0,
+	.allow_inline_asm = 0,
+	.allow_pointer_ops = 0,
+	.allow_oop = 0,
+
+	.allow_meta_commands = 0,
+	.allow_option_explicit = 0,
+	.allow_option_compare = 0,
+
+	.allow_overloading = 0,
+	.allow_operator_overload = 0,
+	.allow_namespaces = 0,
+	.allow_classes = 0,
+
+	.default_int_size = 16,
+	.default_real_type = 0,
+};
+
+/* IBM BASIC (PC BASIC, BASICA) - Similar to GW-BASIC */
+dialect_features_t ibm_features = {
+	.require_line_numbers = 1,
+	.allow_line_labels = 0,
+	.allow_multistatement = 1,
+
+	.allow_rem_statement = 1,
+	.allow_quote_comment = 0,
+	.allow_inline_comments = 1,
+
+	.allow_long_names = 0,  /* 2-char limit */
+	.allow_underscores = 0,
+	.require_type_suffix = 1,
+	.allow_explicit_types = 0,
+	.case_sensitive = 0,
+
+	.allow_string_functions = 1,
+	.allow_string_concat = 1,
+	.allow_fixed_strings = 0,
+	.max_string_length = 255,
+
+	.allow_integer = 1,
+	.allow_long = 0,
+	.allow_single = 1,
+	.allow_double = 1,
+	.allow_string = 1,
+	.allow_currency = 0,
+	.allow_byte = 0,
+	.allow_boolean = 0,
+	.allow_variant = 0,
+	.allow_udt = 0,
+
+	.allow_dynamic_arrays = 0,
+	.allow_multidim_arrays = 1,
+	.default_array_base = 0,
+	.allow_option_base = 1,
+
+	.allow_structured_if = 0,
+	.allow_select_case = 0,
+	.allow_do_loop = 0,
+	.allow_while_wend = 1,
+	.allow_for_next = 1,
+	.allow_for_step = 1,
+	.allow_exit_statement = 0,
+
+	.allow_gosub = 1,
+	.allow_def_fn = 1,
+	.allow_sub_procedures = 0,
+	.allow_function_procedures = 0,
+	.allow_byref_byval = 0,
+	.allow_optional_params = 0,
+	.allow_param_arrays = 0,
+
+	.allow_static = 0,
+	.allow_shared = 0,
+	.allow_common = 1,
+	.allow_local = 0,
+
+	.allow_print_using = 1,
+	.allow_input_prompt = 1,
+	.allow_line_input = 1,
+	.allow_file_io = 1,
+	.allow_binary_files = 0,
+	.allow_random_files = 1,
+
+	.allow_graphics = 1,
+	.allow_screen_modes = 1,
+	.allow_sound = 1,
+
+	.allow_peek_poke = 1,
+	.allow_inline_asm = 0,
+	.allow_pointer_ops = 0,
+	.allow_oop = 0,
+
+	.allow_meta_commands = 0,
+	.allow_option_explicit = 0,
+	.allow_option_compare = 0,
+
+	.allow_overloading = 0,
+	.allow_operator_overload = 0,
+	.allow_namespaces = 0,
+	.allow_classes = 0,
+
+	.default_int_size = 16,
+	.default_real_type = 0,
+};
+
 /*
  * Initialize dialect system
  */
@@ -663,6 +1185,24 @@ set_dialect(basic_dialect_t dialect)
 	case DIALECT_ISO:
 		dialect_features = &iso_features;
 		break;
+	case DIALECT_QUICKBASIC:
+		dialect_features = &quickbasic_features;
+		break;
+	case DIALECT_ATARI_ST:
+		dialect_features = &atari_st_features;
+		break;
+	case DIALECT_AMIGA:
+		dialect_features = &amiga_features;
+		break;
+	case DIALECT_DEC:
+		dialect_features = &dec_features;
+		break;
+	case DIALECT_HP:
+		dialect_features = &hp_features;
+		break;
+	case DIALECT_IBM:
+		dialect_features = &ibm_features;
+		break;
 	case DIALECT_AUTO:
 		/* Default to FreeBASIC for auto mode (most permissive) */
 		dialect_features = &freebasic_features;
@@ -694,6 +1234,18 @@ get_dialect_name(basic_dialect_t dialect)
 		return "FreeBASIC";
 	case DIALECT_ISO:
 		return "ISO BASIC Advanced";
+	case DIALECT_QUICKBASIC:
+		return "Macintosh QuickBASIC";
+	case DIALECT_ATARI_ST:
+		return "Atari ST BASIC";
+	case DIALECT_AMIGA:
+		return "Amiga BASIC";
+	case DIALECT_DEC:
+		return "DEC BASIC-PLUS";
+	case DIALECT_HP:
+		return "HP BASIC";
+	case DIALECT_IBM:
+		return "IBM BASIC";
 	case DIALECT_AUTO:
 		return "Auto-detect";
 	default:
@@ -721,6 +1273,18 @@ parse_dialect(const char *name)
 		return DIALECT_FREEBASIC;
 	if (strcasecmp(name, "iso") == 0 || strcasecmp(name, "isobasic") == 0)
 		return DIALECT_ISO;
+	if (strcasecmp(name, "quickbasic") == 0 || strcasecmp(name, "qbasic") == 0 || strcasecmp(name, "macqb") == 0)
+		return DIALECT_QUICKBASIC;
+	if (strcasecmp(name, "atari") == 0 || strcasecmp(name, "atarist") == 0 || strcasecmp(name, "gfa") == 0)
+		return DIALECT_ATARI_ST;
+	if (strcasecmp(name, "amiga") == 0 || strcasecmp(name, "amigabasic") == 0)
+		return DIALECT_AMIGA;
+	if (strcasecmp(name, "dec") == 0 || strcasecmp(name, "decbasic") == 0 || strcasecmp(name, "basicplus") == 0)
+		return DIALECT_DEC;
+	if (strcasecmp(name, "hp") == 0 || strcasecmp(name, "hpbasic") == 0)
+		return DIALECT_HP;
+	if (strcasecmp(name, "ibm") == 0 || strcasecmp(name, "basica") == 0 || strcasecmp(name, "pcbasic") == 0)
+		return DIALECT_IBM;
 	if (strcasecmp(name, "auto") == 0)
 		return DIALECT_AUTO;
 

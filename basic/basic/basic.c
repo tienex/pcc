@@ -353,7 +353,7 @@ usage(void)
 	printf("  -o <file>     Place output in <file>\n");
 	printf("  -c            Compile to object files, don't link\n");
 	printf("  -S            Compile to assembly, don't assemble\n");
-	printf("  -d <dialect>  Set BASIC dialect (gwbasic, turbo, vbdos, pds, powerbasic, freebasic, iso)\n");
+	printf("  -d <dialect>  Set BASIC dialect\n");
 	printf("  -L<dir>       Add directory to library search path\n");
 	printf("  -l<library>   Link with library\n");
 	printf("  -v            Verbose output\n");
@@ -366,6 +366,12 @@ usage(void)
 	printf("  powerbasic    PowerBASIC\n");
 	printf("  freebasic     FreeBASIC\n");
 	printf("  iso           ISO BASIC Advanced\n");
+	printf("  quickbasic    Macintosh QuickBASIC\n");
+	printf("  atari         Atari ST BASIC (GFA BASIC)\n");
+	printf("  amiga         Amiga BASIC\n");
+	printf("  dec           DEC BASIC-PLUS\n");
+	printf("  hp            HP BASIC\n");
+	printf("  ibm           IBM BASIC (BASICA)\n");
 	exit(0);
 }
 
