@@ -1103,6 +1103,7 @@ AC_CONFIG_FILES([Makefile
 		prolog/Makefile
 		prolog/prolog/Makefile
 		prolog/plogcom/Makefile
+		prolog/libprolog/Makefile
 		common/abi/Makefile
 		include/Makefile
 		libunicode/Makefile
