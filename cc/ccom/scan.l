@@ -290,6 +290,10 @@ struct keywords {
 	{ "id", OBJC_ID, C_TYPE },
 	{ "Class", OBJC_CLASS, C_TYPE },
 	{ "SEL", OBJC_SEL, C_TYPE },
+	{ "__strong", ARC_STRONG, C_QUALIFIER },
+	{ "__weak", ARC_WEAK, C_QUALIFIER },
+	{ "__unsafe_unretained", ARC_UNSAFE, C_QUALIFIER },
+	{ "__autoreleasing", ARC_AUTORELEASING, C_QUALIFIER },
 };
 	
 
@@ -384,6 +388,10 @@ struct objc_keywords {
 	{ "finally", OBJC_FINALLY },
 	{ "throw", OBJC_THROW },
 	{ "synchronized", OBJC_SYNCHRONIZED },
+	/* ARC bridging casts */
+	{ "__bridge", ARC_BRIDGE },
+	{ "__bridge_retained", ARC_BRIDGE_RETAINED },
+	{ "__bridge_transfer", ARC_BRIDGE_TRANSFER },
 	{ NULL, 0 }
 };
 

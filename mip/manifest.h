@@ -90,7 +90,7 @@
  */
 #define NOLAB	(-1)
 
-/* 
+/*
  * Type modifiers.
  */
 #define	PTR		0x20
@@ -98,6 +98,15 @@
 #define	ARY		0x60
 #define	CON		0x20
 #define	VOL		0x40
+
+/*
+ * ARC (Automatic Reference Counting) ownership qualifiers
+ * These are stored in the attribute chain, not in the type word
+ */
+#define	ARC_STRONG		0x80    /* __strong (default for objects) */
+#define	ARC_WEAK		0x100   /* __weak (zeroing weak reference) */
+#define	ARC_UNSAFE		0x200   /* __unsafe_unretained */
+#define	ARC_AUTORELEASING	0x400   /* __autoreleasing */
 
 /*
  * Type packing constants

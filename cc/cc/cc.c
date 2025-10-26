@@ -318,6 +318,7 @@ int	xuchar = 0;
 #endif
 int	cxxflag;
 int	objcflag;
+int	arcflag;	/* Objective-C ARC enabled */
 int	cppflag;
 int	printprogname, printfilename;
 enum { SC11, STRAD, SC89, SGNU89, SC99, SGNU99 } cstd;
@@ -628,6 +629,10 @@ main(int argc, char *argv[])
 			} else if (match(u, "stack-protector") ||
 			    match(u, "stack-protector-all")) {
 				sspflag = j ? 0 : 1;
+			} else if (match(u, "objc-arc")) {
+				arcflag = j ? 0 : 1;
+			} else if (match(u, "objc-weak")) {
+				/* Enable weak references - enabled by default with ARC */
 			}
 			/* silently ignore the rest */
 			break;
@@ -1691,6 +1696,7 @@ struct flgcheck {
 	{ &freestanding, 0, "-D__STDC_HOSTED__=1" },
 	{ &cxxflag, 1, "-D__cplusplus" },
 	{ &objcflag, 1, "-D__OBJC__" },
+	{ &arcflag, 1, "-D__OBJC_ARC__" },
 	{ &xuchar, 1, "-D__CHAR_UNSIGNED__" },
 	{ &sspflag, 1, "-D__SSP__" },
 	{ &pthreads, 1, "-D_PTHREADS" },
@@ -1905,6 +1911,7 @@ struct flgcheck ccomflgcheck[] = {
 	{ &xgnu99, 1, "-xgnu99" },
 	{ &xuchar, 1, "-xuchar" },
 	{ &objcflag, 1, "-xobjc" },
+	{ &arcflag, 1, "-xobjc-arc" },
 #if !defined(os_sunos) && !defined(mach_i386)
 	{ &vflag, 1, "-v" },
 #endif

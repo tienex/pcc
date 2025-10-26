@@ -158,6 +158,11 @@
 %token	OBJC_SYNCHRONIZED
 %token	OBJC_STRING
 
+/* ARC and bridging tokens */
+%token	ARC_BRIDGE
+%token	ARC_BRIDGE_RETAINED
+%token	ARC_BRIDGE_TRANSFER
+
 /*
  * Precedence
  */
