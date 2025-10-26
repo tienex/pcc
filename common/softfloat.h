@@ -155,6 +155,228 @@ typedef SF *SFP;
 #define CRAYFP_64_HAS_SUBNORM 0
 #endif
 
+/* IEEE 754-2008 binary16 (half precision) constants */
+#ifdef USE_IEEEFP_16
+#define IEEEFP_16_RADIX 2
+#define IEEEFP_16_DIG 3
+#define IEEEFP_16_EPSILON 9.76562500E-04F
+#define IEEEFP_16_MAX_10_EXP +4
+#define IEEEFP_16_MAX_EXP +16
+#define IEEEFP_16_MAX 6.55040000E+04F
+#define IEEEFP_16_MIN_10_EXP -4
+#define IEEEFP_16_MIN_EXP -13
+#define IEEEFP_16_MIN 6.10351562E-05F
+#define IEEEFP_16_MANT_DIG 11
+#define IEEEFP_16_HAS_SUBNORM 1
+#endif
+
+/* IEEE 754-2008 binary128 (quad precision) constants */
+#ifdef USE_IEEEFP_128
+#define IEEEFP_128_RADIX 2
+#define IEEEFP_128_DIG 33
+#define IEEEFP_128_EPSILON 1.92592994045684017991e-34L
+#define IEEEFP_128_MAX_10_EXP +4932
+#define IEEEFP_128_MAX_EXP +16384
+#define IEEEFP_128_MAX 1.18973149535723176502e+4932L
+#define IEEEFP_128_MIN_10_EXP -4931
+#define IEEEFP_128_MIN_EXP -16381
+#define IEEEFP_128_MIN 3.36210314311209350626e-4932L
+#define IEEEFP_128_MANT_DIG 113
+#define IEEEFP_128_HAS_SUBNORM 1
+#endif
+
+/* bfloat16 (Brain Float) constants */
+#ifdef USE_BFLOAT16
+#define BFLOAT16_RADIX 2
+#define BFLOAT16_DIG 2
+#define BFLOAT16_MAX_10_EXP +38
+#define BFLOAT16_MAX_EXP +128
+#define BFLOAT16_MIN_10_EXP -37
+#define BFLOAT16_MIN_EXP -125
+#define BFLOAT16_MANT_DIG 8
+#define BFLOAT16_HAS_SUBNORM 1
+#endif
+
+/* TensorFloat-32 (TF32) constants */
+#ifdef USE_TENSORFLOAT32
+#define TF32_RADIX 2
+#define TF32_DIG 3
+#define TF32_MAX_10_EXP +38
+#define TF32_MAX_EXP +128
+#define TF32_MIN_10_EXP -37
+#define TF32_MIN_EXP -125
+#define TF32_MANT_DIG 11
+#define TF32_HAS_SUBNORM 1
+#endif
+
+/* FP8 E4M3 constants */
+#ifdef USE_FP8_E4M3
+#define FP8_E4M3_RADIX 2
+#define FP8_E4M3_DIG 1
+#define FP8_E4M3_MAX_10_EXP +1
+#define FP8_E4M3_MAX_EXP +7
+#define FP8_E4M3_MIN_10_EXP -2
+#define FP8_E4M3_MIN_EXP -5
+#define FP8_E4M3_MANT_DIG 4
+#define FP8_E4M3_HAS_SUBNORM 0
+#endif
+
+/* FP8 E5M2 constants */
+#ifdef USE_FP8_E5M2
+#define FP8_E5M2_RADIX 2
+#define FP8_E5M2_DIG 1
+#define FP8_E5M2_MAX_10_EXP +4
+#define FP8_E5M2_MAX_EXP +15
+#define FP8_E5M2_MIN_10_EXP -4
+#define FP8_E5M2_MIN_EXP -14
+#define FP8_E5M2_MANT_DIG 3
+#define FP8_E5M2_HAS_SUBNORM 1
+#endif
+
+/* DEC VAX F_floating constants */
+#ifdef USE_VAXFP_F
+#define VAXFP_F_RADIX 2
+#define VAXFP_F_DIG 6
+#define VAXFP_F_MAX_10_EXP +38
+#define VAXFP_F_MAX_EXP +127
+#define VAXFP_F_MIN_10_EXP -38
+#define VAXFP_F_MIN_EXP -127
+#define VAXFP_F_MANT_DIG 24
+#define VAXFP_F_HAS_SUBNORM 0
+#endif
+
+/* DEC VAX D_floating constants */
+#ifdef USE_VAXFP_D
+#define VAXFP_D_RADIX 2
+#define VAXFP_D_DIG 16
+#define VAXFP_D_MAX_10_EXP +38
+#define VAXFP_D_MAX_EXP +127
+#define VAXFP_D_MIN_10_EXP -38
+#define VAXFP_D_MIN_EXP -127
+#define VAXFP_D_MANT_DIG 56
+#define VAXFP_D_HAS_SUBNORM 0
+#endif
+
+/* DEC VAX G_floating constants */
+#ifdef USE_VAXFP_G
+#define VAXFP_G_RADIX 2
+#define VAXFP_G_DIG 15
+#define VAXFP_G_MAX_10_EXP +307
+#define VAXFP_G_MAX_EXP +1023
+#define VAXFP_G_MIN_10_EXP -308
+#define VAXFP_G_MIN_EXP -1023
+#define VAXFP_G_MANT_DIG 53
+#define VAXFP_G_HAS_SUBNORM 0
+#endif
+
+/* DEC VAX H_floating constants */
+#ifdef USE_VAXFP_H
+#define VAXFP_H_RADIX 2
+#define VAXFP_H_DIG 33
+#define VAXFP_H_MAX_10_EXP +4932
+#define VAXFP_H_MAX_EXP +16383
+#define VAXFP_H_MIN_10_EXP -4932
+#define VAXFP_H_MIN_EXP -16382
+#define VAXFP_H_MANT_DIG 113
+#define VAXFP_H_HAS_SUBNORM 0
+#endif
+
+/* ARM Alternative Half Precision constants */
+#ifdef USE_ARM_ALT_HALF
+#define ARM_ALT_HALF_RADIX 2
+#define ARM_ALT_HALF_DIG 3
+#define ARM_ALT_HALF_MAX_10_EXP +4
+#define ARM_ALT_HALF_MAX_EXP +16
+#define ARM_ALT_HALF_MIN_10_EXP -4
+#define ARM_ALT_HALF_MIN_EXP -14
+#define ARM_ALT_HALF_MANT_DIG 11
+#define ARM_ALT_HALF_HAS_SUBNORM 1
+#endif
+
+/* Posit8 constants */
+#ifdef USE_POSIT8
+#define POSIT8_DIG 2
+#define POSIT8_MAX_10_EXP +7
+#define POSIT8_MIN_10_EXP -7
+#define POSIT8_MANT_DIG 6
+#define POSIT8_HAS_SUBNORM 0
+#endif
+
+/* Posit16 constants */
+#ifdef USE_POSIT16
+#define POSIT16_DIG 4
+#define POSIT16_MAX_10_EXP +36
+#define POSIT16_MIN_10_EXP -36
+#define POSIT16_MANT_DIG 13
+#define POSIT16_HAS_SUBNORM 0
+#endif
+
+/* Posit32 constants */
+#ifdef USE_POSIT32
+#define POSIT32_DIG 8
+#define POSIT32_MAX_10_EXP +151
+#define POSIT32_MIN_10_EXP -151
+#define POSIT32_MANT_DIG 28
+#define POSIT32_HAS_SUBNORM 0
+#endif
+
+/* Posit64 constants */
+#ifdef USE_POSIT64
+#define POSIT64_DIG 17
+#define POSIT64_MAX_10_EXP +614
+#define POSIT64_MIN_10_EXP -614
+#define POSIT64_MANT_DIG 59
+#define POSIT64_HAS_SUBNORM 0
+#endif
+
+/* Pixar PXR24 constants */
+#ifdef USE_PXR24
+#define PXR24_RADIX 2
+#define PXR24_DIG 4
+#define PXR24_MAX_10_EXP +38
+#define PXR24_MAX_EXP +128
+#define PXR24_MIN_10_EXP -37
+#define PXR24_MIN_EXP -125
+#define PXR24_MANT_DIG 16
+#define PXR24_HAS_SUBNORM 1
+#endif
+
+/* AMD 24-bit float constants */
+#ifdef USE_AMD24
+#define AMD24_RADIX 2
+#define AMD24_DIG 4
+#define AMD24_MAX_10_EXP +38
+#define AMD24_MAX_EXP +128
+#define AMD24_MIN_10_EXP -37
+#define AMD24_MIN_EXP -125
+#define AMD24_MANT_DIG 16
+#define AMD24_HAS_SUBNORM 1
+#endif
+
+/* Minifloat E3M2 constants */
+#ifdef USE_MINIFLOAT_E3M2
+#define MINI_E3M2_RADIX 2
+#define MINI_E3M2_DIG 1
+#define MINI_E3M2_MAX_10_EXP 0
+#define MINI_E3M2_MAX_EXP +3
+#define MINI_E3M2_MIN_10_EXP -1
+#define MINI_E3M2_MIN_EXP -1
+#define MINI_E3M2_MANT_DIG 3
+#define MINI_E3M2_HAS_SUBNORM 0
+#endif
+
+/* Minifloat E2M3 constants */
+#ifdef USE_MINIFLOAT_E2M3
+#define MINI_E2M3_RADIX 2
+#define MINI_E2M3_DIG 1
+#define MINI_E2M3_MAX_10_EXP 0
+#define MINI_E2M3_MAX_EXP +1
+#define MINI_E2M3_MIN_10_EXP -1
+#define MINI_E2M3_MIN_EXP 0
+#define MINI_E2M3_MANT_DIG 4
+#define MINI_E2M3_HAS_SUBNORM 0
+#endif
+
 #define	TARGET_FLT_RADIX	C(FLT_FP,_RADIX)
 
 /*

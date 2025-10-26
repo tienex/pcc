@@ -501,12 +501,12 @@ static SF sfddiv(SF, ULLong, SF, ULLong, TWORD);
 extern int strtodg (const char*, char**, FPI*, Long*, ULong*);
 
 /* IEEE binary formats, and their interchange format encodings */
-#ifdef notdef
+#ifdef USE_IEEEFP_16
 FPI fpi_binary16 = { 11, 1-15-11+1,
                         30-15-11+1, 1, 0,
         0, 1, 1, 0,  16,   15+11-1 };
 #endif
-#ifndef notyet
+#ifdef USE_IEEEFP_128
 FPI fpi_binary128 = { 113,   1-16383-113+1,
                          32766-16383-113+1, 1, 0,
         0, 1, 1, 0,   128,     16383+113-1 };
@@ -517,10 +517,20 @@ FPI fpi_binary128 = { 113,   1-16383-113+1,
 FPI fpi_binary32 = { 24,  1-127-24+1,
                         254-127-24+1, 1, 0,
         0, 1, 1, 0,  32,    127+24-1 };
+#elif defined(USE_IEEEFP_16)
+#define FPI_FLOAT	fpi_binary16
 #elif defined(USE_MSBFP_32)
 #define FPI_FLOAT	fpi_msbf32
 #elif defined(USE_IBMFP_32)
 #define FPI_FLOAT	fpi_ibm32
+#elif defined(USE_BFLOAT16)
+#define FPI_FLOAT	fpi_bfloat16
+#elif defined(USE_VAXFP_F)
+#define FPI_FLOAT	fpi_vax_f
+#elif defined(USE_PXR24)
+#define FPI_FLOAT	fpi_pxr24
+#elif defined(USE_AMD24)
+#define FPI_FLOAT	fpi_amd24
 #else
 #error need float definition
 #endif
@@ -535,6 +545,10 @@ FPI fpi_binary64 = { 53,   1-1023-53+1,
 #define FPI_DOUBLE	fpi_ibm64
 #elif defined(USE_CRAYFP_64)
 #define FPI_DOUBLE	fpi_cray64
+#elif defined(USE_VAXFP_D)
+#define FPI_DOUBLE	fpi_vax_d
+#elif defined(USE_VAXFP_G)
+#define FPI_DOUBLE	fpi_vax_g
 #else
 #error need double definition
 #endif
@@ -550,10 +564,14 @@ FPI fpi_binaryx80 = { 64,   1-16383-64+1,
 #define	FPI_LDOUBLE_ISZ(sf)	(sf.fp[0] == 0 && sf.fp[1] == 0 && \
 	sf.fp[2] == 0 && sf.fp[3] == 0 && (sf.fp[4] & 0x7fff) == 0)
 #define	FPI_LDOUBLE_NEG(sf)	sf.fp[4] ^= 0x8000
+#elif defined(USE_IEEEFP_128)
+#define FPI_LDOUBLE	fpi_binary128
 #elif defined(USE_IBMFP_128)
 #define FPI_LDOUBLE	fpi_ibm128
 #elif defined(USE_CRAYFP_64)
 #define FPI_LDOUBLE	fpi_cray64
+#elif defined(USE_VAXFP_H)
+#define FPI_LDOUBLE	fpi_vax_h
 #else
 #error need long double definition
 #endif
@@ -614,6 +632,195 @@ FPI fpi_ibm128 = { 112, 0-64,
 FPI fpi_cray64 = { 48, 1-16384-48+1,
                       65534-16384-48+1, 1, 0,
         0, 0, 1, 0,  64,    16384 };
+#endif
+
+/*
+ * bfloat16 (Brain Floating Point) - Google, Intel, ARM
+ * Used extensively in machine learning and AI
+ * 1 sign + 8 exponent (bias 127, same as float32) + 7 mantissa
+ * Truncated version of IEEE 754 float32, same dynamic range
+ */
+#ifdef USE_BFLOAT16
+#define FPI_BFLOAT16	fpi_bfloat16
+FPI fpi_bfloat16 = { 8, 1-127-8+1,
+                        254-127-8+1, 1, 0,
+        0, 1, 1, 0,  16,    127+8-1 };
+#endif
+
+/*
+ * TensorFloat-32 (TF32) - NVIDIA Ampere and later GPUs
+ * 1 sign + 8 exponent (bias 127) + 10 mantissa
+ * Intermediate format between float16 and float32 for AI training
+ */
+#ifdef USE_TENSORFLOAT32
+#define FPI_TF32	fpi_tf32
+FPI fpi_tf32 = { 11, 1-127-11+1,
+                    254-127-11+1, 1, 0,
+        0, 1, 1, 0,  19,    127+11-1 };
+#endif
+
+/*
+ * FP8 E4M3 - 8-bit float used in NVIDIA Hopper, AMD MI300, Intel Habana
+ * 1 sign + 4 exponent (bias 7) + 3 mantissa
+ * Optimized for AI training with higher precision, smaller range
+ */
+#ifdef USE_FP8_E4M3
+#define FPI_FP8_E4M3	fpi_fp8_e4m3
+FPI fpi_fp8_e4m3 = { 4, 1-7-4+1,
+                       14-7-4+1, 1, 0,
+        0, 1, 0, 0,  8,     7+4-1 };
+#endif
+
+/*
+ * FP8 E5M2 - 8-bit float used in NVIDIA Hopper, AMD MI300, Intel Habana
+ * 1 sign + 5 exponent (bias 15) + 2 mantissa
+ * Optimized for AI inference with larger range, lower precision
+ */
+#ifdef USE_FP8_E5M2
+#define FPI_FP8_E5M2	fpi_fp8_e5m2
+FPI fpi_fp8_e5m2 = { 3, 1-15-3+1,
+                       30-15-3+1, 1, 0,
+        0, 1, 1, 0,  8,     15+3-1 };
+#endif
+
+/*
+ * DEC VAX F_floating - 32-bit
+ * Used on VAX computers (1970s-1990s)
+ * 1 sign + 8 exponent (bias 128) + 23 mantissa
+ * No INF/NaN, hidden bit, different byte order than IEEE
+ */
+#ifdef USE_VAXFP_F
+#define FPI_VAX_F	fpi_vax_f
+FPI fpi_vax_f = { 24, 1-128-24+1,
+                     254-128-24+1, 1, 0,
+        0, 0, 0, 1,  32,    128 };
+#endif
+
+/*
+ * DEC VAX D_floating - 64-bit
+ * 1 sign + 8 exponent (bias 128) + 55 mantissa
+ */
+#ifdef USE_VAXFP_D
+#define FPI_VAX_D	fpi_vax_d
+FPI fpi_vax_d = { 56, 1-128-56+1,
+                     254-128-56+1, 1, 0,
+        0, 0, 0, 1,  64,    128 };
+#endif
+
+/*
+ * DEC VAX G_floating - 64-bit
+ * 1 sign + 11 exponent (bias 1024) + 52 mantissa
+ * Similar range to IEEE double but different encoding
+ */
+#ifdef USE_VAXFP_G
+#define FPI_VAX_G	fpi_vax_g
+FPI fpi_vax_g = { 53, 1-1024-53+1,
+                     2046-1024-53+1, 1, 0,
+        0, 0, 0, 1,  64,    1024 };
+#endif
+
+/*
+ * DEC VAX H_floating - 128-bit
+ * 1 sign + 15 exponent (bias 16384) + 112 mantissa
+ */
+#ifdef USE_VAXFP_H
+#define FPI_VAX_H	fpi_vax_h
+FPI fpi_vax_h = { 113, 1-16384-113+1,
+                      32766-16384-113+1, 1, 0,
+        0, 0, 0, 1,  128,   16384 };
+#endif
+
+/*
+ * ARM Alternative Half Precision - 16-bit
+ * 1 sign + 5 exponent (bias 15) + 10 mantissa
+ * No INF/NaN support (all exponent bits set = normal number)
+ */
+#ifdef USE_ARM_ALT_HALF
+#define FPI_ARM_ALT_HALF	fpi_arm_alt_half
+FPI fpi_arm_alt_half = { 11, 1-15-11+1,
+                            31-15-11+1, 1, 0,
+        0, 1, 0, 1,  16,    15+11-1 };
+#endif
+
+/*
+ * Posit formats - Modern alternative to IEEE 754 (John Gustafson)
+ * Variable exponent and fraction based on regime encoding
+ * No INF (all bits set = NaR - Not a Real), better accuracy distribution
+ * Note: Simplified FPI representation - actual posit arithmetic differs significantly
+ */
+#ifdef USE_POSIT8
+#define FPI_POSIT8	fpi_posit8
+/* Posit<8,0>: ~6-bit effective precision, variable exponent */
+FPI fpi_posit8 = { 6, -24,
+                     24, 1, 0,
+        0, 0, 0, 1,  8,     0 };
+#endif
+
+#ifdef USE_POSIT16
+#define FPI_POSIT16	fpi_posit16
+/* Posit<16,1>: ~13-bit effective precision, variable exponent */
+FPI fpi_posit16 = { 13, -120,
+                       120, 1, 0,
+        0, 0, 0, 1,  16,    0 };
+#endif
+
+#ifdef USE_POSIT32
+#define FPI_POSIT32	fpi_posit32
+/* Posit<32,2>: ~28-bit effective precision, variable exponent */
+FPI fpi_posit32 = { 28, -504,
+                       504, 1, 0,
+        0, 0, 0, 1,  32,    0 };
+#endif
+
+#ifdef USE_POSIT64
+#define FPI_POSIT64	fpi_posit64
+/* Posit<64,3>: ~59-bit effective precision, variable exponent */
+FPI fpi_posit64 = { 59, -2040,
+                       2040, 1, 0,
+        0, 0, 0, 1,  64,    0 };
+#endif
+
+/*
+ * Pixar PXR24 - 24-bit floating point used in image processing
+ * 1 sign + 8 exponent (bias 127) + 15 mantissa
+ * Used in OpenEXR and film production
+ */
+#ifdef USE_PXR24
+#define FPI_PXR24	fpi_pxr24
+FPI fpi_pxr24 = { 16, 1-127-16+1,
+                     254-127-16+1, 1, 0,
+        0, 1, 1, 0,  24,    127+16-1 };
+#endif
+
+/*
+ * AMD 24-bit float (historic) - Used in some AMD 3D graphics
+ * 1 sign + 8 exponent (bias 127) + 15 mantissa
+ */
+#ifdef USE_AMD24
+#define FPI_AMD24	fpi_amd24
+FPI fpi_amd24 = { 16, 1-127-16+1,
+                     254-127-16+1, 1, 0,
+        0, 1, 1, 0,  24,    127+16-1 };
+#endif
+
+/*
+ * Minifloat formats - Used in research, education, and specialized hardware
+ */
+
+/* E3M2 - 6-bit float: 1 sign + 3 exponent + 2 mantissa */
+#ifdef USE_MINIFLOAT_E3M2
+#define FPI_MINI_E3M2	fpi_mini_e3m2
+FPI fpi_mini_e3m2 = { 3, 1-3-3+1,
+                         6-3-3+1, 1, 0,
+        0, 1, 0, 0,  6,     3+3-1 };
+#endif
+
+/* E2M3 - 6-bit float: 1 sign + 2 exponent + 3 mantissa */
+#ifdef USE_MINIFLOAT_E2M3
+#define FPI_MINI_E2M3	fpi_mini_e2m3
+FPI fpi_mini_e2m3 = { 4, 1-1-4+1,
+                         2-1-4+1, 1, 0,
+        0, 1, 0, 0,  6,     1+4-1 };
 #endif
 
 FPI * fpis[3] = {
