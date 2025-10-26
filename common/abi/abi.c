@@ -16,6 +16,25 @@ extern const abi_ops_t msvc_abi_ops;
 extern const abi_ops_t watcom_abi_ops;
 extern const abi_ops_t borland_abi_ops;
 extern const abi_ops_t gnu_old_abi_ops;
+extern const abi_ops_t dmc_abi_ops;
+extern const abi_ops_t apple_objc1_abi_ops;
+extern const abi_ops_t apple_objc2_abi_ops;
+extern const abi_ops_t gnu_objc_abi_ops;
+extern const abi_ops_t corefoundation_abi_ops;
+extern const abi_ops_t dlang_abi_ops;
+extern const abi_ops_t swift_abi_ops;
+extern const abi_ops_t rust_abi_ops;
+extern const abi_ops_t go_abi_ops;
+extern const abi_ops_t zig_abi_ops;
+extern const abi_ops_t crystal_abi_ops;
+extern const abi_ops_t java_abi_ops;
+extern const abi_ops_t clr_abi_ops;
+extern const abi_ops_t dart_abi_ops;
+extern const abi_ops_t kotlin_abi_ops;
+extern const abi_ops_t freepascal_abi_ops;
+extern const abi_ops_t gnu_pascal_abi_ops;
+extern const abi_ops_t gnat_abi_ops;
+extern const abi_ops_t ecere_abi_ops;
 
 /*
  * Initialize ABI context
@@ -35,6 +54,7 @@ abi_init(abi_kind_t kind)
 
 	/* Set up operations based on ABI */
 	switch (kind) {
+	/* C++ ABIs */
 	case ABI_ITANIUM:
 	case ABI_ARM:
 		ctx->ops = &itanium_abi_ops;
@@ -51,6 +71,9 @@ abi_init(abi_kind_t kind)
 	case ABI_GNU_OLD:
 		ctx->ops = &gnu_old_abi_ops;
 		break;
+	case ABI_DMC:
+		ctx->ops = &dmc_abi_ops;
+		break;
 	case ABI_SUN:
 	case ABI_INTEL:
 	case ABI_IBM:
@@ -58,11 +81,73 @@ abi_init(abi_kind_t kind)
 		/* These use Itanium ABI with minor variations */
 		ctx->ops = &itanium_abi_ops;
 		break;
-	case ABI_DLANG:
-	case ABI_SWIFT:
-		/* Modern ABIs - not yet implemented, use Itanium as fallback */
-		ctx->ops = &itanium_abi_ops;
+
+	/* Objective-C ABIs */
+	case ABI_APPLE_OBJC1:
+		ctx->ops = &apple_objc1_abi_ops;
 		break;
+	case ABI_APPLE_OBJC2:
+		ctx->ops = &apple_objc2_abi_ops;
+		break;
+	case ABI_GNU_OBJC:
+		ctx->ops = &gnu_objc_abi_ops;
+		break;
+	case ABI_COREFOUNDATION:
+		ctx->ops = &corefoundation_abi_ops;
+		break;
+
+	/* Modern System Languages */
+	case ABI_DLANG:
+		ctx->ops = &dlang_abi_ops;
+		break;
+	case ABI_SWIFT:
+		ctx->ops = &swift_abi_ops;
+		break;
+	case ABI_RUST:
+		ctx->ops = &rust_abi_ops;
+		break;
+	case ABI_GO:
+		ctx->ops = &go_abi_ops;
+		break;
+	case ABI_ZIG:
+		ctx->ops = &zig_abi_ops;
+		break;
+	case ABI_CRYSTAL:
+		ctx->ops = &crystal_abi_ops;
+		break;
+
+	/* VM/Managed Languages */
+	case ABI_JAVA:
+		ctx->ops = &java_abi_ops;
+		break;
+	case ABI_CLR:
+		ctx->ops = &clr_abi_ops;
+		break;
+	case ABI_DART:
+		ctx->ops = &dart_abi_ops;
+		break;
+	case ABI_KOTLIN:
+		ctx->ops = &kotlin_abi_ops;
+		break;
+
+	/* Pascal ABIs */
+	case ABI_FREEPASCAL:
+		ctx->ops = &freepascal_abi_ops;
+		break;
+	case ABI_GNU_PASCAL:
+		ctx->ops = &gnu_pascal_abi_ops;
+		break;
+
+	/* Ada ABI */
+	case ABI_GNAT:
+		ctx->ops = &gnat_abi_ops;
+		break;
+
+	/* Framework ABIs */
+	case ABI_ECERE:
+		ctx->ops = &ecere_abi_ops;
+		break;
+
 	default:
 		free(ctx);
 		return NULL;

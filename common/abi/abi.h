@@ -36,18 +36,49 @@ struct abi_function;
 
 /* ABI types supported */
 typedef enum {
+	/* C++ ABIs */
 	ABI_ITANIUM,        /* Itanium C++ ABI (GCC 3+, Clang, most Unix) */
 	ABI_MSVC,           /* Microsoft Visual C++ ABI */
 	ABI_WATCOM,         /* Watcom C++ ABI */
 	ABI_ARM,            /* ARM C++ ABI (variant of Itanium) */
 	ABI_BORLAND,        /* Borland C++/C++Builder/Delphi */
 	ABI_GNU_OLD,        /* Old GNU C++ ABI (GCC 2.x, ARM/CFront) */
+	ABI_DMC,            /* Digital Mars C++ (Zortech/Symantec) */
 	ABI_SUN,            /* Sun/Oracle C++ ABI */
 	ABI_INTEL,          /* Intel C++ Compiler ABI */
 	ABI_IBM,            /* IBM XL C++ ABI */
 	ABI_HP,             /* HP aCC ABI */
+
+	/* Objective-C ABIs */
+	ABI_APPLE_OBJC1,    /* Apple/NeXT Objective-C 1.0 (Fragile) */
+	ABI_APPLE_OBJC2,    /* Apple/NeXT Objective-C 2.0 (Non-fragile) */
+	ABI_GNU_OBJC,       /* GNU Objective-C runtime */
+	ABI_COREFOUNDATION, /* Apple CoreFoundation */
+
+	/* Modern System Languages */
 	ABI_DLANG,          /* D Language ABI */
 	ABI_SWIFT,          /* Swift ABI */
+	ABI_RUST,           /* Rust ABI */
+	ABI_GO,             /* Go (golang) ABI */
+	ABI_ZIG,            /* Zig ABI */
+	ABI_CRYSTAL,        /* Crystal ABI */
+
+	/* VM/Managed Languages */
+	ABI_JAVA,           /* Java JNI ABI */
+	ABI_CLR,            /* .NET Common Language Runtime */
+	ABI_DART,           /* Dart Native ABI */
+	ABI_KOTLIN,         /* Kotlin/Native ABI */
+
+	/* Pascal ABIs */
+	ABI_FREEPASCAL,     /* FreePascal ABI */
+	ABI_GNU_PASCAL,     /* GNU Pascal (GPC) ABI */
+
+	/* Ada ABI */
+	ABI_GNAT,           /* GNAT Ada ABI */
+
+	/* Framework ABIs */
+	ABI_ECERE,          /* eCere SDK ABI */
+
 	ABI_AUTO            /* Auto-detect based on platform */
 } abi_kind_t;
 

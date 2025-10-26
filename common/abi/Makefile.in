@@ -19,7 +19,12 @@ exec_prefix = @exec_prefix@
 libdir = @libdir@
 includedir = @includedir@
 
-OBJS=	abi.o itanium.o msvc.o watcom.o borland.o gnu_old.o \
+OBJS=	abi.o \
+	itanium.o msvc.o watcom.o borland.o gnu_old.o dmc.o \
+	apple_objc1.o apple_objc2.o gnu_objc.o corefoundation.o \
+	dlang.o swift.o rust.o go.o zig.o crystal.o \
+	java.o clr.o dart.o kotlin.o \
+	freepascal.o gnu_pascal.o gnat.o ecere.o \
 	demangle_itanium.o demangle_msvc.o
 
 LIB=libpccabi.a
@@ -53,6 +58,10 @@ demangle_itanium.o: $(srcdir)/demangle_itanium.c $(srcdir)/demangle.h $(srcdir)/
 
 demangle_msvc.o: $(srcdir)/demangle_msvc.c $(srcdir)/demangle.h $(srcdir)/abi.h
 	$(CC) $(CFLAGS) $(CPPFLAGS) -c $(srcdir)/demangle_msvc.c
+
+# Generic rule for all other .o files
+%.o: $(srcdir)/%.c $(srcdir)/abi.h
+	$(CC) $(CFLAGS) $(CPPFLAGS) -c $(srcdir)/$*.c
 
 install: $(LIB)
 	test -z "$(DESTDIR)$(libdir)" || mkdir -p "$(DESTDIR)$(libdir)"
