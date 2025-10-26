@@ -103,7 +103,7 @@ struct _seh_registration {
 };
 
 /*
- * Global exception chain head
+ * Global exception chain head and current exception state
  * On Windows, this is at FS:[0] (x86) or GS:[0] (x64)
  * On Unix, we maintain it in TLS
  */
@@ -111,6 +111,7 @@ struct _seh_registration {
 /* Windows uses FS:[0] or GS:[0] - handled by OS */
 #else
 extern __thread struct _seh_registration *_seh_chain_head;
+extern __thread struct _seh_exception_record _seh_current_exception;
 #endif
 
 /*

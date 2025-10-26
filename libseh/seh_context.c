@@ -24,11 +24,15 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#define _GNU_SOURCE
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <signal.h>
 #include <ucontext.h>
+#ifdef __linux__
+#include <sys/reg.h>
+#endif
 #include "seh.h"
 
 /*
