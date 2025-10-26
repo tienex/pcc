@@ -31,7 +31,7 @@ INSTALL_PROGRAM = @INSTALL_PROGRAM@
 INSTALL_DATA = @INSTALL_DATA@
 
 OBJS=	main.o error.o dialect.o symtab.o types.o builtins.o \
-	codegen.o scan.o pligram.o
+	ir.o scan.o pligram.o
 
 DEST=plicom$(EXEEXT)
 
@@ -71,8 +71,8 @@ types.o: $(srcdir)/types.c pass1.h error.h dialect.h
 builtins.o: $(srcdir)/builtins.c pass1.h error.h dialect.h
 	$(CC) $(DEFS) $(CPPFLAGS) $(CFLAGS) -c $(srcdir)/builtins.c
 
-codegen.o: $(srcdir)/codegen.c codegen.h pass1.h
-	$(CC) $(DEFS) $(CPPFLAGS) $(CFLAGS) -c $(srcdir)/codegen.c
+ir.o: $(srcdir)/ir.c ir.h pass1.h
+	$(CC) $(DEFS) $(CPPFLAGS) $(CFLAGS) -c $(srcdir)/ir.c
 
 install: all
 	test -z "$(DESTDIR)$(libexecdir)" || mkdir -p "$(DESTDIR)$(libexecdir)"
