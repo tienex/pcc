@@ -8,6 +8,12 @@
 *.dll
 *.exe
 
+# Compiler binaries
+ccom
+cxxcom
+cpp
+mkext
+
 # Generated files from bison/yacc
 *.tab.c
 *.tab.h
@@ -20,17 +26,7 @@ cgram.h
 lex.yy.c
 scan.c
 
-# Generated source files
-external.c
-external.h
-
-# Build tools
-mkext
-cc/cc/cc
-cc/cpp/cpp
-cc/ccom/ccom
-
-# Generated source files
+# Generated files from mkext
 external.c
 external.h
 
