@@ -5758,12 +5758,18 @@ BUILD_LIBTHREAD=no
 
 if test "$have_uchar" = "no"; then
     BUILD_LIBUNICODE=yes
+
+printf "%s\n" "#define NEED_LIBUNICODE 1" >>confdefs.h
+
     { printf "%s\n" "$as_me:${as_lineno-$LINENO}: Will build portable libunicode (C11 Unicode support)" >&5
 printf "%s\n" "$as_me: Will build portable libunicode (C11 Unicode support)" >&6;}
 fi
 
 if test "$have_threads" = "no"; then
     BUILD_LIBTHREAD=yes
+
+printf "%s\n" "#define NEED_LIBTHREAD 1" >>confdefs.h
+
     { printf "%s\n" "$as_me:${as_lineno-$LINENO}: Will build portable libthread (C11 threading support)" >&5
 printf "%s\n" "$as_me: Will build portable libthread (C11 threading support)" >&6;}
 fi

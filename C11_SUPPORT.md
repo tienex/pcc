@@ -187,13 +187,46 @@ int main(void) {
 
 ## Automatic Linking
 
-The portable libraries are **automatically linked** when needed:
+The portable libraries are **automatically linked** when needed by the PCC driver:
 
-- If your system lacks `<uchar.h>`, programs are automatically linked with `-lunicode`
-- If your system lacks `<threads.h>`, programs are automatically linked with `-lthread`
-- On POSIX systems, `-lpthread` is linked automatically when needed
+### How It Works
 
-This means you don't need to manually specify these libraries when compiling your programs.
+1. During `./configure`, the build system:
+   - Checks for native `<uchar.h>` and `<threads.h>` support
+   - Sets `NEED_LIBUNICODE` and/or `NEED_LIBTHREAD` in `config.h` if needed
+   - Marks libraries for building via `BUILD_LIBUNICODE` and `BUILD_LIBTHREAD`
+
+2. During compilation, the PCC driver (`cc/driver/platform.c`):
+   - Checks the `NEED_*` defines from `config.h`
+   - Automatically adds `-lunicode` to link flags if `NEED_LIBUNICODE` is defined
+   - Automatically adds `-lthread -lpthread` to link flags if `NEED_LIBTHREAD` is defined
+   - Includes these in the standard library flags, so no manual intervention needed
+
+3. At install time:
+   - Headers (`uchar.h`, `threads.h`) are installed to `$(includedir)`
+   - Libraries (`libunicode.a`, `libthread.a`) are installed to `$(libdir)`
+   - They become part of the standard PCC runtime environment
+
+### What This Means for Users
+
+**No manual library flags needed:**
+```bash
+# This just works - no -lunicode or -lthread needed:
+pcc myprogram.c -o myprogram
+
+# The driver automatically adds the necessary libraries based on config.h
+```
+
+**Headers automatically available:**
+```c
+#include <uchar.h>    // Works automatically
+#include <threads.h>  // Works automatically
+```
+
+**Zero configuration:**
+- Users don't need to know whether they're using native or portable C11
+- The same code works everywhere
+- Build scripts don't need platform-specific library flags
 
 ## Platform Compatibility
 

@@ -317,4 +317,14 @@ init_platform_specific(const char *os_name, const char *arch_name)
 	compiler = COMPILER;
 	assembler = ASSEMBLER;
 	linker = LINKER;
+
+	/* Add portable C11 libraries if needed */
+#ifdef NEED_LIBUNICODE
+	strlist_append(&stdlib_flags, "-lunicode");
+#endif
+#ifdef NEED_LIBTHREAD
+	strlist_append(&stdlib_flags, "-lthread");
+	/* libthread wraps pthread on POSIX, so link pthread too */
+	strlist_append(&stdlib_flags, "-lpthread");
+#endif
 }

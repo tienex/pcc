@@ -756,11 +756,13 @@ BUILD_LIBTHREAD=no
 
 if test "$have_uchar" = "no"; then
     BUILD_LIBUNICODE=yes
+    AC_DEFINE(NEED_LIBUNICODE, 1, [Define if portable libunicode should be linked])
     AC_MSG_NOTICE([Will build portable libunicode (C11 Unicode support)])
 fi
 
 if test "$have_threads" = "no"; then
     BUILD_LIBTHREAD=yes
+    AC_DEFINE(NEED_LIBTHREAD, 1, [Define if portable libthread should be linked])
     AC_MSG_NOTICE([Will build portable libthread (C11 threading support)])
 fi
 
