@@ -111,6 +111,13 @@ typedef enum {
 	DBGFMT_MACHO,		/* Mach-O (modern macOS/iOS/Darwin) */
 	DBGFMT_OMF,		/* Object Module Format (MS-DOS/OS/2) */
 
+	/* Modern and specialized formats */
+	DBGFMT_PDB,		/* Program Database (Microsoft Visual Studio) */
+	DBGFMT_CTF,		/* Compact C Type Format (Solaris/illumos/FreeBSD) */
+	DBGFMT_BTF,		/* BPF Type Format (Linux kernel BPF) */
+	DBGFMT_PLAN9,		/* Plan 9 from Bell Labs */
+	DBGFMT_TADS,		/* Turbo Assembler Debug Symbols (Borland) */
+
 	DBGFMT_MAX
 } debug_format_t;
 
@@ -512,6 +519,46 @@ void debugsym_omf_init(void);
 void debugsym_omf_emit(debug_symbol_t *sym);
 void debugsym_omf_finish(void);
 debug_symbol_t *debugsym_omf_parse(void *data, size_t len);
+
+/*
+ * PDB debug format support (Microsoft Visual Studio)
+ */
+void debugsym_pdb_init(void);
+void debugsym_pdb_emit(debug_symbol_t *sym);
+void debugsym_pdb_finish(void);
+debug_symbol_t *debugsym_pdb_parse(void *data, size_t len);
+
+/*
+ * CTF debug format support (Solaris/illumos/FreeBSD)
+ */
+void debugsym_ctf_init(void);
+void debugsym_ctf_emit(debug_symbol_t *sym);
+void debugsym_ctf_finish(void);
+debug_symbol_t *debugsym_ctf_parse(void *data, size_t len);
+
+/*
+ * BTF debug format support (Linux kernel BPF)
+ */
+void debugsym_btf_init(void);
+void debugsym_btf_emit(debug_symbol_t *sym);
+void debugsym_btf_finish(void);
+debug_symbol_t *debugsym_btf_parse(void *data, size_t len);
+
+/*
+ * Plan 9 debug format support
+ */
+void debugsym_plan9_init(void);
+void debugsym_plan9_emit(debug_symbol_t *sym);
+void debugsym_plan9_finish(void);
+debug_symbol_t *debugsym_plan9_parse(void *data, size_t len);
+
+/*
+ * TADS debug format support (Borland)
+ */
+void debugsym_tads_init(void);
+void debugsym_tads_emit(debug_symbol_t *sym);
+void debugsym_tads_finish(void);
+debug_symbol_t *debugsym_tads_parse(void *data, size_t len);
 
 /* ===================================================================
  * UTILITY FUNCTIONS
