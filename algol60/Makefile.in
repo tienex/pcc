@@ -1,0 +1,21 @@
+#	$Id$
+#
+# Makefile.in for ALGOL 60+ compiler
+#
+VPATH=@srcdir@
+srcdir=@srcdir@
+top_srcdir=@top_srcdir@
+top_builddir=@top_builddir@
+
+SUBDIRS=algol acom
+
+all clean install:
+	for subdir in $(SUBDIRS); do \
+		(cd $$subdir && $(MAKE) $@) || exit 1; \
+	done
+
+distclean:
+	for subdir in $(SUBDIRS); do \
+		(cd $$subdir && $(MAKE) $@) || exit 1; \
+	done
+	rm -f Makefile
