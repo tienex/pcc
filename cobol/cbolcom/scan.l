@@ -115,7 +115,7 @@ CALL                    { return CALL; }
 COMPUTE                 { return COMPUTE; }
 DELETE                  { return DELETE; }
 DISPLAY                 { return DISPLAY; }
-DIVIDE                  { return DIVIDE; }
+DIVIDE                  { return DIVIDE_OP; }
 EVALUATE                { return EVALUATE; }
 EXIT                    { return EXIT; }
 GO[ \t]+TO              { return GOTO; }
