@@ -593,6 +593,7 @@ enable_c=no
 enable_cxx=no
 enable_pascal=no
 enable_f77=no
+enable_basic=no
 enable_bliss=no
 
 # Normalize language list (replace spaces with commas)
@@ -615,6 +616,9 @@ for lang in $enable_languages; do
 	f77|F77|fortran|FORTRAN)
 		enable_f77=yes
 		;;
+	basic|BASIC|bas|BAS)
+		enable_basic=yes
+		;;
 	bliss|BLISS)
 		enable_bliss=yes
 		;;
@@ -623,13 +627,14 @@ for lang in $enable_languages; do
 		enable_cxx=yes
 		enable_pascal=yes
 		enable_f77=yes
+		enable_basic=yes
 		enable_bliss=yes
 		;;
 	"")
 		# Skip empty entries
 		;;
 	*)
-		AC_MSG_ERROR([Unknown language '$lang'. Supported: c, c++, pascal, f77, bliss, all])
+		AC_MSG_ERROR([Unknown language '$lang'. Supported: c, c++, pascal, f77, basic, bliss, all])
 		;;
 	esac
 done
@@ -645,6 +650,7 @@ AC_SUBST(enable_c)
 AC_SUBST(enable_cxx)
 AC_SUBST(enable_pascal)
 AC_SUBST(enable_f77)
+AC_SUBST(enable_basic)
 AC_SUBST(enable_bliss)
 
 # Process architecture selection
@@ -1251,6 +1257,15 @@ if test "$enable_pascal" = "yes"; then
 		pascal/pcom/Makefile"
 fi
 
+# Add BASIC if enabled
+if test "$enable_basic" = "yes"; then
+	CONFIG_MAKEFILES="$CONFIG_MAKEFILES
+		basic/Makefile
+		basic/basic/Makefile
+		basic/pbc/Makefile
+		basic/libbasic/Makefile"
+fi
+
 # Add BLISS if enabled
 if test "$enable_bliss" = "yes"; then
 	CONFIG_MAKEFILES="$CONFIG_MAKEFILES
@@ -1261,6 +1276,7 @@ if test "$enable_bliss" = "yes"; then
 fi
 
 AC_CONFIG_FILES([$CONFIG_MAKEFILES])
+AC_OUTPUT
 AC_OUTPUT
 
 eval "exec_prefix=$exec_prefix"
@@ -1273,6 +1289,7 @@ test "$enable_c" = "yes" && ENABLED_LANGUAGES="$ENABLED_LANGUAGES c"
 test "$enable_cxx" = "yes" && ENABLED_LANGUAGES="$ENABLED_LANGUAGES c++"
 test "$enable_pascal" = "yes" && ENABLED_LANGUAGES="$ENABLED_LANGUAGES pascal"
 test "$enable_f77" = "yes" && ENABLED_LANGUAGES="$ENABLED_LANGUAGES f77"
+test "$enable_basic" = "yes" && ENABLED_LANGUAGES="$ENABLED_LANGUAGES basic"
 test "$enable_bliss" = "yes" && ENABLED_LANGUAGES="$ENABLED_LANGUAGES bliss"
 ENABLED_LANGUAGES=`echo $ENABLED_LANGUAGES | sed 's/^ *//'`
 

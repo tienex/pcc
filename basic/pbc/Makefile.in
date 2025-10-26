@@ -1,0 +1,71 @@
+# Makefile.in for PBC compiler frontend
+VPATH=@srcdir@
+srcdir=@srcdir@
+top_srcdir=@top_srcdir@
+top_builddir=@top_builddir@
+prefix = @prefix@
+exec_prefix = @exec_prefix@
+libexecdir = @libexecdir@
+CC = @CC@
+EXEEXT = @EXEEXT@
+YACC = @YACC@
+LEX = @LEX@
+CFLAGS = @CFLAGS@
+CPPFLAGS = @CPPFLAGS@ \
+	-I$(srcdir) \
+	-I$(top_builddir) \
+	-I$(top_srcdir)/mip \
+	-I$(top_srcdir)/common
+LDFLAGS = @LDFLAGS@
+LIBS = @LIBS@
+INSTALL = @INSTALL@
+INSTALL_PROGRAM = @INSTALL_PROGRAM@
+
+OBJS=main.o scan_manual.o pgram.o error.o dialect.o types.o symtab.o builtins.o
+DEST=pbc$(EXEEXT)
+
+all: $(DEST)
+
+$(DEST): $(OBJS)
+	$(CC) $(LDFLAGS) $(OBJS) -o $@ $(LIBS)
+
+# Use hand-written scanner since flex/lex may not be available
+scan_manual.o: $(srcdir)/scan_manual.c y.tab.h $(srcdir)/pass1.h
+	$(CC) $(CPPFLAGS) $(CFLAGS) -c $(srcdir)/scan_manual.c
+
+pgram.c y.tab.h: $(srcdir)/pgram.y
+	$(YACC) -d $(srcdir)/pgram.y
+	mv y.tab.c pgram.c
+
+main.o: $(srcdir)/main.c $(srcdir)/pass1.h
+	$(CC) $(CPPFLAGS) $(CFLAGS) -c $(srcdir)/main.c
+
+error.o: $(srcdir)/error.c $(srcdir)/error.h
+	$(CC) $(CPPFLAGS) $(CFLAGS) -c $(srcdir)/error.c
+
+dialect.o: $(srcdir)/dialect.c $(srcdir)/dialect.h
+	$(CC) $(CPPFLAGS) $(CFLAGS) -c $(srcdir)/dialect.c
+
+types.o: $(srcdir)/types.c $(srcdir)/pass1.h
+	$(CC) $(CPPFLAGS) $(CFLAGS) -c $(srcdir)/types.c
+
+symtab.o: $(srcdir)/symtab.c $(srcdir)/pass1.h
+	$(CC) $(CPPFLAGS) $(CFLAGS) -c $(srcdir)/symtab.c
+
+builtins.o: $(srcdir)/builtins.c $(srcdir)/pass1.h
+	$(CC) $(CPPFLAGS) $(CFLAGS) -c $(srcdir)/builtins.c
+
+pgram.o: pgram.c $(srcdir)/pass1.h
+	$(CC) $(CPPFLAGS) $(CFLAGS) -c pgram.c
+
+install: all
+	test -d "$(DESTDIR)$(libexecdir)" || mkdir -p "$(DESTDIR)$(libexecdir)"
+	$(INSTALL_PROGRAM) $(DEST) "$(DESTDIR)$(libexecdir)/$(DEST)"
+
+clean:
+	rm -f $(OBJS) $(DEST) pgram.c y.tab.h y.tab.c *.o
+
+distclean: clean
+	rm -f Makefile
+
+.PHONY: all install clean distclean
