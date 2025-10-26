@@ -21,7 +21,7 @@ stabs=no
 dwarf=no
 # allowed: UNSIGNED (4-char u_int), INT (4-char int), SHORT (2-char u_short)
 wchar_type=INT
-# Default assembler format (gnu-as, nasm, yasm, apple-as, masm, tasm, wasm)
+# Default assembler format (gnu-as, nasm, yasm, fasm, apple-as, masm, jwasm, uasm, tasm, wasm)
 asm_format=gnu-as
 
 case "$target_os" in
@@ -489,7 +489,7 @@ if test "$useyasm" = "yes"; then
 fi
 AC_ARG_WITH(asm-format,
 	AS_HELP_STRING([--with-asm-format=<format>],
-		[Specify assembly output format: gnu-as (default), nasm, yasm, apple-as, masm, tasm, wasm]),
+		[Specify assembly output format: gnu-as (default), nasm, yasm, fasm, apple-as, masm, jwasm, uasm, tasm, wasm]),
 	asm_format=$withval,
 	[])
 AC_ARG_ENABLE(native,

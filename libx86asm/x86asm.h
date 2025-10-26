@@ -34,7 +34,10 @@ typedef enum {
     ASM_FMT_WASM,        /* Watcom Assembler */
     ASM_FMT_OWASM,       /* Open Watcom Assembler */
     ASM_FMT_NASM,        /* Netwide Assembler */
-    ASM_FMT_YASM         /* Yet Another Assembler */
+    ASM_FMT_YASM,        /* Yet Another Assembler */
+    ASM_FMT_FASM,        /* Flat Assembler */
+    ASM_FMT_JWASM,       /* JWasm (MASM-compatible) */
+    ASM_FMT_UASM         /* UASM (JWasm successor) */
 } x86asm_format_t;
 
 /* Register types */

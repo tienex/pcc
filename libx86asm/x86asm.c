@@ -20,6 +20,7 @@ extern const x86asm_ops_t x86asm_ops_wasm;
 extern const x86asm_ops_t x86asm_ops_owasm;
 extern const x86asm_ops_t x86asm_ops_nasm;
 extern const x86asm_ops_t x86asm_ops_yasm;
+extern const x86asm_ops_t x86asm_ops_fasm;
 
 /*
  * Create a new emitter context
@@ -70,6 +71,14 @@ x86asm_create(x86asm_format_t format, FILE *output, int bits)
         break;
     case ASM_FMT_YASM:
         ctx->ops = &x86asm_ops_yasm;
+        break;
+    case ASM_FMT_FASM:
+        ctx->ops = &x86asm_ops_fasm;
+        break;
+    case ASM_FMT_JWASM:
+    case ASM_FMT_UASM:
+        /* JWasm and UASM are MASM-compatible */
+        ctx->ops = &x86asm_ops_masm;
         break;
     default:
         free(ctx);

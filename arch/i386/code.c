@@ -55,8 +55,14 @@ get_asm_format(void)
 		return ASM_FMT_NASM;
 	if (strcmp(ASM_FORMAT, "yasm") == 0)
 		return ASM_FMT_YASM;
+	if (strcmp(ASM_FORMAT, "fasm") == 0)
+		return ASM_FMT_FASM;
 	if (strcmp(ASM_FORMAT, "masm") == 0)
 		return ASM_FMT_MASM;
+	if (strcmp(ASM_FORMAT, "jwasm") == 0)
+		return ASM_FMT_JWASM;
+	if (strcmp(ASM_FORMAT, "uasm") == 0)
+		return ASM_FMT_UASM;
 	if (strcmp(ASM_FORMAT, "tasm") == 0)
 		return ASM_FMT_TASM;
 	if (strcmp(ASM_FORMAT, "wasm") == 0)

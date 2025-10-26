@@ -11,7 +11,7 @@ LDFLAGS =
 # Library sources
 LIB_SRCS = x86asm.c x86asm_util.c \
            emit_gnu_as.c emit_apple_as.c \
-           emit_nasm.c emit_yasm.c \
+           emit_nasm.c emit_yasm.c emit_fasm.c \
            emit_masm.c emit_tasm.c \
            emit_wasm.c
 
@@ -71,6 +71,7 @@ emit_gnu_as.o: emit_gnu_as.c x86asm_internal.h x86asm.h
 emit_apple_as.o: emit_apple_as.c x86asm_internal.h x86asm.h
 emit_nasm.o: emit_nasm.c x86asm_internal.h x86asm.h
 emit_yasm.o: emit_yasm.c x86asm_internal.h x86asm.h
+emit_fasm.o: emit_fasm.c x86asm_internal.h x86asm.h
 emit_masm.o: emit_masm.c x86asm_internal.h x86asm.h
 emit_tasm.o: emit_tasm.c x86asm_internal.h x86asm.h
 emit_wasm.o: emit_wasm.c x86asm_internal.h x86asm.h
