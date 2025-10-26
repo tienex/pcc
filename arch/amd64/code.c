@@ -150,7 +150,6 @@ defloc(struct symtab *sp)
 {
 	char *name;
 	char labelbuf[64];
-	char directive[256];
 
 	if (!asm_ctx) return;
 
@@ -167,15 +166,13 @@ defloc(struct symtab *sp)
 #ifndef MACHOABI
 	/* Emit type and size directives for ELF */
 	if (sp->sclass == EXTDEF) {
-		if (ISFTN(sp->stype)) {
-			snprintf(directive, sizeof(directive), ".type %s,@function", name);
-		} else {
-			snprintf(directive, sizeof(directive), ".type %s,@object", name);
-			x86asm_directive(asm_ctx, directive, NULL);
-			snprintf(directive, sizeof(directive), ".size %s,%d", name,
-			    (int)tsize(sp->stype, sp->sdf, sp->sap)/SZCHAR);
+		x86asm_symbol_type(asm_ctx, name,
+		    ISFTN(sp->stype) ? SYMBOL_TYPE_FUNCTION : SYMBOL_TYPE_OBJECT);
+
+		if (!ISFTN(sp->stype)) {
+			size_t sz = (size_t)tsize(sp->stype, sp->sdf, sp->sap)/SZCHAR;
+			x86asm_symbol_size(asm_ctx, name, sz);
 		}
-		x86asm_directive(asm_ctx, directive, NULL);
 	}
 #endif
 }
@@ -516,11 +513,11 @@ ejobcode(int flag)
 	}
 
 	if (asm_ctx) {
-		char comment[256];
-		snprintf(comment, sizeof(comment), "PCC: %s", VERSSTR);
-		x86asm_comment(asm_ctx, comment);
+		char ident_str[256];
+		snprintf(ident_str, sizeof(ident_str), "PCC: %s", VERSSTR);
+		x86asm_ident(asm_ctx, ident_str);
 #ifndef MACHOABI
-		x86asm_directive(asm_ctx, ".end", NULL);
+		x86asm_end(asm_ctx);
 #endif
 		x86asm_destroy(asm_ctx);
 		asm_ctx = NULL;

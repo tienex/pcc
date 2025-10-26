@@ -260,3 +260,148 @@ x86asm_reg_name(x86asm_ctx_t *ctx, x86asm_reg_t reg)
 
     return x86asm_reg_name_internal(ctx->format, reg, ctx->bits);
 }
+
+/*
+ * High-level directive: Symbol type
+ * Emits format-specific symbol type directive
+ */
+void
+x86asm_symbol_type(x86asm_ctx_t *ctx, const char *symbol,
+                   x86asm_symbol_type_t type)
+{
+    char directive[512];
+
+    if (!ctx || !symbol)
+        return;
+
+    /* Only emit for formats that support it (ELF-based formats) */
+    switch (ctx->format) {
+    case ASM_FMT_GNU_AS:
+    case ASM_FMT_NASM:
+    case ASM_FMT_YASM:
+        if (type == SYMBOL_TYPE_FUNCTION) {
+            snprintf(directive, sizeof(directive), "%s,@function", symbol);
+        } else if (type == SYMBOL_TYPE_OBJECT) {
+            snprintf(directive, sizeof(directive), "%s,@object", symbol);
+        } else {
+            return; /* NOTYPE - don't emit */
+        }
+        x86asm_directive(ctx, "type", directive);
+        break;
+
+    default:
+        /* Other formats don't use .type directive */
+        break;
+    }
+}
+
+/*
+ * High-level directive: Symbol size
+ * Emits format-specific symbol size directive
+ */
+void
+x86asm_symbol_size(x86asm_ctx_t *ctx, const char *symbol, size_t size)
+{
+    char directive[512];
+
+    if (!ctx || !symbol)
+        return;
+
+    /* Only emit for formats that support it (ELF-based formats) */
+    switch (ctx->format) {
+    case ASM_FMT_GNU_AS:
+    case ASM_FMT_NASM:
+    case ASM_FMT_YASM:
+        snprintf(directive, sizeof(directive), "%s,%zu", symbol, size);
+        x86asm_directive(ctx, "size", directive);
+        break;
+
+    default:
+        /* Other formats don't use .size directive */
+        break;
+    }
+}
+
+/*
+ * High-level directive: Ident/version string
+ * Emits compiler identification string
+ */
+void
+x86asm_ident(x86asm_ctx_t *ctx, const char *ident_string)
+{
+    char directive[512];
+
+    if (!ctx || !ident_string)
+        return;
+
+    switch (ctx->format) {
+    case ASM_FMT_GNU_AS:
+    case ASM_FMT_APPLE_AS:
+        snprintf(directive, sizeof(directive), "\"%s\"", ident_string);
+        x86asm_directive(ctx, "ident", directive);
+        break;
+
+    case ASM_FMT_NASM:
+    case ASM_FMT_YASM:
+        /* NASM/YASM don't have .ident, but we can use a comment */
+        fprintf(ctx->output, "\t; %s\n", ident_string);
+        break;
+
+    case ASM_FMT_MASM:
+    case ASM_FMT_ML:
+    case ASM_FMT_TASM:
+        /* MASM-family: use comment */
+        fprintf(ctx->output, "; %s\n", ident_string);
+        break;
+
+    case ASM_FMT_WASM:
+    case ASM_FMT_OWASM:
+        /* Watcom: use comment */
+        fprintf(ctx->output, "; %s\n", ident_string);
+        break;
+    }
+}
+
+/*
+ * High-level directive: Indirect symbol (Mach-O)
+ * Emits .indirect_symbol directive for Mach-O stub tables
+ */
+void
+x86asm_indirect_symbol(x86asm_ctx_t *ctx, const char *symbol)
+{
+    if (!ctx || !symbol)
+        return;
+
+    /* This is primarily for Mach-O (Apple AS) */
+    switch (ctx->format) {
+    case ASM_FMT_APPLE_AS:
+        x86asm_directive(ctx, "indirect_symbol", symbol);
+        break;
+
+    default:
+        /* Other formats don't use .indirect_symbol */
+        break;
+    }
+}
+
+/*
+ * High-level directive: End
+ * Emits end-of-file directive for formats that require it
+ */
+void
+x86asm_end(x86asm_ctx_t *ctx)
+{
+    if (!ctx)
+        return;
+
+    switch (ctx->format) {
+    case ASM_FMT_GNU_AS:
+        /* ELF format uses .end */
+        x86asm_directive(ctx, "end", NULL);
+        break;
+
+    default:
+        /* Most formats don't need an explicit end directive */
+        break;
+    }
+}

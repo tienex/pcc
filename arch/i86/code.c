@@ -260,10 +260,10 @@ bfcode(struct symtab **sp, int cnt)
 void
 ejobcode(int flag)
 {
-	char comment[256];
+	char ident_str[256];
 	if (asm_ctx) {
-		snprintf(comment, sizeof(comment), "PCC: %s", VERSSTR);
-		x86asm_comment(asm_ctx, comment);
+		snprintf(ident_str, sizeof(ident_str), "PCC: %s", VERSSTR);
+		x86asm_ident(asm_ctx, ident_str);
 		x86asm_destroy(asm_ctx);
 		asm_ctx = NULL;
 	}

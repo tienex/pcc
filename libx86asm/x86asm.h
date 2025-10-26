@@ -331,6 +331,30 @@ void x86asm_align(x86asm_ctx_t *ctx, int alignment);
 /* Emit a raw directive */
 void x86asm_directive(x86asm_ctx_t *ctx, const char *name, const char *value);
 
+/* High-level directive functions */
+
+/* Symbol type (for ELF: .type symbol,@function or @object) */
+typedef enum {
+	SYMBOL_TYPE_FUNCTION,
+	SYMBOL_TYPE_OBJECT,
+	SYMBOL_TYPE_NOTYPE
+} x86asm_symbol_type_t;
+
+void x86asm_symbol_type(x86asm_ctx_t *ctx, const char *symbol,
+                        x86asm_symbol_type_t type);
+
+/* Symbol size (for ELF: .size symbol,size) */
+void x86asm_symbol_size(x86asm_ctx_t *ctx, const char *symbol, size_t size);
+
+/* Ident/version string (e.g., .ident "compiler version") */
+void x86asm_ident(x86asm_ctx_t *ctx, const char *ident_string);
+
+/* Indirect symbol (for Mach-O: .indirect_symbol symbol) */
+void x86asm_indirect_symbol(x86asm_ctx_t *ctx, const char *symbol);
+
+/* End directive (for some formats like ELF: .end) */
+void x86asm_end(x86asm_ctx_t *ctx);
+
 /* Helper functions for creating operands */
 x86asm_operand_t x86asm_op_reg(x86asm_reg_t reg, int size);
 x86asm_operand_t x86asm_op_imm(int64_t value, int size);

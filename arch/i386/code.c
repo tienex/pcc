@@ -117,7 +117,6 @@ defloc(struct symtab *sp)
 {
 	char *name;
 	char labelbuf[64];
-	char directive[256];
 
 	if (!asm_ctx) return;
 
@@ -134,20 +133,19 @@ defloc(struct symtab *sp)
 #if defined(ELFABI)
 	/* Emit type directive */
 	if (sp->sclass == EXTDEF) {
-		snprintf(directive, sizeof(directive), ".type %s,@%s",
-		    name, ISFTN(sp->stype) ? "function" : "object");
-		x86asm_directive(asm_ctx, directive, NULL);
+		x86asm_symbol_type(asm_ctx, name,
+		    ISFTN(sp->stype) ? SYMBOL_TYPE_FUNCTION : SYMBOL_TYPE_OBJECT);
 	}
 
 	/* Emit size directive for data objects */
 	if (!ISFTN(sp->stype)) {
-		if (sp->slevel == 0)
-			snprintf(directive, sizeof(directive), ".size %s,%d",
-			    name, (int)tsize(sp->stype, sp->sdf, sp->sap)/SZCHAR);
-		else
-			snprintf(directive, sizeof(directive), ".size " LABFMT ",%d",
-			    sp->soffset, (int)tsize(sp->stype, sp->sdf, sp->sap)/SZCHAR);
-		x86asm_directive(asm_ctx, directive, NULL);
+		size_t sz = (size_t)tsize(sp->stype, sp->sdf, sp->sap)/SZCHAR;
+		if (sp->slevel == 0) {
+			x86asm_symbol_size(asm_ctx, name, sz);
+		} else {
+			snprintf(labelbuf, sizeof(labelbuf), LABFMT, sp->soffset);
+			x86asm_symbol_size(asm_ctx, labelbuf, sz);
+		}
 	}
 #endif
 }
@@ -455,14 +453,12 @@ ejobcode(int flag)
 	if (kflag && asm_ctx) {
 		struct stub *p;
 		char labelbuf[256];
-		char directive[512];
 
 		DLIST_FOREACH(p, &stublist, link) {
 			x86asm_directive(asm_ctx, ".section __IMPORT,__jump_table,symbol_stubs,self_modifying_code+pure_instructions,5", NULL);
 			snprintf(labelbuf, sizeof(labelbuf), "L%s$stub", p->name);
 			x86asm_label(asm_ctx, labelbuf, 0);
-			snprintf(directive, sizeof(directive), ".indirect_symbol %s", p->name);
-			x86asm_directive(asm_ctx, directive, NULL);
+			x86asm_indirect_symbol(asm_ctx, p->name);
 			x86asm_directive(asm_ctx, "hlt ; hlt ; hlt ; hlt ; hlt", NULL);
 			x86asm_directive(asm_ctx, ".subsections_via_symbols", NULL);
 		}
@@ -471,8 +467,7 @@ ejobcode(int flag)
 		DLIST_FOREACH(p, &nlplist, link) {
 			snprintf(labelbuf, sizeof(labelbuf), "L%s$non_lazy_ptr", p->name);
 			x86asm_label(asm_ctx, labelbuf, 0);
-			snprintf(directive, sizeof(directive), ".indirect_symbol %s", p->name);
-			x86asm_directive(asm_ctx, directive, NULL);
+			x86asm_indirect_symbol(asm_ctx, p->name);
 			x86asm_directive(asm_ctx, ".long 0", NULL);
 	        }
 
@@ -480,9 +475,9 @@ ejobcode(int flag)
 #endif
 
 	if (asm_ctx) {
-		char comment[256];
-		snprintf(comment, sizeof(comment), "PCC: %s", VERSSTR);
-		x86asm_comment(asm_ctx, comment);
+		char ident_str[256];
+		snprintf(ident_str, sizeof(ident_str), "PCC: %s", VERSSTR);
+		x86asm_ident(asm_ctx, ident_str);
 		x86asm_destroy(asm_ctx);
 		asm_ctx = NULL;
 	}
