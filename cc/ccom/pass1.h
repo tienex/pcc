@@ -190,6 +190,14 @@ extern	int contlab;
 extern	int flostat;
 extern	int retlab;
 extern	int doing_init, statinit;
+
+/* SEH (Structured Exception Handling) labels */
+extern	int sehleavlab;
+extern	int sehexcept;
+extern	int sehfinally;
+extern	int sehendlab;
+extern	int sehtrylab;
+extern	P1ND *sehfilter;
 extern	short sztable[];
 extern	char *astypnames[];
 

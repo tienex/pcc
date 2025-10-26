@@ -1,0 +1,36 @@
+# Build artifacts
+*.o
+*.a
+*.so
+*.dylib
+*.exe
+
+# Generated files from bison/yacc
+*.tab.c
+*.tab.h
+y.tab.c
+y.tab.h
+
+# Generated files from flex/lex
+lex.yy.c
+
+# Autoconf/configure generated files
+config.log
+config.status
+autom4te.cache/
+Makefile
+configure
+
+# Editor and IDE files
+*~
+*.swp
+*.swo
+.*.swp
+.DS_Store
+.vscode/
+.idea/
+
+# Compiler outputs
+*.out
+a.out
+core

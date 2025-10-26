@@ -218,7 +218,11 @@ struct keywords {
 	char *name;
 	int cword, wclass;
 } keywords[] = {
+	{ "__except", C_EXCEPT, DEFKW },
+	{ "__finally", C_FINALLY, DEFKW },
 	{ "__func__", 0, KWFUNC },
+	{ "__leave", C_LEAVE, DEFKW },
+	{ "__try", C_TRY, DEFKW },
 	{ "_Alignas", C_ALIGNAS, DEFKW },
 	{ "_Alignof", C_ALIGNOF, DEFKW },
 	{ "_Atomic", C_ATOMIC, DEFKW },
