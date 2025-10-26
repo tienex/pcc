@@ -28,7 +28,7 @@ C_SUBDIRS=	common/abi include
 CC_SUBDIR=	cc
 EXTRA_SUBDIRS=	pascal f77
 ALL_SUBDIRS=	$(PORTABLE_LIBS) $(C_SUBDIRS) $(CC_SUBDIR)
-DIST_SUBDIRS=	$(C_SUBDIRS) $(CC_SUBDIR) $(EXTRA_SUBDIRS) libunicode libthread libstdbit libckdint libdecimal libmetaware libblocks
+DIST_SUBDIRS=	$(C_SUBDIRS) $(CC_SUBDIR) $(EXTRA_SUBDIRS) libunicode libthread libstdbit libckdint libdecimal libmetaware libblocks libpascal
 
 # Default targets - conditional on bootstrap
 all:

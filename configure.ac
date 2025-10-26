@@ -1083,6 +1083,7 @@ AC_CONFIG_FILES([Makefile
 		libdecimal/Makefile
 		libmetaware/Makefile
 		libblocks/Makefile
+		libpascal/Makefile
 ])
 AC_OUTPUT
 
