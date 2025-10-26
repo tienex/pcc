@@ -1,0 +1,34 @@
+#	$Id$
+#
+# Makefile.in for go compiler
+#
+
+VPATH=@srcdir@
+srcdir=@srcdir@
+top_srcdir=@top_srcdir@
+top_builddir=@top_builddir@
+
+SUBDIRS = gocom go
+
+all:
+	for dir in $(SUBDIRS); do \
+		(cd $$dir && $(MAKE) all) || exit 1; \
+	done
+
+install:
+	for dir in $(SUBDIRS); do \
+		(cd $$dir && $(MAKE) install) || exit 1; \
+	done
+
+clean:
+	for dir in $(SUBDIRS); do \
+		(cd $$dir && $(MAKE) clean) || exit 1; \
+	done
+
+distclean:
+	for dir in $(SUBDIRS); do \
+		(cd $$dir && $(MAKE) distclean) || exit 1; \
+	done
+	rm -f Makefile
+
+.PHONY: all install clean distclean
