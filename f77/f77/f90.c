@@ -33,7 +33,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-char xxxvers[] = "FORTRAN 90 DRIVER, VERSION 3.0 (F66/F77/F95/F2003/F2008/F2018 + OOP)\n";
+char xxxvers[] = "FORTRAN 90 DRIVER, VERSION 3.1 (F66-F2018 + OOP + Vendor Extensions)\n";
 
 #include <sys/wait.h>
 
@@ -115,6 +115,13 @@ static flag enable_oop		= NO;	/* Enable OOP features (classes, inheritance) */
 static flag enable_coarrays	= NO;	/* Enable coarray parallelism */
 static flag enable_submodules	= NO;	/* Enable submodules (F2008) */
 static flag enable_teams	= NO;	/* Enable teams and events (F2018) */
+
+/* Vendor-specific extension flags */
+static flag ms_extensions	= NO;	/* Microsoft PowerFortran extensions */
+static flag hp_extensions	= NO;	/* HP Fortran extensions */
+static flag dec_extensions	= NO;	/* DEC Fortran extensions */
+static flag ibm_extensions	= NO;	/* IBM XL Fortran extensions */
+static flag cray_extensions	= NO;	/* Cray Fortran extensions */
 
 static char *setdoto(char *), *lastchar(char *), *lastfield(char *);
 static void intrupt(int);
@@ -285,6 +292,47 @@ main(int argc, char **argv)
 				} else if (strcmp(s, "fno-teams") == 0) {
 					enable_teams = NO;
 					addarg(ffary, &ffmax, "-fno-teams");
+					goto endfor;
+				/* Vendor extension flags */
+				} else if (strcmp(s, "fms-extensions") == 0) {
+					ms_extensions = YES;
+					addarg(ffary, &ffmax, "-fms-extensions");
+					goto endfor;
+				} else if (strcmp(s, "fno-ms-extensions") == 0) {
+					ms_extensions = NO;
+					addarg(ffary, &ffmax, "-fno-ms-extensions");
+					goto endfor;
+				} else if (strcmp(s, "fhp-extensions") == 0) {
+					hp_extensions = YES;
+					addarg(ffary, &ffmax, "-fhp-extensions");
+					goto endfor;
+				} else if (strcmp(s, "fno-hp-extensions") == 0) {
+					hp_extensions = NO;
+					addarg(ffary, &ffmax, "-fno-hp-extensions");
+					goto endfor;
+				} else if (strcmp(s, "fdec-extensions") == 0) {
+					dec_extensions = YES;
+					addarg(ffary, &ffmax, "-fdec-extensions");
+					goto endfor;
+				} else if (strcmp(s, "fno-dec-extensions") == 0) {
+					dec_extensions = NO;
+					addarg(ffary, &ffmax, "-fno-dec-extensions");
+					goto endfor;
+				} else if (strcmp(s, "fibm-extensions") == 0) {
+					ibm_extensions = YES;
+					addarg(ffary, &ffmax, "-fibm-extensions");
+					goto endfor;
+				} else if (strcmp(s, "fno-ibm-extensions") == 0) {
+					ibm_extensions = NO;
+					addarg(ffary, &ffmax, "-fno-ibm-extensions");
+					goto endfor;
+				} else if (strcmp(s, "fcray-extensions") == 0) {
+					cray_extensions = YES;
+					addarg(ffary, &ffmax, "-fcray-extensions");
+					goto endfor;
+				} else if (strcmp(s, "fno-cray-extensions") == 0) {
+					cray_extensions = NO;
+					addarg(ffary, &ffmax, "-fno-cray-extensions");
 					goto endfor;
 				}
 				break;

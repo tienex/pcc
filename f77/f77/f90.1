@@ -34,14 +34,15 @@
 .\"
 .TH F90 1
 .SH NAME
-f90 \- Fortran 90 compiler (F66/F77/F95/F2003/F2008/F2018 with OOP support)
+f90 \- Fortran compiler (F66-F2018 + OOP + MS/HP/DEC/IBM/Cray extensions)
 .SH SYNOPSIS
 .B f90
 [ option ] ... file ...
 .SH DESCRIPTION
 .I F90
-is a modern Fortran compiler supporting standards from Fortran 66 through Fortran 2018,
-with full object-oriented programming (OOP) capabilities.
+is a comprehensive Fortran compiler supporting all major standards from Fortran 66 through Fortran 2018,
+with full object-oriented programming (OOP) capabilities and vendor-specific extensions
+from Microsoft PowerFortran, HP, DEC, IBM XL Fortran, and Cray compilers.
 It accepts several types of arguments:
 .PP
 Arguments whose names end with `.f' are taken to be
@@ -160,6 +161,31 @@ Automatically enabled with
 .B -std=f2018
 or later.
 .TP
+.SM
+.BR \-fms-extensions " / " \-fno-ms-extensions
+Enable or disable Microsoft PowerFortran extensions.
+Includes STRUCTURE/UNION, RECORD, VOLATILE, packed data types, and MS-specific intrinsics.
+.TP
+.SM
+.BR \-fhp-extensions " / " \-fno-hp-extensions
+Enable or disable HP Fortran extensions.
+Includes HP-UX specific features, POINTER statements, TASK COMMON, and HP intrinsics.
+.TP
+.SM
+.BR \-fdec-extensions " / " \-fno-dec-extensions
+Enable or disable DEC (Digital Equipment Corporation) Fortran extensions.
+Includes VAX/VMS features, STRUCTURE/UNION, RECORD, %VAL/%REF/%DESCR, and DEC intrinsics.
+.TP
+.SM
+.BR \-fibm-extensions " / " \-fno-ibm-extensions
+Enable or disable IBM XL Fortran extensions.
+Includes IBM-specific directives (SMP, parallel processing), POINTER extensions, and IBM intrinsics.
+.TP
+.SM
+.BR \-fcray-extensions " / " \-fno-cray-extensions
+Enable or disable Cray Fortran extensions.
+Includes Cray pointers, TASK COMMON, Cray directives, vector intrinsics, and Cray-specific optimizations.
+.TP
 .BR \-u
 Make the default type of a variable `undefined' rather than using the default Fortran rules.
 .TP
@@ -268,6 +294,129 @@ Example OOP program structure:
     type(Circle), target :: mycircle
     myshape => mycircle
 .fi
+.SH VENDOR EXTENSIONS
+The
+.I f90
+compiler supports proprietary extensions from major historical and commercial Fortran compilers.
+These extensions can be enabled individually or in combination.
+.PP
+.B Microsoft PowerFortran Extensions (-fms-extensions):
+.RS
+.TP
+.B STRUCTURE and UNION
+Non-standard record structures similar to C structs and unions.
+Provides memory layout control and interoperability with C code.
+.TP
+.B RECORD
+Declares variables of STRUCTURE type, supporting nested structures.
+.TP
+.B VOLATILE
+Declares variables as volatile to prevent compiler optimization.
+Essential for memory-mapped I/O and shared memory programming.
+.TP
+.B Packed Data Types
+Support for efficient memory packing of data structures.
+.TP
+.B MS-Specific Intrinsics
+SIZEOF, LOC, and other Microsoft-specific built-in functions.
+.RE
+.PP
+.B HP Fortran Extensions (-fhp-extensions):
+.RS
+.TP
+.B POINTER Statement
+HP's original pointer syntax (different from Cray pointers).
+.TP
+.B TASK COMMON
+Thread-private common blocks for parallel programming.
+.TP
+.B HP-UX Features
+HP-UX operating system specific functionality and I/O extensions.
+.TP
+.B HP Intrinsics
+HP-specific mathematical and system intrinsic functions.
+.RE
+.PP
+.B DEC Fortran Extensions (-fdec-extensions):
+.RS
+.TP
+.B VAX/VMS Features
+Digital VAX and VMS operating system compatibility.
+.TP
+.B STRUCTURE/UNION/RECORD
+DEC's version of non-standard data structures.
+.TP
+.B %VAL, %REF, %DESCR
+Argument passing mechanisms for interoperability with other languages.
+%VAL passes by value, %REF by reference, %DESCR by descriptor.
+.TP
+.B DEC Intrinsics
+IDATE, SECNDS, RAN, and other DEC-specific functions.
+.TP
+.B BYTE Data Type
+8-bit integer data type for low-level operations.
+.RE
+.PP
+.B IBM XL Fortran Extensions (-fibm-extensions):
+.RS
+.TP
+.B SMP Directives
+Symmetric multiprocessing directives for parallel loops and regions.
+.TP
+.B POINTER Extensions
+IBM's extended pointer functionality with advanced features.
+.TP
+.B IBM Intrinsics
+SYSTEM, FLUSH, and IBM-specific built-in functions.
+.TP
+.B Parallel Processing
+IBM parallel DO extensions and worksharing constructs.
+.RE
+.PP
+.B Cray Fortran Extensions (-fcray-extensions):
+.RS
+.TP
+.B Cray Pointers
+Powerful low-level pointer mechanism for array access and memory manipulation.
+Syntax: POINTER (pointer, pointee)
+.TP
+.B TASK COMMON
+Per-thread common blocks for multitasking programs.
+.TP
+.B Cray Directives
+Compiler directives for vectorization and optimization hints.
+.TP
+.B Vector Intrinsics
+CVMGP, CVMGN, CVMGT, and other vector processing intrinsics.
+.TP
+.B Cray-Specific Optimizations
+Support for Cray vector register hints and memory access patterns.
+.RE
+.PP
+.B Common Extensions Across Vendors:
+.RS
+Many vendor extensions overlap in functionality. Common features include:
+.TP
+.B Non-Standard I/O
+OPEN with vendor-specific keywords (SHARED, READONLY, etc.)
+.TP
+.B Extended Precision
+REAL*16, COMPLEX*32 on systems that support quad precision
+.TP
+.B Mixed Language Support
+Enhanced interoperability with C, C++, and assembly language
+.TP
+.B System Interface
+Access to operating system functions and environment variables
+.RE
+.PP
+.B Compatibility Notes:
+.PP
+Vendor extensions may conflict with each other or with standard Fortran features.
+When multiple vendor extension sets are enabled simultaneously, the compiler will
+attempt to resolve conflicts by prioritizing in this order: Cray, IBM, DEC, HP, Microsoft.
+For maximum compatibility with legacy code, enable only the specific vendor
+extension set required for your codebase.
 .SH FILES
 .nf
 .ta \w'/usr/lib/libF77.a   'u
