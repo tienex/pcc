@@ -14,14 +14,8 @@ BOOTSTRAP_COMPARE = @bootstrap_compare@
 BUILD_LIBUNICODE=@BUILD_LIBUNICODE@
 BUILD_LIBTHREAD=@BUILD_LIBTHREAD@
 
-# Build portable libraries if needed
-PORTABLE_LIBS=
-ifeq ($(BUILD_LIBUNICODE),yes)
-PORTABLE_LIBS += libunicode
-endif
-ifeq ($(BUILD_LIBTHREAD),yes)
-PORTABLE_LIBS += libthread
-endif
+# Portable libraries are substituted by configure based on system needs
+PORTABLE_LIBS=@PORTABLE_LIBS@
 
 # Installation directories
 prefix = @prefix@

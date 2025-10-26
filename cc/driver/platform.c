@@ -319,6 +319,14 @@ init_platform_specific(const char *os_name, const char *arch_name)
 	linker = LINKER;
 
 	/* Add portable C11 libraries if needed */
+#if defined(NEED_LIBUNICODE) || defined(NEED_LIBTHREAD)
+	/* Add library directory for portable C11 libraries */
+#ifdef LIBDIR
+	/* Use configured alternate library directory */
+	strlist_append(&early_linker_flags, "-L" LIBDIR);
+#endif
+#endif
+
 #ifdef NEED_LIBUNICODE
 	strlist_append(&stdlib_flags, "-lunicode");
 #endif

@@ -693,6 +693,7 @@ AC_C_BIGENDIAN([AC_DEFINE(HOST_BIG_ENDIAN, 1, [Define if host is BIG endian])],
 # Checks for programs.
 AC_PROG_MAKE_SET
 AC_PROG_INSTALL
+AC_PROG_RANLIB
 AC_PROG_YACC
 AC_PROG_LEX([noyywrap])
 AC_PROG_RANLIB
@@ -753,21 +754,25 @@ AC_SUBST(PTHREAD_LIBS)
 # Determine which libraries to build
 BUILD_LIBUNICODE=no
 BUILD_LIBTHREAD=no
+PORTABLE_LIBS=""
 
 if test "$have_uchar" = "no"; then
     BUILD_LIBUNICODE=yes
+    PORTABLE_LIBS="$PORTABLE_LIBS libunicode"
     AC_DEFINE(NEED_LIBUNICODE, 1, [Define if portable libunicode should be linked])
     AC_MSG_NOTICE([Will build portable libunicode (C11 Unicode support)])
 fi
 
 if test "$have_threads" = "no"; then
     BUILD_LIBTHREAD=yes
+    PORTABLE_LIBS="$PORTABLE_LIBS libthread"
     AC_DEFINE(NEED_LIBTHREAD, 1, [Define if portable libthread should be linked])
     AC_MSG_NOTICE([Will build portable libthread (C11 threading support)])
 fi
 
 AC_SUBST(BUILD_LIBUNICODE)
 AC_SUBST(BUILD_LIBTHREAD)
+AC_SUBST(PORTABLE_LIBS)
 
 # Checks for library functions.
 ##  AC_FUNC_STRTOD
