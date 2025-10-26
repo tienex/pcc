@@ -2,7 +2,7 @@
 
 ## Overview
 
-The PCC C# compiler supports all major C# language versions from 1.0 through 12.0, allowing you to compile code targeting any C# version. This provides:
+The PCC PCSC supports all major C# language versions from 1.0 through 12.0, allowing you to compile code targeting any C# version. This provides:
 
 - **Full backwards compatibility** - Compile legacy C# 1.0/2.0 code
 - **Modern language features** - Use latest C# 12.0 capabilities
@@ -35,13 +35,13 @@ Use the `-langversion:` option to select a specific C# version:
 
 ```bash
 # Compile as C# 2.0
-csharp -langversion:2.0 program.cs
+pcsc -langversion:2.0 program.cs
 
 # Compile as C# 7.3
-csharp -langversion:7.3 program.cs
+pcsc -langversion:7.3 program.cs
 
 # Compile as latest (C# 12.0) - default
-csharp -langversion:latest program.cs
+pcsc -langversion:latest program.cs
 csharp program.cs  # Same as above
 ```
 
@@ -51,10 +51,10 @@ See what features are available for a specific version:
 
 ```bash
 # Show C# 3.0 features
-csharp -langversion:3.0 --features
+pcsc -langversion:3.0 --features
 
 # Show C# 8.0 features
-csharp -langversion:8.0 --features
+pcsc -langversion:8.0 --features
 ```
 
 Example output:
@@ -702,7 +702,7 @@ Error: LINQ queries not available in C# 2.0
 
 **Solution**: Increase language version or refactor code:
 ```bash
-csharp -langversion:3.0 program.cs
+pcsc -langversion:3.0 program.cs
 ```
 
 ### Unknown Version Warning
@@ -715,6 +715,6 @@ Warning: Unrecognized C# version '13.0', using latest
 
 ## See Also
 
-- [C# Compiler Documentation](CSHARP_COMPILER.md)
+- [PCSC Documentation](CSHARP_COMPILER.md)
 - [Module Format Specification](CSHARP_COMPILER.md#module-format)
 - [ARC Integration](ARC_LIBRARY.md)

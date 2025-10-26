@@ -1,4 +1,4 @@
-# Makefile for C# Driver
+# Makefile for PCSC (Portable C# Compiler) Driver
 
 VPATH = @srcdir@
 srcdir = @srcdir@
@@ -13,23 +13,23 @@ LDFLAGS = @LDFLAGS@
 INSTALL = @INSTALL@
 INSTALL_PROGRAM = @INSTALL_PROGRAM@
 
-OBJS = csharp.o
+OBJS = pcsc.o
 
-CSHARP = csharp
+PCSC = pcsc
 
-all: $(CSHARP)
+all: $(PCSC)
 
-$(CSHARP): $(OBJS)
+$(PCSC): $(OBJS)
 	$(CC) $(CFLAGS) -o $@ $(OBJS) $(LDFLAGS)
 
-csharp.o: csharp.c
+pcsc.o: pcsc.c
 	$(CC) $(CFLAGS) -c -o $@ $<
 
 clean:
-	rm -f $(OBJS) $(CSHARP)
+	rm -f $(OBJS) $(PCSC)
 
 install: all
 	test -z "$(DESTDIR)$(bindir)" || mkdir -p "$(DESTDIR)$(bindir)"
-	$(INSTALL_PROGRAM) $(CSHARP) $(DESTDIR)$(bindir)/
+	$(INSTALL_PROGRAM) $(PCSC) $(DESTDIR)$(bindir)/
 
 .PHONY: all clean install
