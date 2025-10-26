@@ -44,6 +44,8 @@ typedef enum {
 	ABI_BORLAND,        /* Borland C++/C++Builder/Delphi */
 	ABI_GNU_OLD,        /* Old GNU C++ ABI (GCC 2.x, ARM/CFront) */
 	ABI_DMC,            /* Digital Mars C++ (Zortech/Symantec) */
+	ABI_CFRONT,         /* AT&T Cfront C++ ABI */
+	ABI_EDG,            /* Edison Design Group C++ frontend */
 	ABI_SUN,            /* Sun/Oracle C++ ABI */
 	ABI_INTEL,          /* Intel C++ Compiler ABI */
 	ABI_IBM,            /* IBM XL C++ ABI */
@@ -62,6 +64,9 @@ typedef enum {
 	ABI_GO,             /* Go (golang) ABI */
 	ABI_ZIG,            /* Zig ABI */
 	ABI_CRYSTAL,        /* Crystal ABI */
+	ABI_NIM,            /* Nim ABI */
+	ABI_VLANG,          /* V Language ABI */
+	ABI_JULIA,          /* Julia ABI */
 
 	/* VM/Managed Languages */
 	ABI_JAVA,           /* Java JNI ABI */
@@ -69,15 +74,29 @@ typedef enum {
 	ABI_DART,           /* Dart Native ABI */
 	ABI_KOTLIN,         /* Kotlin/Native ABI */
 
+	/* Functional Languages */
+	ABI_GHC,            /* Glasgow Haskell Compiler (GHC) */
+	ABI_OCAML,          /* OCaml ABI */
+	ABI_FSHARP,         /* F# ABI */
+
 	/* Pascal ABIs */
 	ABI_FREEPASCAL,     /* FreePascal ABI */
 	ABI_GNU_PASCAL,     /* GNU Pascal (GPC) ABI */
+
+	/* Fortran ABIs */
+	ABI_GFORTRAN,       /* GNU Fortran (gfortran) */
+	ABI_IFORT,          /* Intel Fortran (ifort/ifx) */
+	ABI_NAG_FORTRAN,    /* NAG Fortran Compiler */
 
 	/* Ada ABI */
 	ABI_GNAT,           /* GNAT Ada ABI */
 
 	/* Framework ABIs */
 	ABI_ECERE,          /* eCere SDK ABI */
+
+	/* IR/Bytecode ABIs */
+	ABI_LLVM_IR,        /* LLVM Intermediate Representation */
+	ABI_WASM,           /* WebAssembly */
 
 	ABI_AUTO            /* Auto-detect based on platform */
 } abi_kind_t;

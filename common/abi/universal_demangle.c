@@ -86,6 +86,48 @@ demangle_detect_abi(const char *name)
 	if (strncmp(name, "ada__", 5) == 0)
 		return ABI_GNAT;
 
+	/* Fortran: lowercase with trailing underscore */
+	if (name[0] != '_' && strchr(name, '_') == name + strlen(name) - 1) {
+		/* Could be Fortran - check for common patterns */
+		if (strstr(name, "_MOD_"))
+			return ABI_GFORTRAN;  /* Module procedure */
+		/* Could also be ifort or NAG, but default to gfortran */
+		if (islower(name[0]))
+			return ABI_GFORTRAN;
+	}
+
+	/* NAG Fortran: all uppercase */
+	if (isupper(name[0]) && !strchr(name, '_'))
+		return ABI_NAG_FORTRAN;
+
+	/* GHC Haskell: Z-encoded with _closure suffix */
+	if (strstr(name, "_closure") || strstr(name, "_info"))
+		return ABI_GHC;
+
+	/* OCaml: caml prefix */
+	if (strncmp(name, "caml", 4) == 0)
+		return ABI_OCAML;
+
+	/* Julia: julia_ or jl_ prefix */
+	if (strncmp(name, "julia_", 6) == 0 || strncmp(name, "jl_", 3) == 0)
+		return ABI_JULIA;
+
+	/* Nim: __ with module pattern */
+	if (strstr(name, "__module_") || strstr(name, "__global_"))
+		return ABI_NIM;
+
+	/* V: module__ pattern */
+	if (strstr(name, "__") && !strncmp(name, "main__", 6))
+		return ABI_VLANG;
+
+	/* LLVM IR: @ prefix */
+	if (name[0] == '@')
+		return ABI_LLVM_IR;
+
+	/* WebAssembly: $ prefix */
+	if (name[0] == '$')
+		return ABI_WASM;
+
 	/* Rust: _ZN with Rust-specific patterns */
 	if (strncmp(name, "_ZN", 3) == 0) {
 		/* Could be Itanium or Rust, check for Rust patterns */
@@ -97,6 +139,10 @@ demangle_detect_abi(const char *name)
 	/* GNU Old C++: __ prefix with length */
 	if (name[0] == '_' && name[1] == '_' && isdigit(name[2]))
 		return ABI_GNU_OLD;
+
+	/* Cfront: __F pattern */
+	if (strstr(name, "__F"))
+		return ABI_CFRONT;
 
 	/* Borland: @ prefix */
 	if (name[0] == '@')
@@ -135,7 +181,7 @@ demangle_with_abi(const char *mangled_name, abi_kind_t abi)
 
 	case ABI_MSVC:
 	case ABI_DMC:
-		return demangle_msvc(mangled_name);
+		return demangle_msvc(mangled_name, DEMANGLE_OPT_NONE);
 
 	/* For ABIs without demanglers, return copy */
 	case ABI_DLANG:
@@ -284,6 +330,8 @@ demangle_abi_name(abi_kind_t abi)
 	case ABI_BORLAND: return "Borland C++";
 	case ABI_GNU_OLD: return "GNU C++ (old)";
 	case ABI_DMC: return "Digital Mars C++";
+	case ABI_CFRONT: return "AT&T Cfront C++";
+	case ABI_EDG: return "Edison Design Group C++";
 	case ABI_APPLE_OBJC1: return "Apple Objective-C 1.0";
 	case ABI_APPLE_OBJC2: return "Apple Objective-C 2.0";
 	case ABI_GNU_OBJC: return "GNU Objective-C";
@@ -294,14 +342,25 @@ demangle_abi_name(abi_kind_t abi)
 	case ABI_GO: return "Go";
 	case ABI_ZIG: return "Zig";
 	case ABI_CRYSTAL: return "Crystal";
+	case ABI_NIM: return "Nim";
+	case ABI_VLANG: return "V Language";
+	case ABI_JULIA: return "Julia";
 	case ABI_JAVA: return "Java";
 	case ABI_CLR: return ".NET CLR";
 	case ABI_DART: return "Dart";
 	case ABI_KOTLIN: return "Kotlin/Native";
+	case ABI_GHC: return "Glasgow Haskell Compiler (GHC)";
+	case ABI_OCAML: return "OCaml";
+	case ABI_FSHARP: return "F#";
 	case ABI_FREEPASCAL: return "FreePascal";
 	case ABI_GNU_PASCAL: return "GNU Pascal";
+	case ABI_GFORTRAN: return "GNU Fortran (gfortran)";
+	case ABI_IFORT: return "Intel Fortran (ifort)";
+	case ABI_NAG_FORTRAN: return "NAG Fortran";
 	case ABI_GNAT: return "GNAT Ada";
 	case ABI_ECERE: return "eCere SDK";
+	case ABI_LLVM_IR: return "LLVM IR";
+	case ABI_WASM: return "WebAssembly";
 	default: return "Unknown";
 	}
 }

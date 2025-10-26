@@ -20,11 +20,15 @@ libdir = @libdir@
 includedir = @includedir@
 
 OBJS=	abi.o \
-	itanium.o msvc.o watcom.o borland.o gnu_old.o dmc.o \
+	itanium.o msvc.o watcom.o borland.o gnu_old.o dmc.o cfront.o edg.o \
 	apple_objc1.o apple_objc2.o gnu_objc.o corefoundation.o \
-	dlang.o swift.o rust.o go.o zig.o crystal.o \
+	dlang.o swift.o rust.o go.o zig.o crystal.o nim.o vlang.o julia.o \
 	java.o clr.o dart.o kotlin.o \
-	freepascal.o gnu_pascal.o gnat.o ecere.o \
+	ghc.o ocaml.o fsharp.o \
+	freepascal.o gnu_pascal.o \
+	gfortran.o ifort.o nag_fortran.o \
+	gnat.o ecere.o \
+	llvm_ir.o wasm.o \
 	demangle_itanium.o demangle_msvc.o \
 	template_renamer.o universal_demangle.o
 

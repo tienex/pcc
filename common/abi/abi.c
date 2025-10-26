@@ -17,6 +17,8 @@ extern const abi_ops_t watcom_abi_ops;
 extern const abi_ops_t borland_abi_ops;
 extern const abi_ops_t gnu_old_abi_ops;
 extern const abi_ops_t dmc_abi_ops;
+extern const abi_ops_t cfront_abi_ops;
+extern const abi_ops_t edg_abi_ops;
 extern const abi_ops_t apple_objc1_abi_ops;
 extern const abi_ops_t apple_objc2_abi_ops;
 extern const abi_ops_t gnu_objc_abi_ops;
@@ -27,14 +29,25 @@ extern const abi_ops_t rust_abi_ops;
 extern const abi_ops_t go_abi_ops;
 extern const abi_ops_t zig_abi_ops;
 extern const abi_ops_t crystal_abi_ops;
+extern const abi_ops_t nim_abi_ops;
+extern const abi_ops_t vlang_abi_ops;
+extern const abi_ops_t julia_abi_ops;
 extern const abi_ops_t java_abi_ops;
 extern const abi_ops_t clr_abi_ops;
 extern const abi_ops_t dart_abi_ops;
 extern const abi_ops_t kotlin_abi_ops;
+extern const abi_ops_t ghc_abi_ops;
+extern const abi_ops_t ocaml_abi_ops;
+extern const abi_ops_t fsharp_abi_ops;
 extern const abi_ops_t freepascal_abi_ops;
 extern const abi_ops_t gnu_pascal_abi_ops;
+extern const abi_ops_t gfortran_abi_ops;
+extern const abi_ops_t ifort_abi_ops;
+extern const abi_ops_t nag_fortran_abi_ops;
 extern const abi_ops_t gnat_abi_ops;
 extern const abi_ops_t ecere_abi_ops;
+extern const abi_ops_t llvm_ir_abi_ops;
+extern const abi_ops_t wasm_abi_ops;
 
 /*
  * Initialize ABI context
@@ -73,6 +86,12 @@ abi_init(abi_kind_t kind)
 		break;
 	case ABI_DMC:
 		ctx->ops = &dmc_abi_ops;
+		break;
+	case ABI_CFRONT:
+		ctx->ops = &cfront_abi_ops;
+		break;
+	case ABI_EDG:
+		ctx->ops = &edg_abi_ops;
 		break;
 	case ABI_SUN:
 	case ABI_INTEL:
@@ -115,6 +134,15 @@ abi_init(abi_kind_t kind)
 	case ABI_CRYSTAL:
 		ctx->ops = &crystal_abi_ops;
 		break;
+	case ABI_NIM:
+		ctx->ops = &nim_abi_ops;
+		break;
+	case ABI_VLANG:
+		ctx->ops = &vlang_abi_ops;
+		break;
+	case ABI_JULIA:
+		ctx->ops = &julia_abi_ops;
+		break;
 
 	/* VM/Managed Languages */
 	case ABI_JAVA:
@@ -130,12 +158,34 @@ abi_init(abi_kind_t kind)
 		ctx->ops = &kotlin_abi_ops;
 		break;
 
+	/* Functional Languages */
+	case ABI_GHC:
+		ctx->ops = &ghc_abi_ops;
+		break;
+	case ABI_OCAML:
+		ctx->ops = &ocaml_abi_ops;
+		break;
+	case ABI_FSHARP:
+		ctx->ops = &fsharp_abi_ops;
+		break;
+
 	/* Pascal ABIs */
 	case ABI_FREEPASCAL:
 		ctx->ops = &freepascal_abi_ops;
 		break;
 	case ABI_GNU_PASCAL:
 		ctx->ops = &gnu_pascal_abi_ops;
+		break;
+
+	/* Fortran ABIs */
+	case ABI_GFORTRAN:
+		ctx->ops = &gfortran_abi_ops;
+		break;
+	case ABI_IFORT:
+		ctx->ops = &ifort_abi_ops;
+		break;
+	case ABI_NAG_FORTRAN:
+		ctx->ops = &nag_fortran_abi_ops;
 		break;
 
 	/* Ada ABI */
@@ -146,6 +196,14 @@ abi_init(abi_kind_t kind)
 	/* Framework ABIs */
 	case ABI_ECERE:
 		ctx->ops = &ecere_abi_ops;
+		break;
+
+	/* IR/Bytecode ABIs */
+	case ABI_LLVM_IR:
+		ctx->ops = &llvm_ir_abi_ops;
+		break;
+	case ABI_WASM:
+		ctx->ops = &wasm_abi_ops;
 		break;
 
 	default:
