@@ -1,6 +1,6 @@
 #	$Id$
 #
-# Makefile for the Fortran 77 compiler
+# Makefile for the Fortran 90 compiler (fcom backend)
 #
 srcdir=@srcdir@
 top_srcdir=@top_srcdir@

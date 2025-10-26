@@ -32,19 +32,19 @@
 .\" IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE 
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.TH F77 1
+.TH F90 1
 .SH NAME
-f77 \- Fortran 77 compiler
+f90 \- Fortran 90 compiler (with F66/F77 compatibility)
 .SH SYNOPSIS
-.B f77
+.B f90
 [ option ] ... file ...
 .SH DESCRIPTION
-.I F77
-is the UNIX Fortran 77 compiler.
+.I F90
+is the UNIX Fortran 90 compiler with F66 and F77 compatibility modes.
 It accepts several types of arguments:
 .PP
 Arguments whose names end with `.f' are taken to be
-Fortran 77 source programs;
+Fortran 90 source programs (or F66/F77 when using compatibility mode);
 they are compiled, and
 each object program is left on the file in the current directory
 whose name is that of the source with `.o' substituted
@@ -52,7 +52,7 @@ for '.f'.
 .PP
 Arguments whose names end with `.r' or `.e' are taken to be Ratfor or EFL
 source programs, respectively; these are first transformed by the
-appropriate preprocessor, then compiled by f77.
+appropriate preprocessor, then compiled by f90.
 .PP
 In the same way,
 arguments whose names end with `.c' or `.s' are taken to be C or assembly source programs
@@ -93,7 +93,18 @@ Name the final output file
 instead of `a.out'.
 .PP
 The following options are peculiar to
-.IR f77 .
+.IR f90 .
+.TP
+.SM
+.BR \-std=STANDARD
+Specify the Fortran standard to use. Valid values are:
+.B f66
+(Fortran 66),
+.B f77
+(Fortran 77), and
+.B f90
+(Fortran 90, default).
+This allows the compiler to operate in compatibility mode for older Fortran standards.
 .TP
 .SM
 .BR \-onetrip
@@ -134,10 +145,10 @@ as a Ratfor option in processing `.r' files.
 .PP
 Other arguments
 are taken
-to be either loader option arguments, or F77-compatible
+to be either loader option arguments, or F90-compatible
 object programs, typically produced by an earlier
 run,
-or perhaps libraries of F77-compatible routines.
+or perhaps libraries of F90-compatible routines.
 These programs, together with the results of any
 compilations specified, are loaded (in the order
 given) to produce an executable program with name
@@ -165,7 +176,7 @@ A Portable Fortran 77 Compiler
 prof(1), cc(1), ld(1)
 .SH DIAGNOSTICS
 The diagnostics produced by
-.I f77
+.I f90
 itself are intended to be
 self-explanatory.
 Occasional messages may be produced by the loader.
