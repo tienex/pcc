@@ -124,6 +124,7 @@ case "$target_os" in
 	    mips*) targmach=mips ;;
 	    wasm32) targmach=wasm ;;
 	    wasm64) targmach=wasm ;;
+	    chill) targmach=chill ;;
 	esac
 	case "$target_os" in
 	    *-musl*) ADD_CPPFLAGS="$ADD_CPPFLAGS -DUSE_MUSL" ;;
