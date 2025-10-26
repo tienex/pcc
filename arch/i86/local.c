@@ -400,22 +400,37 @@ ninval(CONSZ off, int fsz, NODE *p)
 		u.l = (long double)p->n_dcon;
 #if defined(HOST_BIG_ENDIAN)
 		/* XXX probably broken on most hosts */
-		printf("\t.long\t0x%x,0x%x,0x%x\n", u.i[2], u.i[1], u.i[0]);
+		{
+			uint32_t data[3] = { (uint32_t)u.i[2], (uint32_t)u.i[1], (uint32_t)u.i[0] };
+			x86asm_data(asm_ctx, DATA_DWORD, data, 3);
+		}
 #else
-		printf("\t.long\t%d,%d,%d\n", u.i[0], u.i[1], u.i[2] & 0177777);
+		{
+			uint32_t data[3] = { (uint32_t)u.i[0], (uint32_t)u.i[1], (uint32_t)(u.i[2] & 0177777) };
+			x86asm_data(asm_ctx, DATA_DWORD, data, 3);
+		}
 #endif
 		break;
 	case DOUBLE:
 		u.d = (double)p->n_dcon;
 #if defined(HOST_BIG_ENDIAN)
-		printf("\t.long\t0x%x,0x%x\n", u.i[1], u.i[0]);
+		{
+			uint32_t data[2] = { (uint32_t)u.i[1], (uint32_t)u.i[0] };
+			x86asm_data(asm_ctx, DATA_DWORD, data, 2);
+		}
 #else
-		printf("\t.long\t%d,%d\n", u.i[0], u.i[1]);
+		{
+			uint32_t data[2] = { (uint32_t)u.i[0], (uint32_t)u.i[1] };
+			x86asm_data(asm_ctx, DATA_DWORD, data, 2);
+		}
 #endif
 		break;
 	case FLOAT:
 		u.f = (float)p->n_dcon;
-		printf("\t.long\t%d\n", u.i[0]);
+		{
+			uint32_t data = (uint32_t)u.i[0];
+			x86asm_data(asm_ctx, DATA_DWORD, &data, 1);
+		}
 		break;
 	default:
 		return 0;
@@ -563,9 +578,9 @@ fixdef(struct symtab *sp)
 			}
 		}
 		if (wr == NULL)
-			printf("\t.weak %s\n", sn);
+			x86asm_weak(asm_ctx, sn);
 		else
-			printf("\t.weakref %s,%s\n", sn, wr);
+			x86asm_weakref(asm_ctx, sn, wr);
 	} else
 #endif
 	    if ((ap = attr_find(sp->sap, GCC_ATYP_ALIAS)) != NULL) {
@@ -573,26 +588,27 @@ fixdef(struct symtab *sp)
 		char *sn = sp->soname ? sp->soname : sp->sname; 
 		char *v;
 
-		v = attr_find(sp->sap, GCC_ATYP_WEAK) ? "weak" : "globl";
-		printf("\t.%s %s\n", v, sn);
-		printf("\t.set %s,%s\n", sn, an);
+		if (attr_find(sp->sap, GCC_ATYP_WEAK))
+			x86asm_weak(asm_ctx, sn);
+		x86asm_set(asm_ctx, sn, an);
 	}	
 #endif
 	if (alias != NULL && (sp->sclass != PARAM)) {
 		char *name;
 		if ((name = sp->soname) == NULL)
 			name = exname(sp->sname);
-		printf("\t.globl %s\n", name);
-		printf("%s = ", name);
-		printf("%s\n", exname(alias));
+		x86asm_set(asm_ctx, name, exname(alias));
 		alias = NULL;
 	}
 	if ((constructor || destructor) && (sp->sclass != PARAM)) {
-		printf("\t.section .%ctors,\"w\"\n",
+		char section_name[32];
+		snprintf(section_name, sizeof(section_name), ".%ctors",
 		    constructor ? 'c' : 'd');
-		printf("\t.p2align 2\n");
-		printf("\t.long %s\n", exname(sp->sname));
-		printf("\t.previous\n");
+		x86asm_segment(asm_ctx, SEG_TEXT, section_name);  /* Use custom section */
+		x86asm_p2align(asm_ctx, 2);
+		/* TODO: Need to output .long symbol reference - may need x86asm_data_ref() */
+		fprintf(stdout, "\t.long %s\n", exname(sp->sname));
+		x86asm_previous(asm_ctx);
 		constructor = destructor = 0;
 	}
 	if (stdcall && (sp->sclass != PARAM)) {

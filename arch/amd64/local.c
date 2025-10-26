@@ -579,9 +579,19 @@ myp2tree(NODE *p)
 			sps.soffset = dblxor;
 			locctr(DATA, &sps);
 			defloc(&sps);
-			printf("\t.long 0,0x80000000,0,0\n");
-			printf(LABFMT ":\n", fltxor);
-			printf("\t.long 0x80000000,0,0,0\n");
+			{
+				uint32_t data1[4] = { 0, 0x80000000, 0, 0 };
+				x86asm_data(asm_ctx, DATA_DWORD, data1, 4);
+			}
+			{
+				char label[32];
+				snprintf(label, sizeof(label), LABFMT, fltxor);
+				x86asm_label(asm_ctx, label, 0);  /* Emit label for fltxor */
+			}
+			{
+				uint32_t data2[4] = { 0x80000000, 0, 0, 0 };
+				x86asm_data(asm_ctx, DATA_DWORD, data2, 4);
+			}
 		}
 		p->n_ap = attr_add(p->n_ap,
 		    ap = attr_new(ATTR_AMD64_XORLBL, 1));
@@ -710,23 +720,37 @@ ninval(CONSZ off, int fsz, NODE *p)
 		u.l = (long double)FCAST(p->n_dcon)->fp;
 #if defined(HOST_BIG_ENDIAN)
 		/* XXX probably broken on most hosts */
-		printf("\t.long\t0x%x,0x%x,0x%x,0\n", u.i[2], u.i[1], u.i[0]);
+		{
+			uint32_t data[4] = { (uint32_t)u.i[2], (uint32_t)u.i[1], (uint32_t)u.i[0], 0 };
+			x86asm_data(asm_ctx, DATA_DWORD, data, 4);
+		}
 #else
-		printf("\t.long\t0x%x,0x%x,0x%x,0\n", u.i[0], u.i[1],
-		    u.i[2] & 0xffff);
+		{
+			uint32_t data[4] = { (uint32_t)u.i[0], (uint32_t)u.i[1], (uint32_t)(u.i[2] & 0xffff), 0 };
+			x86asm_data(asm_ctx, DATA_DWORD, data, 4);
+		}
 #endif
 		break;
 	case DOUBLE:
 		u.d = (double)FCAST(p->n_dcon)->fp;
 #if defined(HOST_BIG_ENDIAN)
-		printf("\t.long\t0x%x,0x%x\n", u.i[1], u.i[0]);
+		{
+			uint32_t data[2] = { (uint32_t)u.i[1], (uint32_t)u.i[0] };
+			x86asm_data(asm_ctx, DATA_DWORD, data, 2);
+		}
 #else
-		printf("\t.long\t0x%x,0x%x\n", u.i[0], u.i[1]);
+		{
+			uint32_t data[2] = { (uint32_t)u.i[0], (uint32_t)u.i[1] };
+			x86asm_data(asm_ctx, DATA_DWORD, data, 2);
+		}
 #endif
 		break;
 	case FLOAT:
 		u.f = (float)FCAST(p->n_dcon)->fp;
-		printf("\t.long\t0x%x\n", u.i[0]);
+		{
+			uint32_t data = (uint32_t)u.i[0];
+			x86asm_data(asm_ctx, DATA_DWORD, &data, 1);
+		}
 		break;
 	default:
 		return 0;
