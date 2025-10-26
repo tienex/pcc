@@ -124,7 +124,19 @@ main(int argc, char **argv)
 
 	/* Generate code */
 	if (ast_root) {
+		FILE *out = stdout;
+		if (output_file) {
+			out = fopen(output_file, "w");
+			if (!out) {
+				fprintf(stderr, "Error: cannot open output file %s\n", output_file);
+				return 1;
+			}
+		}
+		set_output_file(out);
 		generate_code(ast_root);
+		if (output_file && out != stdout) {
+			fclose(out);
+		}
 	}
 
 	/* Clean up */

@@ -130,6 +130,10 @@ int types_compatible(DartTypeKind t1, DartTypeKind t2);
 
 /* Code generation */
 void generate_code(Node *root);
+void set_output_file(FILE *fp);
+
+/* Built-in functions */
+void dart_builtin_print(Node *args);
 
 /* Global variables */
 extern FILE *yyin;

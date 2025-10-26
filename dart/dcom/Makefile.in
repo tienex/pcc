@@ -12,7 +12,7 @@ PREFIX=@prefix@
 LIBEXECDIR=$(PREFIX)/libexec
 
 PROG=	dcom
-OBJS=	main.o dgram.o scan.o symtab.o ast.o error.o codegen.o
+OBJS=	main.o dgram.o scan.o symtab.o ast.o error.o codegen.o builtins.o
 
 all: $(PROG)
 
@@ -45,6 +45,9 @@ error.o: error.c pass1.h
 
 codegen.o: codegen.c pass1.h
 	$(CC) $(CFLAGS) -c codegen.c
+
+builtins.o: builtins.c pass1.h
+	$(CC) $(CFLAGS) -c builtins.c
 
 clean:
 	rm -f $(PROG) $(OBJS) dgram.c dgram.h scan.c

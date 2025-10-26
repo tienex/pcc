@@ -12,8 +12,9 @@
 #include <sys/wait.h>
 
 #define DCOM_PATH "/usr/local/libexec/dcom"
-#define AS_PATH "/usr/bin/as"
-#define LD_PATH "/usr/bin/ld"
+#define CC_PATH "/usr/bin/gcc"
+#define LIBDART_PATH "/usr/local/lib"
+#define LIBDART_INCLUDE "/usr/local/include"
 
 static char *input_file = NULL;
 static char *output_file = "a.out";
@@ -121,37 +122,26 @@ get_temp_file(const char *suffix)
 int
 main(int argc, char **argv)
 {
-	char *asm_file;
-	char *obj_file;
+	char *c_file;
 	int ret;
 
 	parse_args(argc, argv);
 
-	/* Determine output file names */
-	if (assembly_only) {
+	/* Determine output file name */
+	if (compile_only) {
 		if (strcmp(output_file, "a.out") == 0) {
-			/* Default output for -S */
-			asm_file = strdup("output.s");
+			c_file = strdup("output.c");
 		} else {
-			asm_file = strdup(output_file);
+			c_file = strdup(output_file);
 		}
-	} else if (compile_only) {
-		if (strcmp(output_file, "a.out") == 0) {
-			/* Default output for -c */
-			obj_file = strdup("output.o");
-		} else {
-			obj_file = strdup(output_file);
-		}
-		asm_file = get_temp_file(".s");
 	} else {
-		asm_file = get_temp_file(".s");
-		obj_file = get_temp_file(".o");
+		c_file = get_temp_file(".c");
 	}
 
-	/* Step 1: Compile Dart to assembly */
+	/* Step 1: Compile Dart to C */
 	char *compile_args[] = {
 		DCOM_PATH,
-		"-o", asm_file,
+		"-o", c_file,
 		input_file,
 		NULL
 	};
@@ -162,48 +152,32 @@ main(int argc, char **argv)
 		return ret;
 	}
 
-	if (assembly_only) {
-		if (!keep_temps && strcmp(asm_file, output_file) != 0) {
-			unlink(asm_file);
-		}
-		return 0;
-	}
-
-	/* Step 2: Assemble */
-	char *as_args[] = {
-		AS_PATH,
-		"-o", obj_file,
-		asm_file,
-		NULL
-	};
-
-	ret = run_command(as_args);
-	if (!keep_temps) {
-		unlink(asm_file);
-	}
-	if (ret != 0) {
-		fprintf(stderr, "Assembly failed\n");
-		return ret;
-	}
-
 	if (compile_only) {
 		return 0;
 	}
 
-	/* Step 3: Link */
-	char *ld_args[] = {
-		LD_PATH,
+	/* Step 2: Compile C to executable using gcc */
+	char libdart_lib[256];
+	char libdart_inc[256];
+	snprintf(libdart_lib, sizeof(libdart_lib), "-L%s", LIBDART_PATH);
+	snprintf(libdart_inc, sizeof(libdart_inc), "-I%s", LIBDART_INCLUDE);
+
+	char *cc_args[] = {
+		CC_PATH,
+		libdart_inc,
 		"-o", output_file,
-		obj_file,
+		c_file,
+		libdart_lib,
+		"-ldart",
 		NULL
 	};
 
-	ret = run_command(ld_args);
+	ret = run_command(cc_args);
 	if (!keep_temps) {
-		unlink(obj_file);
+		unlink(c_file);
 	}
 	if (ret != 0) {
-		fprintf(stderr, "Linking failed\n");
+		fprintf(stderr, "C compilation failed\n");
 		return ret;
 	}
 
