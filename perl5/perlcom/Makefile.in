@@ -1,0 +1,82 @@
+#	$Id$
+#
+# Makefile.in for Perl 5 compiler backend (perlcom)
+#
+
+VPATH = @srcdir@
+srcdir = @srcdir@
+top_srcdir = @top_srcdir@
+top_builddir = @top_builddir@
+prefix = @prefix@
+exec_prefix = @exec_prefix@
+bindir = @bindir@
+libexecdir = @libexecdir@
+datarootdir = @datarootdir@
+mandir = @mandir@
+
+CC = @CC@
+CFLAGS = @CFLAGS@ @ADD_CFLAGS@
+CPPFLAGS = @CPPFLAGS@ @ADD_CPPFLAGS@ \
+	-I$(srcdir) -I$(top_builddir) -I$(top_srcdir)/common \
+	-I$(top_srcdir)/mip -I$(ARCHDIR) -I$(TARGOS) -Dos_$(TARGOS) \
+	-I$(top_srcdir)/os/$(TARGOS)
+LIBS = @LIBS@
+LDFLAGS = @LDFLAGS@
+INSTALL = @INSTALL@
+INSTALL_PROGRAM = @INSTALL_PROGRAM@
+
+YACC = @YACC@
+YFLAGS = @YFLAGS@
+LEX = @LEX@
+LFLAGS = @LFLAGS@
+
+ARCHDIR = $(top_srcdir)/arch/$(TARGMACH)
+TARGMACH = @targmach@
+TARGOS = @targos@
+
+DEST = @BINPREFIX@perlcom@EXEEXT@
+
+OBJS = main.o pgram.o scan.o trees.o symtab.o codegen.o
+
+all: $(DEST)
+
+$(DEST): $(OBJS)
+	$(CC) $(LDFLAGS) $(OBJS) -o $@ $(LIBS)
+
+main.o: $(srcdir)/main.c pass1.h
+	$(CC) $(CFLAGS) $(CPPFLAGS) -c $(srcdir)/main.c
+
+pgram.c pgram.h: $(srcdir)/pgram.y
+	$(YACC) -d $(YFLAGS) $(srcdir)/pgram.y
+	mv y.tab.c pgram.c
+	mv y.tab.h pgram.h
+
+pgram.o: pgram.c pass1.h
+	$(CC) $(CFLAGS) $(CPPFLAGS) -c pgram.c
+
+scan.c: $(srcdir)/scan.l pgram.h
+	$(LEX) $(LFLAGS) -t $(srcdir)/scan.l > scan.c
+
+scan.o: scan.c pass1.h pgram.h
+	$(CC) $(CFLAGS) $(CPPFLAGS) -c scan.c
+
+trees.o: $(srcdir)/trees.c pass1.h
+	$(CC) $(CFLAGS) $(CPPFLAGS) -c $(srcdir)/trees.c
+
+symtab.o: $(srcdir)/symtab.c pass1.h
+	$(CC) $(CFLAGS) $(CPPFLAGS) -c $(srcdir)/symtab.c
+
+codegen.o: $(srcdir)/codegen.c pass1.h
+	$(CC) $(CFLAGS) $(CPPFLAGS) -c $(srcdir)/codegen.c
+
+install: all
+	test -z "$(DESTDIR)$(libexecdir)" || mkdir -p "$(DESTDIR)$(libexecdir)"
+	$(INSTALL_PROGRAM) $(DEST) $(DESTDIR)$(libexecdir)/$(DEST)
+
+clean:
+	rm -f $(OBJS) $(DEST) pgram.c pgram.h scan.c
+
+distclean: clean
+	rm -f Makefile
+
+.PHONY: all install clean distclean
