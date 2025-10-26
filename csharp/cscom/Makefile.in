@@ -14,7 +14,7 @@ LDFLAGS = @LDFLAGS@
 INSTALL = @INSTALL@
 INSTALL_PROGRAM = @INSTALL_PROGRAM@
 
-OBJS = cs_main.o cs_types.o cs_arc.o
+OBJS = cs_main.o cs_types.o cs_arc.o cs_version.o cs_features.o
 COMMON_OBJS = $(top_builddir)/common/cs_module.o
 
 CSCOM = cscom
@@ -24,13 +24,19 @@ all: $(CSCOM)
 $(CSCOM): $(OBJS) $(COMMON_OBJS)
 	$(CC) $(CFLAGS) -o $@ $(OBJS) $(COMMON_OBJS) $(LDFLAGS)
 
-cs_main.o: cs_main.c cs_pass1.h $(top_srcdir)/common/cs_module.h
+cs_main.o: cs_main.c cs_pass1.h cs_version.h $(top_srcdir)/common/cs_module.h
 	$(CC) $(CFLAGS) -c -o $@ $<
 
-cs_types.o: cs_types.c cs_pass1.h
+cs_types.o: cs_types.c cs_pass1.h cs_version.h
 	$(CC) $(CFLAGS) -c -o $@ $<
 
 cs_arc.o: cs_arc.c cs_pass1.h
+	$(CC) $(CFLAGS) -c -o $@ $<
+
+cs_version.o: cs_version.c cs_version.h
+	$(CC) $(CFLAGS) -c -o $@ $<
+
+cs_features.o: cs_features.c cs_pass1.h cs_version.h
 	$(CC) $(CFLAGS) -c -o $@ $<
 
 $(top_builddir)/common/cs_module.o: $(top_srcdir)/common/cs_module.c $(top_srcdir)/common/cs_module.h
