@@ -589,10 +589,29 @@ enum {	ATTR_FIRST = ATTR_MI_MAX + 1,
 	GCC_ATYP_NEAR,		/* near pointer (offset only, 16-bit) */
 	GCC_ATYP_HUGE,		/* huge pointer (normalized far, 32-bit) */
 	GCC_ATYP_BASED,		/* based pointer (relative to segment, with 1 arg) */
+	GCC_ATYP_FAR16,		/* Watcom: 16-bit far pointer */
+	GCC_ATYP_SEGMENT,	/* segment type */
+	GCC_ATYP_SELF,		/* self-relative addressing */
 
 	/* DOS-era i86 calling conventions */
 	GCC_ATYP_PASCAL,	/* Pascal calling convention (reverse params, callee cleans) */
 	GCC_ATYP_FORTRAN,	/* Fortran calling convention (similar to Pascal) */
+	GCC_ATYP_SYSCALL,	/* Watcom: system call convention */
+	GCC_ATYP_WATCALL,	/* Watcom: register-based calling convention */
+
+	/* DOS-era i86 function modifiers */
+	GCC_ATYP_INTERRUPT,	/* interrupt service routine */
+	GCC_ATYP_LOADDS,	/* load DS register on function entry */
+	GCC_ATYP_SAVEREGS,	/* save/restore all registers */
+	GCC_ATYP_EXPORT,	/* export function (DLL) */
+
+	/* Segment register keywords */
+	GCC_ATYP_SS,		/* stack segment register */
+	GCC_ATYP_CS,		/* code segment register */
+	GCC_ATYP_DS,		/* data segment register */
+	GCC_ATYP_ES,		/* extra segment register */
+	GCC_ATYP_FS,		/* additional segment register (386+) */
+	GCC_ATYP_GS,		/* additional segment register (386+) */
 #endif
 
 	GCC_ATYP_MAX,

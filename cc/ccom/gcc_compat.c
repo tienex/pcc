@@ -74,14 +74,33 @@ static struct kw {
 /* 23 */{ "__alignof", NULL, C_ALIGNOF },
 /* 24 */{ "__restrict__", NULL, -1 },
 #ifdef mach_i86
-	/* DOS-era i86 keywords (Microsoft/Watcom/Borland compatibility) */
+	/* DOS-era i86 keywords (Microsoft/Watcom/Borland/Zortech compatibility) */
+	/* Pointer type modifiers */
 /* 25 */{ "__far", NULL, 0 },
 /* 26 */{ "__near", NULL, 0 },
 /* 27 */{ "__huge", NULL, 0 },
 /* 28 */{ "__based", NULL, 0 },
-/* 29 */{ "__cdecl", NULL, 0 },
-/* 30 */{ "__pascal", NULL, 0 },
-/* 31 */{ "__fortran", NULL, 0 },
+/* 29 */{ "__far16", NULL, 0 },		/* Watcom */
+/* 30 */{ "__segment", NULL, 0 },
+/* 31 */{ "__self", NULL, 0 },
+	/* Calling conventions */
+/* 32 */{ "__cdecl", NULL, 0 },
+/* 33 */{ "__pascal", NULL, 0 },
+/* 34 */{ "__fortran", NULL, 0 },
+/* 35 */{ "__syscall", NULL, 0 },		/* Watcom */
+/* 36 */{ "__watcall", NULL, 0 },		/* Watcom */
+	/* Function modifiers */
+/* 37 */{ "__interrupt", NULL, 0 },
+/* 38 */{ "__loadds", NULL, 0 },
+/* 39 */{ "__saveregs", NULL, 0 },
+/* 40 */{ "__export", NULL, 0 },
+	/* Segment registers */
+/* 41 */{ "__ss", NULL, 0 },
+/* 42 */{ "__cs", NULL, 0 },
+/* 43 */{ "__ds", NULL, 0 },
+/* 44 */{ "__es", NULL, 0 },
+/* 45 */{ "__fs", NULL, 0 },
+/* 46 */{ "__gs", NULL, 0 },
 #endif
 	{ NULL, NULL, 0 },
 };
@@ -338,23 +357,58 @@ gcc_keyword(char *str)
 		return C_UNOP;
 #ifdef mach_i86
 	/* DOS-era i86 keywords - work like inline __attribute__((name)) */
+	/* These keywords act as shorthand for __attribute__((keyword)) */
+
+	/* Pointer type modifiers (25-31) */
 	case 25: /* __far */
 	case 26: /* __near */
 	case 27: /* __huge */
 	case 28: /* __based */
-	case 29: /* __cdecl */
-	case 30: /* __pascal */
-	case 31: /* __fortran */
-		/* These keywords act as shorthand for __attribute__((keyword)) */
-		/* They enable attribute parsing and set the attribute type */
+	case 29: /* __far16 */
+	case 30: /* __segment */
+	case 31: /* __self */
+	/* Calling conventions (32-36) */
+	case 32: /* __cdecl */
+	case 33: /* __pascal */
+	case 34: /* __fortran */
+	case 35: /* __syscall */
+	case 36: /* __watcall */
+	/* Function modifiers (37-40) */
+	case 37: /* __interrupt */
+	case 38: /* __loadds */
+	case 39: /* __saveregs */
+	case 40: /* __export */
+	/* Segment registers (41-46) */
+	case 41: /* __ss */
+	case 42: /* __cs */
+	case 43: /* __ds */
+	case 44: /* __es */
+	case 45: /* __fs */
+	case 46: /* __gs */
+		/* Map keyword index to attribute type */
 		switch (i) {
 		case 25: yylval.intval = GCC_ATYP_FAR; break;
 		case 26: yylval.intval = GCC_ATYP_NEAR; break;
 		case 27: yylval.intval = GCC_ATYP_HUGE; break;
 		case 28: yylval.intval = GCC_ATYP_BASED; break;
-		case 29: yylval.intval = GCC_ATYP_CDECL; break;  /* Use existing CDECL */
-		case 30: yylval.intval = GCC_ATYP_PASCAL; break;
-		case 31: yylval.intval = GCC_ATYP_FORTRAN; break;
+		case 29: yylval.intval = GCC_ATYP_FAR16; break;
+		case 30: yylval.intval = GCC_ATYP_SEGMENT; break;
+		case 31: yylval.intval = GCC_ATYP_SELF; break;
+		case 32: yylval.intval = GCC_ATYP_CDECL; break;
+		case 33: yylval.intval = GCC_ATYP_PASCAL; break;
+		case 34: yylval.intval = GCC_ATYP_FORTRAN; break;
+		case 35: yylval.intval = GCC_ATYP_SYSCALL; break;
+		case 36: yylval.intval = GCC_ATYP_WATCALL; break;
+		case 37: yylval.intval = GCC_ATYP_INTERRUPT; break;
+		case 38: yylval.intval = GCC_ATYP_LOADDS; break;
+		case 39: yylval.intval = GCC_ATYP_SAVEREGS; break;
+		case 40: yylval.intval = GCC_ATYP_EXPORT; break;
+		case 41: yylval.intval = GCC_ATYP_SS; break;
+		case 42: yylval.intval = GCC_ATYP_CS; break;
+		case 43: yylval.intval = GCC_ATYP_DS; break;
+		case 44: yylval.intval = GCC_ATYP_ES; break;
+		case 45: yylval.intval = GCC_ATYP_FS; break;
+		case 46: yylval.intval = GCC_ATYP_GS; break;
 		}
 		/* Enter attribute mode for parsing */
 		inattr = 1;
@@ -450,13 +504,36 @@ struct atax {
 	CS(GCC_ATYP_WEAKIMPORT)	{ A_0ARG, "weak_import" },
 
 #ifdef mach_i86
-	/* DOS-era i86 attributes */
+	/* DOS-era i86 attributes (Microsoft/Watcom/Borland/Zortech) */
+
+	/* Pointer type modifiers */
 	CS(GCC_ATYP_FAR)	{ A_0ARG, "far" },
 	CS(GCC_ATYP_NEAR)	{ A_0ARG, "near" },
 	CS(GCC_ATYP_HUGE)	{ A_0ARG, "huge" },
 	CS(GCC_ATYP_BASED)	{ A_0ARG|A_1ARG|A1_NAME, "based" },
+	CS(GCC_ATYP_FAR16)	{ A_0ARG, "far16" },
+	CS(GCC_ATYP_SEGMENT)	{ A_0ARG, "segment" },
+	CS(GCC_ATYP_SELF)	{ A_0ARG, "self" },
+
+	/* Calling conventions */
 	CS(GCC_ATYP_PASCAL)	{ A_0ARG, "pascal" },
 	CS(GCC_ATYP_FORTRAN)	{ A_0ARG, "fortran" },
+	CS(GCC_ATYP_SYSCALL)	{ A_0ARG, "syscall" },
+	CS(GCC_ATYP_WATCALL)	{ A_0ARG, "watcall" },
+
+	/* Function modifiers */
+	CS(GCC_ATYP_INTERRUPT)	{ A_0ARG|A_1ARG, "interrupt" },
+	CS(GCC_ATYP_LOADDS)	{ A_0ARG, "loadds" },
+	CS(GCC_ATYP_SAVEREGS)	{ A_0ARG, "saveregs" },
+	CS(GCC_ATYP_EXPORT)	{ A_0ARG, "export" },
+
+	/* Segment registers */
+	CS(GCC_ATYP_SS)		{ A_0ARG, "ss" },
+	CS(GCC_ATYP_CS)		{ A_0ARG, "cs" },
+	CS(GCC_ATYP_DS)		{ A_0ARG, "ds" },
+	CS(GCC_ATYP_ES)		{ A_0ARG, "es" },
+	CS(GCC_ATYP_FS)		{ A_0ARG, "fs" },
+	CS(GCC_ATYP_GS)		{ A_0ARG, "gs" },
 #endif
 };
 
