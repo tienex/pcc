@@ -72,6 +72,7 @@ struct symtab *cxxfinddtor(struct symtab *classsym);
 NODE *cxxgencall(struct symtab *sp, struct symtab *fnsym);
 void cxxabi_init(void);
 struct abi_context *cxxabi_get_context(void);
+char *cxxabi_mangle_function(struct symtab *sp);
 struct symtab *cxxlookup(NODE *p, int declare);
 void cxxsetname(struct symtab *sp);
 void cxxmember(struct symtab *sp);

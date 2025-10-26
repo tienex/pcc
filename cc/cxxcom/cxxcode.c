@@ -359,7 +359,21 @@ decoratename(struct symtab *sp, int type)
 		n = exname(sp->sname);
 		return addname(n);
 	}
-	/* Compute the mangled name for other symbols */
+
+	/* Use ABI library for function mangling if available */
+	if (ISFTN(sp->stype) && abi_ctx != NULL) {
+		char *abi_mangled = cxxabi_mangle_function(sp);
+		if (abi_mangled != NULL) {
+			if (cppdebug)
+				printf("ABI mangled %s -> %s\n", sp->sname, abi_mangled);
+			return abi_mangled;
+		}
+		/* Fall through to manual mangling if ABI mangling fails */
+		if (cppdebug)
+			printf("ABI mangling failed for %s, using manual mangling\n", sp->sname);
+	}
+
+	/* Compute the mangled name for other symbols using manual Itanium-style mangling */
 	nmptr = 0;
 	subptr = 0;
 	nmch('_'); nmch('Z');
@@ -1059,4 +1073,186 @@ cxxabi_get_context(void)
 	if (abi_ctx == NULL)
 		cxxabi_init();
 	return abi_ctx;
+}
+
+/*
+ * Convert PCC TWORD type to ABI type kind.
+ */
+static abi_type_kind_t
+pcc_to_abi_type(TWORD t)
+{
+	switch (BTYPE(t)) {
+	case VOID:      return ABI_TYPE_VOID;
+	case BOOL:      return ABI_TYPE_BOOL;
+	case CHAR:      return ABI_TYPE_CHAR;
+	case UCHAR:     return ABI_TYPE_UCHAR;
+	case SHORT:     return ABI_TYPE_SHORT;
+	case USHORT:    return ABI_TYPE_USHORT;
+	case INT:       return ABI_TYPE_INT;
+	case UNSIGNED:  return ABI_TYPE_UINT;
+	case LONG:      return ABI_TYPE_LONG;
+	case ULONG:     return ABI_TYPE_ULONG;
+	case LONGLONG:  return ABI_TYPE_LONGLONG;
+	case ULONGLONG: return ABI_TYPE_ULONGLONG;
+	case FLOAT:     return ABI_TYPE_FLOAT;
+	case DOUBLE:    return ABI_TYPE_DOUBLE;
+	case LDOUBLE:   return ABI_TYPE_LONGDOUBLE;
+	case STRTY:     return ABI_TYPE_CLASS;
+	case UNIONTY:   return ABI_TYPE_UNION;
+	case ENUMTY:    return ABI_TYPE_ENUM;
+	default:        return ABI_TYPE_INT; /* fallback */
+	}
+}
+
+/*
+ * Create an ABI type descriptor from PCC type.
+ */
+static abi_type_t *
+create_abi_type(TWORD type, union dimfun *df, struct attr *ap)
+{
+	abi_type_t *atype;
+
+	atype = abi_create_type(pcc_to_abi_type(type));
+	if (atype == NULL)
+		return NULL;
+
+	/* Handle type qualifiers */
+	if (type & CON)
+		atype->is_const = 1;
+	if (type & VOL)
+		atype->is_volatile = 1;
+
+	/* Handle pointers and references */
+	if (ISPTR(type)) {
+		TWORD pointee_type = DECREF(type);
+		atype->kind = ABI_TYPE_POINTER;
+		atype->u.pointee = create_abi_type(pointee_type, df, ap);
+	}
+
+	return atype;
+}
+
+/*
+ * Create an ABI function descriptor from PCC symbol table entry.
+ */
+static abi_function_t *
+create_abi_function(struct symtab *sp)
+{
+	abi_function_t *func;
+	abi_param_t *param, *last_param = NULL;
+
+	func = calloc(1, sizeof(abi_function_t));
+	if (func == NULL)
+		return NULL;
+
+	func->name = sp->sname;
+
+	/* Set return type */
+	func->return_type = create_abi_type(DECREF(sp->stype), sp->sdf, sp->sap);
+
+	/* Check if constructor or destructor */
+	if (sp->sflags & SCTOR)
+		func->is_constructor = 1;
+	if (sp->sflags & SDTOR)
+		func->is_destructor = 1;
+
+	/* Check if member function */
+	if (sp->sdown != NULL && sp->sdown != spole && sp->sdown->sclass != NSPACE) {
+		/* This is a member function - we'll set parent_class later if needed */
+		func->parent_class = NULL; /* For now */
+	}
+
+	/* Add parameters if this is a function with prototype */
+	if (ISFTN(sp->stype) && sp->sdf && sp->sdf->dfun) {
+		union arglist *al;
+		int param_num = 0;
+
+		for (al = sp->sdf->dfun; al->type != TNULL; al++, param_num++) {
+			/* Skip ellipsis */
+			if (al->type == TELLIPSIS)
+				continue;
+
+			param = calloc(1, sizeof(abi_param_t));
+			if (param == NULL)
+				break;
+
+			/* Parameters don't have names in arglist, use generic name */
+			/* In practice, the ABI library mainly needs the types */
+			param->name = NULL;
+			param->type = create_abi_type(al->type, al->df, al->sap);
+			param->next = NULL;
+
+			if (last_param == NULL)
+				func->params = param;
+			else
+				last_param->next = param;
+			last_param = param;
+		}
+	}
+
+	return func;
+}
+
+/*
+ * Free ABI function descriptor and associated memory.
+ */
+static void
+free_abi_function(abi_function_t *func)
+{
+	abi_param_t *param, *next;
+
+	if (func == NULL)
+		return;
+
+	/* Free parameters */
+	param = func->params;
+	while (param != NULL) {
+		next = param->next;
+		if (param->type)
+			abi_destroy_type(param->type);
+		free(param);
+		param = next;
+	}
+
+	/* Free return type */
+	if (func->return_type)
+		abi_destroy_type(func->return_type);
+
+	free(func);
+}
+
+/*
+ * Mangle a function or method name using the ABI library.
+ * Returns a statically allocated string (via addname).
+ */
+char *
+cxxabi_mangle_function(struct symtab *sp)
+{
+	abi_context_t *ctx;
+	abi_function_t *func;
+	char *mangled;
+	char *result;
+
+	/* Get ABI context */
+	ctx = cxxabi_get_context();
+	if (ctx == NULL)
+		return NULL;
+
+	/* Create ABI function descriptor */
+	func = create_abi_function(sp);
+	if (func == NULL)
+		return NULL;
+
+	/* Mangle using ABI library */
+	mangled = abi_mangle_function(ctx, func);
+
+	/* Copy to permanent storage via addname */
+	result = mangled ? addname(mangled) : NULL;
+
+	/* Clean up */
+	if (mangled)
+		free(mangled);
+	free_abi_function(func);
+
+	return result;
 }
