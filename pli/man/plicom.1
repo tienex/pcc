@@ -1,0 +1,159 @@
+.TH PLICOM 1 "2025" "PCC" "PL/I Compiler"
+.SH NAME
+plicom \- PL/I compiler proper
+.SH SYNOPSIS
+.B plicom
+[\fIOPTIONS\fR] \fIfile\fR
+.SH DESCRIPTION
+.B plicom
+is the PL/I compiler proper, part of the PCC (Portable C Compiler) suite. It compiles PL/I and PL/M source code to assembly language.
+
+This command is normally invoked by the
+.BR pli (1)
+driver and is not typically used directly by users.
+
+.SH OPTIONS
+.TP
+.BI \-o " file"
+Write output to
+.IR file
+instead of standard output.
+.TP
+.BI \-d " dialect"
+Set the PL/I dialect:
+.BR pli ,
+.BR plm ,
+.BR plm86 ,
+.BR plm386 ,
+.BR plc ,
+or
+.BR subset .
+.TP
+.BI \-W warning
+Enable specific warning. Warnings include:
+.BR unused ,
+.BR conversion ,
+.BR strict ,
+.BR extensions ,
+.BR deprecated .
+.TP
+.B \-w
+Disable all warnings.
+.TP
+.B \-v
+Verbose mode. Print additional diagnostic information.
+.TP
+.B \-h
+Display help message and exit.
+
+.SH DIALECT FEATURES
+.SS Standard PL/I
+Full language support including:
+.IP \(bu 2
+All data types (FIXED, FLOAT, BIT, CHARACTER, POINTER, etc.)
+.IP \(bu
+Based and controlled storage
+.IP \(bu
+Multitasking (TASK, EVENT)
+.IP \(bu
+Exception handling (ON conditions)
+.IP \(bu
+Preprocessor (%DECLARE, %INCLUDE)
+.IP \(bu
+Picture specifications
+.IP \(bu
+File I/O (stream and record)
+
+.SS PL/M
+Simplified dialect for embedded systems:
+.IP \(bu 2
+Hardware I/O (INPUT/OUTPUT)
+.IP \(bu
+LITERALLY macros
+.IP \(bu
+AT clause for absolute addressing
+.IP \(bu
+INTERRUPT procedures
+.IP \(bu
+BYTE/WORD/DWORD types
+.IP \(bu
+Limited to essential features
+
+.SH DIAGNOSTICS
+.B plicom
+produces Clang-style diagnostics with source context:
+.PP
+.in +4
+.nf
+example.pli:5:12: error: undeclared identifier 'foo'
+    CALL foo();
+         ^
+.fi
+.in
+
+Diagnostics include:
+.IP \(bu 2
+Severity levels: note, warning, error, fatal
+.IP \(bu
+Source file location
+.IP \(bu
+Column indicators
+.IP \(bu
+Source line context
+.IP \(bu
+Color output (on TTY)
+
+.SH EXIT STATUS
+.TP
+.B 0
+Successful compilation
+.TP
+.B 1
+Compilation errors
+.TP
+.B 2
+Invalid arguments or system error
+
+.SH EXAMPLES
+.PP
+Compile PL/I source to assembly:
+.RS
+.nf
+plicom \-o program.s program.pli
+.fi
+.RE
+
+.PP
+Compile with dialect specification:
+.RS
+.nf
+plicom \-d plm86 \-o firmware.s firmware.plm
+.fi
+.RE
+
+.PP
+Enable warnings:
+.RS
+.nf
+plicom \-Wunused \-Wstrict program.pli
+.fi
+.RE
+
+.SH FILES
+.I /usr/local/libexec/plicom
+.br
+.I /usr/local/lib/libpli.a
+
+.SH SEE ALSO
+.BR pli (1),
+.BR cc (1),
+.BR as (1)
+
+.SH BUGS
+Report bugs to: https://github.com/pcc/pcc/issues
+
+.SH AUTHOR
+Written as part of the Portable C Compiler (PCC) project.
+
+.SH COPYRIGHT
+Copyright \(co 2025 PCC Project.

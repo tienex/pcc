@@ -217,6 +217,12 @@ static void link_files(char **objfiles, int num_objs) {
 	for (int i = 0; i < num_objs; i++)
 		argv[argc++] = objfiles[i];
 
+	/* Always link with PL/I runtime library */
+	argv[argc++] = "-lpli";
+
+	/* Add standard math library */
+	argv[argc++] = "-lm";
+
 	for (int i = 0; i < num_library_paths; i++) {
 		argv[argc++] = "-L";
 		argv[argc++] = library_paths[i];
