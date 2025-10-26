@@ -560,7 +560,7 @@ struct atax {
 	CS(GCC_ATYP_GS)		{ A_0ARG, "gs" },
 
 	/* Borland/MSVC extensions */
-	CS(GCC_ATYP_EMIT)	{ A_1ARG, "emit" },
+	CS(GCC_ATYP_EMIT)	{ A_1ARG|A_MANY, "emit" },  /* 1 or more byte arguments */
 #endif
 
 #if defined(mach_i86) || defined(mach_i386)

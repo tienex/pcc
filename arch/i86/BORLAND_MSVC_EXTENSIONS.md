@@ -26,11 +26,20 @@ The `__emit` keyword allows you to insert raw byte values directly into the gene
 
 ### Syntax
 
+**Borland/MSVC syntax:**
 ```c
-__emit byte_value
-__emit__(byte_value)
-__attribute__((emit(byte_value)))
+__emit(byte_value)                    // Single byte
+__emit(byte1, byte2, byte3, ...)     // Multiple bytes (Borland)
+__emit__(byte_value)                  // Alternative form
 ```
+
+**GCC-style attribute form:**
+```c
+__attribute__((emit(byte_value)))
+__attribute__((emit(byte1, byte2, ...)))
+```
+
+**PCC Extension:** Unlike the original Borland/MSVC implementations which required literal constants, PCC also accepts expressions and variables as arguments, allowing for more flexible code generation.
 
 ### Examples
 
@@ -38,28 +47,44 @@ __attribute__((emit(byte_value)))
 // Emit NOP instruction (0x90)
 void insert_nop(void)
 {
-    __emit 0x90;
+    __emit(0x90);
 }
 
 // Emit INT 3 instruction (debugger breakpoint: 0xCC)
 void debug_break(void)
 {
-    __emit 0xCC;
+    __emit(0xCC);
 }
 
-// Emit multiple bytes
+// Emit multiple bytes in one statement (Borland-style)
 void custom_instruction(void)
 {
-    __emit 0x0F;  // Two-byte opcode prefix
-    __emit 0x31;  // RDTSC instruction (Read Time-Stamp Counter)
+    __emit(0x0F, 0x31);  // RDTSC instruction (Read Time-Stamp Counter)
+}
+
+// Multiple separate calls
+void rdtsc_alt(void)
+{
+    __emit(0x0F);  // Two-byte opcode prefix
+    __emit(0x31);  // RDTSC second byte
 }
 
 // Using attribute form
 void nop_sled(void)
 {
-    __attribute__((emit(0x90)));
-    __attribute__((emit(0x90)));
-    __attribute__((emit(0x90)));
+    __attribute__((emit(0x90, 0x90, 0x90)));  // Three NOPs at once
+}
+
+// PCC extension: Using variables (not available in original Borland/MSVC)
+void emit_dynamic(unsigned char opcode)
+{
+    __emit(opcode);  // Emit byte from variable
+}
+
+// PCC extension: Complex expressions
+void emit_calculated(void)
+{
+    __emit(0x90 + 0);  // Expression evaluation
 }
 ```
 
@@ -69,24 +94,34 @@ void nop_sled(void)
 // Emit far return (RETF)
 void far_return_stub(void)
 {
-    __emit 0xCB;  // RETF instruction
+    __emit(0xCB);  // RETF instruction
 }
 
 // Emit segment override prefix
 void es_override(void)
 {
-    __emit 0x26;  // ES: segment override prefix
-    __emit 0xA1;  // MOV AX, [...]
+    __emit(0x26, 0xA1);  // ES: MOV AX, [...]
     // ... rest of instruction
 }
 
 // Lock prefix for atomic operations
 void atomic_inc(void)
 {
-    __emit 0xF0;  // LOCK prefix
-    __emit 0xFF;  // INC [mem]
-    __emit 0x06;  // ModRM byte
+    __emit(0xF0, 0xFF, 0x06);  // LOCK INC [mem]
     // ... address follows
+}
+
+// Multiple instructions
+void int_sequence(void)
+{
+    __emit(0xCD, 0x21);  // INT 21h (DOS function call)
+}
+
+// Segment register manipulation
+void set_es_to_video(void)
+{
+    __emit(0xB8, 0x00, 0xB8);  // MOV AX, 0B800h (VGA text mode)
+    __emit(0x8E, 0xC0);         // MOV ES, AX
 }
 ```
 
@@ -96,46 +131,68 @@ void atomic_inc(void)
 // Emit CPUID instruction
 void emit_cpuid(void)
 {
-    __emit 0x0F;
-    __emit 0xA2;  // CPUID
+    __emit(0x0F, 0xA2);  // CPUID
 }
 
 // Emit RDTSC (Read Time-Stamp Counter)
 void emit_rdtsc(void)
 {
-    __emit 0x0F;
-    __emit 0x31;  // RDTSC
+    __emit(0x0F, 0x31);  // RDTSC
 }
 
 // Emit PREFETCH instruction (Pentium III+)
 void emit_prefetch(void)
 {
-    __emit 0x0F;
-    __emit 0x18;
-    __emit 0x00;  // PREFETCH [EAX]
+    __emit(0x0F, 0x18, 0x00);  // PREFETCH [EAX]
+}
+
+// WBINVD instruction (486+)
+void writeback_invalidate(void)
+{
+    __emit(0x0F, 0x09);  // WBINVD
+}
+
+// INVD instruction (486+)
+void invalidate_cache(void)
+{
+    __emit(0x0F, 0x08);  // INVD
 }
 ```
 
 ### Use Cases
 
-1. **Debugging**: Insert breakpoint instructions
+1. **Debugging**: Insert breakpoint instructions (`__emit(0xCC)`)
 2. **Optimization**: Insert specific CPU instructions for performance
 3. **Compatibility**: Work around compiler code generation issues
 4. **Assembly Tricks**: Implement specific instruction sequences
 5. **Anti-debugging**: Insert unusual instruction sequences
+6. **Instruction prefixes**: LOCK, REP, segment overrides
+7. **Privileged instructions**: System-level operations (I/O, cache control)
+8. **Dynamic code generation**: Emit bytes based on runtime calculations (PCC extension)
 
 ### Compatibility
 
-- **Borland C/C++**: `__emit__` (double underscore form)
-- **Microsoft C/C++**: `__emit` (single underscore form)
-- **PCC**: Both forms supported, plus `__attribute__((emit(value)))`
+**Original Borland/MSVC Syntax:**
+- **Borland C/C++ 3.x-5.x**:
+  - `__emit(byte)` - single byte (required literal)
+  - `__emit(b1, b2, ...)` - multiple bytes (required literals)
+- **Microsoft C/C++ 6.x-7.x**:
+  - `__emit byte` - single byte (required literal)
+
+**PCC Implementation:**
+- ✓ `__emit(byte)` - Borland single byte syntax
+- ✓ `__emit(b1, b2, ...)` - Borland multiple byte syntax
+- ✓ `__emit__(byte)` - Alternative form
+- ✓ `__attribute__((emit(byte, ...)))` - GCC-style attribute
+- ✓ **PCC Extension**: Accepts variables and expressions (not just literals)
 
 ### Notes
 
 - The emitted bytes are inserted directly into the code stream at the current position
 - No instruction validation is performed - you are responsible for valid opcodes
-- Multi-byte instructions must be emitted one byte at a time
+- Multi-byte instructions can be emitted in a single `__emit()` call
 - Be careful with instruction alignment and CPU compatibility
+- **PCC Extension**: Unlike Borland/MSVC, PCC allows non-constant expressions as arguments, enabling dynamic opcode generation
 
 ---
 
@@ -497,8 +554,8 @@ Register pseudo-variables were popular in:
 
 | Feature | i86 | i386 | Notes |
 |---------|-----|------|-------|
-| `__emit` | ✓ | ✓ | Both architectures |
-| `__asm` (MSVC-style) | ✓ | ✓ | Both architectures |
+| `__emit(...)` | ✓ | ✓ | Multiple bytes, PCC extension for non-literals |
+| `__asm` (MSVC-style) | ✓ | ✓ | Block form `{ }` supported |
 | Register pseudo-vars | Planned | Planned | Future enhancement |
 
 ## Compiler Compatibility Matrix
