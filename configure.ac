@@ -610,6 +610,7 @@ enable_f77=no
 enable_basic=no
 enable_bliss=no
 enable_pxc=no
+enable_ocaml=no
 
 # Normalize language list (replace spaces with commas)
 enable_languages=`echo "$enable_languages" | tr ' ' ',' | tr -d ' '`
@@ -640,6 +641,9 @@ for lang in $enable_languages; do
 	pxc|PXC|xbase++|xbasepp|XBASEPP)
 		enable_pxc=yes
 		;;
+	ocaml|OCaml|OCAML|ml|ML)
+		enable_ocaml=yes
+		;;
 	all|ALL)
 		enable_c=yes
 		enable_cxx=yes
@@ -648,6 +652,7 @@ for lang in $enable_languages; do
 		enable_basic=yes
 		enable_bliss=yes
 		enable_pxc=yes
+		enable_ocaml=yes
 		;;
 	"")
 		# Skip empty entries
@@ -672,6 +677,7 @@ AC_SUBST(enable_f77)
 AC_SUBST(enable_basic)
 AC_SUBST(enable_bliss)
 AC_SUBST(enable_pxc)
+AC_SUBST(enable_ocaml)
 
 # Process architecture selection
 if test "$enable_archs" = "auto" -o "$enable_archs" = ""; then
@@ -1304,6 +1310,14 @@ if test "$enable_pxc" = "yes"; then
 		pxc/libxbrt/Makefile"
 fi
 
+# Add OCaml if enabled
+if test "$enable_ocaml" = "yes"; then
+	CONFIG_MAKEFILES="$CONFIG_MAKEFILES
+		ocaml/Makefile
+		ocaml/ocaml/Makefile
+		ocaml/ocom/Makefile"
+fi
+
 AC_CONFIG_FILES([$CONFIG_MAKEFILES])
 AC_OUTPUT
 
@@ -1320,6 +1334,7 @@ test "$enable_f77" = "yes" && ENABLED_LANGUAGES="$ENABLED_LANGUAGES f90"
 test "$enable_basic" = "yes" && ENABLED_LANGUAGES="$ENABLED_LANGUAGES basic"
 test "$enable_bliss" = "yes" && ENABLED_LANGUAGES="$ENABLED_LANGUAGES bliss"
 test "$enable_pxc" = "yes" && ENABLED_LANGUAGES="$ENABLED_LANGUAGES pxc"
+test "$enable_ocaml" = "yes" && ENABLED_LANGUAGES="$ENABLED_LANGUAGES ocaml"
 ENABLED_LANGUAGES=`echo $ENABLED_LANGUAGES | sed 's/^ *//'`
 
 echo

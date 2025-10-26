@@ -693,6 +693,7 @@ CC
 BINPREFIX
 enable_targets
 enable_archs
+enable_ocaml
 enable_pxc
 enable_bliss
 enable_basic
@@ -1451,7 +1452,7 @@ Optional Packages:
   --with-asm-format=<format>
                           Specify assembly output format: gnu-as (default),
                           nasm, yasm, fasm, apple-as, masm, jwasm, uasm, tasm,
-                          wasm
+                          wasm, javascript
   --with-bootstrap-stage=N
                           Set bootstrap stage number (default: 0)
 
@@ -2934,7 +2935,7 @@ stabs=no
 dwarf=no
 # allowed: UNSIGNED (4-char u_int), INT (4-char int), SHORT (2-char u_short)
 wchar_type=INT
-# Default assembler format (gnu-as, nasm, yasm, fasm, apple-as, masm, jwasm, uasm, tasm, wasm)
+# Default assembler format (gnu-as, nasm, yasm, fasm, apple-as, masm, jwasm, uasm, tasm, wasm, javascript)
 asm_format=gnu-as
 
 case "$target_os" in
@@ -3037,6 +3038,8 @@ case "$target_os" in
 	    mips*) targmach=mips ;;
 	    wasm32) targmach=wasm ;;
 	    wasm64) targmach=wasm ;;
+	    javascript) targmach=javascript asm_format=javascript ;;
+	    js) targmach=javascript asm_format=javascript ;;
 	esac
 	case "$target_os" in
 	    *-musl*) ADD_CPPFLAGS="$ADD_CPPFLAGS -DUSE_MUSL" ;;
@@ -3208,6 +3211,16 @@ case "$target_os" in
 	esac
 	;;
 
+    javascript*|js*)
+	targos=javascript
+	abi=none
+	asm_format=javascript
+	case "$target_cpu" in
+	    javascript|js) targmach=javascript ;;
+	    *) targmach=javascript ;;
+	esac
+	;;
+
     windows*|pe*)
 	target_alias=i386-pe
 	targos=win32
@@ -3225,6 +3238,8 @@ case "$target_os" in
 	    pdp7) targmach=pdp7 ;;
 	    wasm32) targmach=wasm ;;
 	    wasm64) targmach=wasm ;;
+	    javascript) targmach=javascript asm_format=javascript ;;
+	    js) targmach=javascript asm_format=javascript ;;
 	esac
 	;;
 esac
@@ -3586,6 +3601,7 @@ enable_f77=no
 enable_basic=no
 enable_bliss=no
 enable_pxc=no
+enable_ocaml=no
 
 # Normalize language list (replace spaces with commas)
 enable_languages=`echo "$enable_languages" | tr ' ' ',' | tr -d ' '`
@@ -3616,6 +3632,9 @@ for lang in $enable_languages; do
 	pxc|PXC|xbase++|xbasepp|XBASEPP)
 		enable_pxc=yes
 		;;
+	ocaml|OCaml|OCAML|ml|ML)
+		enable_ocaml=yes
+		;;
 	all|ALL)
 		enable_c=yes
 		enable_cxx=yes
@@ -3624,6 +3643,7 @@ for lang in $enable_languages; do
 		enable_basic=yes
 		enable_bliss=yes
 		enable_pxc=yes
+		enable_ocaml=yes
 		;;
 	"")
 		# Skip empty entries
@@ -3641,6 +3661,7 @@ if test "$enable_c" = "no"; then
 printf "%s\n" "$as_me: WARNING: C language is required and will be enabled" >&2;}
 	enable_c=yes
 fi
+
 
 
 
@@ -6738,6 +6759,14 @@ if test "$enable_pxc" = "yes"; then
 		pxc/libxbrt/Makefile"
 fi
 
+# Add OCaml if enabled
+if test "$enable_ocaml" = "yes"; then
+	CONFIG_MAKEFILES="$CONFIG_MAKEFILES
+		ocaml/Makefile
+		ocaml/ocaml/Makefile
+		ocaml/ocom/Makefile"
+fi
+
 ac_config_files="$ac_config_files $CONFIG_MAKEFILES"
 
 cat >confcache <<\_ACEOF
@@ -8029,6 +8058,7 @@ test "$enable_f77" = "yes" && ENABLED_LANGUAGES="$ENABLED_LANGUAGES f90"
 test "$enable_basic" = "yes" && ENABLED_LANGUAGES="$ENABLED_LANGUAGES basic"
 test "$enable_bliss" = "yes" && ENABLED_LANGUAGES="$ENABLED_LANGUAGES bliss"
 test "$enable_pxc" = "yes" && ENABLED_LANGUAGES="$ENABLED_LANGUAGES pxc"
+test "$enable_ocaml" = "yes" && ENABLED_LANGUAGES="$ENABLED_LANGUAGES ocaml"
 ENABLED_LANGUAGES=`echo $ENABLED_LANGUAGES | sed 's/^ *//'`
 
 echo
