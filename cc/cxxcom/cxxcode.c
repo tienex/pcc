@@ -25,13 +25,18 @@
  */
 
 # include "pass1.h"
-
+# include "../../common/abi/abi.h"
 
 struct symtab spole0 = { 0, 0, 0, 0, 0, 0, 0, "base", "base", };
 struct symtab *spole = &spole0;
 struct symtab *nscur = &spole0;
 int elnk, nsptr;
 int cxxcuraccess = ACCESS_PUBLIC; /* default access in structs */
+
+/* C++ standard and ABI selection */
+int cxx_standard = CXX_STD_98;          /* Default to C++98 for compatibility */
+int cxx_abi = CXX_ABI_ITANIUM;          /* Default to Itanium ABI (GCC/Clang) */
+static abi_context_t *abi_ctx = NULL;   /* ABI library context */
 
 static struct symtab *sfind(char *n, struct symtab *sp);
 
@@ -989,4 +994,69 @@ cxxgencall(struct symtab *sp, struct symtab *fnsym)
 		printf("Generated call to %s for object %s\n", fnsym->sname, sp->sname);
 
 	return call;
+}
+
+/*
+ * Convert our CXX_ABI_* enum to ABI library's abi_kind_t.
+ */
+static abi_kind_t
+cxx_to_abi_kind(int cxx_abi_type)
+{
+	switch (cxx_abi_type) {
+	case CXX_ABI_ITANIUM:  return ABI_ITANIUM;
+	case CXX_ABI_MSVC:     return ABI_MSVC;
+	case CXX_ABI_WATCOM:   return ABI_WATCOM;
+	case CXX_ABI_BORLAND:  return ABI_BORLAND;
+	case CXX_ABI_GNU_OLD:  return ABI_GNU_OLD;
+	case CXX_ABI_DMC:      return ABI_DMC;
+	case CXX_ABI_ARM:      return ABI_ARM;
+	default:               return ABI_ITANIUM; /* Safe default */
+	}
+}
+
+/*
+ * Initialize the ABI library context.
+ * Should be called once during compiler initialization.
+ */
+void
+cxxabi_init(void)
+{
+	abi_kind_t abi_kind;
+
+	/* Convert C++ ABI type to ABI library type */
+	abi_kind = cxx_to_abi_kind(cxx_abi);
+
+	/* Initialize ABI context */
+	if (abi_ctx != NULL)
+		abi_destroy(abi_ctx);
+
+	abi_ctx = abi_init(abi_kind);
+
+	if (abi_ctx == NULL)
+		cerror("Failed to initialize ABI library");
+
+	if (cppdebug)
+		printf("Initialized %s ABI (C++%s)\n",
+		       cxx_abi == CXX_ABI_ITANIUM ? "Itanium" :
+		       cxx_abi == CXX_ABI_MSVC ? "MSVC" :
+		       cxx_abi == CXX_ABI_WATCOM ? "Watcom" :
+		       cxx_abi == CXX_ABI_BORLAND ? "Borland" : "Unknown",
+		       cxx_standard == CXX_STD_98 ? "98" :
+		       cxx_standard == CXX_STD_03 ? "03" :
+		       cxx_standard == CXX_STD_11 ? "11" :
+		       cxx_standard == CXX_STD_14 ? "14" :
+		       cxx_standard == CXX_STD_17 ? "17" :
+		       cxx_standard == CXX_STD_20 ? "20" :
+		       cxx_standard == CXX_STD_23 ? "23" : "Unknown");
+}
+
+/*
+ * Get the current ABI context.
+ */
+abi_context_t *
+cxxabi_get_context(void)
+{
+	if (abi_ctx == NULL)
+		cxxabi_init();
+	return abi_ctx;
 }

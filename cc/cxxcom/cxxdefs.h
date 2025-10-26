@@ -10,6 +10,31 @@ extern int elnk;
 enum { ACCESS_PUBLIC, ACCESS_PRIVATE, ACCESS_PROTECTED };
 extern int cxxcuraccess; /* current access level in class */
 
+/* C++ standard versions */
+enum {
+	CXX_STD_98,    /* C++98 */
+	CXX_STD_03,    /* C++03 (minor update to 98) */
+	CXX_STD_11,    /* C++11 (was C++0x) */
+	CXX_STD_14,    /* C++14 */
+	CXX_STD_17,    /* C++17 */
+	CXX_STD_20,    /* C++20 */
+	CXX_STD_23,    /* C++23 */
+	CXX_STD_26     /* C++26 (future) */
+};
+
+/* C++ ABI vendors */
+enum {
+	CXX_ABI_ITANIUM,  /* GCC/Clang (default) */
+	CXX_ABI_MSVC,     /* Microsoft Visual C++ */
+	CXX_ABI_WATCOM,   /* Watcom C++ */
+	CXX_ABI_BORLAND,  /* Borland C++ */
+	CXX_ABI_GNU_OLD,  /* Old GNU C++ (GCC 2.x) */
+	CXX_ABI_DMC,      /* Digital Mars C++ */
+	CXX_ABI_ARM       /* ARM C++ (Itanium variant) */
+};
+
+extern int cxx_standard;    /* Current C++ standard version */
+extern int cxx_abi;         /* Current C++ ABI */
 extern int cppdebug;
 
 /* spole is symbol at base, nscur is where we are in the stack. */
@@ -45,6 +70,8 @@ int cxxisclass(TWORD type);
 struct symtab *cxxfindctor(struct symtab *classsym);
 struct symtab *cxxfinddtor(struct symtab *classsym);
 NODE *cxxgencall(struct symtab *sp, struct symtab *fnsym);
+void cxxabi_init(void);
+struct abi_context *cxxabi_get_context(void);
 struct symtab *cxxlookup(NODE *p, int declare);
 void cxxsetname(struct symtab *sp);
 void cxxmember(struct symtab *sp);
