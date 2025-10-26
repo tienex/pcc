@@ -1,26 +1,28 @@
 /*
  * Copyright (c) 2025 PCC Xbase++ Compiler
  *
- * Code generation - Convert AST to PCC IR
+ * Code generation - Convert AST to C code
  */
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include "pass1.h"
-#include "../../mip/manifest.h"
 
 /* Forward declarations */
-static NODE *gen_expr(struct node *xb_node);
-static void gen_stmt(struct node *xb_node);
-static NODE *gen_call(struct node *xb_node);
-static NODE *gen_assign(struct node *xb_node);
+static void gen_expr(struct node *xb_node, FILE *out);
+static void gen_stmt(struct node *xb_node, FILE *out, int indent);
+static void gen_call(struct node *xb_node, FILE *out);
 
 /* Current function being compiled */
 static SYMTAB *current_function = NULL;
 
+/* Output file */
+static FILE *output_file = NULL;
+
 /* Label counter */
 static int label_counter = 0;
+static int temp_counter = 0;
 
 /*
  * Generate a new label
@@ -32,264 +34,121 @@ new_label(void)
 }
 
 /*
- * Convert Xbase++ type to PCC type
+ * Print indentation
  */
-static TWORD
-xb_type_to_pcc(TNODE *xb_type)
+static void
+print_indent(FILE *out, int indent)
+{
+	for (int i = 0; i < indent; i++)
+		fprintf(out, "\t");
+}
+
+/*
+ * Convert Xbase++ type to C type string
+ */
+static const char *
+xb_type_to_c(TNODE *xb_type)
 {
 	if (!xb_type)
-		return PTR | VOID;  /* Untyped = void* */
+		return "xb_value_t*";  /* Untyped = variant */
 
 	switch (xb_type->ttype) {
 	case TINTEGER:
-		return LONGLONG;
+		return "long long";
 	case TFLOAT:
 	case TNUMERIC:
-		return DOUBLE;
+		return "double";
 	case TCHAR:
 	case TMEMO:
-		return PTR | CHAR;  /* char* */
+		return "char*";
 	case TLOGICAL:
-		return INT;
+		return "int";
 	case TDATE:
-		return INT;  /* Julian day number */
+		return "int32_t";  /* Julian day number */
 	case TARRAY:
+		return "xb_array_t*";
 	case TOBJECT:
+		return "xb_object_t*";
 	case TCODEBLOCK:
-		return PTR | VOID;  /* Generic pointer */
+		return "xb_codeblock_t*";
 	default:
-		return PTR | VOID;  /* Default to void* */
+		return "xb_value_t*";  /* Default to variant */
 	}
 }
 
 /*
- * Generate code for integer constant
+ * Map operator to C string
  */
-static NODE *
-gen_icon(long long val)
+static const char *
+op_to_string(int op)
 {
-	NODE *p = talloc();
-	p->n_op = ICON;
-	p->n_type = LONGLONG;
-	p->n_lval = val;
-	p->n_rval = 0;
-	return p;
-}
-
-/*
- * Generate code for float constant
- */
-static NODE *
-gen_fcon(double val)
-{
-	NODE *p = talloc();
-	p->n_op = FCON;
-	p->n_type = DOUBLE;
-	p->n_dcon = val;
-	return p;
-}
-
-/*
- * Generate code for string constant
- */
-static NODE *
-gen_scon(char *str)
-{
-	NODE *p = talloc();
-	p->n_op = NAME;
-	p->n_type = PTR | CHAR;
-	/* TODO: Add string to string table and get label */
-	p->n_lval = 0;
-	p->n_rval = 0;
-	return p;
-}
-
-/*
- * Generate code for variable reference
- */
-static NODE *
-gen_name(SYMTAB *sym)
-{
-	NODE *p = talloc();
-
-	sym->sflags |= SUSED;
-
-	p->n_op = NAME;
-	p->n_type = xb_type_to_pcc(sym->stype);
-	p->n_sp = sym;
-	p->n_lval = 0;
-	p->n_rval = 0;
-
-	return p;
-}
-
-/*
- * Generate code for binary operation
- */
-static NODE *
-gen_binop(int op, struct node *left, struct node *right)
-{
-	NODE *l = gen_expr(left);
-	NODE *r = gen_expr(right);
-	NODE *p = talloc();
-
-	/* Map Xbase++ operators to PCC operators */
 	switch (op) {
-	case N_PLUS:   p->n_op = PLUS; break;
-	case N_MINUS:  p->n_op = MINUS; break;
-	case N_MUL:    p->n_op = MUL; break;
-	case N_DIV:    p->n_op = DIV; break;
-	case N_MOD:    p->n_op = MOD; break;
-	case N_EQ:     p->n_op = EQ; break;
-	case N_NE:     p->n_op = NE; break;
-	case N_LT:     p->n_op = LT; break;
-	case N_LE:     p->n_op = LE; break;
-	case N_GT:     p->n_op = GT; break;
-	case N_GE:     p->n_op = GE; break;
-	case N_AND:    p->n_op = AND; break;
-	case N_OR:     p->n_op = OR; break;
-	default:       p->n_op = PLUS; break;
+	case N_PLUS:   return "+";
+	case N_MINUS:  return "-";
+	case N_MUL:    return "*";
+	case N_DIV:    return "/";
+	case N_MOD:    return "%";
+	case N_EQ:     return "==";
+	case N_NE:     return "!=";
+	case N_LT:     return "<";
+	case N_LE:     return "<=";
+	case N_GT:     return ">";
+	case N_GE:     return ">=";
+	case N_AND:    return "&&";
+	case N_OR:     return "||";
+	default:       return "+";
 	}
-
-	p->n_left = l;
-	p->n_right = r;
-	p->n_type = l->n_type;  /* Result type */
-
-	return p;
-}
-
-/*
- * Generate code for unary operation
- */
-static NODE *
-gen_unop(int op, struct node *operand)
-{
-	NODE *p = talloc();
-	NODE *o = gen_expr(operand);
-
-	switch (op) {
-	case N_UMINUS: p->n_op = UMINUS; break;
-	case N_NOT:    p->n_op = NOT; break;
-	default:       p->n_op = UMINUS; break;
-	}
-
-	p->n_left = o;
-	p->n_type = o->n_type;
-
-	return p;
-}
-
-/*
- * Generate code for assignment
- */
-static NODE *
-gen_assign(struct node *xb_node)
-{
-	NODE *p = talloc();
-	NODE *left = gen_expr(xb_node->n.bn.left);
-	NODE *right = gen_expr(xb_node->n.bn.right);
-
-	p->n_op = ASSIGN;
-	p->n_left = left;
-	p->n_right = right;
-	p->n_type = left->n_type;
-
-	/* Mark left side as set */
-	if (xb_node->n.bn.left->op == N_NAME) {
-		xb_node->n.bn.left->n.sym.sym->sflags |= SSET;
-	}
-
-	return p;
-}
-
-/*
- * Generate code for function call
- */
-static NODE *
-gen_call(struct node *xb_node)
-{
-	NODE *p = talloc();
-	NODE *func = gen_expr(xb_node->n.bn.left);
-	NODE *args = NULL;
-
-	if (xb_node->n.bn.right) {
-		args = gen_expr(xb_node->n.bn.right);
-	}
-
-	p->n_op = CALL;
-	p->n_left = func;
-	p->n_right = args;
-	p->n_type = PTR | VOID;  /* Generic return type */
-
-	return p;
-}
-
-/*
- * Generate code for array subscript
- */
-static NODE *
-gen_subscript(struct node *xb_node)
-{
-	NODE *p = talloc();
-	NODE *arr = gen_expr(xb_node->n.bn.left);
-	NODE *idx = gen_expr(xb_node->n.bn.right);
-
-	p->n_op = PLUS;  /* Array access is base + index */
-	p->n_left = arr;
-	p->n_right = idx;
-	p->n_type = PTR | VOID;
-
-	/* Dereference the result */
-	NODE *deref = talloc();
-	deref->n_op = UMUL;
-	deref->n_left = p;
-	deref->n_type = PTR | VOID;
-
-	return deref;
-}
-
-/*
- * Generate code for field access
- */
-static NODE *
-gen_field(struct node *xb_node)
-{
-	NODE *p = talloc();
-	NODE *obj = gen_expr(xb_node->n.bn.left);
-
-	/* Field access - for now treat as function call to accessor */
-	p->n_op = CALL;
-	p->n_left = obj;
-	p->n_right = NULL;
-	p->n_type = PTR | VOID;
-
-	return p;
 }
 
 /*
  * Generate code for expression
  */
-static NODE *
-gen_expr(struct node *xb_node)
+static void
+gen_expr(struct node *xb_node, FILE *out)
 {
 	if (!xb_node)
-		return NULL;
+		return;
 
 	switch (xb_node->op) {
 	case N_ICON:
-		return gen_icon(xb_node->n.ival.val);
+		fprintf(out, "%lld", xb_node->n.ival.val);
+		break;
 
 	case N_FCON:
-		return gen_fcon(xb_node->n.fval.val);
+		fprintf(out, "%.15g", xb_node->n.fval.val);
+		break;
 
 	case N_SCON:
-		return gen_scon(xb_node->n.sval.str);
+		/* Escape string and output */
+		fprintf(out, "\"");
+		for (char *p = xb_node->n.sval.str; *p; p++) {
+			switch (*p) {
+			case '\n': fprintf(out, "\\n"); break;
+			case '\t': fprintf(out, "\\t"); break;
+			case '\r': fprintf(out, "\\r"); break;
+			case '\\': fprintf(out, "\\\\"); break;
+			case '"':  fprintf(out, "\\\""); break;
+			default:   fprintf(out, "%c", *p); break;
+			}
+		}
+		fprintf(out, "\"");
+		break;
 
 	case N_NAME:
-		return gen_name(xb_node->n.sym.sym);
+		if (xb_node->n.sym.sym) {
+			xb_node->n.sym.sym->sflags |= SUSED;
+			fprintf(out, "%s", xb_node->n.sym.sym->sname);
+		}
+		break;
 
 	case N_ASSIGN:
-		return gen_assign(xb_node);
+		if (xb_node->n.bn.left->op == N_NAME) {
+			xb_node->n.bn.left->n.sym.sym->sflags |= SSET;
+		}
+		gen_expr(xb_node->n.bn.left, out);
+		fprintf(out, " = ");
+		gen_expr(xb_node->n.bn.right, out);
+		break;
 
 	case N_PLUS:
 	case N_MINUS:
@@ -304,137 +163,222 @@ gen_expr(struct node *xb_node)
 	case N_GE:
 	case N_AND:
 	case N_OR:
-		return gen_binop(xb_node->op, xb_node->n.bn.left, xb_node->n.bn.right);
+		fprintf(out, "(");
+		gen_expr(xb_node->n.bn.left, out);
+		fprintf(out, " %s ", op_to_string(xb_node->op));
+		gen_expr(xb_node->n.bn.right, out);
+		fprintf(out, ")");
+		break;
 
 	case N_UMINUS:
+		fprintf(out, "-(");
+		gen_expr(xb_node->n.bn.left, out);
+		fprintf(out, ")");
+		break;
+
 	case N_NOT:
-		return gen_unop(xb_node->op, xb_node->n.bn.left);
+		fprintf(out, "!(");
+		gen_expr(xb_node->n.bn.left, out);
+		fprintf(out, ")");
+		break;
 
 	case N_CALL:
-		return gen_call(xb_node);
+		gen_call(xb_node, out);
+		break;
 
 	case N_SUBSCR:
-		return gen_subscript(xb_node);
+		/* Array access: arr[idx] */
+		fprintf(out, "xb_array_get(");
+		gen_expr(xb_node->n.bn.left, out);
+		fprintf(out, ", ");
+		gen_expr(xb_node->n.bn.right, out);
+		fprintf(out, ")");
+		break;
 
 	case N_FIELD:
-		return gen_field(xb_node);
+		/* Object field access */
+		fprintf(out, "xb_object_get_field(");
+		gen_expr(xb_node->n.bn.left, out);
+		fprintf(out, ", \"%s\")",
+			xb_node->n.bn.right->n.sym.sym ?
+			xb_node->n.bn.right->n.sym.sym->sname : "unknown");
+		break;
 
 	default:
 		warning("code generation for op %d not implemented", xb_node->op);
-		return gen_icon(0);
+		fprintf(out, "0");
+		break;
 	}
+}
+
+/*
+ * Generate code for function call
+ */
+static void
+gen_call(struct node *xb_node, FILE *out)
+{
+	/* Function name */
+	if (xb_node->n.bn.left && xb_node->n.bn.left->op == N_NAME) {
+		fprintf(out, "xb_%s(", xb_node->n.bn.left->n.sym.sym->sname);
+	} else {
+		fprintf(out, "(");
+		gen_expr(xb_node->n.bn.left, out);
+		fprintf(out, ")(");
+	}
+
+	/* Arguments */
+	if (xb_node->n.bn.right) {
+		struct node *arg = xb_node->n.bn.right;
+		int first = 1;
+
+		/* Handle argument list */
+		while (arg) {
+			if (!first)
+				fprintf(out, ", ");
+			first = 0;
+
+			if (arg->op == N_ARGLIST && arg->n.bn.left) {
+				gen_expr(arg->n.bn.left, out);
+				arg = arg->n.bn.right;
+			} else {
+				gen_expr(arg, out);
+				break;
+			}
+		}
+	}
+
+	fprintf(out, ")");
 }
 
 /*
  * Generate code for IF statement
  */
 static void
-gen_if(struct node *xb_node)
+gen_if(struct node *xb_node, FILE *out, int indent)
 {
-	int else_label = new_label();
-	int end_label = new_label();
-
-	NODE *cond = gen_expr(xb_node->n.bn.left);
-
-	/* Generate: if (!cond) goto else_label */
-	ecomp(buildtree(NOT, cond, NULL));
-	cbranch(buildtree(NOT, cond, NULL), bcon(else_label));
+	print_indent(out, indent);
+	fprintf(out, "if (");
+	gen_expr(xb_node->n.bn.left, out);
+	fprintf(out, ") {\n");
 
 	/* Generate then block */
 	if (xb_node->n.bn.right) {
-		gen_stmt(xb_node->n.bn.right);
+		gen_stmt(xb_node->n.bn.right, out, indent + 1);
 	}
 
-	/* Jump to end */
-	branch(end_label);
+	print_indent(out, indent);
+	fprintf(out, "}\n");
 
-	/* Else label */
-	plabel(else_label);
-
-	/* TODO: Generate else block if present */
-
-	/* End label */
-	plabel(end_label);
+	/* TODO: Handle ELSE clause */
 }
 
 /*
  * Generate code for WHILE loop
  */
 static void
-gen_while(struct node *xb_node)
+gen_while(struct node *xb_node, FILE *out, int indent)
 {
-	int loop_label = new_label();
-	int end_label = new_label();
-
-	/* Loop label */
-	plabel(loop_label);
-
-	/* Condition */
-	NODE *cond = gen_expr(xb_node->n.bn.left);
-	cbranch(buildtree(NOT, cond, NULL), bcon(end_label));
+	print_indent(out, indent);
+	fprintf(out, "while (");
+	gen_expr(xb_node->n.bn.left, out);
+	fprintf(out, ") {\n");
 
 	/* Body */
 	if (xb_node->n.bn.right) {
-		gen_stmt(xb_node->n.bn.right);
+		gen_stmt(xb_node->n.bn.right, out, indent + 1);
 	}
 
-	/* Loop back */
-	branch(loop_label);
+	print_indent(out, indent);
+	fprintf(out, "}\n");
+}
 
-	/* End label */
-	plabel(end_label);
+/*
+ * Generate code for FOR loop
+ */
+static void
+gen_for(struct node *xb_node, FILE *out, int indent)
+{
+	print_indent(out, indent);
+	fprintf(out, "for (");
+
+	/* Init */
+	if (xb_node->n.bn.left && xb_node->n.bn.left->n.bn.left) {
+		gen_expr(xb_node->n.bn.left->n.bn.left, out);
+	}
+	fprintf(out, "; ");
+
+	/* Condition */
+	if (xb_node->n.bn.left && xb_node->n.bn.left->n.bn.right) {
+		gen_expr(xb_node->n.bn.left->n.bn.right, out);
+	}
+	fprintf(out, "; ");
+
+	/* Increment - TODO: extract from somewhere */
+	fprintf(out, ") {\n");
+
+	/* Body */
+	if (xb_node->n.bn.right) {
+		gen_stmt(xb_node->n.bn.right, out, indent + 1);
+	}
+
+	print_indent(out, indent);
+	fprintf(out, "}\n");
 }
 
 /*
  * Generate code for RETURN statement
  */
 static void
-gen_return(struct node *xb_node)
+gen_return(struct node *xb_node, FILE *out, int indent)
 {
-	NODE *retval = NULL;
+	print_indent(out, indent);
+	fprintf(out, "return");
 
 	if (xb_node->n.bn.left) {
-		retval = gen_expr(xb_node->n.bn.left);
+		fprintf(out, " ");
+		gen_expr(xb_node->n.bn.left, out);
 	}
 
-	/* Generate return */
-	ecomp(buildtree(RETURN, retval, NULL));
+	fprintf(out, ";\n");
 }
 
 /*
  * Generate code for statement
  */
 static void
-gen_stmt(struct node *xb_node)
+gen_stmt(struct node *xb_node, FILE *out, int indent)
 {
 	if (!xb_node)
 		return;
 
 	switch (xb_node->op) {
 	case N_IF:
-		gen_if(xb_node);
+		gen_if(xb_node, out, indent);
 		break;
 
 	case N_WHILE:
-		gen_while(xb_node);
+		gen_while(xb_node, out, indent);
+		break;
+
+	case N_FOR:
+		gen_for(xb_node, out, indent);
 		break;
 
 	case N_RETURN:
-		gen_return(xb_node);
+		gen_return(xb_node, out, indent);
 		break;
 
 	case N_BLOCK:
 		/* Generate left then right */
-		gen_stmt(xb_node->n.bn.left);
-		gen_stmt(xb_node->n.bn.right);
+		gen_stmt(xb_node->n.bn.left, out, indent);
+		gen_stmt(xb_node->n.bn.right, out, indent);
 		break;
 
 	default:
 		/* Expression statement */
-		if (xb_node->op >= N_PLUS && xb_node->op <= N_FIELD) {
-			NODE *expr = gen_expr(xb_node);
-			ecomp(expr);
-		}
+		print_indent(out, indent);
+		gen_expr(xb_node, out);
+		fprintf(out, ";\n");
 		break;
 	}
 }
@@ -445,19 +389,55 @@ gen_stmt(struct node *xb_node)
 void
 codegen_function(SYMTAB *func, struct node *body)
 {
+	FILE *out = output_file;
+	if (!out)
+		return;
+
 	current_function = func;
 	label_counter = 0;
 
-	/* Function prologue */
-	printf("; Function: %s\n", func->sname);
+	/* Function signature */
+	fprintf(out, "\n%s %s(",
+		xb_type_to_c(func->stype),
+		func->sname);
+
+	/* Parameters - TODO: extract from function */
+	fprintf(out, "void");
+
+	fprintf(out, ")\n{\n");
 
 	/* Generate body */
 	if (body) {
-		gen_stmt(body);
+		gen_stmt(body, out, 1);
 	}
 
 	/* Function epilogue */
+	fprintf(out, "}\n");
+
 	current_function = NULL;
+}
+
+/*
+ * Set output file for code generation
+ */
+void
+codegen_set_output(FILE *fp)
+{
+	output_file = fp;
+}
+
+/*
+ * Generate C file header
+ */
+void
+codegen_header(FILE *out)
+{
+	fprintf(out, "/* Generated by PXC (Xbase++ Compiler) */\n\n");
+	fprintf(out, "#include <stdio.h>\n");
+	fprintf(out, "#include <stdlib.h>\n");
+	fprintf(out, "#include <string.h>\n");
+	fprintf(out, "#include <stdint.h>\n");
+	fprintf(out, "#include <pxc/xbrt.h>\n\n");
 }
 
 /*
@@ -467,4 +447,6 @@ void
 codegen_init(void)
 {
 	label_counter = 0;
+	temp_counter = 0;
+	output_file = NULL;
 }

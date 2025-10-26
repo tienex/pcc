@@ -37,14 +37,27 @@ int
 main(int argc, char **argv)
 {
 	int i;
-	FILE *fp;
+	FILE *fp, *outfp = NULL;
 
 	/* Initialize subsystems */
 	symtab_init();
 	init_builtins();
+	semantic_init();
+	codegen_init();
 
 	/* Parse command line options */
 	parse_options(argc, argv);
+
+	/* Open output file */
+	if (output_file) {
+		outfp = fopen(output_file, "w");
+		if (!outfp) {
+			fprintf(stderr, "pxccom: cannot create %s\n", output_file);
+			return 1;
+		}
+		codegen_set_output(outfp);
+		codegen_header(outfp);
+	}
 
 	/* If no input files specified, read from stdin */
 	if (optind >= argc) {
@@ -82,6 +95,11 @@ main(int argc, char **argv)
 
 			fclose(fp);
 		}
+	}
+
+	/* Close output file */
+	if (outfp) {
+		fclose(outfp);
 	}
 
 	/* Print summary */

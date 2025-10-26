@@ -541,9 +541,9 @@ enum yysymbol_kind_t
   YYSYMBOL_definition_list = 138,          /* definition_list  */
   YYSYMBOL_definition = 139,               /* definition  */
   YYSYMBOL_function_def = 140,             /* function_def  */
-  YYSYMBOL_141_1 = 141,                    /* $@1  */
+  YYSYMBOL_141_1 = 141,                    /* @1  */
   YYSYMBOL_procedure_def = 142,            /* procedure_def  */
-  YYSYMBOL_143_2 = 143,                    /* $@2  */
+  YYSYMBOL_143_2 = 143,                    /* @2  */
   YYSYMBOL_class_def = 144,                /* class_def  */
   YYSYMBOL_145_3 = 145,                    /* $@3  */
   YYSYMBOL_opt_from_clause = 146,          /* opt_from_clause  */
@@ -991,22 +991,22 @@ static const yytype_uint8 yytranslate[] =
 static const yytype_int16 yyrline[] =
 {
        0,   104,   104,   106,   110,   111,   115,   116,   117,   118,
-     119,   125,   124,   139,   138,   153,   152,   163,   165,   166,
-     169,   171,   175,   176,   180,   181,   182,   186,   187,   188,
-     189,   190,   195,   194,   203,   207,   209,   210,   214,   215,
-     220,   221,   222,   223,   224,   225,   229,   230,   234,   235,
-     239,   240,   246,   247,   251,   252,   257,   259,   261,   263,
-     265,   267,   269,   271,   273,   275,   277,   279,   284,   285,
-     290,   298,   300,   304,   305,   309,   313,   315,   321,   329,
-     335,   337,   342,   350,   351,   355,   359,   361,   367,   371,
-     373,   377,   381,   385,   390,   391,   392,   393,   394,   395,
-     396,   397,   398,   399,   400,   404,   405,   409,   415,   416,
-     420,   421,   422,   423,   427,   429,   431,   433,   435,   437,
-     439,   441,   443,   445,   447,   449,   451,   453,   455,   457,
-     459,   461,   466,   468,   470,   472,   474,   479,   481,   483,
-     485,   487,   489,   491,   496,   498,   500,   502,   504,   506,
-     508,   510,   512,   514,   516,   518,   520,   522,   528,   529,
-     533,   534,   540,   551,   553,   554
+     119,   125,   124,   157,   156,   188,   187,   198,   200,   201,
+     204,   206,   210,   211,   215,   216,   217,   221,   222,   223,
+     224,   225,   230,   229,   238,   242,   244,   245,   249,   250,
+     255,   256,   257,   258,   259,   260,   264,   265,   269,   270,
+     274,   275,   281,   282,   286,   287,   292,   294,   296,   298,
+     300,   302,   304,   306,   308,   310,   312,   314,   319,   320,
+     325,   333,   335,   339,   340,   344,   348,   350,   356,   364,
+     370,   372,   377,   385,   386,   390,   394,   396,   402,   408,
+     409,   414,   418,   422,   427,   428,   429,   430,   431,   432,
+     433,   434,   435,   436,   437,   441,   442,   446,   452,   453,
+     457,   458,   459,   460,   464,   466,   468,   470,   472,   474,
+     476,   478,   480,   482,   484,   486,   488,   490,   492,   494,
+     496,   498,   503,   505,   507,   509,   511,   516,   518,   520,
+     522,   524,   526,   528,   533,   535,   537,   539,   541,   543,
+     545,   547,   549,   551,   553,   555,   557,   559,   565,   566,
+     570,   571,   577,   588,   590,   591
 };
 #endif
 
@@ -1041,7 +1041,7 @@ static const char *const yytname[] =
   "LFALSE", "NIL", "EOL", "'+'", "'-'", "'*'", "'/'", "'%'", "UMINUS",
   "'.'", "'['", "'('", "')'", "','", "';'", "']'", "'{'", "'}'", "'|'",
   "'@'", "'&'", "$accept", "program", "definition_list", "definition",
-  "function_def", "$@1", "procedure_def", "$@2", "class_def", "$@3",
+  "function_def", "@1", "procedure_def", "@2", "class_def", "$@3",
   "opt_from_clause", "opt_class_members", "class_member_list",
   "class_member", "data_member", "method_def", "$@4", "opt_param_list",
   "param_list", "variable_decl", "var_list", "var_item", "field_list",
@@ -1991,470 +1991,517 @@ yyreduce:
   YY_REDUCE_PRINT (yyn);
   switch (yyn)
     {
-  case 11: /* $@1: %empty  */
+  case 11: /* @1: %empty  */
 #line 125 "./xgram.y"
                 {
 			(yyvsp[-2].symptr)->sclass = S_FUNC;
 			enter_scope();
+			(yyval.symptr) = (yyvsp[-2].symptr);
 		}
-#line 2001 "y.tab.c"
+#line 2002 "y.tab.c"
     break;
 
-  case 12: /* function_def: FUNCTION identifier opt_param_list opt_eol $@1 opt_statement_list opt_return_stmt  */
-#line 131 "./xgram.y"
+  case 12: /* function_def: FUNCTION identifier opt_param_list opt_eol @1 opt_statement_list opt_return_stmt  */
+#line 132 "./xgram.y"
                 {
+			SYMTAB *func = (yyvsp[-2].symptr);
+			struct node *body = (yyvsp[-1].nodeptr);
+
+			/* Add return statement to body if present */
+			if ((yyvsp[0].nodeptr) && body) {
+				/* Append return to body */
+				body = make_node(N_BLOCK, body, (yyvsp[0].nodeptr));
+			} else if ((yyvsp[0].nodeptr)) {
+				body = (yyvsp[0].nodeptr);
+			}
+
+			/* Run semantic analysis */
+			semantic_analyze_function(func, body);
+
+			/* Generate code */
+			codegen_function(func, body);
+
 			exit_scope();
 		}
-#line 2009 "y.tab.c"
+#line 2027 "y.tab.c"
     break;
 
-  case 13: /* $@2: %empty  */
-#line 139 "./xgram.y"
+  case 13: /* @2: %empty  */
+#line 157 "./xgram.y"
                 {
 			(yyvsp[-2].symptr)->sclass = S_PROC;
 			enter_scope();
+			(yyval.symptr) = (yyvsp[-2].symptr);
 		}
-#line 2018 "y.tab.c"
+#line 2037 "y.tab.c"
     break;
 
-  case 14: /* procedure_def: PROCEDURE identifier opt_param_list opt_eol $@2 opt_statement_list opt_return_stmt  */
-#line 145 "./xgram.y"
+  case 14: /* procedure_def: PROCEDURE identifier opt_param_list opt_eol @2 opt_statement_list opt_return_stmt  */
+#line 164 "./xgram.y"
                 {
+			SYMTAB *proc = (yyvsp[-2].symptr);
+			struct node *body = (yyvsp[-1].nodeptr);
+
+			/* Add return statement to body if present */
+			if ((yyvsp[0].nodeptr) && body) {
+				body = make_node(N_BLOCK, body, (yyvsp[0].nodeptr));
+			} else if ((yyvsp[0].nodeptr)) {
+				body = (yyvsp[0].nodeptr);
+			}
+
+			/* Run semantic analysis */
+			semantic_analyze_function(proc, body);
+
+			/* Generate code */
+			codegen_function(proc, body);
+
 			exit_scope();
 		}
-#line 2026 "y.tab.c"
+#line 2061 "y.tab.c"
     break;
 
   case 15: /* $@3: %empty  */
-#line 153 "./xgram.y"
+#line 188 "./xgram.y"
                 {
 			enter_scope();
 		}
-#line 2034 "y.tab.c"
+#line 2069 "y.tab.c"
     break;
 
   case 16: /* class_def: CLASS identifier opt_from_clause opt_eol $@3 opt_class_members ENDCLASS opt_eol  */
-#line 158 "./xgram.y"
+#line 193 "./xgram.y"
                 {
 			exit_scope();
 		}
-#line 2042 "y.tab.c"
+#line 2077 "y.tab.c"
     break;
 
   case 32: /* $@4: %empty  */
-#line 195 "./xgram.y"
+#line 230 "./xgram.y"
                 {
 			enter_scope();
 		}
-#line 2050 "y.tab.c"
+#line 2085 "y.tab.c"
     break;
 
   case 33: /* method_def: METHOD identifier opt_param_list opt_eol $@4 opt_statement_list opt_return_stmt  */
-#line 200 "./xgram.y"
+#line 235 "./xgram.y"
                 {
 			exit_scope();
 		}
-#line 2058 "y.tab.c"
+#line 2093 "y.tab.c"
     break;
 
   case 52: /* opt_statement_list: %empty  */
-#line 246 "./xgram.y"
+#line 281 "./xgram.y"
                 { (yyval.nodeptr) = NULL; }
-#line 2064 "y.tab.c"
+#line 2099 "y.tab.c"
     break;
 
   case 55: /* statement_list: statement_list opt_eol statement  */
-#line 253 "./xgram.y"
+#line 288 "./xgram.y"
                 { (yyval.nodeptr) = make_node(N_BLOCK, (yyvsp[-2].nodeptr), (yyvsp[0].nodeptr)); }
-#line 2070 "y.tab.c"
+#line 2105 "y.tab.c"
     break;
 
   case 56: /* statement: expr_stmt  */
-#line 258 "./xgram.y"
+#line 293 "./xgram.y"
                 { (yyval.nodeptr) = (yyvsp[0].nodeptr); }
-#line 2076 "y.tab.c"
+#line 2111 "y.tab.c"
     break;
 
   case 57: /* statement: if_stmt  */
-#line 260 "./xgram.y"
+#line 295 "./xgram.y"
                 { (yyval.nodeptr) = (yyvsp[0].nodeptr); }
-#line 2082 "y.tab.c"
+#line 2117 "y.tab.c"
     break;
 
   case 58: /* statement: while_stmt  */
-#line 262 "./xgram.y"
+#line 297 "./xgram.y"
                 { (yyval.nodeptr) = (yyvsp[0].nodeptr); }
-#line 2088 "y.tab.c"
+#line 2123 "y.tab.c"
     break;
 
   case 59: /* statement: for_stmt  */
-#line 264 "./xgram.y"
+#line 299 "./xgram.y"
                 { (yyval.nodeptr) = (yyvsp[0].nodeptr); }
-#line 2094 "y.tab.c"
+#line 2129 "y.tab.c"
     break;
 
   case 60: /* statement: case_stmt  */
-#line 266 "./xgram.y"
+#line 301 "./xgram.y"
                 { (yyval.nodeptr) = (yyvsp[0].nodeptr); }
-#line 2100 "y.tab.c"
+#line 2135 "y.tab.c"
     break;
 
   case 61: /* statement: return_stmt  */
-#line 268 "./xgram.y"
+#line 303 "./xgram.y"
                 { (yyval.nodeptr) = (yyvsp[0].nodeptr); }
-#line 2106 "y.tab.c"
+#line 2141 "y.tab.c"
     break;
 
   case 62: /* statement: break_stmt  */
-#line 270 "./xgram.y"
+#line 305 "./xgram.y"
                 { (yyval.nodeptr) = NULL; }
-#line 2112 "y.tab.c"
+#line 2147 "y.tab.c"
     break;
 
   case 63: /* statement: exit_stmt  */
-#line 272 "./xgram.y"
+#line 307 "./xgram.y"
                 { (yyval.nodeptr) = NULL; }
-#line 2118 "y.tab.c"
+#line 2153 "y.tab.c"
     break;
 
   case 64: /* statement: loop_stmt  */
-#line 274 "./xgram.y"
+#line 309 "./xgram.y"
                 { (yyval.nodeptr) = NULL; }
-#line 2124 "y.tab.c"
+#line 2159 "y.tab.c"
     break;
 
   case 65: /* statement: variable_decl  */
-#line 276 "./xgram.y"
+#line 311 "./xgram.y"
                 { (yyval.nodeptr) = NULL; }
-#line 2130 "y.tab.c"
+#line 2165 "y.tab.c"
     break;
 
   case 66: /* statement: db_command  */
-#line 278 "./xgram.y"
+#line 313 "./xgram.y"
                 { (yyval.nodeptr) = NULL; }
-#line 2136 "y.tab.c"
+#line 2171 "y.tab.c"
     break;
 
   case 67: /* statement: EOL  */
-#line 280 "./xgram.y"
+#line 315 "./xgram.y"
                 { (yyval.nodeptr) = NULL; }
-#line 2142 "y.tab.c"
+#line 2177 "y.tab.c"
     break;
 
   case 70: /* if_stmt: IF expression opt_eol opt_statement_list opt_elseif_list opt_else_clause ENDIF opt_eol  */
-#line 295 "./xgram.y"
+#line 330 "./xgram.y"
                 { (yyval.nodeptr) = make_node(N_IF, (yyvsp[-6].nodeptr), (yyvsp[-4].nodeptr)); }
-#line 2148 "y.tab.c"
+#line 2183 "y.tab.c"
     break;
 
   case 78: /* while_stmt: DO WHILE expression opt_eol opt_statement_list ENDDO opt_eol  */
-#line 324 "./xgram.y"
+#line 359 "./xgram.y"
                 { (yyval.nodeptr) = make_node(N_WHILE, (yyvsp[-4].nodeptr), (yyvsp[-2].nodeptr)); }
-#line 2154 "y.tab.c"
+#line 2189 "y.tab.c"
     break;
 
   case 79: /* for_stmt: FOR identifier ASSIGN expression TO expression opt_step opt_eol opt_statement_list NEXT opt_eol  */
-#line 332 "./xgram.y"
+#line 367 "./xgram.y"
                 { (yyval.nodeptr) = make_node(N_FOR, NULL, NULL); }
-#line 2160 "y.tab.c"
+#line 2195 "y.tab.c"
     break;
 
   case 82: /* case_stmt: DO CASE opt_eol case_list opt_otherwise ENDCASE opt_eol  */
-#line 346 "./xgram.y"
+#line 381 "./xgram.y"
                 { (yyval.nodeptr) = NULL; }
-#line 2166 "y.tab.c"
+#line 2201 "y.tab.c"
     break;
 
   case 88: /* return_stmt: RETURN opt_expression opt_eol  */
-#line 368 "./xgram.y"
+#line 403 "./xgram.y"
                 { (yyval.nodeptr) = make_node(N_RETURN, (yyvsp[-1].nodeptr), NULL); }
-#line 2172 "y.tab.c"
+#line 2207 "y.tab.c"
+    break;
+
+  case 89: /* opt_return_stmt: %empty  */
+#line 408 "./xgram.y"
+                { (yyval.nodeptr) = NULL; }
+#line 2213 "y.tab.c"
+    break;
+
+  case 90: /* opt_return_stmt: return_stmt  */
+#line 410 "./xgram.y"
+                { (yyval.nodeptr) = (yyvsp[0].nodeptr); }
+#line 2219 "y.tab.c"
     break;
 
   case 108: /* opt_expression: %empty  */
-#line 415 "./xgram.y"
+#line 452 "./xgram.y"
                 { (yyval.nodeptr) = NULL; }
-#line 2178 "y.tab.c"
+#line 2225 "y.tab.c"
     break;
 
   case 114: /* binary_expr: expression '+' expression  */
-#line 428 "./xgram.y"
+#line 465 "./xgram.y"
                 { (yyval.nodeptr) = make_node(N_PLUS, (yyvsp[-2].nodeptr), (yyvsp[0].nodeptr)); }
-#line 2184 "y.tab.c"
+#line 2231 "y.tab.c"
     break;
 
   case 115: /* binary_expr: expression '-' expression  */
-#line 430 "./xgram.y"
+#line 467 "./xgram.y"
                 { (yyval.nodeptr) = make_node(N_MINUS, (yyvsp[-2].nodeptr), (yyvsp[0].nodeptr)); }
-#line 2190 "y.tab.c"
+#line 2237 "y.tab.c"
     break;
 
   case 116: /* binary_expr: expression '*' expression  */
-#line 432 "./xgram.y"
+#line 469 "./xgram.y"
                 { (yyval.nodeptr) = make_node(N_MUL, (yyvsp[-2].nodeptr), (yyvsp[0].nodeptr)); }
-#line 2196 "y.tab.c"
+#line 2243 "y.tab.c"
     break;
 
   case 117: /* binary_expr: expression '/' expression  */
-#line 434 "./xgram.y"
+#line 471 "./xgram.y"
                 { (yyval.nodeptr) = make_node(N_DIV, (yyvsp[-2].nodeptr), (yyvsp[0].nodeptr)); }
-#line 2202 "y.tab.c"
+#line 2249 "y.tab.c"
     break;
 
   case 118: /* binary_expr: expression '%' expression  */
-#line 436 "./xgram.y"
+#line 473 "./xgram.y"
                 { (yyval.nodeptr) = make_node(N_MOD, (yyvsp[-2].nodeptr), (yyvsp[0].nodeptr)); }
-#line 2208 "y.tab.c"
+#line 2255 "y.tab.c"
     break;
 
   case 119: /* binary_expr: expression POWER expression  */
-#line 438 "./xgram.y"
+#line 475 "./xgram.y"
                 { (yyval.nodeptr) = make_node(N_PLUS, (yyvsp[-2].nodeptr), (yyvsp[0].nodeptr)); /* TODO: POWER op */ }
-#line 2214 "y.tab.c"
+#line 2261 "y.tab.c"
     break;
 
   case 120: /* binary_expr: expression EQ expression  */
-#line 440 "./xgram.y"
+#line 477 "./xgram.y"
                 { (yyval.nodeptr) = make_node(N_EQ, (yyvsp[-2].nodeptr), (yyvsp[0].nodeptr)); }
-#line 2220 "y.tab.c"
+#line 2267 "y.tab.c"
     break;
 
   case 121: /* binary_expr: expression NE expression  */
-#line 442 "./xgram.y"
+#line 479 "./xgram.y"
                 { (yyval.nodeptr) = make_node(N_NE, (yyvsp[-2].nodeptr), (yyvsp[0].nodeptr)); }
-#line 2226 "y.tab.c"
+#line 2273 "y.tab.c"
     break;
 
   case 122: /* binary_expr: expression LT expression  */
-#line 444 "./xgram.y"
+#line 481 "./xgram.y"
                 { (yyval.nodeptr) = make_node(N_LT, (yyvsp[-2].nodeptr), (yyvsp[0].nodeptr)); }
-#line 2232 "y.tab.c"
+#line 2279 "y.tab.c"
     break;
 
   case 123: /* binary_expr: expression LE expression  */
-#line 446 "./xgram.y"
+#line 483 "./xgram.y"
                 { (yyval.nodeptr) = make_node(N_LE, (yyvsp[-2].nodeptr), (yyvsp[0].nodeptr)); }
-#line 2238 "y.tab.c"
+#line 2285 "y.tab.c"
     break;
 
   case 124: /* binary_expr: expression GT expression  */
-#line 448 "./xgram.y"
+#line 485 "./xgram.y"
                 { (yyval.nodeptr) = make_node(N_GT, (yyvsp[-2].nodeptr), (yyvsp[0].nodeptr)); }
-#line 2244 "y.tab.c"
+#line 2291 "y.tab.c"
     break;
 
   case 125: /* binary_expr: expression GE expression  */
-#line 450 "./xgram.y"
+#line 487 "./xgram.y"
                 { (yyval.nodeptr) = make_node(N_GE, (yyvsp[-2].nodeptr), (yyvsp[0].nodeptr)); }
-#line 2250 "y.tab.c"
+#line 2297 "y.tab.c"
     break;
 
   case 126: /* binary_expr: expression AND expression  */
-#line 452 "./xgram.y"
+#line 489 "./xgram.y"
                 { (yyval.nodeptr) = make_node(N_AND, (yyvsp[-2].nodeptr), (yyvsp[0].nodeptr)); }
-#line 2256 "y.tab.c"
+#line 2303 "y.tab.c"
     break;
 
   case 127: /* binary_expr: expression OR expression  */
-#line 454 "./xgram.y"
+#line 491 "./xgram.y"
                 { (yyval.nodeptr) = make_node(N_OR, (yyvsp[-2].nodeptr), (yyvsp[0].nodeptr)); }
-#line 2262 "y.tab.c"
+#line 2309 "y.tab.c"
     break;
 
   case 128: /* binary_expr: expression SUBSTR expression  */
-#line 456 "./xgram.y"
+#line 493 "./xgram.y"
                 { (yyval.nodeptr) = make_node(N_PLUS, (yyvsp[-2].nodeptr), (yyvsp[0].nodeptr)); /* TODO: SUBSTR op */ }
-#line 2268 "y.tab.c"
+#line 2315 "y.tab.c"
     break;
 
   case 129: /* binary_expr: expression ASSIGN expression  */
-#line 458 "./xgram.y"
+#line 495 "./xgram.y"
                 { (yyval.nodeptr) = make_node(N_ASSIGN, (yyvsp[-2].nodeptr), (yyvsp[0].nodeptr)); }
-#line 2274 "y.tab.c"
+#line 2321 "y.tab.c"
     break;
 
   case 130: /* binary_expr: expression PLUSASSIGN expression  */
-#line 460 "./xgram.y"
+#line 497 "./xgram.y"
                 { (yyval.nodeptr) = make_node(N_ASSIGN, (yyvsp[-2].nodeptr), make_node(N_PLUS, (yyvsp[-2].nodeptr), (yyvsp[0].nodeptr))); }
-#line 2280 "y.tab.c"
+#line 2327 "y.tab.c"
     break;
 
   case 131: /* binary_expr: expression MINUSASSIGN expression  */
-#line 462 "./xgram.y"
+#line 499 "./xgram.y"
                 { (yyval.nodeptr) = make_node(N_ASSIGN, (yyvsp[-2].nodeptr), make_node(N_MINUS, (yyvsp[-2].nodeptr), (yyvsp[0].nodeptr))); }
-#line 2286 "y.tab.c"
+#line 2333 "y.tab.c"
     break;
 
   case 132: /* unary_expr: NOT expression  */
-#line 467 "./xgram.y"
+#line 504 "./xgram.y"
                 { (yyval.nodeptr) = make_node(N_NOT, (yyvsp[0].nodeptr), NULL); }
-#line 2292 "y.tab.c"
+#line 2339 "y.tab.c"
     break;
 
   case 133: /* unary_expr: '-' expression  */
-#line 469 "./xgram.y"
+#line 506 "./xgram.y"
                 { (yyval.nodeptr) = make_node(N_UMINUS, (yyvsp[0].nodeptr), NULL); }
-#line 2298 "y.tab.c"
+#line 2345 "y.tab.c"
     break;
 
   case 134: /* unary_expr: '+' expression  */
-#line 471 "./xgram.y"
+#line 508 "./xgram.y"
                 { (yyval.nodeptr) = (yyvsp[0].nodeptr); }
-#line 2304 "y.tab.c"
+#line 2351 "y.tab.c"
     break;
 
   case 135: /* unary_expr: INCR expression  */
-#line 473 "./xgram.y"
+#line 510 "./xgram.y"
                 { (yyval.nodeptr) = make_node(N_ASSIGN, (yyvsp[0].nodeptr), make_node(N_PLUS, (yyvsp[0].nodeptr), make_icon(1))); }
-#line 2310 "y.tab.c"
+#line 2357 "y.tab.c"
     break;
 
   case 136: /* unary_expr: DECR expression  */
-#line 475 "./xgram.y"
+#line 512 "./xgram.y"
                 { (yyval.nodeptr) = make_node(N_ASSIGN, (yyvsp[0].nodeptr), make_node(N_MINUS, (yyvsp[0].nodeptr), make_icon(1))); }
-#line 2316 "y.tab.c"
+#line 2363 "y.tab.c"
     break;
 
   case 137: /* postfix_expr: expression '[' expression ']'  */
-#line 480 "./xgram.y"
+#line 517 "./xgram.y"
                 { (yyval.nodeptr) = make_node(N_SUBSCR, (yyvsp[-3].nodeptr), (yyvsp[-1].nodeptr)); }
-#line 2322 "y.tab.c"
+#line 2369 "y.tab.c"
     break;
 
   case 138: /* postfix_expr: expression '.' identifier  */
-#line 482 "./xgram.y"
+#line 519 "./xgram.y"
                 { (yyval.nodeptr) = make_node(N_FIELD, (yyvsp[-2].nodeptr), make_name((yyvsp[0].symptr))); }
-#line 2328 "y.tab.c"
+#line 2375 "y.tab.c"
     break;
 
   case 139: /* postfix_expr: expression ARROW identifier  */
-#line 484 "./xgram.y"
+#line 521 "./xgram.y"
                 { (yyval.nodeptr) = make_node(N_FIELD, (yyvsp[-2].nodeptr), make_name((yyvsp[0].symptr))); }
-#line 2334 "y.tab.c"
+#line 2381 "y.tab.c"
     break;
 
   case 140: /* postfix_expr: expression DCOLON identifier  */
-#line 486 "./xgram.y"
+#line 523 "./xgram.y"
                 { (yyval.nodeptr) = make_node(N_FIELD, (yyvsp[-2].nodeptr), make_name((yyvsp[0].symptr))); }
-#line 2340 "y.tab.c"
+#line 2387 "y.tab.c"
     break;
 
   case 141: /* postfix_expr: expression '(' opt_expr_list ')'  */
-#line 488 "./xgram.y"
+#line 525 "./xgram.y"
                 { (yyval.nodeptr) = make_node(N_CALL, (yyvsp[-3].nodeptr), (yyvsp[-1].nodeptr)); }
-#line 2346 "y.tab.c"
+#line 2393 "y.tab.c"
     break;
 
   case 142: /* postfix_expr: expression INCR  */
-#line 490 "./xgram.y"
+#line 527 "./xgram.y"
                 { (yyval.nodeptr) = make_node(N_ASSIGN, (yyvsp[-1].nodeptr), make_node(N_PLUS, (yyvsp[-1].nodeptr), make_icon(1))); }
-#line 2352 "y.tab.c"
+#line 2399 "y.tab.c"
     break;
 
   case 143: /* postfix_expr: expression DECR  */
-#line 492 "./xgram.y"
+#line 529 "./xgram.y"
                 { (yyval.nodeptr) = make_node(N_ASSIGN, (yyvsp[-1].nodeptr), make_node(N_MINUS, (yyvsp[-1].nodeptr), make_icon(1))); }
-#line 2358 "y.tab.c"
+#line 2405 "y.tab.c"
     break;
 
   case 144: /* primary_expr: INTEGER  */
-#line 497 "./xgram.y"
+#line 534 "./xgram.y"
                 { (yyval.nodeptr) = make_icon((yyvsp[0].ival)); }
-#line 2364 "y.tab.c"
+#line 2411 "y.tab.c"
     break;
 
   case 145: /* primary_expr: FLOAT  */
-#line 499 "./xgram.y"
+#line 536 "./xgram.y"
                 { (yyval.nodeptr) = make_fcon((yyvsp[0].fval)); }
-#line 2370 "y.tab.c"
+#line 2417 "y.tab.c"
     break;
 
   case 146: /* primary_expr: STRING  */
-#line 501 "./xgram.y"
+#line 538 "./xgram.y"
                 { (yyval.nodeptr) = make_scon((yyvsp[0].sval)); }
-#line 2376 "y.tab.c"
+#line 2423 "y.tab.c"
     break;
 
   case 147: /* primary_expr: DATE  */
-#line 503 "./xgram.y"
+#line 540 "./xgram.y"
                 { (yyval.nodeptr) = make_scon((yyvsp[0].sval)); /* TODO: date type */ }
-#line 2382 "y.tab.c"
+#line 2429 "y.tab.c"
     break;
 
   case 148: /* primary_expr: LTRUE  */
-#line 505 "./xgram.y"
+#line 542 "./xgram.y"
                 { (yyval.nodeptr) = make_icon(1); }
-#line 2388 "y.tab.c"
+#line 2435 "y.tab.c"
     break;
 
   case 149: /* primary_expr: LFALSE  */
-#line 507 "./xgram.y"
+#line 544 "./xgram.y"
                 { (yyval.nodeptr) = make_icon(0); }
-#line 2394 "y.tab.c"
+#line 2441 "y.tab.c"
     break;
 
   case 150: /* primary_expr: NIL  */
-#line 509 "./xgram.y"
+#line 546 "./xgram.y"
                 { (yyval.nodeptr) = make_icon(0); /* TODO: NIL */ }
-#line 2400 "y.tab.c"
+#line 2447 "y.tab.c"
     break;
 
   case 151: /* primary_expr: identifier  */
-#line 511 "./xgram.y"
+#line 548 "./xgram.y"
                 { (yyval.nodeptr) = make_name((yyvsp[0].symptr)); }
-#line 2406 "y.tab.c"
+#line 2453 "y.tab.c"
     break;
 
   case 152: /* primary_expr: '(' expression ')'  */
-#line 513 "./xgram.y"
+#line 550 "./xgram.y"
                 { (yyval.nodeptr) = (yyvsp[-1].nodeptr); }
-#line 2412 "y.tab.c"
+#line 2459 "y.tab.c"
     break;
 
   case 153: /* primary_expr: '{' opt_expr_list '}'  */
-#line 515 "./xgram.y"
+#line 552 "./xgram.y"
                 { (yyval.nodeptr) = NULL; /* TODO: array literal */ }
-#line 2418 "y.tab.c"
+#line 2465 "y.tab.c"
     break;
 
   case 154: /* primary_expr: '{' '|' opt_param_list '|' expression '}'  */
-#line 517 "./xgram.y"
+#line 554 "./xgram.y"
                 { (yyval.nodeptr) = NULL; /* TODO: code block */ }
-#line 2424 "y.tab.c"
+#line 2471 "y.tab.c"
     break;
 
   case 155: /* primary_expr: IIF '(' expression ',' expression ',' expression ')'  */
-#line 519 "./xgram.y"
+#line 556 "./xgram.y"
                 { (yyval.nodeptr) = make_node(N_IF, (yyvsp[-5].nodeptr), make_node(N_BLOCK, (yyvsp[-3].nodeptr), (yyvsp[-1].nodeptr))); }
-#line 2430 "y.tab.c"
+#line 2477 "y.tab.c"
     break;
 
   case 156: /* primary_expr: '@' expression  */
-#line 521 "./xgram.y"
+#line 558 "./xgram.y"
                 { (yyval.nodeptr) = (yyvsp[0].nodeptr); /* TODO: macro expansion */ }
-#line 2436 "y.tab.c"
+#line 2483 "y.tab.c"
     break;
 
   case 157: /* primary_expr: '&' IDENT  */
-#line 523 "./xgram.y"
+#line 560 "./xgram.y"
                 { (yyval.nodeptr) = NULL; /* TODO: macro variable */ }
-#line 2442 "y.tab.c"
+#line 2489 "y.tab.c"
     break;
 
   case 158: /* opt_expr_list: %empty  */
-#line 528 "./xgram.y"
+#line 565 "./xgram.y"
                 { (yyval.nodeptr) = NULL; }
-#line 2448 "y.tab.c"
+#line 2495 "y.tab.c"
     break;
 
   case 161: /* expr_list: expr_list ',' expression  */
-#line 535 "./xgram.y"
+#line 572 "./xgram.y"
                 { (yyval.nodeptr) = make_node(N_BLOCK, (yyvsp[-2].nodeptr), (yyvsp[0].nodeptr)); /* TODO: expr list */ }
-#line 2454 "y.tab.c"
+#line 2501 "y.tab.c"
     break;
 
   case 162: /* identifier: IDENT  */
-#line 541 "./xgram.y"
+#line 578 "./xgram.y"
                 {
 			SYMTAB *sp = lookup((yyvsp[0].sval), current_scope);
 			if (sp == NULL) {
@@ -2462,11 +2509,11 @@ yyreduce:
 			}
 			(yyval.symptr) = sp;
 		}
-#line 2466 "y.tab.c"
+#line 2513 "y.tab.c"
     break;
 
 
-#line 2470 "y.tab.c"
+#line 2517 "y.tab.c"
 
       default: break;
     }
@@ -2659,7 +2706,7 @@ yyreturnlab:
   return yyresult;
 }
 
-#line 557 "./xgram.y"
+#line 594 "./xgram.y"
 
 
 /* Error handling */

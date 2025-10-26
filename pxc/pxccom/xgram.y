@@ -81,7 +81,7 @@ int current_scope = 0;
 %type <nodeptr> primary_expr postfix_expr unary_expr binary_expr
 %type <nodeptr> statement statement_list opt_statement_list
 %type <nodeptr> if_stmt while_stmt for_stmt case_stmt
-%type <nodeptr> return_stmt expr_stmt
+%type <nodeptr> return_stmt opt_return_stmt expr_stmt
 %type <symptr> identifier
 
 /* Precedence and associativity (lowest to highest) */
@@ -125,10 +125,28 @@ function_def:
 		{
 			$2->sclass = S_FUNC;
 			enter_scope();
+			$<symptr>$ = $2;
 		}
 	  opt_statement_list
 	  opt_return_stmt
 		{
+			SYMTAB *func = $<symptr>5;
+			struct node *body = $6;
+
+			/* Add return statement to body if present */
+			if ($7 && body) {
+				/* Append return to body */
+				body = make_node(N_BLOCK, body, $7);
+			} else if ($7) {
+				body = $7;
+			}
+
+			/* Run semantic analysis */
+			semantic_analyze_function(func, body);
+
+			/* Generate code */
+			codegen_function(func, body);
+
 			exit_scope();
 		}
 	;
@@ -139,10 +157,27 @@ procedure_def:
 		{
 			$2->sclass = S_PROC;
 			enter_scope();
+			$<symptr>$ = $2;
 		}
 	  opt_statement_list
 	  opt_return_stmt
 		{
+			SYMTAB *proc = $<symptr>5;
+			struct node *body = $6;
+
+			/* Add return statement to body if present */
+			if ($7 && body) {
+				body = make_node(N_BLOCK, body, $7);
+			} else if ($7) {
+				body = $7;
+			}
+
+			/* Run semantic analysis */
+			semantic_analyze_function(proc, body);
+
+			/* Generate code */
+			codegen_function(proc, body);
+
 			exit_scope();
 		}
 	;
@@ -370,7 +405,9 @@ return_stmt:
 
 opt_return_stmt:
 	  /* empty */
+		{ $$ = NULL; }
 	| return_stmt
+		{ $$ = $1; }
 	;
 
 break_stmt:
