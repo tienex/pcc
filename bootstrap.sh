@@ -269,8 +269,18 @@ build_stage() {
     log_info "Building stage $stage_num..."
 
     cd "$stage_dir"
-    make -j"$JOBS"
-    make install
+
+    # Stage 0: Only build C compiler (minimal bootstrap)
+    # Stage 1+: Build all languages (C, C++, Pascal, F77)
+    if [ $stage_num -eq 0 ]; then
+        log_info "Stage 0: Building minimal C compiler only (C language)"
+        make -j"$JOBS" all-c
+        make install-c
+    else
+        log_info "Stage $stage_num: Building all languages (C, C++, Pascal, F77)"
+        make -j"$JOBS" all-full
+        make install-full
+    fi
 
     cd "$BUILDDIR"
 }

@@ -3,7 +3,7 @@
 
 AC_PREREQ(2.59)
 AC_INIT([Portable C Compiler], [1.2.0.DEVEL], [pcc@lists.ludd.ltu.se], [pcc], [http://pcc.ludd.ltu.se/])
-AC_CONFIG_HEADER([config.h])
+AC_CONFIG_HEADERS([config.h])
 
 AC_CANONICAL_TARGET
 
@@ -665,7 +665,7 @@ AC_C_BIGENDIAN([AC_DEFINE(HOST_BIG_ENDIAN, 1, [Define if host is BIG endian])],
 AC_PROG_MAKE_SET
 AC_PROG_INSTALL
 AC_PROG_YACC
-AC_PROG_LEX
+AC_PROG_LEX([noyywrap])
 AC_PROG_RANLIB
 
 # Checks for libraries.

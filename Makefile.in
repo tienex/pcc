@@ -5,15 +5,45 @@
 
 @SET_MAKE@
 
-ALL_SUBDIRS=	common/abi cc pascal
-DIST_SUBDIRS=	$(ALL_SUBDIRS) f77
+C_SUBDIRS=	common/abi
+CC_SUBDIR=	cc
+EXTRA_SUBDIRS=	pascal f77
+ALL_SUBDIRS=	$(C_SUBDIRS) $(CC_SUBDIR)
+DIST_SUBDIRS=	$(C_SUBDIRS) $(CC_SUBDIR) $(EXTRA_SUBDIRS)
 
+# Minimal C-only build (stage 0 bootstrap)
+all-c install-c clean-c:
+	@target=`echo $@ | sed 's/-c//'`; \
+	for subdir in $(C_SUBDIRS); do \
+		_nextdir_=$${_thisdir_+$$_thisdir_/}$$subdir; \
+		echo "===> $$_nextdir_"; \
+		(_thisdir_=$$_nextdir_; export _thisdir_; cd $$subdir && \
+		    exec $(MAKE) $(MFLAGS) $$target) || exit $$?; \
+		echo "<=== $$_nextdir_"; \
+	done
+	@_nextdir_=cc; \
+	echo "===> $$_nextdir_"; \
+	(cd cc && exec $(MAKE) $(MFLAGS) `echo $@ | sed 's/-c//'`) || exit $$?; \
+	echo "<=== $$_nextdir_"
+
+# Standard build (C + C++)
 all install clean:
 	@for subdir in $(ALL_SUBDIRS); do \
 		_nextdir_=$${_thisdir_+$$_thisdir_/}$$subdir; \
 		echo "===> $$_nextdir_"; \
 		(_thisdir_=$$_nextdir_; export _thisdir_; cd $$subdir && \
 		    exec $(MAKE) $(MFLAGS) $@) || exit $$?; \
+		echo "<=== $$_nextdir_"; \
+	done
+
+# Full build with all languages (C, C++, Pascal, F77)
+all-full install-full clean-full:
+	@target=`echo $@ | sed 's/-full//'`; \
+	for subdir in $(C_SUBDIRS) $(CC_SUBDIR) $(EXTRA_SUBDIRS); do \
+		_nextdir_=$${_thisdir_+$$_thisdir_/}$$subdir; \
+		echo "===> $$_nextdir_"; \
+		(_thisdir_=$$_nextdir_; export _thisdir_; cd $$subdir && \
+		    exec $(MAKE) $(MFLAGS) $$target) || exit $$?; \
 		echo "<=== $$_nextdir_"; \
 	done
 
@@ -50,3 +80,4 @@ bootstrap-clean:
 	rm -rf bootstrap-build
 
 .PHONY: bootstrap bootstrap-quick bootstrap-full bootstrap-clean
+.PHONY: all-c install-c clean-c all-full install-full clean-full
