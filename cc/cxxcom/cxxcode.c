@@ -38,6 +38,16 @@ int cxx_standard = CXX_STD_98;          /* Default to C++98 for compatibility */
 int cxx_abi = CXX_ABI_ITANIUM;          /* Default to Itanium ABI (GCC/Clang) */
 static abi_context_t *abi_ctx = NULL;   /* ABI library context */
 
+/* RAII: Track objects needing destruction at scope exit */
+struct dtor_entry {
+	struct symtab *obj;        /* Object to destroy */
+	struct symtab *dtor;       /* Destructor function */
+	int level;                 /* Block level where created */
+	struct dtor_entry *next;   /* Next in list */
+};
+
+static struct dtor_entry *dtor_stack = NULL;  /* Stack of objects needing destruction */
+
 static struct symtab *sfind(char *n, struct symtab *sp);
 
 /*
@@ -1008,6 +1018,86 @@ cxxgencall(struct symtab *sp, struct symtab *fnsym)
 		printf("Generated call to %s for object %s\n", fnsym->sname, sp->sname);
 
 	return call;
+}
+
+/*
+ * Register an object for destruction at scope exit (RAII).
+ * Called when an automatic object with a destructor is created.
+ */
+void
+cxxregister_dtor(struct symtab *obj, struct symtab *dtor, int level)
+{
+	struct dtor_entry *entry;
+
+	if (obj == NULL || dtor == NULL)
+		return;
+
+	/* Create new destructor entry */
+	entry = malloc(sizeof(struct dtor_entry));
+	if (entry == NULL)
+		return;
+
+	entry->obj = obj;
+	entry->dtor = dtor;
+	entry->level = level;
+	entry->next = dtor_stack;
+	dtor_stack = entry;
+
+	if (cppdebug)
+		printf("Registered destructor for %s at level %d\n", obj->sname, level);
+}
+
+/*
+ * Call destructors for all objects at or above the given level.
+ * Called at scope exit to implement RAII.
+ * Destructors are called in reverse order of construction (LIFO).
+ */
+void
+cxxcall_dtors(int level)
+{
+	struct dtor_entry *entry, *prev, *next;
+	NODE *call;
+	int count = 0;
+
+	if (cppdebug)
+		printf("cxxcall_dtors: level %d\n", level);
+
+	/* First pass: emit destructor calls for matching level */
+	entry = dtor_stack;
+	while (entry != NULL) {
+		if (entry->level >= level) {
+			/* Generate destructor call */
+			call = cxxgencall(entry->obj, entry->dtor);
+			if (call != NULL) {
+				ecomp(call);
+				count++;
+				if (cppdebug)
+					printf("Called destructor for %s\n", entry->obj->sname);
+			}
+		}
+		entry = entry->next;
+	}
+
+	/* Second pass: remove destroyed objects from stack */
+	prev = NULL;
+	entry = dtor_stack;
+	while (entry != NULL) {
+		next = entry->next;
+		if (entry->level >= level) {
+			/* Remove from stack */
+			if (prev == NULL)
+				dtor_stack = next;
+			else
+				prev->next = next;
+			free(entry);
+		} else {
+			prev = entry;
+		}
+		entry = next;
+	}
+
+	if (cppdebug && count > 0)
+		printf("Called %d destructors at level %d\n", count, level);
 }
 
 /*

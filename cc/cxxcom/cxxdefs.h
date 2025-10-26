@@ -85,3 +85,5 @@ NODE *cxxrstruct(int soru, NODE *attr, NODE *t, char *tag);
 NODE *cxxmatchftn(NODE *, NODE *);
 NODE *cxxaddhidden(NODE *, NODE *);
 NODE *cxxstructref(NODE *p, int f, char *name);
+void cxxregister_dtor(struct symtab *obj, struct symtab *dtor, int level);
+void cxxcall_dtors(int level);

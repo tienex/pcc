@@ -316,6 +316,9 @@ symclear(int level)
 	if (ddebug)
 		printf("symclear(%d)\n", level);
 #endif
+	/* C++: Call destructors for objects going out of scope (RAII) */
+	cxxcall_dtors(level);
+
 	if (level < 1) {
 		for (i = 0; i < NSTYPES; i++) {
 			s = tmpsyms[i];

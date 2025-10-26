@@ -1648,7 +1648,7 @@ nidcl(NODE *p, int class)
 
 	/* C++: For auto/register class objects, call default constructor */
 	if ((class == AUTO || class == REGISTER) && cxxisclass(sp->stype)) {
-		struct symtab *classsym, *ctorsym;
+		struct symtab *classsym, *ctorsym, *dtorsym;
 		NODE *call;
 
 		/* Get the class symbol from the struct */
@@ -1661,6 +1661,12 @@ nidcl(NODE *p, int class)
 				call = cxxgencall(sp, ctorsym);
 				if (call != NULL)
 					ecomp(call);
+			}
+
+			/* RAII: Register destructor for automatic cleanup */
+			dtorsym = cxxfinddtor(classsym);
+			if (dtorsym != NULL) {
+				cxxregister_dtor(sp, dtorsym, blevel);
 			}
 		}
 		return;
