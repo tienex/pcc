@@ -36,10 +36,18 @@ struct abi_function;
 
 /* ABI types supported */
 typedef enum {
-	ABI_ITANIUM,        /* Itanium C++ ABI (GCC, Clang, most Unix) */
+	ABI_ITANIUM,        /* Itanium C++ ABI (GCC 3+, Clang, most Unix) */
 	ABI_MSVC,           /* Microsoft Visual C++ ABI */
 	ABI_WATCOM,         /* Watcom C++ ABI */
 	ABI_ARM,            /* ARM C++ ABI (variant of Itanium) */
+	ABI_BORLAND,        /* Borland C++/C++Builder/Delphi */
+	ABI_GNU_OLD,        /* Old GNU C++ ABI (GCC 2.x, ARM/CFront) */
+	ABI_SUN,            /* Sun/Oracle C++ ABI */
+	ABI_INTEL,          /* Intel C++ Compiler ABI */
+	ABI_IBM,            /* IBM XL C++ ABI */
+	ABI_HP,             /* HP aCC ABI */
+	ABI_DLANG,          /* D Language ABI */
+	ABI_SWIFT,          /* Swift ABI */
 	ABI_AUTO            /* Auto-detect based on platform */
 } abi_kind_t;
 

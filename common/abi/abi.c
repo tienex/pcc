@@ -14,6 +14,8 @@
 extern const abi_ops_t itanium_abi_ops;
 extern const abi_ops_t msvc_abi_ops;
 extern const abi_ops_t watcom_abi_ops;
+extern const abi_ops_t borland_abi_ops;
+extern const abi_ops_t gnu_old_abi_ops;
 
 /*
  * Initialize ABI context
@@ -42,6 +44,24 @@ abi_init(abi_kind_t kind)
 		break;
 	case ABI_WATCOM:
 		ctx->ops = &watcom_abi_ops;
+		break;
+	case ABI_BORLAND:
+		ctx->ops = &borland_abi_ops;
+		break;
+	case ABI_GNU_OLD:
+		ctx->ops = &gnu_old_abi_ops;
+		break;
+	case ABI_SUN:
+	case ABI_INTEL:
+	case ABI_IBM:
+	case ABI_HP:
+		/* These use Itanium ABI with minor variations */
+		ctx->ops = &itanium_abi_ops;
+		break;
+	case ABI_DLANG:
+	case ABI_SWIFT:
+		/* Modern ABIs - not yet implemented, use Itanium as fallback */
+		ctx->ops = &itanium_abi_ops;
 		break;
 	default:
 		free(ctx);

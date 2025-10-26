@@ -19,7 +19,8 @@ exec_prefix = @exec_prefix@
 libdir = @libdir@
 includedir = @includedir@
 
-OBJS=	abi.o itanium.o msvc.o watcom.o
+OBJS=	abi.o itanium.o msvc.o watcom.o borland.o gnu_old.o \
+	demangle_itanium.o demangle_msvc.o
 
 LIB=libpccabi.a
 
@@ -41,11 +42,24 @@ msvc.o: $(srcdir)/msvc.c $(srcdir)/abi.h
 watcom.o: $(srcdir)/watcom.c $(srcdir)/abi.h
 	$(CC) $(CFLAGS) $(CPPFLAGS) -c $(srcdir)/watcom.c
 
+borland.o: $(srcdir)/borland.c $(srcdir)/abi.h
+	$(CC) $(CFLAGS) $(CPPFLAGS) -c $(srcdir)/borland.c
+
+gnu_old.o: $(srcdir)/gnu_old.c $(srcdir)/abi.h
+	$(CC) $(CFLAGS) $(CPPFLAGS) -c $(srcdir)/gnu_old.c
+
+demangle_itanium.o: $(srcdir)/demangle_itanium.c $(srcdir)/demangle.h $(srcdir)/abi.h
+	$(CC) $(CFLAGS) $(CPPFLAGS) -c $(srcdir)/demangle_itanium.c
+
+demangle_msvc.o: $(srcdir)/demangle_msvc.c $(srcdir)/demangle.h $(srcdir)/abi.h
+	$(CC) $(CFLAGS) $(CPPFLAGS) -c $(srcdir)/demangle_msvc.c
+
 install: $(LIB)
 	test -z "$(DESTDIR)$(libdir)" || mkdir -p "$(DESTDIR)$(libdir)"
 	test -z "$(DESTDIR)$(includedir)" || mkdir -p "$(DESTDIR)$(includedir)"
 	$(INSTALL_DATA) $(LIB) $(DESTDIR)$(libdir)
 	$(INSTALL_DATA) $(srcdir)/abi.h $(DESTDIR)$(includedir)
+	$(INSTALL_DATA) $(srcdir)/demangle.h $(DESTDIR)$(includedir)
 
 clean:
 	rm -f $(OBJS) $(LIB)
