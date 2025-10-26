@@ -6468,7 +6468,7 @@ esac
 
 
 
-ac_config_files="$ac_config_files Makefile cc/Makefile cc/cc/Makefile cc/cpp/Makefile cc/ccom/Makefile cc/cxxcom/Makefile cc/driver/Makefile f77/Makefile f77/f77/Makefile f77/fcom/Makefile pascal/Makefile pascal/pascal/Makefile pascal/pcom/Makefile basic/Makefile basic/basic/Makefile basic/pbc/Makefile common/abi/Makefile include/Makefile libunicode/Makefile libthread/Makefile libstdbit/Makefile libckdint/Makefile libdecimal/Makefile libmetaware/Makefile libblocks/Makefile"
+ac_config_files="$ac_config_files Makefile cc/Makefile cc/cc/Makefile cc/cpp/Makefile cc/ccom/Makefile cc/cxxcom/Makefile cc/driver/Makefile f77/Makefile f77/f77/Makefile f77/fcom/Makefile pascal/Makefile pascal/pascal/Makefile pascal/pcom/Makefile basic/Makefile basic/basic/Makefile basic/pbc/Makefile basic/libbasic/Makefile common/abi/Makefile include/Makefile libunicode/Makefile libthread/Makefile libstdbit/Makefile libckdint/Makefile libdecimal/Makefile libmetaware/Makefile libblocks/Makefile"
 
 cat >confcache <<\_ACEOF
 # This file is a shell script that caches the results of configure
@@ -7174,6 +7174,7 @@ do
     "basic/Makefile") CONFIG_FILES="$CONFIG_FILES basic/Makefile" ;;
     "basic/basic/Makefile") CONFIG_FILES="$CONFIG_FILES basic/basic/Makefile" ;;
     "basic/pbc/Makefile") CONFIG_FILES="$CONFIG_FILES basic/pbc/Makefile" ;;
+    "basic/libbasic/Makefile") CONFIG_FILES="$CONFIG_FILES basic/libbasic/Makefile" ;;
     "common/abi/Makefile") CONFIG_FILES="$CONFIG_FILES common/abi/Makefile" ;;
     "include/Makefile") CONFIG_FILES="$CONFIG_FILES include/Makefile" ;;
     "libunicode/Makefile") CONFIG_FILES="$CONFIG_FILES libunicode/Makefile" ;;

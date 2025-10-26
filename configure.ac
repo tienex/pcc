@@ -1077,6 +1077,7 @@ AC_CONFIG_FILES([Makefile
 		basic/Makefile
 		basic/basic/Makefile
 		basic/pbc/Makefile
+		basic/libbasic/Makefile
 		common/abi/Makefile
 		include/Makefile
 		libunicode/Makefile
