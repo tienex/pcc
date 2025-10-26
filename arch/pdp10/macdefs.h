@@ -58,13 +58,18 @@
  * PCC code to automatically use the correct sizes!
  */
 
-/* Type sizes - runtime selection based on pdp10_pow2 flag */
+/* Forward declarations for runtime FP size functions */
+int pdp10_szfloat(void);
+int pdp10_szdouble(void);
+int pdp10_szldouble(void);
+
+/* Type sizes - runtime selection based on pdp10_pow2 flag and FP format */
 #define SZCHAR		(pdp10_pow2 ? 8 : 9)
 #define SZBOOL		(pdp10_pow2 ? 8 : 36)
 #define SZINT		(pdp10_pow2 ? 32 : 36)
-#define SZFLOAT		(pdp10_pow2 ? 32 : 36)
-#define SZDOUBLE	(pdp10_pow2 ? 64 : 72)
-#define SZLDOUBLE	(pdp10_pow2 ? 64 : 72)
+#define SZFLOAT		(pdp10_szfloat())
+#define SZDOUBLE	(pdp10_szdouble())
+#define SZLDOUBLE	(pdp10_szldouble())
 #define SZLONG		(pdp10_pow2 ? 64 : 36)
 #define SZSHORT		(pdp10_pow2 ? 16 : 18)
 
@@ -77,13 +82,13 @@
 #define SZPOINT(x)	(pdp10_ptrsize)
 #define SZLONGLONG	(pdp10_pow2 ? 64 : 72)
 
-/* Alignment - runtime selection */
+/* Alignment - runtime selection (typically matches size for most types) */
 #define ALCHAR		(pdp10_pow2 ? 8 : 9)
 #define ALBOOL		(pdp10_pow2 ? 8 : 36)
 #define ALINT		(pdp10_pow2 ? 32 : 36)
-#define ALFLOAT		(pdp10_pow2 ? 32 : 36)
-#define ALDOUBLE	(pdp10_pow2 ? 64 : 36)
-#define ALLDOUBLE	(pdp10_pow2 ? 64 : 36)
+#define ALFLOAT		(pdp10_szfloat())   /* Alignment matches FP size */
+#define ALDOUBLE	(pdp10_szdouble())  /* Alignment matches FP size */
+#define ALLDOUBLE	(pdp10_szldouble()) /* Alignment matches FP size */
 #define ALLONG		(pdp10_pow2 ? 64 : 36)
 #define ALLONGLONG	(pdp10_pow2 ? 64 : 36)
 #define ALSHORT		(pdp10_pow2 ? 16 : 18)
@@ -283,6 +288,37 @@ void pdp10_init_runtime_types(void);
  *   int pdp10_target_endian(void); // Returns runtime endianness
  * And use #ifdef pdp10_target_endian to enable runtime selection.
  */
+
+/*
+ * Runtime floating-point format selection.
+ * Allows single PCC binary to generate code for multiple FP formats.
+ * Essential for Alpha (IEEE + VAX G-float), ML workloads (FP8/FP16), etc.
+ */
+
+/* Floating-point format identifiers */
+#define PDP10_FP_PDP10     0  /* PDP-10 native format (36/72-bit) */
+#define PDP10_FP_VAX_FD    1  /* VAX F-float (32-bit) and D-float (64-bit) */
+#define PDP10_FP_VAX_G     2  /* VAX G-float (64-bit, extended range) */
+#define PDP10_FP_VAX_H     3  /* VAX H-float (128-bit, quad precision) */
+#define PDP10_FP_IEEE32    4  /* IEEE 754 binary32 (32-bit float) */
+#define PDP10_FP_IEEE64    5  /* IEEE 754 binary64 (64-bit double) */
+#define PDP10_FP_IEEE80    6  /* IEEE 754 binary80 (80-bit long double, x87) */
+#define PDP10_FP_IEEE16    7  /* IEEE 754 binary16 (16-bit half precision) */
+#define PDP10_FP_IEEE128   8  /* IEEE 754 binary128 (128-bit quad precision) */
+#define PDP10_FP_FP8_E4M3  9  /* FP8 E4M3 (8-bit, ML training) */
+#define PDP10_FP_FP8_E5M2  10 /* FP8 E5M2 (8-bit, ML inference) */
+
+/* Runtime FP format selection variables (set by command-line flags) */
+extern int pdp10_fpfmt_float;   /* Format for FLOAT type */
+extern int pdp10_fpfmt_double;  /* Format for DOUBLE type */
+extern int pdp10_fpfmt_ldouble; /* Format for LDOUBLE type */
+
+/*
+ * Runtime floating-point format initialization.
+ * Updates the global fpis[] array to point to selected FPI structures.
+ * Must be called after setting pdp10_fpfmt_* variables.
+ */
+void pdp10_init_fp_formats(void);
 
 /* Definitions mostly used in pass2 */
 

@@ -681,16 +681,57 @@ static SF sfddiv(SF, ULLong, SF, ULLong, TWORD);
 extern int strtodg (const char*, char**, FPI*, Long*, ULong*);
 
 /* IEEE binary formats, and their interchange format encodings */
-#ifdef notdef
+/* IEEE binary16 (half precision) - 16-bit */
 FPI fpi_binary16 = { 11, 1-15-11+1,
                         30-15-11+1, 1, 0,
         0, 1, 1, 0,  16,   15+11-1 };
-#endif
-#ifndef notyet
+
+/* IEEE binary128 (quad precision) - 128-bit */
 FPI fpi_binary128 = { 113,   1-16383-113+1,
                          32766-16383-113+1, 1, 0,
         0, 1, 1, 0,   128,     16383+113-1 };
-#endif
+
+/* VAX G-float - 64-bit, extended range compared to D-float */
+/* sign(1) + exp(11, excess-1024) + frac(52, hidden) */
+/* Same mantissa precision as IEEE binary64 but different format */
+/* No INF/NaN, has negative zero, uses VAX rounding (ties away from zero) */
+FPI fpi_vax_g = { 53,   1-1024-53+1,
+                        2046-1024-53+1, FPI_Round_near_from0, 0,
+        0, 0, 1, 0,   64,     1024+53-1 };
+
+/* VAX H-float - 128-bit, quad precision */
+/* sign(1) + exp(15, excess-16384) + frac(112, hidden) */
+/* Extended range and precision compared to G-float */
+/* No INF/NaN, has negative zero, uses VAX rounding */
+FPI fpi_vax_h = { 113,   1-16384-113+1,
+                         32766-16384-113+1, FPI_Round_near_from0, 0,
+        0, 0, 1, 0,   128,     16384+113-1 };
+
+/*
+ * FP8 formats - 8-bit floating point for ML/AI accelerators
+ * Defined in "FP8 Formats for Deep Learning" (NVIDIA/Graphcore, 2022)
+ * Used in NVIDIA H100, AMD MI300, and other AI accelerators
+ */
+
+/* FP8 E4M3 - Optimized for training, no infinities */
+/* sign(1) + exp(4, bias=7) + mantissa(3, explicit leading bit) */
+/* Range: ~2^-6 to 448 (approx 2^8.8) */
+/* NOTE: Uses explicit leading bit (explicit_one=1), not hidden bit */
+/* Max exponent value (15) represents NaN, not infinity */
+/* Common in ML training workloads (weights, gradients) */
+FPI fpi_fp8_e4m3 = { 3,  1-7-3+1,
+                          14-7-3+1, 1, 0,
+        1, 0, 1, 0,   8,      7+3-1 };
+
+/* FP8 E5M2 - Optimized for inference, has infinities */
+/* sign(1) + exp(5, bias=15) + mantissa(2, explicit leading bit) */
+/* Range: ~2^-14 to 57344 (2^15 × 1.75) */
+/* NOTE: Uses explicit leading bit (explicit_one=1), not hidden bit */
+/* Exponent=31, mantissa=0 → infinity; mantissa≠0 → NaN (IEEE-like) */
+/* Common in ML inference workloads (activations) */
+FPI fpi_fp8_e5m2 = { 2,  1-15-2+1,
+                          30-15-2+1, 1, 0,
+        1, 1, 1, 0,   8,     15+2-1 };
 
 #ifdef USE_IEEEFP_32
 #define FPI_FLOAT	fpi_binary32

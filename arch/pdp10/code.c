@@ -46,8 +46,24 @@ int pdp10_abi = PDP10_ABI_ELF;
 int pdp10_pow2 = 0;  /* 0 = native PDP-10 types, 1 = power-of-2 types */
 int pdp10_ptrsize = 36;  /* Default: 36-bit pointers (native PDP-10) */
 
-/* External reference to PCC core type size table */
+/*
+ * Runtime floating-point format selection.
+ * Defaults depend on pdp10_pow2 mode (set by pdp10_init_fp_formats):
+ * - Native mode: PDP10_FP_PDP10 for all types
+ * - POW2 mode: PDP10_FP_VAX_FD (IEEE formats could be used instead)
+ */
+int pdp10_fpfmt_float = -1;   /* -1 = not yet initialized, use defaults */
+int pdp10_fpfmt_double = -1;
+int pdp10_fpfmt_ldouble = -1;
+
+/* External references to PCC core tables */
 extern short sztable[];
+extern FPI *fpis[3];  /* Defined in common/softfloat.c */
+
+/* Forward declarations of FPI structures from common/softfloat.c */
+extern FPI fpi_binary16, fpi_binary32, fpi_binary64, fpi_binaryx80, fpi_binary128;
+extern FPI fpi_vax_g, fpi_vax_h;
+extern FPI fpi_fp8_e4m3, fpi_fp8_e5m2;
 
 /*
  * Initialize runtime type system.
@@ -103,6 +119,170 @@ pdp10_init_runtime_types(void)
 		sztable[14] = 72;  /* LDOUBLE */
 
 		/* Pointer size already set to default 36 or by flags */
+	}
+}
+
+/*
+ * Initialize runtime floating-point formats.
+ * Updates the global fpis[] array to point to the selected FPI structures.
+ *
+ * This allows a single PCC binary to support multiple FP formats:
+ * - PDP-10 native (36/72-bit)
+ * - VAX F/D/G/H float
+ * - IEEE 754 binary16/32/64/80/128
+ * - FP8 E4M3/E5M2 (for ML workloads)
+ *
+ * If formats are not explicitly set (-1), selects defaults based on mode:
+ * - Native mode (pdp10_pow2=0): Use PDP-10 native format
+ * - POW2 mode (pdp10_pow2=1): Use VAX F/D format (current default)
+ *
+ * NOTE: Currently only IEEE and VAX F/D formats have full softfloat.c support.
+ * Other formats defined but may need additional implementation.
+ */
+void
+pdp10_init_fp_formats(void)
+{
+	/* Set defaults if not explicitly specified */
+	if (pdp10_fpfmt_float == -1) {
+		pdp10_fpfmt_float = pdp10_pow2 ? PDP10_FP_IEEE32 : PDP10_FP_PDP10;
+	}
+	if (pdp10_fpfmt_double == -1) {
+		pdp10_fpfmt_double = pdp10_pow2 ? PDP10_FP_IEEE64 : PDP10_FP_PDP10;
+	}
+	if (pdp10_fpfmt_ldouble == -1) {
+		pdp10_fpfmt_ldouble = pdp10_pow2 ? PDP10_FP_IEEE80 : PDP10_FP_PDP10;
+	}
+
+	/* Update fpis[] array for FLOAT */
+	switch (pdp10_fpfmt_float) {
+	case PDP10_FP_IEEE16:
+		fpis[0] = &fpi_binary16;
+		break;
+	case PDP10_FP_IEEE32:
+		fpis[0] = &fpi_binary32;
+		break;
+	case PDP10_FP_FP8_E4M3:
+		fpis[0] = &fpi_fp8_e4m3;
+		break;
+	case PDP10_FP_FP8_E5M2:
+		fpis[0] = &fpi_fp8_e5m2;
+		break;
+	/* PDP10_FP_PDP10 and PDP10_FP_VAX_FD use existing FPI from softfloat.c */
+	default:
+		/* Keep existing FPI (set at compile time) */
+		break;
+	}
+
+	/* Update fpis[] array for DOUBLE */
+	switch (pdp10_fpfmt_double) {
+	case PDP10_FP_IEEE64:
+		fpis[1] = &fpi_binary64;
+		break;
+	case PDP10_FP_VAX_G:
+		fpis[1] = &fpi_vax_g;
+		break;
+	default:
+		/* Keep existing FPI (set at compile time) */
+		break;
+	}
+
+	/* Update fpis[] array for LDOUBLE */
+	switch (pdp10_fpfmt_ldouble) {
+	case PDP10_FP_IEEE80:
+		fpis[2] = &fpi_binaryx80;
+		break;
+	case PDP10_FP_IEEE128:
+		fpis[2] = &fpi_binary128;
+		break;
+	case PDP10_FP_VAX_H:
+		fpis[2] = &fpi_vax_h;
+		break;
+	default:
+		/* Keep existing FPI (set at compile time) */
+		break;
+	}
+
+	/* Update sztable[] to reflect selected FP format sizes */
+	sztable[12] = pdp10_szfloat();   /* FLOAT */
+	sztable[13] = pdp10_szdouble();  /* DOUBLE */
+	sztable[14] = pdp10_szldouble(); /* LDOUBLE */
+}
+
+/*
+ * Runtime floating-point type size functions.
+ * Return the storage size in bits for each FP type based on selected format.
+ * Used by SZFLOAT/SZDOUBLE/SZLDOUBLE macros.
+ */
+
+/* Size of float type based on selected format */
+int
+pdp10_szfloat(void)
+{
+	/* Ensure formats are initialized */
+	if (pdp10_fpfmt_float == -1)
+		pdp10_init_fp_formats();
+
+	switch (pdp10_fpfmt_float) {
+	case PDP10_FP_PDP10:     return 36;
+	case PDP10_FP_VAX_FD:    return 32;
+	case PDP10_FP_VAX_G:     return 64;
+	case PDP10_FP_VAX_H:     return 128;
+	case PDP10_FP_IEEE16:    return 16;
+	case PDP10_FP_IEEE32:    return 32;
+	case PDP10_FP_IEEE64:    return 64;
+	case PDP10_FP_IEEE80:    return 80;
+	case PDP10_FP_IEEE128:   return 128;
+	case PDP10_FP_FP8_E4M3:  return 8;
+	case PDP10_FP_FP8_E5M2:  return 8;
+	default:                 return 32;  /* Safe fallback */
+	}
+}
+
+/* Size of double type based on selected format */
+int
+pdp10_szdouble(void)
+{
+	/* Ensure formats are initialized */
+	if (pdp10_fpfmt_double == -1)
+		pdp10_init_fp_formats();
+
+	switch (pdp10_fpfmt_double) {
+	case PDP10_FP_PDP10:     return 72;
+	case PDP10_FP_VAX_FD:    return 64;
+	case PDP10_FP_VAX_G:     return 64;
+	case PDP10_FP_VAX_H:     return 128;
+	case PDP10_FP_IEEE16:    return 16;
+	case PDP10_FP_IEEE32:    return 32;
+	case PDP10_FP_IEEE64:    return 64;
+	case PDP10_FP_IEEE80:    return 80;
+	case PDP10_FP_IEEE128:   return 128;
+	case PDP10_FP_FP8_E4M3:  return 8;
+	case PDP10_FP_FP8_E5M2:  return 8;
+	default:                 return 64;  /* Safe fallback */
+	}
+}
+
+/* Size of long double type based on selected format */
+int
+pdp10_szldouble(void)
+{
+	/* Ensure formats are initialized */
+	if (pdp10_fpfmt_ldouble == -1)
+		pdp10_init_fp_formats();
+
+	switch (pdp10_fpfmt_ldouble) {
+	case PDP10_FP_PDP10:     return 72;
+	case PDP10_FP_VAX_FD:    return 64;
+	case PDP10_FP_VAX_G:     return 64;
+	case PDP10_FP_VAX_H:     return 128;
+	case PDP10_FP_IEEE16:    return 16;
+	case PDP10_FP_IEEE32:    return 32;
+	case PDP10_FP_IEEE64:    return 64;
+	case PDP10_FP_IEEE80:    return 80;
+	case PDP10_FP_IEEE128:   return 128;
+	case PDP10_FP_FP8_E4M3:  return 8;
+	case PDP10_FP_FP8_E5M2:  return 8;
+	default:                 return 64;  /* Safe fallback */
 	}
 }
 

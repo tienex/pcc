@@ -1339,13 +1339,20 @@ COLORMAP(int c, int *r)
 /*
  * Handle machine-specific command-line flags.
  * Supports:
- *   -masm=<format>   - Set assembly syntax (gnu, midas)
- *   -mabi=<format>   - Set ABI/object format (elf, macho, pecoff, none)
- *   -m64             - Enable power-of-2 type mode (8/16/32/64-bit types)
- *   -m36             - Use native PDP-10 types (9/18/36-bit, default)
- *   -mxva            - Extended virtual addressing (30-bit native, 64-bit POW2)
- *   -m18             - 18-bit pointers (PDP-6 compatible, 256K words)
- *   -m32             - 32-bit pointers (POW2 mode only)
+ *   -masm=<format>       - Set assembly syntax (gnu, midas)
+ *   -mabi=<format>       - Set ABI/object format (elf, macho, pecoff, none)
+ *   -m64                 - Enable power-of-2 type mode (8/16/32/64-bit types)
+ *   -m36                 - Use native PDP-10 types (9/18/36-bit, default)
+ *   -mxva                - Extended virtual addressing (30-bit native, 64-bit POW2)
+ *   -m18                 - 18-bit pointers (PDP-6 compatible, 256K words)
+ *   -m32                 - 32-bit pointers (POW2 mode only)
+ *   -mfp-float=<fmt>     - Set FP format for float type
+ *   -mfp-double=<fmt>    - Set FP format for double type
+ *   -mfp-ldouble=<fmt>   - Set FP format for long double type
+ *
+ * FP format names:
+ *   pdp10, vax-f/vax-fd, vax-g, vax-h, ieee16/half, ieee32/float,
+ *   ieee64/double, ieee80/x87, ieee128/quad, fp8-e4m3/e4m3, fp8-e5m2/e5m2
  */
 void
 mflags(char *str)
@@ -1376,29 +1383,28 @@ mflags(char *str)
 
 		/* Initialize runtime type system with POW2 sizes */
 		pdp10_init_runtime_types();
+		pdp10_init_fp_formats();
 
 #ifdef PDP10_POW2
 		/* Compiler was built with POW2 support */
 		fprintf(stderr, "pcc: -m64 mode enabled\n");
-		fprintf(stderr, "pcc: Using power-of-2 types (8/16/32/64 bit) with VAX FP format\n");
-		fprintf(stderr, "pcc: Compiler built with -DPDP10_POW2: Full support enabled\n");
+		fprintf(stderr, "pcc: Using power-of-2 types (8/16/32/64 bit)\n");
+		fprintf(stderr, "pcc: FP format: IEEE 754 (use -mfp-* to override)\n");
 #else
-		/* Compiler was built for native mode - FP format mismatch! */
+		/* Compiler was built for native mode */
 		fprintf(stderr, "pcc: -m64 mode enabled (RUNTIME mode)\n");
 		fprintf(stderr, "pcc: Using power-of-2 types (8/16/32/64 bit)\n");
-		fprintf(stderr, "pcc: WARNING: Floating-point format limitation:\n");
-		fprintf(stderr, "pcc:   - Compiler built WITHOUT -DPDP10_POW2\n");
-		fprintf(stderr, "pcc:   - Will use PDP-10 FP format (36/72-bit) instead of VAX!\n");
-		fprintf(stderr, "pcc:   - Avoid floating-point operations in this mode\n");
-		fprintf(stderr, "pcc: Type sizes, struct layouts, and array indexing: FULLY WORKING\n");
-		fprintf(stderr, "pcc: For full POW2 support with VAX FP: Recompile with -DPDP10_POW2\n");
+		fprintf(stderr, "pcc: FP format: IEEE 754 (runtime selection enabled)\n");
+		fprintf(stderr, "pcc: Use -mfp-float/-mfp-double/-mfp-ldouble for other formats\n");
 #endif
 	} else if (strcmp(str, "36") == 0) {
 		/* -m36 explicitly selects native mode (already the default) */
 		pdp10_pow2 = 0;
 		pdp10_init_runtime_types();
+		pdp10_init_fp_formats();
 		fprintf(stderr, "pcc: -m36 mode enabled (native PDP-10 types)\n");
 		fprintf(stderr, "pcc: Using native 9/18/36-bit types with PDP-10 FP format\n");
+		fprintf(stderr, "pcc: FP format: PDP-10 native (use -mfp-* to override)\n");
 	} else if (strcmp(str, "xva") == 0) {
 		/* -mxva enables extended virtual addressing (30-bit in native, enabled by -m64) */
 		extern int pdp10_ptrsize;
@@ -1422,9 +1428,78 @@ mflags(char *str)
 		} else {
 			fprintf(stderr, "pcc: warning: -m32 only valid in -m64 mode, ignored\n");
 		}
+	} else if (strncmp(str, "fp-float=", 9) == 0) {
+		/* -mfp-float=<format> selects FP format for float type */
+		extern int pdp10_fpfmt_float;
+		const char *fmt = str + 9;
+		int format = parse_fp_format(fmt);
+		if (format >= 0) {
+			pdp10_fpfmt_float = format;
+			pdp10_init_fp_formats();
+			fprintf(stderr, "pcc: float format set to %s\n", fmt);
+		} else {
+			fprintf(stderr, "pcc: unknown FP format '%s'\n", fmt);
+		}
+	} else if (strncmp(str, "fp-double=", 10) == 0) {
+		/* -mfp-double=<format> selects FP format for double type */
+		extern int pdp10_fpfmt_double;
+		const char *fmt = str + 10;
+		int format = parse_fp_format(fmt);
+		if (format >= 0) {
+			pdp10_fpfmt_double = format;
+			pdp10_init_fp_formats();
+			fprintf(stderr, "pcc: double format set to %s\n", fmt);
+		} else {
+			fprintf(stderr, "pcc: unknown FP format '%s'\n", fmt);
+		}
+	} else if (strncmp(str, "fp-ldouble=", 11) == 0) {
+		/* -mfp-ldouble=<format> selects FP format for long double type */
+		extern int pdp10_fpfmt_ldouble;
+		const char *fmt = str + 11;
+		int format = parse_fp_format(fmt);
+		if (format >= 0) {
+			pdp10_fpfmt_ldouble = format;
+			pdp10_init_fp_formats();
+			fprintf(stderr, "pcc: long double format set to %s\n", fmt);
+		} else {
+			fprintf(stderr, "pcc: unknown FP format '%s'\n", fmt);
+		}
 	} else {
 		fprintf(stderr, "pcc: unknown PDP-10 option '%s'\n", str);
 	}
+}
+
+/*
+ * Parse floating-point format name and return format ID.
+ * Returns -1 if format name is not recognized.
+ */
+static int
+parse_fp_format(const char *name)
+{
+	if (strcmp(name, "pdp10") == 0)
+		return PDP10_FP_PDP10;
+	if (strcmp(name, "vax-f") == 0 || strcmp(name, "vax-fd") == 0)
+		return PDP10_FP_VAX_FD;
+	if (strcmp(name, "vax-g") == 0)
+		return PDP10_FP_VAX_G;
+	if (strcmp(name, "vax-h") == 0)
+		return PDP10_FP_VAX_H;
+	if (strcmp(name, "ieee16") == 0 || strcmp(name, "half") == 0)
+		return PDP10_FP_IEEE16;
+	if (strcmp(name, "ieee32") == 0 || strcmp(name, "float") == 0)
+		return PDP10_FP_IEEE32;
+	if (strcmp(name, "ieee64") == 0 || strcmp(name, "double") == 0)
+		return PDP10_FP_IEEE64;
+	if (strcmp(name, "ieee80") == 0 || strcmp(name, "x87") == 0)
+		return PDP10_FP_IEEE80;
+	if (strcmp(name, "ieee128") == 0 || strcmp(name, "quad") == 0)
+		return PDP10_FP_IEEE128;
+	if (strcmp(name, "fp8-e4m3") == 0 || strcmp(name, "e4m3") == 0)
+		return PDP10_FP_FP8_E4M3;
+	if (strcmp(name, "fp8-e5m2") == 0 || strcmp(name, "e5m2") == 0)
+		return PDP10_FP_FP8_E5M2;
+
+	return -1;  /* Unknown format */
 }
 
 /*
