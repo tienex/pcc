@@ -205,6 +205,16 @@ extern	char *astypnames[];
 /* pragma globals */
 extern int pragma_allpacked, pragma_packed, pragma_aligned;
 
+/* Watcom pragma aux support */
+struct pragma_aux_info {
+	char *symbol;      /* Symbol name this pragma applies to */
+	char *parm_regs;   /* Parameter register list */
+	char *value_reg;   /* Return value register */
+	char *modify_regs; /* Modified register list */
+	int is_caller;     /* Caller cleans stack */
+};
+extern struct pragma_aux_info pragma_aux_pending;
+
 /*
  * Flags used in the (elementary) flow analysis ...
  */
