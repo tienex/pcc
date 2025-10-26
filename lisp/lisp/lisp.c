@@ -264,6 +264,9 @@ link_files(char **objfiles, int n_objs, const char *outfile)
 		argv[argc++] = libraries[i];
 	}
 
+	/* Add LISP runtime library */
+	argv[argc++] = "-llisp";
+
 	/* Add standard C library */
 	argv[argc++] = "-lc";
 
