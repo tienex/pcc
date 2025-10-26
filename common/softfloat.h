@@ -377,6 +377,222 @@ typedef SF *SFP;
 #define MINI_E2M3_HAS_SUBNORM 0
 #endif
 
+/* IEEE 754-2008 Decimal32 constants */
+#ifdef USE_DECIMAL32
+#define DECIMAL32_RADIX 10
+#define DECIMAL32_DIG 7
+#define DECIMAL32_MAX_10_EXP +96
+#define DECIMAL32_MAX_EXP +96
+#define DECIMAL32_MIN_10_EXP -95
+#define DECIMAL32_MIN_EXP -95
+#define DECIMAL32_MANT_DIG 7
+#define DECIMAL32_HAS_SUBNORM 1
+#endif
+
+/* IEEE 754-2008 Decimal64 constants */
+#ifdef USE_DECIMAL64
+#define DECIMAL64_RADIX 10
+#define DECIMAL64_DIG 16
+#define DECIMAL64_MAX_10_EXP +384
+#define DECIMAL64_MAX_EXP +384
+#define DECIMAL64_MIN_10_EXP -383
+#define DECIMAL64_MIN_EXP -383
+#define DECIMAL64_MANT_DIG 16
+#define DECIMAL64_HAS_SUBNORM 1
+#endif
+
+/* IEEE 754-2008 Decimal128 constants */
+#ifdef USE_DECIMAL128
+#define DECIMAL128_RADIX 10
+#define DECIMAL128_DIG 34
+#define DECIMAL128_MAX_10_EXP +6144
+#define DECIMAL128_MAX_EXP +6144
+#define DECIMAL128_MIN_10_EXP -6143
+#define DECIMAL128_MIN_EXP -6143
+#define DECIMAL128_MANT_DIG 34
+#define DECIMAL128_HAS_SUBNORM 1
+#endif
+
+/* Double-Double constants */
+#ifdef USE_DOUBLE_DOUBLE
+#define DOUBLE_DOUBLE_RADIX 2
+#define DOUBLE_DOUBLE_DIG 31
+#define DOUBLE_DOUBLE_MAX_10_EXP +308
+#define DOUBLE_DOUBLE_MAX_EXP +1024
+#define DOUBLE_DOUBLE_MIN_10_EXP -307
+#define DOUBLE_DOUBLE_MIN_EXP -1022
+#define DOUBLE_DOUBLE_MANT_DIG 106
+#define DOUBLE_DOUBLE_HAS_SUBNORM 1
+#endif
+
+/* OCP E4M3FN constants */
+#ifdef USE_OCP_E4M3FN
+#define OCP_E4M3FN_RADIX 2
+#define OCP_E4M3FN_DIG 1
+#define OCP_E4M3FN_MAX_10_EXP +2
+#define OCP_E4M3FN_MAX_EXP +7
+#define OCP_E4M3FN_MIN_10_EXP -2
+#define OCP_E4M3FN_MIN_EXP -6
+#define OCP_E4M3FN_MANT_DIG 4
+#define OCP_E4M3FN_HAS_SUBNORM 0
+#endif
+
+/* OCP E5M2FNUZ constants */
+#ifdef USE_OCP_E5M2FNUZ
+#define OCP_E5M2FNUZ_RADIX 2
+#define OCP_E5M2FNUZ_DIG 1
+#define OCP_E5M2FNUZ_MAX_10_EXP +4
+#define OCP_E5M2FNUZ_MAX_EXP +15
+#define OCP_E5M2FNUZ_MIN_10_EXP -4
+#define OCP_E5M2FNUZ_MIN_EXP -14
+#define OCP_E5M2FNUZ_MANT_DIG 3
+#define OCP_E5M2FNUZ_HAS_SUBNORM 0
+#endif
+
+/* OCP E4M3FNUZ constants */
+#ifdef USE_OCP_E4M3FNUZ
+#define OCP_E4M3FNUZ_RADIX 2
+#define OCP_E4M3FNUZ_DIG 1
+#define OCP_E4M3FNUZ_MAX_10_EXP +2
+#define OCP_E4M3FNUZ_MAX_EXP +7
+#define OCP_E4M3FNUZ_MIN_10_EXP -2
+#define OCP_E4M3FNUZ_MIN_EXP -6
+#define OCP_E4M3FNUZ_MANT_DIG 4
+#define OCP_E4M3FNUZ_HAS_SUBNORM 0
+#endif
+
+/* Motorola 68k Extended 96-bit constants */
+#ifdef USE_M68K_EXT96
+#define M68K_EXT96_RADIX 2
+#define M68K_EXT96_DIG 18
+#define M68K_EXT96_MAX_10_EXP +4932
+#define M68K_EXT96_MAX_EXP +16384
+#define M68K_EXT96_MIN_10_EXP -4931
+#define M68K_EXT96_MIN_EXP -16381
+#define M68K_EXT96_MANT_DIG 64
+#define M68K_EXT96_HAS_SUBNORM 1
+#endif
+
+/* HP-PA Quad Precision constants */
+#ifdef USE_HPPA_QUAD
+#define HPPA_QUAD_RADIX 2
+#define HPPA_QUAD_DIG 33
+#define HPPA_QUAD_MAX_10_EXP +4932
+#define HPPA_QUAD_MAX_EXP +16384
+#define HPPA_QUAD_MIN_10_EXP -4931
+#define HPPA_QUAD_MIN_EXP -16381
+#define HPPA_QUAD_MANT_DIG 113
+#define HPPA_QUAD_HAS_SUBNORM 1
+#endif
+
+/* Intel Flexpoint16 constants */
+#ifdef USE_FLEXPOINT16
+#define FLEXPOINT16_RADIX 2
+#define FLEXPOINT16_DIG 3
+#define FLEXPOINT16_MAX_10_EXP +4
+#define FLEXPOINT16_MAX_EXP +15
+#define FLEXPOINT16_MIN_10_EXP -4
+#define FLEXPOINT16_MIN_EXP -14
+#define FLEXPOINT16_MANT_DIG 10
+#define FLEXPOINT16_HAS_SUBNORM 0
+#endif
+
+/* Unum16 constants */
+#ifdef USE_UNUM16
+#define UNUM16_DIG 3
+#define UNUM16_MAX_10_EXP +36
+#define UNUM16_MIN_10_EXP -36
+#define UNUM16_MANT_DIG 10
+#define UNUM16_HAS_SUBNORM 0
+#endif
+
+/* Unum32 constants */
+#ifdef USE_UNUM32
+#define UNUM32_DIG 7
+#define UNUM32_MAX_10_EXP +151
+#define UNUM32_MIN_10_EXP -151
+#define UNUM32_MANT_DIG 24
+#define UNUM32_HAS_SUBNORM 0
+#endif
+
+/* AMD 3DNow! float constants */
+#ifdef USE_AMD_3DNOW
+#define AMD_3DNOW_RADIX 2
+#define AMD_3DNOW_DIG 6
+#define AMD_3DNOW_MAX_10_EXP +38
+#define AMD_3DNOW_MAX_EXP +128
+#define AMD_3DNOW_MIN_10_EXP -37
+#define AMD_3DNOW_MIN_EXP -125
+#define AMD_3DNOW_MANT_DIG 24
+#define AMD_3DNOW_HAS_SUBNORM 1
+#endif
+
+/* NVIDIA MX9 E4M3 constants */
+#ifdef USE_NVIDIA_MX9_E4M3
+#define NVIDIA_MX9_E4M3_RADIX 2
+#define NVIDIA_MX9_E4M3_DIG 1
+#define NVIDIA_MX9_E4M3_MAX_10_EXP +2
+#define NVIDIA_MX9_E4M3_MAX_EXP +7
+#define NVIDIA_MX9_E4M3_MIN_10_EXP -2
+#define NVIDIA_MX9_E4M3_MIN_EXP -6
+#define NVIDIA_MX9_E4M3_MANT_DIG 4
+#define NVIDIA_MX9_E4M3_HAS_SUBNORM 0
+#endif
+
+/* NVIDIA MX9 E5M2 constants */
+#ifdef USE_NVIDIA_MX9_E5M2
+#define NVIDIA_MX9_E5M2_RADIX 2
+#define NVIDIA_MX9_E5M2_DIG 1
+#define NVIDIA_MX9_E5M2_MAX_10_EXP +4
+#define NVIDIA_MX9_E5M2_MAX_EXP +15
+#define NVIDIA_MX9_E5M2_MIN_10_EXP -4
+#define NVIDIA_MX9_E5M2_MIN_EXP -14
+#define NVIDIA_MX9_E5M2_MANT_DIG 3
+#define NVIDIA_MX9_E5M2_HAS_SUBNORM 1
+#endif
+
+/* Google BF8 constants */
+#ifdef USE_GOOGLE_BF8
+#define GOOGLE_BF8_RADIX 2
+#define GOOGLE_BF8_DIG 1
+#define GOOGLE_BF8_MAX_10_EXP +4
+#define GOOGLE_BF8_MAX_EXP +15
+#define GOOGLE_BF8_MIN_10_EXP -4
+#define GOOGLE_BF8_MIN_EXP -14
+#define GOOGLE_BF8_MANT_DIG 3
+#define GOOGLE_BF8_HAS_SUBNORM 0
+#endif
+
+/* Qualcomm Hexagon Half Precision constants */
+#ifdef USE_HEXAGON_HALF
+#define HEXAGON_HALF_RADIX 2
+#define HEXAGON_HALF_DIG 3
+#define HEXAGON_HALF_MAX_10_EXP +4
+#define HEXAGON_HALF_MAX_EXP +15
+#define HEXAGON_HALF_MIN_10_EXP -4
+#define HEXAGON_HALF_MIN_EXP -14
+#define HEXAGON_HALF_MANT_DIG 11
+#define HEXAGON_HALF_HAS_SUBNORM 1
+#endif
+
+/* Logarithmic Number System 16-bit constants */
+#ifdef USE_LNS16
+#define LNS16_DIG 4
+#define LNS16_MAX_10_EXP +4932
+#define LNS16_MIN_10_EXP -4932
+#define LNS16_MANT_DIG 1
+#define LNS16_HAS_SUBNORM 0
+#endif
+
+/* Logarithmic Number System 32-bit constants */
+#ifdef USE_LNS32
+#define LNS32_DIG 9
+#define LNS32_MAX_10_EXP +323228496
+#define LNS32_MIN_10_EXP -323228496
+#define LNS32_MANT_DIG 1
+#define LNS32_HAS_SUBNORM 0
+#endif
+
 #define	TARGET_FLT_RADIX	C(FLT_FP,_RADIX)
 
 /*

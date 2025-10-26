@@ -531,6 +531,16 @@ FPI fpi_binary32 = { 24,  1-127-24+1,
 #define FPI_FLOAT	fpi_pxr24
 #elif defined(USE_AMD24)
 #define FPI_FLOAT	fpi_amd24
+#elif defined(USE_DECIMAL32)
+#define FPI_FLOAT	fpi_decimal32
+#elif defined(USE_AMD_3DNOW)
+#define FPI_FLOAT	fpi_amd_3dnow
+#elif defined(USE_FLEXPOINT16)
+#define FPI_FLOAT	fpi_flexpoint16
+#elif defined(USE_HEXAGON_HALF)
+#define FPI_FLOAT	fpi_hexagon_half
+#elif defined(USE_ARM_ALT_HALF)
+#define FPI_FLOAT	fpi_arm_alt_half
 #else
 #error need float definition
 #endif
@@ -549,6 +559,8 @@ FPI fpi_binary64 = { 53,   1-1023-53+1,
 #define FPI_DOUBLE	fpi_vax_d
 #elif defined(USE_VAXFP_G)
 #define FPI_DOUBLE	fpi_vax_g
+#elif defined(USE_DECIMAL64)
+#define FPI_DOUBLE	fpi_decimal64
 #else
 #error need double definition
 #endif
@@ -572,6 +584,14 @@ FPI fpi_binaryx80 = { 64,   1-16383-64+1,
 #define FPI_LDOUBLE	fpi_cray64
 #elif defined(USE_VAXFP_H)
 #define FPI_LDOUBLE	fpi_vax_h
+#elif defined(USE_DECIMAL128)
+#define FPI_LDOUBLE	fpi_decimal128
+#elif defined(USE_DOUBLE_DOUBLE)
+#define FPI_LDOUBLE	fpi_double_double
+#elif defined(USE_M68K_EXT96)
+#define FPI_LDOUBLE	fpi_m68k_ext96
+#elif defined(USE_HPPA_QUAD)
+#define FPI_LDOUBLE	fpi_hppa_quad
 #else
 #error need long double definition
 #endif
@@ -821,6 +841,210 @@ FPI fpi_mini_e3m2 = { 3, 1-3-3+1,
 FPI fpi_mini_e2m3 = { 4, 1-1-4+1,
                          2-1-4+1, 1, 0,
         0, 1, 0, 0,  6,     1+4-1 };
+#endif
+
+/*
+ * IEEE 754-2008 Decimal Floating Point - DPD (Densely Packed Decimal) encoding
+ * Used in financial applications, scientific computing requiring exact decimal
+ * Note: Radix 10, not binary - requires special decimal arithmetic
+ */
+#ifdef USE_DECIMAL32
+#define FPI_DECIMAL32	fpi_decimal32
+/* decimal32: 7 decimal digits, exponent range -95 to +96 */
+FPI fpi_decimal32 = { 24, -95,
+                         96, 1, 0,
+        0, 0, 1, 1,  32,    101 };
+#endif
+
+#ifdef USE_DECIMAL64
+#define FPI_DECIMAL64	fpi_decimal64
+/* decimal64: 16 decimal digits, exponent range -383 to +384 */
+FPI fpi_decimal64 = { 54, -383,
+                         384, 1, 0,
+        0, 0, 1, 1,  64,    398 };
+#endif
+
+#ifdef USE_DECIMAL128
+#define FPI_DECIMAL128	fpi_decimal128
+/* decimal128: 34 decimal digits, exponent range -6143 to +6144 */
+FPI fpi_decimal128 = { 114, -6143,
+                          6144, 1, 0,
+        0, 0, 1, 1,  128,   6176 };
+#endif
+
+/*
+ * Double-Double (DD) - PowerPC, SPARC, and high-precision computing
+ * Two IEEE 754 doubles combined for ~106 bits of precision
+ * Used when hardware quad precision unavailable
+ * Note: Non-standard exponent range, variable precision
+ */
+#ifdef USE_DOUBLE_DOUBLE
+#define FPI_DOUBLE_DOUBLE	fpi_double_double
+/* ~106 mantissa bits, same exponent range as double but extended */
+FPI fpi_double_double = { 106, 1-1023-106+1,
+                             2046-1023-106+1, 1, 0,
+        0, 1, 1, 1,  128,   1023+106-1 };
+#endif
+
+/*
+ * OCP (Open Compute Project) FP8 Format Variants
+ * Standardized ML formats with different special value handling
+ */
+
+/* OCP E4M3FN - Finite only, no INF, NaN encoding */
+#ifdef USE_OCP_E4M3FN
+#define FPI_OCP_E4M3FN	fpi_ocp_e4m3fn
+FPI fpi_ocp_e4m3fn = { 4, 1-7-4+1,
+                          14-7-4+1, 1, 0,
+        0, 1, 0, 0,  8,     7+4-1 };
+#endif
+
+/* OCP E5M2FNUZ - Finite, no negative zero, no INF */
+#ifdef USE_OCP_E5M2FNUZ
+#define FPI_OCP_E5M2FNUZ	fpi_ocp_e5m2fnuz
+FPI fpi_ocp_e5m2fnuz = { 3, 1-15-3+1,
+                            30-15-3+1, 1, 0,
+        0, 1, 0, 0,  8,     15+3-1 };
+#endif
+
+/* OCP E4M3FNUZ - Finite, no negative zero */
+#ifdef USE_OCP_E4M3FNUZ
+#define FPI_OCP_E4M3FNUZ	fpi_ocp_e4m3fnuz
+FPI fpi_ocp_e4m3fnuz = { 4, 1-7-4+1,
+                            14-7-4+1, 1, 0,
+        0, 1, 0, 0,  8,     7+4-1 };
+#endif
+
+/*
+ * Motorola 68881/68882 Extended Precision
+ * 96-bit packed format used in 68k FPU
+ * Same as x87 extended but stored in 96 bits instead of 80
+ */
+#ifdef USE_M68K_EXT96
+#define FPI_M68K_EXT96	fpi_m68k_ext96
+FPI fpi_m68k_ext96 = { 64, 1-16383-64+1,
+                          32766-16383-64+1, 1, 0,
+        1, 1, 1, 0,  96,    16383+64-1 };
+#endif
+
+/*
+ * HP-PA (Precision Architecture) Quad Precision
+ * 128-bit format from HP workstations (HP 9000 series)
+ * Similar to IEEE quad but different encoding
+ */
+#ifdef USE_HPPA_QUAD
+#define FPI_HPPA_QUAD	fpi_hppa_quad
+FPI fpi_hppa_quad = { 113, 1-16383-113+1,
+                         32766-16383-113+1, 1, 0,
+        0, 1, 1, 1,  128,   16383+113-1 };
+#endif
+
+/*
+ * Intel Flexpoint - Earlier Intel format for embedded/DSP
+ * 16-bit with shared exponent across multiple values (block floating point)
+ * Simplified representation: individual format
+ */
+#ifdef USE_FLEXPOINT16
+#define FPI_FLEXPOINT16	fpi_flexpoint16
+FPI fpi_flexpoint16 = { 10, 1-15-10+1,
+                           30-15-10+1, 1, 0,
+        0, 1, 0, 0,  16,    15+10-1 };
+#endif
+
+/*
+ * Unums Type I - John Gustafson's earlier work (before Posits)
+ * Variable-size unum with explicit uncertainty bit
+ * Note: Simplified FPI representation - actual unums are more complex
+ */
+#ifdef USE_UNUM16
+#define FPI_UNUM16	fpi_unum16
+/* Simplified 16-bit unum representation */
+FPI fpi_unum16 = { 10, -120,
+                      120, 1, 0,
+        0, 0, 0, 1,  16,    0 };
+#endif
+
+#ifdef USE_UNUM32
+#define FPI_UNUM32	fpi_unum32
+/* Simplified 32-bit unum representation */
+FPI fpi_unum32 = { 24, -504,
+                      504, 1, 0,
+        0, 0, 0, 1,  32,    0 };
+#endif
+
+/*
+ * AMD 3DNow! Float - Historic AMD multimedia extension
+ * Standard IEEE 32-bit, included for completeness
+ */
+#ifdef USE_AMD_3DNOW
+#define FPI_AMD_3DNOW	fpi_amd_3dnow
+FPI fpi_amd_3dnow = { 24, 1-127-24+1,
+                         254-127-24+1, 1, 0,
+        0, 1, 1, 0,  32,    127+24-1 };
+#endif
+
+/*
+ * NVIDIA MX formats - Mixed precision training formats
+ */
+
+/* MX9 E4M3 - NVIDIA Hopper mixed precision */
+#ifdef USE_NVIDIA_MX9_E4M3
+#define FPI_NVIDIA_MX9_E4M3	fpi_nvidia_mx9_e4m3
+FPI fpi_nvidia_mx9_e4m3 = { 4, 1-7-4+1,
+                               14-7-4+1, 1, 0,
+        0, 1, 0, 0,  9,     7+4-1 };
+#endif
+
+/* MX9 E5M2 - NVIDIA Hopper mixed precision */
+#ifdef USE_NVIDIA_MX9_E5M2
+#define FPI_NVIDIA_MX9_E5M2	fpi_nvidia_mx9_e5m2
+FPI fpi_nvidia_mx9_e5m2 = { 3, 1-15-3+1,
+                               30-15-3+1, 1, 0,
+        0, 1, 1, 0,  9,     15+3-1 };
+#endif
+
+/*
+ * Google TPU formats - Custom formats for Tensor Processing Units
+ */
+
+/* BF8 - Google Brain 8-bit float variant */
+#ifdef USE_GOOGLE_BF8
+#define FPI_GOOGLE_BF8	fpi_google_bf8
+FPI fpi_google_bf8 = { 3, 1-15-3+1,
+                          30-15-3+1, 1, 0,
+        0, 1, 0, 0,  8,     15+3-1 };
+#endif
+
+/*
+ * Qualcomm Hexagon DSP formats - Signal processing optimized
+ * Half precision variant for DSP operations
+ */
+#ifdef USE_HEXAGON_HALF
+#define FPI_HEXAGON_HALF	fpi_hexagon_half
+FPI fpi_hexagon_half = { 11, 1-15-11+1,
+                            30-15-11+1, 1, 0,
+        0, 1, 1, 0,  16,    15+11-1 };
+#endif
+
+/*
+ * Logarithmic Number System - Alternative to floating point
+ * Value = sign * 2^exponent (no mantissa)
+ * Efficient for multiplication/division, harder for add/subtract
+ */
+#ifdef USE_LNS16
+#define FPI_LNS16	fpi_lns16
+/* 16-bit LNS: 1 sign + 15 exponent */
+FPI fpi_lns16 = { 1, -16384,
+                    16383, 1, 0,
+        0, 0, 0, 1,  16,    0 };
+#endif
+
+#ifdef USE_LNS32
+#define FPI_LNS32	fpi_lns32
+/* 32-bit LNS: 1 sign + 31 exponent */
+FPI fpi_lns32 = { 1, -1073741824,
+                    1073741823, 1, 0,
+        0, 0, 0, 1,  32,    0 };
 #endif
 
 FPI * fpis[3] = {
