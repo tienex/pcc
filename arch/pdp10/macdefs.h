@@ -67,7 +67,14 @@
 #define SZLDOUBLE	(pdp10_pow2 ? 64 : 72)
 #define SZLONG		(pdp10_pow2 ? 64 : 36)
 #define SZSHORT		(pdp10_pow2 ? 16 : 18)
-#define SZPOINT(x)	(pdp10_pow2 ? 64 : 36)
+
+/*
+ * Pointer size depends on both type mode and addressing mode:
+ * - Native mode: 18-bit (PDP-6), 30-bit (extended), or 36-bit (full word)
+ * - POW2 mode: 32-bit or 64-bit
+ * The pdp10_ptrsize variable is set by -mxva/-m18/-m32 flags.
+ */
+#define SZPOINT(x)	(pdp10_ptrsize)
 #define SZLONGLONG	(pdp10_pow2 ? 64 : 72)
 
 /* Alignment - runtime selection */
@@ -80,7 +87,7 @@
 #define ALLONG		(pdp10_pow2 ? 64 : 36)
 #define ALLONGLONG	(pdp10_pow2 ? 64 : 36)
 #define ALSHORT		(pdp10_pow2 ? 16 : 18)
-#define ALPOINT		(pdp10_pow2 ? 64 : 36)
+#define ALPOINT		(pdp10_ptrsize)
 #define ALSTRUCT	(pdp10_pow2 ? 32 : 36)
 #define ALSTACK		(pdp10_pow2 ? 64 : 36)
 
@@ -258,6 +265,7 @@ int xasmconstregs(char *);
 extern int pdp10_asmfmt;  /* Assembly syntax: PDP10_ASM_* */
 extern int pdp10_abi;     /* ABI/Object format: PDP10_ABI_* */
 extern int pdp10_pow2;    /* Runtime flag: 0=native (36-bit), 1=power-of-2 (64-bit) */
+extern int pdp10_ptrsize; /* Runtime pointer size: 18/30/32/36/64 bits */
 
 /*
  * Runtime type system initialization.
@@ -291,13 +299,14 @@ void pdp10_init_runtime_types(void);
  * Returns how many registers needed for a type.
  *
  * Native mode: FLOAT(36), DOUBLE(72), LONGLONG(72) need 2 registers
- * POW2 mode: DOUBLE(64), LONG(64), LONGLONG(64), POINTER(64) need 2 registers
+ * POW2 mode: DOUBLE(64), LONG(64), LONGLONG(64) need 2 registers
+ * Pointers: need 2 registers if > 36 bits (depends on addressing mode)
  */
 #define	szty(t)	(pdp10_pow2 ? \
 	(((t) == DOUBLE || (t) == LONG || (t) == ULONG || \
-	  (t) == LONGLONG || (t) == ULONGLONG || ISPTR(t)) ? 2 : 1) : \
+	  (t) == LONGLONG || (t) == ULONGLONG || (ISPTR(t) && pdp10_ptrsize > 36)) ? 2 : 1) : \
 	(((t) == DOUBLE || (t) == FLOAT || \
-	  (t) == LONGLONG || (t) == ULONGLONG) ? 2 : 1))
+	  (t) == LONGLONG || (t) == ULONGLONG || (ISPTR(t) && pdp10_ptrsize > 36)) ? 2 : 1))
 
 #define	shltype(o, p) \
 	((o) == REG || (o) == NAME || (o) == ICON || \

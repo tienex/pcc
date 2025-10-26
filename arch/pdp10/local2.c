@@ -1343,6 +1343,9 @@ COLORMAP(int c, int *r)
  *   -mabi=<format>   - Set ABI/object format (elf, macho, pecoff, none)
  *   -m64             - Enable power-of-2 type mode (8/16/32/64-bit types)
  *   -m36             - Use native PDP-10 types (9/18/36-bit, default)
+ *   -mxva            - Extended virtual addressing (30-bit native, 64-bit POW2)
+ *   -m18             - 18-bit pointers (PDP-6 compatible, 256K words)
+ *   -m32             - 32-bit pointers (POW2 mode only)
  */
 void
 mflags(char *str)
@@ -1396,6 +1399,29 @@ mflags(char *str)
 		pdp10_init_runtime_types();
 		fprintf(stderr, "pcc: -m36 mode enabled (native PDP-10 types)\n");
 		fprintf(stderr, "pcc: Using native 9/18/36-bit types with PDP-10 FP format\n");
+	} else if (strcmp(str, "xva") == 0) {
+		/* -mxva enables extended virtual addressing (30-bit in native, enabled by -m64) */
+		extern int pdp10_ptrsize;
+		if (pdp10_pow2) {
+			pdp10_ptrsize = 64;  /* Already default for POW2 */
+		} else {
+			pdp10_ptrsize = 30;  /* Extended addressing for native mode */
+		}
+		fprintf(stderr, "pcc: -mxva enabled: %d-bit pointers\n", pdp10_ptrsize);
+	} else if (strcmp(str, "18") == 0) {
+		/* -m18 uses 18-bit addressing (PDP-6 compatible, 256K words) */
+		extern int pdp10_ptrsize;
+		pdp10_ptrsize = 18;
+		fprintf(stderr, "pcc: -m18 mode: 18-bit pointers (PDP-6 compatible)\n");
+	} else if (strcmp(str, "32") == 0) {
+		/* -m32 uses 32-bit pointers (only valid in POW2 mode) */
+		extern int pdp10_ptrsize;
+		if (pdp10_pow2) {
+			pdp10_ptrsize = 32;
+			fprintf(stderr, "pcc: -m32 mode: 32-bit pointers\n");
+		} else {
+			fprintf(stderr, "pcc: warning: -m32 only valid in -m64 mode, ignored\n");
+		}
 	} else {
 		fprintf(stderr, "pcc: unknown PDP-10 option '%s'\n", str);
 	}

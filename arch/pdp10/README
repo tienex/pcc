@@ -60,6 +60,15 @@ The backend supports runtime configuration via -m flags:
   -m36             Use native PDP-10 types (9/18/36-bit, default)
                    (Explicit native mode selection)
 
+  -mxva            Enable extended virtual addressing
+                   (30-bit in native mode, 64-bit in POW2 mode)
+
+  -m18             Use 18-bit pointers (PDP-6 compatible, 256K words)
+                   (Compatible with both -m36 and -m64)
+
+  -m32             Use 32-bit pointers (POW2 mode only)
+                   (Provides 4GB address space)
+
 
 Assembly Output Formats
 -----------------------
@@ -142,6 +151,53 @@ pdp10_pow2 flag at compile time and select the appropriate values. PCC's
 sztable[] array is updated at runtime by pdp10_init_runtime_types().
 All struct layouts, array calculations, and type operations automatically
 use the correct runtime sizes!
+
+
+Addressing Modes (PDP-6/PDP-10)
+--------------------------------
+
+The backend supports multiple addressing modes for compatibility with
+different PDP-10 configurations and the PDP-6:
+
+1. **18-bit addressing** (-m18):
+   - Compatible with PDP-6 and basic PDP-10
+   - 256K words (1MB) address space
+   - Pointers are 18 bits
+   - Can be combined with both -m36 and -m64
+
+2. **36-bit addressing** (default for -m36):
+   - Full word addressing for PDP-10
+   - 256M words (1GB+) theoretical address space
+   - Pointers are 36 bits (single register)
+
+3. **30-bit extended addressing** (-mxva with -m36):
+   - PDP-10 extended virtual addressing
+   - 1G words (4.5GB) address space
+   - Pointers are 30 bits
+
+4. **32-bit addressing** (-m32 with -m64):
+   - Power-of-2 mode with 32-bit pointers
+   - 4GB byte address space
+   - Pointers fit in single register
+   - Useful for compatibility with other 32-bit systems
+
+5. **64-bit addressing** (default for -m64):
+   - Full 64-bit virtual addressing
+   - Pointers are 64 bits (register pair)
+   - Maximum address space
+
+EXAMPLES:
+  # PDP-6 compatible (18-bit pointers, native types)
+  $ pcc -m36 -m18 -o prog-pdp6 program.c
+
+  # PDP-10 extended addressing (30-bit pointers, native types)
+  $ pcc -m36 -mxva -o prog-extended program.c
+
+  # Power-of-2 with 32-bit pointers (more compact than 64-bit)
+  $ pcc -m64 -m32 -o prog-pow2-32 program.c
+
+  # Full 64-bit addressing (default for -m64)
+  $ pcc -m64 -o prog-pow2-64 program.c
 
 
 PDP-10 C Calling Convention

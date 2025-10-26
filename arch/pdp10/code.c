@@ -44,6 +44,7 @@
 int pdp10_asmfmt = PDP10_ASM_GNU;
 int pdp10_abi = PDP10_ABI_ELF;
 int pdp10_pow2 = 0;  /* 0 = native PDP-10 types, 1 = power-of-2 types */
+int pdp10_ptrsize = 36;  /* Default: 36-bit pointers (native PDP-10) */
 
 /* External reference to PCC core type size table */
 extern short sztable[];
@@ -80,6 +81,10 @@ pdp10_init_runtime_types(void)
 		sztable[12] = 32;  /* FLOAT */
 		sztable[13] = 64;  /* DOUBLE */
 		sztable[14] = 64;  /* LDOUBLE */
+
+		/* Default pointer size for POW2 mode (can be overridden by -m32) */
+		if (pdp10_ptrsize == 36) /* Not explicitly set */
+			pdp10_ptrsize = 64;
 	} else {
 		/* Native PDP-10 mode: 9/18/36/72 bit types */
 		sztable[1] = 36;   /* BOOL */
@@ -96,6 +101,8 @@ pdp10_init_runtime_types(void)
 		sztable[12] = 36;  /* FLOAT */
 		sztable[13] = 72;  /* DOUBLE */
 		sztable[14] = 72;  /* LDOUBLE */
+
+		/* Pointer size already set to default 36 or by flags */
 	}
 }
 
