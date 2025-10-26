@@ -162,6 +162,25 @@ typedef enum {
 } debug_type_encoding_t;
 
 /*
+ * Structure/union member information
+ */
+typedef struct debug_member {
+	char *name;		/* Member name */
+	struct debug_type *type; /* Member type */
+	unsigned int offset;	/* Byte offset from start */
+	unsigned int bit_size;	/* Bit field size (0 if not bitfield) */
+	unsigned int bit_offset; /* Bit field offset */
+} debug_member_t;
+
+/*
+ * Enumeration value information
+ */
+typedef struct debug_enum_value {
+	char *name;		/* Enumerator name */
+	long value;		/* Enumerator value */
+} debug_enum_value_t;
+
+/*
  * Type information
  */
 typedef struct debug_type {
@@ -170,10 +189,25 @@ typedef struct debug_type {
 	int is_const;		/* const qualified */
 	int is_volatile;	/* volatile qualified */
 	int is_restrict;	/* restrict qualified */
-	struct debug_type *base_type; /* For pointers, arrays */
+	struct debug_type *base_type; /* For pointers, arrays, functions */
 	int array_dimensions;	/* For arrays */
 	int *array_bounds;	/* Array dimension sizes */
 	char *name;		/* Type name (for structs, typedefs) */
+
+	/* Composite type members */
+	debug_member_t *members; /* Struct/union members */
+	int member_count;	/* Number of members */
+
+	/* Enumeration values */
+	debug_enum_value_t *enum_values; /* Enum values */
+	int enum_value_count;	/* Number of enum values */
+
+	/* Function type parameters */
+	struct debug_type **param_types; /* Parameter types */
+	int param_count;	/* Number of parameters */
+
+	/* Type cache linkage */
+	struct debug_type *next_cached;
 } debug_type_t;
 
 /*
@@ -284,10 +318,24 @@ void debugsym_exit_block(int level);
 /*
  * Type information
  */
+void debugsym_type_init(void);
 debug_type_t *debugsym_get_type(struct symtab *s);
+debug_type_t *debugsym_get_type_enhanced(struct symtab *s);
+debug_type_t *debugsym_get_type_enhanced_base(struct symtab *s, TWORD t);
 debug_type_t *debugsym_primitive_type(debug_type_encoding_t enc, unsigned int size);
+debug_type_t *debugsym_get_primitive_type(debug_type_encoding_t enc, unsigned int size);
 debug_type_t *debugsym_pointer_type(debug_type_t *base);
 debug_type_t *debugsym_array_type(debug_type_t *base, int *dims, int ndims);
+debug_type_t *debugsym_function_type(debug_type_t *return_type, debug_type_t **param_types, int param_count);
+debug_type_t *debugsym_const_type(debug_type_t *base);
+debug_type_t *debugsym_volatile_type(debug_type_t *base);
+debug_type_t *debugsym_restrict_type(debug_type_t *base);
+debug_type_t *debugsym_composite_type(debug_type_encoding_t enc, const char *name,
+    debug_member_t *members, int member_count, unsigned int size);
+debug_type_t *debugsym_enum_type(const char *name, debug_enum_value_t *values, int value_count);
+unsigned int debugsym_type_size(debug_type_t *type);
+unsigned int debugsym_type_align(debug_type_t *type);
+void debugsym_type_stats(void);
 
 /*
  * Emit debug information
@@ -382,5 +430,42 @@ void debugsym_print_statistics(void);
 void *debugsym_alloc(size_t size);
 void debugsym_free(void *ptr);
 char *debugsym_strdup(const char *s);
+
+/* ===================================================================
+ * INTEGRATION WITH PCC COMPILER
+ * =================================================================== */
+
+/*
+ * Initialize/finish integration
+ */
+void debugsym_integration_init(const char *filename, int enable_debug);
+void debugsym_integration_finish(void);
+
+/*
+ * Source location tracking
+ */
+void debugsym_integration_line(int line);
+
+/*
+ * Symbol recording hooks
+ */
+void debugsym_integration_variable(struct symtab *sp);
+void debugsym_integration_function_begin(struct symtab *sp);
+void debugsym_integration_function_end(void);
+void debugsym_integration_parameter(struct symtab *sp);
+void debugsym_integration_type(struct symtab *sp);
+
+/*
+ * Scope tracking hooks
+ */
+void debugsym_integration_block_begin(int level);
+void debugsym_integration_block_end(int level);
+
+/*
+ * Query functions
+ */
+int debugsym_integration_enabled(void);
+debug_format_t debugsym_integration_get_format(void);
+void debugsym_integration_set_auto_record(int enable);
 
 #endif /* DEBUGSYM_H */

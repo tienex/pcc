@@ -54,14 +54,16 @@ OBJS=	builtins.o cgram.o code.o common.o compat.o dwarf.o external.o	\
 	gcc_compat.o init.o inline.o local.o local2.o main.o strtodg.o	\
 	match.o optim.o optim2.o order.o pftn.o reader.o softfloat.o	\
 	regs.o scan.o stabs.o symtabs.o table.o trees.o unicode.o	\
-	debugsym.o debugsym_dwarf.o debugsym_codeview.o debugsym_coff.o	\
+	debugsym.o debugsym_types.o debugsym_integration.o		\
+	debugsym_dwarf.o debugsym_codeview.o debugsym_coff.o		\
 	debugsym_stabs.o debugsym_dbx.o debugsym_borland.o debugsym_watcom.o
 
 OBJS0=  builtins.o cgram.o code.o common.o compat.o dwarf.o external.o	\
 	gcc_compat.o init.o inline.o local.o main.o             	\
 	optim.o pftn.o softfloat.o strtodg.o				\
 	scan.o stabs.o symtabs.o trees.o unicode.o			\
-	debugsym.o debugsym_dwarf.o debugsym_codeview.o debugsym_coff.o	\
+	debugsym.o debugsym_types.o debugsym_integration.o		\
+	debugsym_dwarf.o debugsym_codeview.o debugsym_coff.o		\
 	debugsym_stabs.o debugsym_dbx.o debugsym_borland.o debugsym_watcom.o
 
 OBJS1=  common2.o compat.o external.o           			\
@@ -225,6 +227,12 @@ debugsym_borland.o: $(srcdir)/debugsym_borland.c
 
 debugsym_watcom.o: $(srcdir)/debugsym_watcom.c
 	$(CC) $(CF0) $(CFLAGS) $(CPPFLAGS) -c -o $@ $(srcdir)/debugsym_watcom.c
+
+debugsym_types.o: $(srcdir)/debugsym_types.c
+	$(CC) $(CF0) $(CFLAGS) $(CPPFLAGS) -c -o $@ $(srcdir)/debugsym_types.c
+
+debugsym_integration.o: $(srcdir)/debugsym_integration.c
+	$(CC) $(CF0) $(CFLAGS) $(CPPFLAGS) -c -o $@ $(srcdir)/debugsym_integration.c
 
 #
 # round 3: build $(DEST)
