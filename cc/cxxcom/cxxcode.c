@@ -31,8 +31,32 @@ struct symtab spole0 = { 0, 0, 0, 0, 0, 0, 0, "base", "base", };
 struct symtab *spole = &spole0;
 struct symtab *nscur = &spole0;
 int elnk, nsptr;
+int cxxcuraccess = ACCESS_PUBLIC; /* default access in structs */
 
 static struct symtab *sfind(char *n, struct symtab *sp);
+
+/*
+ * Set current access level for class members.
+ * Called when 'public:', 'private:', or 'protected:' appears in class body.
+ */
+void
+cxxaccess(char *name)
+{
+	if (strcmp(name, "public") == 0) {
+		cxxcuraccess = ACCESS_PUBLIC;
+		if (cppdebug)printf("access: public\n");
+	} else if (strcmp(name, "private") == 0) {
+		cxxcuraccess = ACCESS_PRIVATE;
+		if (cppdebug)printf("access: private\n");
+	} else if (strcmp(name, "protected") == 0) {
+		cxxcuraccess = ACCESS_PROTECTED;
+		if (cppdebug)printf("access: protected\n");
+	} else {
+		/* Labels in C++, e.g., "label:" */
+		if (cppdebug)printf("label or unknown access: %s\n", name);
+	}
+}
+
 /*
  * Declare a namespace.
  */
@@ -552,14 +576,14 @@ cxxdclstr(char *n)
 	sp = sfind(n, nscur->sup);
 	while (sp && !CLORNS(sp))
 		sp = sfind(n, sp->snext);
-	if (sp == 0)
+	if (sp == 0) {
 		sp = getsymtab(n, STAGNAME);
-//	else
-//		uerror("class/namespace redefined");
-//	INSSYM(sp);
-//	nscur = sp;
+		INSSYM(sp);
+	}
+	/* Allow forward declarations and reopening for definitions */
+	nscur = sp;
 
-if (cppdebug)printf("declaring2 struct %s %p nscur %s\n", n, sp, nscur->sname);
+if (cppdebug)printf("declaring struct %s %p nscur %s\n", n, sp, nscur->sname);
 	return sp;
 }
 

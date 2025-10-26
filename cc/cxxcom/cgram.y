@@ -701,7 +701,7 @@ struct_declaration:
 		   declaration_specifiers struct_declarator_list optsemi {
 			tfree($1);
 		}
-		|  C_NAME ':' { /* cxxaccess($1); */ }
+		|  C_NAME ':' { cxxaccess($1); }
 		;
 
 optsemi:	   ';' { }

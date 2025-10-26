@@ -6,6 +6,10 @@ enum { LINK_DEF, LINK_C }; /* linkage definitions */
 extern int elnk;
 #define	SCLINK	00020	/* for symtab */
 
+/* C++ access control */
+enum { ACCESS_PUBLIC, ACCESS_PRIVATE, ACCESS_PROTECTED };
+extern int cxxcuraccess; /* current access level in class */
+
 extern int cppdebug;
 
 /* spole is symbol at base, nscur is where we are in the stack. */
@@ -32,6 +36,7 @@ char *decoratename(struct symtab *sp, int type);
 NODE *cxx_new(NODE *p);
 NODE *cxx_delete(NODE *p, int del);
 void dclns(NODE *attr, char *n);
+void cxxaccess(char *name);
 struct symtab *cxxlookup(NODE *p, int declare);
 void cxxsetname(struct symtab *sp);
 void cxxmember(struct symtab *sp);
