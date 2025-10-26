@@ -6,17 +6,30 @@ libmetaware provides runtime support for the innovative language extensions from
 
 ## Features
 
-### 1. Nested Functions with Closures
+### Runtime Features (Fully Implemented)
+
+#### 1. Nested Functions with Closures
 Support for Pascal-style nested functions with access to parent scope variables.
 
-### 2. Generator Coroutines
+#### 2. Generator Coroutines
 Python-style generators with yield, implemented **12 years before Python 2.2**!
 
-### 3. Function Values (Closures)
+#### 3. Function Values (Closures)
 Full function values that work as non-escaping closures.
 
-### 4. Non-Local Goto
+#### 4. Non-Local Goto
 Jump from nested functions to parent labels with stack unwinding.
+
+### Syntax Extensions (Preprocessor Workarounds)
+
+#### 5. Labeled/Named Arguments
+Python-style keyword arguments using C99 designated initializers.
+
+#### 6. Numeric Literal Separators
+Predefined constants for readable large numbers (_1K, _1M, _1B, HEX4, etc.).
+
+#### 7. Case Ranges
+Macro-based character class ranges for switch statements (CASE_LOWERCASE, etc.).
 
 ## Installation
 
@@ -29,6 +42,8 @@ sudo make install
 ```
 
 ## Quick Start
+
+### Runtime Features Example
 
 ```c
 #include <metaware.h>
@@ -60,9 +75,78 @@ Compile:
 pcc program.c -lmetaware -o program
 ```
 
+### Syntax Extensions Example
+
+```c
+#include <metaware_syntax.h>
+#include <stdio.h>
+
+/* Labeled arguments */
+DECLARE_LABELED_FUNC(drawRect,
+    int x; int y; int width; int height; int color;
+)
+
+DEFINE_LABELED_FUNC(drawRect) {
+    printf("Drawing at (%d,%d) size %dx%d color 0x%X\n",
+           ARGS->x, ARGS->y, ARGS->width, ARGS->height, ARGS->color);
+}
+
+int main(void) {
+    /* Arguments in any order */
+    CALL(drawRect,
+        .width = 200,
+        .height = 100,
+        .x = 50,
+        .y = 75,
+        .color = 0xFF0000
+    );
+
+    /* Numeric separators */
+    int buffer_size = 8 * _1K;      /* 8 KB */
+    int max_size = 100 * _1M;       /* 100 MB */
+    int color = HEX8(FF, AA, 00, 00);
+
+    /* Case ranges */
+    char c = 'a';
+    switch (c) {
+        CASE_LOWERCASE:
+            printf("Lowercase letter\n");
+            break;
+        CASE_UPPERCASE:
+            printf("Uppercase letter\n");
+            break;
+        CASE_DIGIT:
+            printf("Digit\n");
+            break;
+    }
+
+    return 0;
+}
+```
+
+Compile:
+```bash
+pcc program.c -I. -o program
+```
+
 ## API Documentation
 
-See [METAWARE_EXTENSIONS.md](../METAWARE_EXTENSIONS.md) for complete documentation.
+### Runtime Features
+See [METAWARE_EXTENSIONS.md](../METAWARE_EXTENSIONS.md) for complete runtime API documentation.
+
+### Syntax Extensions
+See [metaware_syntax.h](metaware_syntax.h) for syntax workaround macros.
+
+**Examples:**
+- `examples/labeled_args_example.c` - Keyword argument examples
+- `examples/numeric_separators_example.c` - Readable number constants
+- `examples/case_ranges_example.c` - Character class ranges
+- `examples/combined_syntax_example.c` - All features together
+- `test_metaware_syntax.c` - Comprehensive test suite
+
+For **true compiler syntax** support (not workarounds), see:
+- [METAWARE_COMPLETE_FEATURES.md](../METAWARE_COMPLETE_FEATURES.md) - Full feature specification
+- [Compiler implementation patches](#) - Coming soon
 
 ## Performance
 
