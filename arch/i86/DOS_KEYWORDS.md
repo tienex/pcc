@@ -315,6 +315,7 @@ int __far __pascal __loadds __export MessageBox(HWND hwnd,
 
 ## See Also
 
+- `BORLAND_MSVC_EXTENSIONS.md` - Borland and MSVC extensions (__emit, __asm, register pseudo-variables)
 - `arch/i86/macdefs.h` - Memory model definitions
 - `arch/i86/local2.c` - Memory model implementation
 - `cc/ccom/pass1.h` - Attribute definitions

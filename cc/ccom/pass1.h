@@ -612,6 +612,14 @@ enum {	ATTR_FIRST = ATTR_MI_MAX + 1,
 	GCC_ATYP_ES,		/* extra segment register */
 	GCC_ATYP_FS,		/* additional segment register (386+) */
 	GCC_ATYP_GS,		/* additional segment register (386+) */
+
+	/* Borland register pseudo-variables (direct register access) */
+	GCC_ATYP_EMIT,		/* __emit - emit raw bytes */
+#endif
+
+#if defined(mach_i86) || defined(mach_i386)
+	/* MSVC/Borland inline assembly */
+	GCC_ATYP_ASM_MSVC,	/* __asm - MSVC-style inline assembly */
 #endif
 
 	GCC_ATYP_MAX,

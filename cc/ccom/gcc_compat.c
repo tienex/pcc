@@ -101,6 +101,13 @@ static struct kw {
 /* 44 */{ "__es", NULL, 0 },
 /* 45 */{ "__fs", NULL, 0 },
 /* 46 */{ "__gs", NULL, 0 },
+	/* Raw byte emission */
+/* 47 */{ "__emit", NULL, 0 },
+/* 48 */{ "__emit__", NULL, 0 },
+#endif
+#if defined(mach_i86) || defined(mach_i386)
+	/* MSVC-style inline assembly (both i86 and i386) */
+/* 49 */{ "__asm", NULL, 0 },		/* Note: conflicts with index 0, handled specially */
 #endif
 	{ NULL, NULL, 0 },
 };
@@ -409,11 +416,28 @@ gcc_keyword(char *str)
 		case 44: yylval.intval = GCC_ATYP_ES; break;
 		case 45: yylval.intval = GCC_ATYP_FS; break;
 		case 46: yylval.intval = GCC_ATYP_GS; break;
+		case 47: yylval.intval = GCC_ATYP_EMIT; break;
+		case 48: yylval.intval = GCC_ATYP_EMIT; break;
 		}
 		/* Enter attribute mode for parsing */
 		inattr = 1;
 		parlvl = parbal;
 		return C_ATTRIBUTE;
+	/* __emit keyword - emit raw bytes into code stream */
+	case 47: /* __emit */
+	case 48: /* __emit__ */
+		yylval.intval = GCC_ATYP_EMIT;
+		inattr = 1;
+		parlvl = parbal;
+		return C_ATTRIBUTE;
+#endif
+#if defined(mach_i86) || defined(mach_i386)
+	/* MSVC-style __asm keyword */
+	case 49: /* __asm */
+		/* MSVC __asm is different from GCC __asm (index 0) */
+		/* For now, treat as regular C_ASM but mark for MSVC-style parsing */
+		yylval.intval = GCC_ATYP_ASM_MSVC;
+		return C_ASM;  /* Return C_ASM to trigger inline assembly parsing */
 #endif
 	}
 	cerror("gcc_keyword");
@@ -534,6 +558,14 @@ struct atax {
 	CS(GCC_ATYP_ES)		{ A_0ARG, "es" },
 	CS(GCC_ATYP_FS)		{ A_0ARG, "fs" },
 	CS(GCC_ATYP_GS)		{ A_0ARG, "gs" },
+
+	/* Borland/MSVC extensions */
+	CS(GCC_ATYP_EMIT)	{ A_1ARG, "emit" },
+#endif
+
+#if defined(mach_i86) || defined(mach_i386)
+	/* MSVC inline assembly */
+	CS(GCC_ATYP_ASM_MSVC)	{ A_0ARG, "asm_msvc" },
 #endif
 };
 
