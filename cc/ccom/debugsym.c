@@ -165,6 +165,18 @@ debugsym_init(debug_format_t format)
 		debugsym_acorn_init();
 		break;
 
+	case DBGFMT_AOUT:
+		debugsym_aout_init();
+		break;
+
+	case DBGFMT_MACHO:
+		debugsym_macho_init();
+		break;
+
+	case DBGFMT_OMF:
+		debugsym_omf_init();
+		break;
+
 	default:
 		break;
 	}
@@ -259,6 +271,18 @@ debugsym_finish(void)
 	case DBGFMT_ACORN_AOF:
 	case DBGFMT_ACORN_AIF:
 		debugsym_acorn_finish();
+		break;
+
+	case DBGFMT_AOUT:
+		debugsym_aout_finish();
+		break;
+
+	case DBGFMT_MACHO:
+		debugsym_macho_finish();
+		break;
+
+	case DBGFMT_OMF:
+		debugsym_omf_finish();
 		break;
 
 	default:
@@ -905,6 +929,18 @@ debugsym_emit_symbol(debug_symbol_t *sym)
 		debugsym_acorn_emit(sym);
 		break;
 
+	case DBGFMT_AOUT:
+		debugsym_aout_emit(sym);
+		break;
+
+	case DBGFMT_MACHO:
+		debugsym_macho_emit(sym);
+		break;
+
+	case DBGFMT_OMF:
+		debugsym_omf_emit(sym);
+		break;
+
 	default:
 		break;
 	}
@@ -951,7 +987,8 @@ debugsym_format_name(debug_format_t format)
 		"Mac OS MPW", "Mac OS PEF",
 		"Atari DRI", "Atari GST",
 		"Amiga Hunk", "Amiga SAS/C",
-		"Acorn AOF", "Acorn AIF"
+		"Acorn AOF", "Acorn AIF",
+		"a.out", "Mach-O", "OMF"
 	};
 
 	if (format < 0 || format >= DBGFMT_MAX)

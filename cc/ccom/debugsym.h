@@ -43,6 +43,9 @@
  * - Atari TOS/GEMDOS (DRI/GST)
  * - Amiga (Hunk/SAS/C)
  * - Acorn RISC OS (AOF/AIF)
+ * - a.out (Original Unix executable format)
+ * - Mach-O (Modern macOS/iOS/Darwin)
+ * - OMF (MS-DOS/OS/2 Object Module Format)
  */
 
 #ifndef DEBUGSYM_H
@@ -102,6 +105,11 @@ typedef enum {
 	DBGFMT_AMIGA_SASC,	/* Amiga SAS/C debug format */
 	DBGFMT_ACORN_AOF,	/* Acorn ARM Object Format (AOF) */
 	DBGFMT_ACORN_AIF,	/* Acorn ARM Image Format (AIF) */
+
+	/* Additional executable formats */
+	DBGFMT_AOUT,		/* a.out executable format (Unix) */
+	DBGFMT_MACHO,		/* Mach-O (modern macOS/iOS/Darwin) */
+	DBGFMT_OMF,		/* Object Module Format (MS-DOS/OS/2) */
 
 	DBGFMT_MAX
 } debug_format_t;
@@ -480,6 +488,30 @@ void debugsym_acorn_init(void);
 void debugsym_acorn_emit(debug_symbol_t *sym);
 void debugsym_acorn_finish(void);
 debug_symbol_t *debugsym_acorn_parse(void *data, size_t len);
+
+/*
+ * a.out debug format support (Unix)
+ */
+void debugsym_aout_init(void);
+void debugsym_aout_emit(debug_symbol_t *sym);
+void debugsym_aout_finish(void);
+debug_symbol_t *debugsym_aout_parse(void *data, size_t len);
+
+/*
+ * Mach-O debug format support (macOS/iOS/Darwin)
+ */
+void debugsym_macho_init(void);
+void debugsym_macho_emit(debug_symbol_t *sym);
+void debugsym_macho_finish(void);
+debug_symbol_t *debugsym_macho_parse(void *data, size_t len);
+
+/*
+ * OMF debug format support (MS-DOS/OS/2)
+ */
+void debugsym_omf_init(void);
+void debugsym_omf_emit(debug_symbol_t *sym);
+void debugsym_omf_finish(void);
+debug_symbol_t *debugsym_omf_parse(void *data, size_t len);
 
 /* ===================================================================
  * UTILITY FUNCTIONS
