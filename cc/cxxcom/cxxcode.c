@@ -904,3 +904,89 @@ cxxmarkdtor(struct symtab *sp)
 	if (cppdebug)
 		printf("Marked %s as destructor\n", sp->sname);
 }
+
+/*
+ * Check if a type is a class type (struct in C++ terms).
+ * Returns 1 if type is a class, 0 otherwise.
+ */
+int
+cxxisclass(TWORD type)
+{
+	TWORD t = BTYPE(type);
+	return (t == STRTY);
+}
+
+/*
+ * Find a constructor for a given class symbol.
+ * Returns the constructor symtab entry, or NULL if not found.
+ */
+struct symtab *
+cxxfindctor(struct symtab *classsym)
+{
+	struct symtab *sp;
+
+	if (classsym == NULL || classsym->sclass != STNAME)
+		return NULL;
+
+	/* Look for a constructor in the class's symbol list */
+	for (sp = classsym->sup; sp != NULL; sp = sp->snext) {
+		if (sp->sflags & SCTOR)
+			return sp;
+	}
+
+	return NULL;
+}
+
+/*
+ * Find a destructor for a given class symbol.
+ * Returns the destructor symtab entry, or NULL if not found.
+ */
+struct symtab *
+cxxfinddtor(struct symtab *classsym)
+{
+	struct symtab *sp;
+
+	if (classsym == NULL || classsym->sclass != STNAME)
+		return NULL;
+
+	/* Look for a destructor in the class's symbol list */
+	for (sp = classsym->sup; sp != NULL; sp = sp->snext) {
+		if (sp->sflags & SDTOR)
+			return sp;
+	}
+
+	return NULL;
+}
+
+/*
+ * Generate a call to a constructor or destructor.
+ * sp: the object being constructed/destructed
+ * fnsym: the constructor/destructor function symbol
+ * Returns a function call node.
+ */
+NODE *
+cxxgencall(struct symtab *sp, struct symtab *fnsym)
+{
+	NODE *fn, *obj, *call;
+
+	if (sp == NULL || fnsym == NULL)
+		return NULL;
+
+	/* Create function name node */
+	fn = nametree(fnsym);
+
+	/* Create object reference node */
+	obj = nametree(sp);
+
+	/* For member functions, we need to pass the object address as first argument */
+	/* Build a call: ctor(&obj) or dtor(&obj) */
+	obj = buildtree(ADDROF, obj, NIL);
+
+	/* Build function call */
+	call = buildtree(CALL, fn, obj);
+
+	if (cppdebug)
+		printf("Generated call to %s for object %s\n", fnsym->sname, sp->sname);
+
+	return call;
+}

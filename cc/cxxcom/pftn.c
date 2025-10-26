@@ -1646,6 +1646,26 @@ nidcl(NODE *p, int class)
 	if (sp->sflags & SASG)
 		return; /* already initialized */
 
+	/* C++: For auto/register class objects, call default constructor */
+	if ((class == AUTO || class == REGISTER) && cxxisclass(sp->stype)) {
+		struct symtab *classsym, *ctorsym;
+		NODE *call;
+
+		/* Get the class symbol from the struct */
+		classsym = strmemb(sp->sap);
+		if (classsym != NULL) {
+			/* Find the default constructor */
+			ctorsym = cxxfindctor(classsym);
+			if (ctorsym != NULL) {
+				/* Generate and emit constructor call */
+				call = cxxgencall(sp, ctorsym);
+				if (call != NULL)
+					ecomp(call);
+			}
+		}
+		return;
+	}
+
 	switch (class) {
 	case EXTDEF:
 		/* simulate initialization by 0 */
