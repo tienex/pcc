@@ -1102,6 +1102,7 @@ AC_CONFIG_FILES([Makefile
 		pascal/pcom/Makefile
 		chill/Makefile
 		chill/chcom/Makefile
+		libchill/Makefile
 		common/abi/Makefile
 		include/Makefile
 		libunicode/Makefile

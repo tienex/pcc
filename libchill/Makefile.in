@@ -1,0 +1,66 @@
+#	$Id$
+#
+# Makefile.in for CHILL runtime library (libchill)
+#
+VPATH=@srcdir@
+srcdir=@srcdir@
+top_srcdir=@top_srcdir@
+top_builddir=@top_builddir@
+prefix = @prefix@
+exec_prefix = @exec_prefix@
+libdir = @libdir@
+includedir = @includedir@
+CC = @CC@
+AR = ar
+RANLIB = @RANLIB@
+CFLAGS = @CFLAGS@ @ADD_CFLAGS@
+CPPFLAGS = @CPPFLAGS@ @ADD_CPPFLAGS@ -I$(srcdir)
+INSTALL = @INSTALL@
+INSTALL_DATA = @INSTALL_DATA@
+
+OBJS=	chill_io.o chill_string.o chill_math.o chill_memory.o \
+	chill_process.o chill_powerset.o chill_exception.o chill_runtime.o
+
+LIBNAME=libchill.a
+
+all: $(LIBNAME)
+
+$(LIBNAME): $(OBJS)
+	$(AR) rcs $@ $(OBJS)
+	$(RANLIB) $@
+
+chill_io.o: $(srcdir)/chill_io.c $(srcdir)/chill.h
+	$(CC) $(CPPFLAGS) $(CFLAGS) -c $(srcdir)/chill_io.c
+
+chill_string.o: $(srcdir)/chill_string.c $(srcdir)/chill.h
+	$(CC) $(CPPFLAGS) $(CFLAGS) -c $(srcdir)/chill_string.c
+
+chill_math.o: $(srcdir)/chill_math.c $(srcdir)/chill.h
+	$(CC) $(CPPFLAGS) $(CFLAGS) -c $(srcdir)/chill_math.c
+
+chill_memory.o: $(srcdir)/chill_memory.c $(srcdir)/chill.h
+	$(CC) $(CPPFLAGS) $(CFLAGS) -c $(srcdir)/chill_memory.c
+
+chill_process.o: $(srcdir)/chill_process.c $(srcdir)/chill.h
+	$(CC) $(CPPFLAGS) $(CFLAGS) -pthread -c $(srcdir)/chill_process.c
+
+chill_powerset.o: $(srcdir)/chill_powerset.c $(srcdir)/chill.h
+	$(CC) $(CPPFLAGS) $(CFLAGS) -c $(srcdir)/chill_powerset.c
+
+chill_exception.o: $(srcdir)/chill_exception.c $(srcdir)/chill.h
+	$(CC) $(CPPFLAGS) $(CFLAGS) -c $(srcdir)/chill_exception.c
+
+chill_runtime.o: $(srcdir)/chill_runtime.c $(srcdir)/chill.h
+	$(CC) $(CPPFLAGS) $(CFLAGS) -c $(srcdir)/chill_runtime.c
+
+install: all
+	test -z "$(DESTDIR)$(libdir)" || mkdir -p "$(DESTDIR)$(libdir)"
+	test -z "$(DESTDIR)$(includedir)" || mkdir -p "$(DESTDIR)$(includedir)"
+	$(INSTALL_DATA) $(LIBNAME) $(DESTDIR)$(libdir)
+	$(INSTALL_DATA) $(srcdir)/chill.h $(DESTDIR)$(includedir)
+
+clean:
+	rm -f $(OBJS) $(LIBNAME)
+
+distclean: clean
+	rm -f Makefile
