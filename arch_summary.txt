@@ -1,0 +1,534 @@
+PCC COMPILER ARCHITECTURE OVERVIEW
+==================================
+
+PROJECT: Portable C Compiler (PCC)
+Original Source: http://pcc.ludd.ltu.se/
+This is a modified version with enhancements for bootstrapping, multi-arch support, WASM backend, and extensive debug symbol support
+
+================================================================================
+1. OVERALL DIRECTORY STRUCTURE
+================================================================================
+
+/home/user/pcc/
+├── cc/                          # Compiler infrastructure
+│   ├── cc/                      # Driver (cc command)
+│   ├── ccom/                    # C front-end (lexer, parser, semantic analysis)
+│   ├── cxxcom/                  # C++ front-end
+│   ├── cpp/                     # C preprocessor
+│   └── driver/                  # Compiler driver (manages tool pipeline)
+│
+├── arch/                        # Architecture-specific backends (code generators)
+│   ├── amd64/                   # x86-64 backend
+│   ├── arm/                     # ARM backend
+│   ├── wasm/                    # WebAssembly backend (newly added)
+│   ├── i386/                    # i386 backend
+│   ├── i86/                     # 8086 backend
+│   ├── mips/                    # MIPS backend
+│   ├── mips64/                  # MIPS64 backend
+│   ├── powerpc/                 # PowerPC backend
+│   ├── m68k/                    # Motorola 68000 backend
+│   ├── sparc64/                 # SPARC64 backend
+│   ├── hppa/                    # PA-RISC backend
+│   ├── pdp11/                   # PDP-11 backend
+│   ├── vax/                     # VAX backend
+│   └── [other classic archs]    # PDP-7, PDP-10, Nova, M16C, etc.
+│
+├── mip/                         # Machine-Independent Part (architecture-independent IR & code generation framework)
+│   ├── manifest.h               # IR node type definitions
+│   ├── pass2.h                  # Code generation framework definitions
+│   ├── node.h                   # Node structure definitions
+│   ├── common.c                 # Shared code generation utilities
+│   ├── match.c                  # IR pattern matching
+│   ├── optim2.c                 # Code generation optimizations
+│   ├── order.c                  # Instruction ordering
+│   ├── table.c                  # Instruction patterns (common)
+│   ├── reader.c                 # IR reader
+│   └── regs.c                   # Register allocation
+│
+├── common/                      # Shared utilities
+│   ├── softfloat.c/.h          # Software floating-point implementation
+│   ├── strtodg.c               # String to double conversion
+│   ├── compat.c/.h             # Compatibility layer
+│   ├── unicode.c/.h            # Unicode support
+│   └── abi/                     # ABI definitions
+│
+├── libx86asm/                   # X86 Assembly emitter library
+│   └── README.md                # Supports 9 assembly formats and multiple ABIs
+│
+├── include/                     # Standard C headers
+└── [build files]                # configure.ac, Makefile.in, etc.
+
+================================================================================
+2. EXISTING FRONT-ENDS
+================================================================================
+
+Currently two language frontends exist:
+
+A. C FRONT-END (cc/ccom/)
+   - File: cgram.y (C grammar/parser - 65KB)
+   - Lexer: scan.l
+   - Output: P1ND (Pass 1 Node) IR tree structure
+   - Components:
+     * main.c - Entry point
+     * scan.l - Lexical analyzer
+     * cgram.y - Grammar parser (Yacc format)
+     * pass1.h - Pass 1 (semantic analysis) definitions
+     * trees.c - Tree manipulation and semantic analysis
+     * symtabs.c - Symbol table management
+     * init.c - Variable initialization
+     * pftn.c - Function prototype handling
+     * inline.c - Inline function support
+     * optim.c - Pass 1 optimizations
+     * builtins.c - Built-in functions
+
+B. C++ FRONT-END (cc/cxxcom/)
+   - Similar structure to C frontend but with C++ support
+   - cgram.y - C++ grammar
+   - cxxdefs.h - C++ specific definitions
+   - cxxcode.c - C++ specific code generation
+
+================================================================================
+3. INTERMEDIATE REPRESENTATION (IR) FORMAT
+================================================================================
+
+The compiler uses a TWO-PASS architecture:
+
+PASS 1: High-level IR (in ccom/)
+---------------------------------
+- Data Structure: P1ND (Pass 1 Node)
+- Defined in: cc/ccom/pass1.h (lines 259-285)
+- Structure:
+  typedef struct p1node {
+      int n_op;              // Operator type (e.g., PLUS, ASSIGN, CALL)
+      TWORD n_type;          // Type word (data type)
+      TWORD n_qual;          // Type qualifiers (const, volatile)
+      union {
+          char *_name;       // For NAME nodes
+          union dimfun *_df; // For dimension/function info
+      } n_5;
+      struct attr *n_ap;     // Attribute list
+      union {
+          struct {
+              union {
+                  P1ND *_left;  // Left child
+                  CONSZ _val;   // Constant value
+              } n_l;
+              union {
+                  P1ND *_right; // Right child
+                  int _rval;    // Register/value
+                  struct symtab *_sp; // Symbol pointer
+              } n_r;
+          } n_u;
+          struct {
+              struct flt *_dcon; // Double constant
+              struct flt *_ccon; // Complex constant
+          };
+      } n_f;
+  } P1ND;
+
+- Operators: ~80 operators including:
+  * Arithmetic: PLUS, MINUS, MUL, DIV, MOD
+  * Logical: AND, OR, NOT, ANDAND, OROR
+  * Comparison: EQ, NE, LE, LT, GE, GT
+  * Assignment: ASSIGN, PLUSEQ, MINUSEQ, etc.
+  * Memory: DEREF (*p), ADDROF (&x), INDIRECT, OREG
+  * Control: CALL, RETURN, GOTO, LABEL
+  * Type conversions: CAST, CONVERT
+  * And many more...
+
+- Symbol Table: struct symtab
+  * Variable names, types, storage classes
+  * Offset/value information
+  * Function prototypes
+  * Struct/union members
+
+PASS 2: Machine-dependent IR (in mip/ and arch/)
+--------------------------------------------------
+- Data Structure: NODE (Pass 2 Node)
+- Defined in: mip/node.h
+- Lower-level IR with machine-specific details
+- Generated from P1ND trees during code generation
+- Contains:
+  * Lower-level operations suitable for instruction selection
+  * Register allocation information
+  * Machine-specific addressing modes
+  * Target-specific register names and constraints
+
+Key Components:
+- match.c - Pattern matching against instruction table
+- table.c (per-arch) - Instruction pattern definitions
+- local2.c (per-arch) - Architecture-specific lowering
+- optim2.c - Pass 2 optimizations
+
+================================================================================
+4. AVAILABLE BACKENDS
+================================================================================
+
+The compiler supports 18 architecture backends:
+
+MODERN ARCHITECTURES:
+- amd64 (x86-64) - Most mature, full-featured
+- arm (ARMv7) - Full support
+- wasm (WebAssembly) - Recently added
+
+CLASSIC RISC ARCHITECTURES:
+- mips, mips64 - MIPS ISA variants
+- powerpc - PowerPC ISA
+- sparc64 - SPARC64 ISA
+- hppa - PA-RISC ISA
+- pdp11 - PDP-11 ISA
+
+CLASSIC CISC ARCHITECTURES:
+- i386 - 32-bit Intel
+- i86 - 16-bit Intel (8086)
+- m68k - Motorola 68000 family
+- vax - DEC VAX
+
+HISTORIC/MINIMAL:
+- pdp7, pdp10 - Historic DEC systems
+- nova - Data General Nova
+- m16c - Renesas M16C
+
+EACH BACKEND CONSISTS OF:
+1. macdefs.h - Machine definitions
+   - Data type sizes (SZCHAR, SZINT, SZLONG, SZPOINT, etc.)
+   - Alignment constraints (ALCHAR, ALINT, etc.)
+   - Min/max values for types
+   - ABI-specific settings
+
+2. code.c - High-level code generation
+   - Entry points for code generation
+   - Assembly output functions
+   - Prologue/epilogue generation
+   - Assembler format selection
+
+3. local.c - Pass 1 local optimizations
+   - Pass 1 machine-dependent optimizations
+   - Tree transformations
+
+4. local2.c - Pass 2 local code generation
+   - Machine-dependent register allocation
+   - Address mode selection
+   - Instruction generation
+   - Prologue/epilogue detailed implementation
+
+5. order.c - Instruction ordering
+   - Register usage ordering
+   - Memory access ordering
+   - Dependency handling
+
+6. table.c - Instruction pattern matching table
+   - Instruction cost and pattern definitions
+   - Rewrite rules for code selection
+   - Each pattern maps IR patterns to assembly instructions
+
+================================================================================
+5. COMPILER PIPELINE & STAGE CONNECTIONS
+================================================================================
+
+THE COMPLETE COMPILATION PIPELINE:
+
+Input (foo.c or foo.rb for future Ruby frontend)
+  |
+  v
+[DRIVER] cc/driver/driver.c
+  - Parses command-line arguments
+  - Invokes preprocessor, compiler, assembler, linker
+  - Manages tool coordination and temporary files
+  |
+  v
+[PREPROCESSOR] cc/cpp/
+  - C preprocessor (cpc.c, cpp.c)
+  - Handles: #include, #define, #ifdef, etc.
+  - Output: preprocessed source (.i file)
+  |
+  v
+[FRONT-END] cc/ccom/ or cc/cxxcom/
+  Phase 1a: LEXICAL ANALYSIS (scan.l)
+    - Tokenizes input
+    - Output: Token stream
+    |
+    v
+  Phase 1b: SYNTAX ANALYSIS (cgram.y)
+    - Parses tokens into AST
+    - Output: Partial parse tree
+    |
+    v
+  Phase 1c: SEMANTIC ANALYSIS (trees.c, pass1.h)
+    - Type checking
+    - Symbol resolution
+    - Type coercion
+    - Optimizations
+    - Output: P1ND (Pass 1 Node) IR tree
+    |
+    v
+  Phase 1d: INTERMEDIATE REPRESENTATION
+    - myp2tree() function called to lower from P1ND
+    - Output: FILE * with function dumps (f1 file)
+    - Function: myp2tree(P1ND *p) in mip/common.c
+    |
+    v
+[CODE GENERATOR] (invoked separately as pass 2)
+  Phase 2a: READ IR
+    - reader.c reads the dumped IR
+    - Reconstructs NODE trees from serialized form
+    |
+    v
+  Phase 2b: REGISTER ALLOCATION (regs.c)
+    - Allocates registers for variables
+    - Manages register pressure
+    |
+    v
+  Phase 2c: INSTRUCTION SELECTION (match.c + table.c)
+    - Pattern matching against instruction templates
+    - Each NODE pattern mapped to target instructions
+    - Applies rewrite rules
+    - Output: Instruction-level trees
+    |
+    v
+  Phase 2d: CODE GENERATION (local2.c)
+    - Architecture-specific code emission
+    - Actual assembly generation
+    - Output: .s (assembly) file
+    |
+    v
+[ASSEMBLER] (invokes system as)
+  - Assembles .s to .o (object file)
+  - Output: object file
+  |
+  v
+[LINKER] (invokes system ld)
+  - Links object files and libraries
+  - Output: executable or shared library
+
+INTER-STAGE DATA FLOW:
+  C Source → Tokens → Parse Tree → AST → P1ND IR
+           → Serialized IR → NODE IR → Assembly → Object → Executable
+
+================================================================================
+6. BUILD SYSTEM
+================================================================================
+
+TYPE: GNU Autotools (configure + Makefile)
+MAIN ENTRY: configure.ac (Autoconf configuration)
+
+BUILD STAGES:
+
+Stage 0: Preparation (mkext utility)
+  - mkext tool generated from mip/mkext.c
+  - Generates:
+    * external.c - External symbol declarations
+    * external.h - External symbol declarations
+
+Stage 1: Parser generation
+  - Yacc/Bison on cgram.y → cgram.c, cgram.h
+  - Lex/Flex on scan.l → scan.c
+
+Stage 2: Compilation
+  - Object files compiled from C sources
+  - Three variants:
+    * OBJS0: Pass 0 (preprocessing)
+    * OBJS: Full pass 1 (ccom)
+    * OBJS1: Pass 1 (for separation)
+
+Stage 3: Linking
+  - Produces cc0, cc1, or ccom executable
+  - Links with libx86asm library (for x86 assembly generation)
+
+BUILD VARIANTS:
+
+Standard Build:
+  make all              # Default build
+  make install          # Install binaries
+
+Bootstrap Build:
+  make bootstrap        # Multi-stage bootstrap verification
+  - Stage 1: Compile with host compiler
+  - Stage 2: Compile with stage 1 output
+  - Stage 3: Compile with stage 2 output
+  - Verify: Compare stage 2 and 3 outputs
+  Option: --compare-stages flag
+
+Multiarch Build:
+  - Supports cross-compilation
+  - Target selection via configure --target
+
+Configuration:
+  configure [OPTIONS]
+  - --target=<arch>-<os>  # Target platform
+  - --prefix=<path>       # Installation prefix
+  - --with-asm-format=    # gnu-as, nasm, yasm, masm, etc.
+  - BOOTSTRAP=yes         # Enable bootstrap mode
+  - BOOTSTRAP_STAGES=3    # Number of bootstrap stages
+
+COMPILER NAMES:
+  - CC - host compiler used for build
+  - CC_FOR_BUILD - special compiler for build tools
+  - $(BINPREFIX)ccom - target compiler name
+  - $(BINPREFIX)cc0, cc1 - split pass versions
+
+================================================================================
+7. KEY COMPONENTS & FILES
+================================================================================
+
+CRITICAL INTEGRATION POINTS:
+
+For Adding Ruby Frontend, key files to understand:
+1. cc/ccom/cgram.y - C grammar (700+ lines)
+   - Shows how grammar rules map to semantic actions
+   - Pattern for Ruby grammar
+
+2. cc/ccom/pass1.h - Pass 1 header (630+ lines)
+   - Core IR structure definitions
+   - Symbol table definitions
+   - Key functions for tree manipulation
+
+3. cc/ccom/scan.l - Lexer (650+ lines)
+   - Token definitions
+   - Lexical patterns
+
+4. cc/ccom/trees.c - Tree operations (1800+ lines)
+   - Type checking and coercion
+   - Semantic rule implementations
+   - IR tree construction and optimization
+
+5. cc/ccom/main.c - Compiler entry point
+   - Shows how to initialize and drive compilation
+   - I/O redirection and file management
+
+BACKEND INTEGRATION:
+
+1. arch/<arch>/macdefs.h
+   - Must define size and alignment macros
+   - Must define register names and counts
+   - Must define ABI-specific settings
+
+2. arch/<arch>/code.c
+   - Implements high-level assembly generation
+   - Key functions: prologue(), epilogue(), deflab(), etc.
+
+3. arch/<arch>/local2.c
+   - Implements register allocation
+   - Key function: geninsn() for instruction generation
+
+4. arch/<arch>/table.c
+   - Instruction selection patterns
+   - Largest and most complex backend file
+   - Defines cost and rewrite rules
+
+5. mip/manifest.h
+   - Architecture-independent operator definitions
+   - Node types
+   - Shared constants
+
+6. mip/pass2.h
+   - Code generation framework
+   - Common pass 2 data structures
+
+7. configure.ac
+   - Must add target case for new architecture
+   - Maps target triple to TARGMACH and other variables
+
+================================================================================
+8. KEY ABSTRACTIONS & PATTERNS
+================================================================================
+
+OPERATOR NODES (in P1ND):
+- All operations represented as n_op field
+- Define new operators in mip/manifest.h
+- Each operator has:
+  * n_type: result type
+  * n_qual: type qualifiers
+  * n_left, n_right: operands (may be NULL)
+  * n_val, n_sp: constant or symbol value
+
+TYPE SYSTEM:
+- TWORD: Atomic type word
+- dimfun: Dimension/function information
+- attr: Attributes (packed, aligned, etc.)
+- All types are built from atomic types with modifiers
+
+SYMBOL TABLE:
+- struct symtab: Symbol table entry
+- Organized by scope level (blevel)
+- Stores: name, type, storage class, offset
+- Linked list structure for same scope
+
+INSTRUCTION PATTERNS:
+- table.c files contain pattern descriptions
+- Each pattern has:
+  * Cost (estimated instruction count)
+  * IR pattern (matched against NODE trees)
+  * Rewrite rule (generates lower-level IR or assembly)
+  * Constraints (which registers, etc.)
+
+REGISTER ALLOCATION:
+- Two phases: local and global
+- Local: within a basic block
+- Global: across basic blocks (handled in regs.c)
+
+================================================================================
+9. DEBUG SYMBOL SUPPORT
+================================================================================
+
+PCC includes an EXTENSIVE debug symbol system supporting:
+- 24+ debug format families
+- 22+ programming languages
+- Multi-platform support
+
+Key files:
+- cc/ccom/debugsym.h - Main API
+- cc/ccom/debugsym.c - Dispatcher
+- cc/ccom/debugsym_dwarf.c - DWARF support
+- cc/ccom/debugsym_codeview.c - CodeView support
+- ... and 20+ other format implementations
+
+This can be integrated with the Ruby frontend for comprehensive debugging support.
+
+================================================================================
+10. DESIGN PATTERNS FOR RUBY FRONTEND INTEGRATION
+================================================================================
+
+TO CREATE A RUBY FRONT-END (cc/rcom/):
+
+1. Create directory: cc/rcom/
+
+2. Implement scanner: scan.l
+   - Tokenize Ruby source
+   - Handle Ruby-specific syntax (blocks, symbols, etc.)
+
+3. Implement parser: cgram.y
+   - Grammar rules mapping to semantic actions
+   - Build P1ND IR tree
+   - Can reuse many rules from C frontend
+
+4. Implement semantic analysis: trees.c or equivalent
+   - Type inference/checking
+   - Symbol resolution
+   - IR optimization
+   - Call myp2tree() to lower to Pass 2
+
+5. Mirror C frontend structure:
+   - main.c - Entry point
+   - pass1.h - Ruby-specific IR definitions
+   - pftn.c - Function/method handling
+   - symtabs.c - Symbol table (may extend for Ruby features)
+   - init.c - Initialization semantics
+   - inline.c - If supporting inline
+
+6. Reuse backend infrastructure:
+   - All backends remain unchanged
+   - Ruby P1ND → myp2tree() → Common IR → Backends
+
+7. Update build system:
+   - Add case in configure.ac for Ruby language detection
+   - Create cc/rcom/Makefile.in mirroring ccom structure
+   - Add rcom to cc/Makefile.in targets
+
+8. Consider Ruby-specific features:
+   - Dynamic typing (runtime type info)
+   - Blocks and procs
+   - Method dispatch (may need special IR nodes)
+   - Ruby object model (method lookup, etc.)
+
+================================================================================

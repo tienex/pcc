@@ -1,0 +1,640 @@
+================================================================================
+RUBY FRONT-END INTEGRATION GUIDE
+================================================================================
+
+OBJECTIVE: Design and implement a Ruby front-end (rcom) that integrates with the
+PCC compiler infrastructure to target all existing backends (amd64, ARM, WASM, etc.)
+
+================================================================================
+STEP 1: DIRECTORY STRUCTURE & BUILD CONFIGURATION
+================================================================================
+
+CREATE DIRECTORY STRUCTURE:
+  mkdir -p /home/user/pcc/cc/rcom
+
+FILES TO CREATE:
+  cc/rcom/
+  ├── main.c            - Compiler entry point
+  ├── pass1.h           - Ruby-specific IR definitions
+  ├── scan.l            - Ruby lexer
+  ├── cgram.y           - Ruby grammar
+  ├── trees.c           - Tree operations & semantic analysis
+  ├── symtabs.c         - Symbol table for Ruby
+  ├── pftn.c            - Function/method handling
+  ├── init.c            - Initialization handling
+  ├── Makefile.in       - Build configuration
+  └── ruby-specific/
+      ├── blocks.c      - Ruby block/proc handling
+      ├── methods.c     - Ruby method dispatch
+      └── objmodel.c    - Ruby object model basics
+
+UPDATE BUILD SYSTEM:
+  1. Edit /home/user/pcc/configure.ac
+     - Add Ruby language detection
+     - Add --enable-ruby option
+  
+  2. Create /home/user/pcc/cc/rcom/Makefile.in
+     - Mirror ccom/Makefile.in structure
+     - Use same compilation flags and patterns
+
+  3. Edit /home/user/pcc/cc/Makefile.in
+     - Add rcom to CC_SUBDIR conditional
+     - Add rcom to ALL_SUBDIRS if Ruby enabled
+
+================================================================================
+STEP 2: UNDERSTAND EXISTING C FRONT-END STRUCTURE
+================================================================================
+
+KEY FILES TO STUDY (in order):
+
+1. cc/ccom/main.c (Entry Point)
+   - How to initialize the compiler
+   - How to open input files
+   - How to manage output
+   - Where to call the parser
+   
+   Key functions:
+   - main() - Entry point
+   - compile() - Main compilation driver
+   - Where output is written
+
+2. cc/ccom/scan.l (Lexical Analysis)
+   - Token definitions
+   - How to handle identifiers, keywords, numbers
+   - String and character constant handling
+   
+   Pattern for Ruby:
+   - Add Ruby keywords: def, end, class, module, etc.
+   - Add Ruby operators: =>, &&, ||, **, etc.
+   - Add Ruby literals: symbols, ranges, etc.
+
+3. cc/ccom/cgram.y (Parser Grammar)
+   - Grammar rules syntax (Yacc format)
+   - How semantic actions build IR trees
+   - Declarations, functions, statements, expressions
+   
+   Key patterns:
+   - declaration rules
+   - function_definition rules
+   - statement rules
+   - expression rules
+
+4. cc/ccom/pass1.h (IR Definitions)
+   - P1ND structure definition
+   - Symbol table structure
+   - Key macros for tree manipulation
+   
+   For Ruby, may need to extend:
+   - Add block node type
+   - Add method dispatch node type
+   - Extend symbol attributes for Ruby features
+
+5. cc/ccom/trees.c (Semantic Analysis)
+   - Type checking implementation
+   - Tree transformation functions
+   - Operator handling
+   
+   For Ruby:
+   - Type inference rules
+   - Block handling
+   - Method resolution
+
+================================================================================
+STEP 3: KEY INTEGRATION POINTS
+================================================================================
+
+CRITICAL FUNCTION: myp2tree() in mip/common.c
+
+This function is called to transition from Pass 1 to Pass 2:
+
+void myp2tree(P1ND *p) {
+    // This function receives a P1ND tree from the frontend
+    // and lowers it to Pass 2 IR format
+    // It writes to a file (f1) that Pass 2 reads
+    
+    // For Ruby frontend:
+    // - All Ruby constructs must be lowered to equivalent
+    //   P1ND IR that myp2tree() can handle
+    // - Ruby blocks → function pointers or special nodes
+    // - Ruby method calls → function calls or special CALL nodes
+    // - Ruby classes → handled via initialization
+}
+
+LOCATION: /home/user/pcc/mip/common.c (around line 200+)
+
+Your Ruby frontend must:
+1. Build P1ND trees from Ruby code
+2. Call myp2tree() to lower to Pass 2 IR
+3. All lowering is automatic after that
+
+KEY FUNCTIONS IN CCOM TO UNDERSTAND:
+
+In cc/ccom/trees.c:
+  P1ND *buildtree(int op, P1ND *l, P1ND *r);
+    - Builds a tree node with operator op
+    - Use this in semantic actions to build IR
+
+  P1ND *mkty(unsigned type, ...);
+    - Creates a type node
+
+  void ecomp(P1ND *p);
+    - Compiles an expression
+    - Equivalent: emit IR for Ruby expression
+
+  P1ND *block(int op, P1ND *p1, P1ND *p2, ...);
+    - Creates a compound statement node
+    - Use for Ruby blocks
+
+In cc/ccom/symtabs.c:
+  struct symtab *lookup(char *name, int scope);
+    - Looks up symbol in current scope
+
+  struct symtab *getsymtab(char *name, int flags);
+    - Gets/creates symbol table entry
+
+For Ruby:
+  - Extend symtab structure if needed for Ruby metadata
+  - Add symbol attributes for Ruby-specific features
+
+================================================================================
+STEP 4: MINIMAL RUBY GRAMMAR SKELETON
+================================================================================
+
+EXAMPLE cgram.y structure for Ruby:
+
+%{
+#include "pass1.h"
+// Ruby-specific includes
+%}
+
+%union {
+    P1ND *node;
+    struct symtab *sym;
+    char *str;
+    // Add Ruby-specific types
+}
+
+%token RUBY_DEF RUBY_END RUBY_CLASS RUBY_IF RUBY_ELSE ...
+%token IDENTIFIER INTEGER FLOAT STRING SYMBOL ...
+
+%%
+program:        /* empty */
+              | program top_level
+              ;
+
+top_level:      method_definition
+              | class_definition
+              | statement
+              ;
+
+method_definition:
+              RUBY_DEF IDENTIFIER '(' parameter_list ')' 
+              RUBY_END
+              {
+                  // Create function-like P1ND tree
+                  // Use buildtree() to construct IR
+              }
+              ;
+
+expression:   IDENTIFIER
+              | INTEGER
+              | method_call
+              | binary_op
+              ;
+
+method_call:  IDENTIFIER '(' argument_list ')'
+              {
+                  // Build CALL node using buildtree()
+                  $$ = buildtree(CALL, $1, $3);
+              }
+              ;
+
+%%
+
+void yyerror(char *s) { /* error handling */ }
+int yylex() { /* from scan.l */ }
+
+================================================================================
+STEP 5: RUBY LEXER SKELETON (scan.l)
+================================================================================
+
+EXAMPLE scan.l structure for Ruby:
+
+%{
+#include "pass1.h"
+#include "cgram.h"  // Generated from cgram.y
+
+// Ruby-specific keywords and patterns
+%}
+
+%%
+"def"           { return RUBY_DEF; }
+"end"           { return RUBY_END; }
+"class"         { return RUBY_CLASS; }
+"if"            { return RUBY_IF; }
+"else"          { return RUBY_ELSE; }
+"def"           { return RUBY_DEF; }
+"module"        { return RUBY_MODULE; }
+"while"         { return RUBY_WHILE; }
+"for"           { return RUBY_FOR; }
+"do"            { return RUBY_DO; }
+"break"         { return RUBY_BREAK; }
+"next"          { return RUBY_NEXT; }
+"return"        { return RUBY_RETURN; }
+"true"          { return RUBY_TRUE; yylval.node = ...; }
+"false"         { return RUBY_FALSE; yylval.node = ...; }
+"nil"           { return RUBY_NIL; yylval.node = ...; }
+
+"=>"            { return RUBY_ARROW; }
+"**"            { return RUBY_POW; }
+"<<"            { return LSHIFT; }
+">>"            { return RSHIFT; }
+"&&"            { return ANDAND; }
+"||"            { return OROR; }
+"!="            { return NE; }
+"=="            { return EQ; }
+"<="            { return LE; }
+">="            { return GE; }
+
+[a-zA-Z_][a-zA-Z0-9_]* {
+    yylval.sym = lookup(yytext, 0);
+    return IDENTIFIER;
+}
+
+[0-9]+          { yylval.node = bcon(atoi(yytext)); return INTEGER; }
+[0-9]*\.[0-9]+  { /* float handling */ return FLOAT; }
+\"[^\"]*\"      { /* string handling */ return STRING; }
+:[a-zA-Z_][a-zA-Z0-9_]* { /* symbol handling */ return SYMBOL; }
+
+[ \t\n]         { /* whitespace */ }
+.               { /* other */ }
+
+%%
+
+int yywrap() { return 1; }
+
+================================================================================
+STEP 6: MAIN ENTRY POINT (main.c)
+================================================================================
+
+MINIMAL main.c for Ruby compiler:
+
+#include "pass1.h"
+#include <stdio.h>
+#include <stdlib.h>
+
+FILE *inf, *outf;
+int lineno;
+int nerrors;
+extern int yyparse(void);
+extern FILE *yyin, *yyout;
+
+int main(int argc, char **argv) {
+    char *infile = NULL, *outfile = NULL;
+    
+    // Parse command-line arguments
+    for (int i = 1; i < argc; i++) {
+        if (argv[i][0] == '-') {
+            // Handle compiler options
+        } else {
+            infile = argv[i];
+        }
+    }
+    
+    // Open input file
+    if (infile == NULL) {
+        inf = stdin;
+    } else {
+        inf = fopen(infile, "r");
+        if (inf == NULL) {
+            perror(infile);
+            exit(1);
+        }
+    }
+    
+    // Set parser input
+    yyin = inf;
+    
+    // Initialize compiler
+    lineno = 1;
+    nerrors = 0;
+    
+    // Parse and compile
+    if (yyparse() != 0 || nerrors > 0) {
+        fprintf(stderr, "%d errors\n", nerrors);
+        exit(1);
+    }
+    
+    // Close files
+    if (infile != NULL) fclose(inf);
+    
+    return 0;
+}
+
+void yyerror(const char *s) {
+    fprintf(stderr, "line %d: %s\n", lineno, s);
+    nerrors++;
+}
+
+================================================================================
+STEP 7: HANDLING RUBY-SPECIFIC CONSTRUCTS
+================================================================================
+
+RUBY BLOCKS → Convert to P1ND IR:
+
+Example: Ruby code:
+  array.each { |x| puts x }
+
+Strategy 1: Convert to function pointer
+  - Create anonymous function
+  - Pass function pointer to method
+  - In P1ND: becomes CALL node with block as argument
+
+Strategy 2: Use special block node
+  - Extend P1ND with BLOCK_NODE operator
+  - Store block parameters and body in node
+  - Lower during myp2tree()
+
+Example semantic action:
+
+block_expression: '{' block_parameters block_statements '}'
+    {
+        // Create block as special node
+        P1ND *block = buildtree(BLOCK_NODE, $3, NULL);
+        block->n_op = BLOCK_NODE; // Special operator
+        // Attach block parameters info
+        $$ = block;
+    }
+    ;
+
+RUBY METHOD DISPATCH → Convert to C function calls:
+
+Example: Ruby code:
+  obj.method(args)
+
+Semantic action:
+method_call: IDENTIFIER '.' IDENTIFIER '(' argument_list ')'
+    {
+        // Build as function call
+        // obj becomes first implicit parameter
+        P1ND *receiver = nametree(lookup($1, 0));
+        P1ND *call = buildtree(CALL, nametree(lookup($3, 0)), $5);
+        // Add receiver to arguments
+        $$ = call;
+    }
+    ;
+
+================================================================================
+STEP 8: TESTING INTEGRATION
+================================================================================
+
+TEST PHASE 1: Parser Only
+  - Compile cgram.y and scan.l with Yacc/Lex
+  - Test parsing simple Ruby code
+  - Verify AST construction
+
+TEST PHASE 2: IR Generation
+  - Verify myp2tree() is called correctly
+  - Check serialized IR is generated
+  - Test with simple programs
+
+TEST PHASE 3: Code Generation
+  - Run through full compiler pipeline
+  - Compile Ruby → Assembly → Object → Executable
+  - Test on different backends (amd64, ARM, WASM)
+
+TEST PHASE 4: Features
+  - Incrementally add Ruby features
+  - Test each feature against backends
+  - Handle edge cases
+
+================================================================================
+STEP 9: EXTENDING SYMBOL TABLE FOR RUBY
+================================================================================
+
+Current struct symtab (from pass1.h):
+struct symtab {
+    struct symtab *snext;
+    int soffset;
+    char sclass;
+    char slevel;
+    short sflags;
+    char *sname;
+    TWORD stype;
+    TWORD squal;
+    union dimfun *sdf;
+    struct attr *sap;
+};
+
+For Ruby, consider adding:
+- Method visibility (public, private, protected)
+- Default parameter values
+- Variable number of arguments
+- Method aliases
+- Metaclass information
+
+Implementation:
+1. Define Ruby-specific attribute flags in pass1.h
+2. Store Ruby metadata in struct attr
+3. Use existing sflags and sap fields if possible
+4. Create ruby_symtab extension if needed
+
+Example:
+#define RUBY_PRIVATE    0x1000
+#define RUBY_PROTECTED  0x2000
+#define RUBY_VARARGS    0x4000
+
+Then in semantic analysis:
+symtab_entry->sflags |= RUBY_PRIVATE;
+
+================================================================================
+STEP 10: BACKEND COMPATIBILITY CHECKLIST
+================================================================================
+
+Your Ruby IR must be compatible with all backends:
+
+Supported Operations:
+  [ ] Arithmetic (PLUS, MINUS, MUL, DIV, MOD)
+  [ ] Logical (AND, OR, NOT, ANDAND, OROR)
+  [ ] Comparison (EQ, NE, LT, LE, GT, GE)
+  [ ] Assignment (ASSIGN, PLUSEQ, etc.)
+  [ ] Memory (DEREF, ADDROF, INDIRECT)
+  [ ] Control (CALL, RETURN, GOTO, LABEL)
+  [ ] Type conversion (CAST)
+
+Type System:
+  [ ] Integer types (CHAR, SHORT, INT, LONG, LONGLONG)
+  [ ] Floating-point (FLOAT, DOUBLE, LDOUBLE)
+  [ ] Pointers (use INCREF on base type)
+  [ ] Arrays (use dimension info)
+  [ ] Structs/unions (use type info)
+  [ ] Functions (use function prototype)
+
+Data Flow:
+  [ ] All P1ND trees must be valid
+  [ ] Symbol table properly populated
+  [ ] Type information complete
+  [ ] No backend-specific assumptions
+  [ ] myp2tree() must handle all operators
+
+Testing:
+  [ ] Compile to amd64 → works
+  [ ] Compile to ARM → works
+  [ ] Compile to WASM → works
+  [ ] All operators map to instructions
+  [ ] No unhandled node types
+
+================================================================================
+STEP 11: BUILD CONFIGURATION TEMPLATE
+================================================================================
+
+Update /home/user/pcc/configure.ac:
+
+Add Ruby support detection:
+  AC_ARG_ENABLE([ruby],
+    [AS_HELP_STRING([--enable-ruby], [Build Ruby compiler])],
+    [enable_ruby=$enableval],
+    [enable_ruby=no])
+
+  AM_CONDITIONAL(BUILD_RUBY, test x$enable_ruby = xyes)
+
+In case statement with other compilers:
+  if test x$enable_ruby = xyes; then
+    CCNAMES="$CCNAMES \$(BINPREFIX)rcom\$(EXEEXT)"
+  fi
+
+Create /home/user/pcc/cc/rcom/Makefile.in:
+
+# Based on cc/ccom/Makefile.in structure
+VPATH=@srcdir@
+srcdir=@srcdir@
+top_srcdir=@top_srcdir@
+
+MDIR=$(top_srcdir)/arch/$(TARGMACH)
+MIPDIR=$(top_srcdir)/mip
+COMMONDIR=$(top_srcdir)/common
+
+RCOM=$(BINPREFIX)rcom$(EXEEXT)
+
+OBJS= main.o cgram.o scan.o trees.o symtabs.o pftn.c init.o \
+      blocks.o methods.o compat.o softfloat.o ...
+
+$(RCOM): $(OBJS)
+    $(CC) $(LDFLAGS) $(OBJS) -o $@ $(LIBS)
+
+[Rest follows ccom pattern...]
+
+================================================================================
+STEP 12: INCREMENTAL DEVELOPMENT ROADMAP
+================================================================================
+
+PHASE 1: Minimal Compiler (1-2 weeks)
+  - Lexer + Parser for basic Ruby
+  - Variable declarations and assignment
+  - Arithmetic expressions
+  - Function definitions (as wrappers around C functions)
+  - Output: Compile simple Ruby to ASM
+
+PHASE 2: Control Flow (1 week)
+  - If/else statements
+  - While loops
+  - For loops (as while wrappers)
+  - Break/next
+  - Return statements
+
+PHASE 3: Functions & Scope (1-2 weeks)
+  - Method definitions with parameters
+  - Local variables
+  - Global variables
+  - Parameter passing
+  - Return values
+
+PHASE 4: Data Structures (2 weeks)
+  - Basic arrays
+  - Basic hashes (as arrays)
+  - String literals
+  - String interpolation (as string concatenation)
+
+PHASE 5: Object-Oriented (2-3 weeks)
+  - Class definitions
+  - Instance variables
+  - Method dispatch
+  - Inheritance (basic)
+  - Constructors (initialize)
+
+PHASE 6: Blocks & Iterators (1-2 weeks)
+  - Block parameters
+  - Block passing
+  - Common iterators (each, map, select)
+  - Yield
+
+PHASE 7: Advanced Features (ongoing)
+  - Modules & mixins
+  - Metaclasses
+  - Singleton methods
+  - Module methods
+  - String operators
+  - Range operators
+
+================================================================================
+STEP 13: DEBUGGING & TESTING INFRASTRUCTURE
+================================================================================
+
+Create test files in cc/rcom/tests/:
+
+test_arithmetic.rb:
+  a = 5
+  b = 3
+  c = a + b
+  puts c
+
+test_functions.rb:
+  def add(x, y)
+    return x + y
+  end
+  result = add(2, 3)
+  puts result
+
+test_loops.rb:
+  i = 0
+  while i < 5 do
+    puts i
+    i = i + 1
+  end
+
+test_methods.rb:
+  class Calculator
+    def add(x, y)
+      return x + y
+    end
+  end
+  
+  calc = Calculator.new
+  puts calc.add(2, 3)
+
+BUILD TEST INFRASTRUCTURE:
+  Create cc/rcom/test.sh script to:
+  1. Compile Ruby → ASM
+  2. Assemble → Object
+  3. Link → Executable
+  4. Run & verify output
+  5. Test on multiple backends
+
+================================================================================
+FINAL NOTES
+================================================================================
+
+1. Start minimal, expand incrementally
+2. Test against existing backends early
+3. Reuse as much C frontend code as possible
+4. IR compatibility is critical
+5. Type system must map to target architectures
+6. Use existing debug symbol infrastructure
+7. Follow PCC coding style and conventions
+8. Reference C/C++ frontends for patterns
+9. Leverage multi-arch testing with WASM
+
+Key Success Criterion:
+  Ruby code → P1ND IR → All backends → Working executables
+
+================================================================================

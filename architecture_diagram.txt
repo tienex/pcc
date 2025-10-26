@@ -1,0 +1,308 @@
+================================================================================
+COMPILER ARCHITECTURE VISUAL DIAGRAM
+================================================================================
+
+                        SOURCE CODE (foo.c, foo.rb)
+                              |
+                              v
+                    +---------+----------+
+                    |  DRIVER (cc)       |
+                    |  driver.c          |
+                    +--------+-----------+
+                             |
+           +-------------------+-------------------+
+           |                   |                   |
+           v                   v                   v
+      [Preprocessor]    [Front-End Compiler]  [Assembler/Linker]
+      (cpp)             (ccom or rcom)
+      
+    .c or .rb            C/Ruby Parser & Semantic Analysis
+    preprocessed         
+         to .i                   |
+                                 v
+                        +-----PASS 1: FRONT-END-------+
+                        |                              |
+                  Lexical Analysis (scan.l)            |
+                        |                              |
+                        v                              |
+                  Token Stream                         |
+                        |                              |
+                        v                              |
+                  Syntax Analysis (cgram.y)            |
+                        |                              |
+                        v                              |
+                  Parse Tree / AST                     |
+                        |                              |
+                        v                              |
+                  Semantic Analysis (trees.c)          |
+                        |                              |
+                        v                              |
+                  Type Checking                        |
+                  Symbol Resolution                    |
+                        |                              |
+                        v                              |
+                  P1ND IR TREE (Pass 1 Node)           |
+                  High-level IR                        |
+                        |                              |
+                        v                              |
+                  Lowering to Pass 2 IR                |
+                  (myp2tree in common.c)               |
+                        |                              |
+                        v                              |
+                  [Serialized IR] (.s or temp file)    |
+                        +-----PASS 1 END--------+
+                               |
+                               v
+                        +-----PASS 2: CODE GENERATION-----+
+                        |                                  |
+                  Read Serialized IR (reader.c)            |
+                        |                                  |
+                        v                                  |
+                  NODE IR (Lower-level)                    |
+                        |                                  |
+                        v                                  |
+                  Register Allocation (regs.c)             |
+                        |                                  |
+                        v                                  |
+                  Instruction Selection                    |
+                  Pattern Matching (match.c)               |
+                  Against Instruction Table (table.c)      |
+                        |                                  |
+                        v                                  |
+                  Code Generation (local2.c)               |
+                        |                                  |
+                        v                                  |
+                  Assembly Output (.s file)                |
+                        +-----PASS 2 END----------+
+                               |
+                               v
+                  System Assembler (as)
+                               |
+                               v
+                  Object File (.o)
+                               |
+                               v
+                  System Linker (ld)
+                               |
+                               v
+                  Executable or Library
+
+
+================================================================================
+BACKEND ARCHITECTURE (arch/* directories)
+================================================================================
+
+Each Backend Implements 6 Files:
+  
+  macdefs.h          +--> Machine-specific sizes and alignments
+                     |     ABI definitions
+                     |     Register definitions
+                     |
+  code.c             +--> High-level code generation
+                     |     Assembly output generation
+                     |     Prologue/epilogue
+                     |
+  local.c            +--> Pass 1 local optimizations
+                     |     Machine-dependent tree xforms
+                     |
+  local2.c           +--> Pass 2 code generation
+                     |     Register allocation details
+                     |     Instruction emission
+                     |
+  order.c            +--> Instruction ordering
+                     |     Dependency handling
+                     |
+  table.c            +--> Instruction selection patterns
+                     |     Cost and rewrite rules
+                     |     (~1000-2000 lines per arch)
+
+Shared Components (all backends use):
+  
+  mip/manifest.h     +--> Operator definitions (~100)
+  mip/pass2.h        |     Code generation framework
+  mip/node.h         |     NODE structure
+  mip/common.c       |     Shared utilities
+  mip/match.c        |     Pattern matching engine
+  mip/optim2.c       |     Pass 2 optimizations
+  mip/regs.c         |     Register allocator
+  mip/reader.c       |     IR reader
+
+
+================================================================================
+DATA FLOW THROUGH IR LAYERS
+================================================================================
+
+                         HIGH-LEVEL SEMANTICS
+                                 |
+                                 v
+                    ┌────────────────────────┐
+                    │      P1ND IR TREE      │
+                    │   (Pass 1 Nodes)       │
+                    │                        │
+                    │  - Type information    │
+                    │  - Symbol references   │
+                    │  - Semantic structure  │
+                    │  - ~80 operators       │
+                    └────────┬───────────────┘
+                             |
+                             | myp2tree()
+                             v
+                    ┌────────────────────────┐
+                    │   SERIALIZED IR        │
+                    │   (Temp file format)   │
+                    │                        │
+                    │  - Lowered IR          │
+                    │  - Flattened structure │
+                    └────────┬───────────────┘
+                             |
+                             | reader.c
+                             v
+                    ┌────────────────────────┐
+                    │      NODE IR TREE      │
+                    │  (Pass 2 Nodes)        │
+                    │                        │
+                    │  - Architecture-dep.   │
+                    │  - Register info       │
+                    │  - Address modes       │
+                    │  - ~30-50 per arch ops │
+                    └────────┬───────────────┘
+                             |
+                             | Pattern Matching
+                             | (match.c)
+                             v
+                    ┌────────────────────────┐
+                    │  INSTRUCTION NODES     │
+                    │                        │
+                    │  - Mapped to target    │
+                    │    ISA instructions    │
+                    │  - Registers assigned  │
+                    │  - Addressing modes    │
+                    │    selected            │
+                    └────────┬───────────────┘
+                             |
+                             | Code gen (local2.c)
+                             v
+                         ASSEMBLY CODE
+                             |
+                             v
+                      System Assembler
+                             |
+                             v
+                       MACHINE CODE
+
+
+================================================================================
+COMPILATION MODES
+================================================================================
+
+UNIFIED COMPILER (One-Pass Model):
+┌─────────────────────────────────────┐
+│  Source Code (.c)                   │
+└──────────┬──────────────────────────┘
+           |
+           v (ccom)
+    ┌─────────────┐
+    │ Pass 1 + 2  │ (Combined)
+    │  (ccom)     │
+    └──────┬──────┘
+           |
+           v
+      Assembly (.s)
+
+
+SPLIT COMPILER (Multi-Pass Model):
+┌─────────────────────────────────────┐
+│  Source Code (.c)                   │
+└──────────┬──────────────────────────┘
+           |
+           v (cc0)
+    ┌─────────────┐
+    │   Pass 1    │
+    │   (cc0)     │
+    └──────┬──────┘
+           |
+           v Intermediate IR
+    ┌─────────────┐
+    │   Pass 2    │
+    │   (cc1)     │
+    └──────┬──────┘
+           |
+           v
+      Assembly (.s)
+
+This split model allows:
+- Separate compilation phases
+- Distributed compilation
+- Parallel processing
+- Better code organization
+
+
+================================================================================
+FILE TYPE FLOW IN BUILD SYSTEM
+================================================================================
+
+Input Files:
+  *.y   →  [YACC]   → *.c (generated parser)
+  *.l   →  [LEX]    → *.c (generated lexer)
+  *.c   →  [CC]     → *.o (object files)
+
+Build Phases:
+  Stage 0: mkext utility generation
+  Stage 1: Parser generation (cgram.c, scan.c)
+  Stage 2: Object file compilation
+  Stage 3: Linking → ccom executable
+
+Output Files:
+  ccom          Final compiler executable
+  cc0, cc1      Split pass compilers
+  *.o           Object files
+  *.s           Assembly files (temp)
+  *.i           Preprocessed C files
+
+
+================================================================================
+ARCHITECTURE-SPECIFIC CUSTOMIZATION POINTS
+================================================================================
+
+For each architecture in arch/<arch>/:
+
+1. Type System (macdefs.h)
+   ├─ Integer sizes: SZCHAR, SZINT, SZLONG, etc.
+   ├─ Float sizes: SZFLOAT, SZDOUBLE, SZLDOUBLE
+   ├─ Pointer sizes: SZPOINT(type)
+   ├─ Alignment: ALCHAR, ALINT, ALLONG, etc.
+   ├─ Endianness: handled in configure.ac
+   └─ Signedness: CHAR_UNSIGNED, etc.
+
+2. Register System (macdefs.h + local2.c)
+   ├─ Register count: MAXREGS
+   ├─ Register names: rnames[] arrays
+   ├─ Register classes: integer, float, special
+   ├─ Caller/callee save conventions
+   ├─ Reserved registers (stack ptr, frame ptr, etc.)
+   └─ Special registers (link register, etc.)
+
+3. ABI (macdefs.h + local2.c + code.c)
+   ├─ Calling conventions
+   ├─ Stack layout (ARGINIT, AUTOINIT)
+   ├─ Return value passing
+   ├─ Argument passing
+   ├─ Function prologue/epilogue
+   └─ Exception handling (SEH support)
+
+4. Instruction Selection (table.c)
+   ├─ Pattern definitions
+   ├─ Instruction costs
+   ├─ Rewrite rules
+   ├─ Register constraints
+   └─ Addressing mode patterns
+
+5. Code Generation (code.c + local2.c)
+   ├─ Assembler format selection
+   ├─ Assembly mnemonic output
+   ├─ Symbol handling
+   ├─ Section directives
+   └─ Debug info emission
+
+
+================================================================================
