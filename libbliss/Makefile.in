@@ -12,7 +12,7 @@ includedir = @includedir@
 
 LIB = libbliss.a
 HEADERS = blissrt.h
-OBJS = io.o string.o memory.o runtime.o
+OBJS = io.o string.o memory.o runtime.o startup.o bliss_io.o
 
 all: $(LIB)
 
@@ -31,6 +31,12 @@ memory.o: memory.c blissrt.h
 
 runtime.o: runtime.c blissrt.h
 	$(CC) $(CFLAGS) -c runtime.c -o runtime.o
+
+startup.o: startup.c blissrt.h
+	$(CC) $(CFLAGS) -c startup.c -o startup.o
+
+bliss_io.o: bliss_io.c blissrt.h
+	$(CC) $(CFLAGS) -c bliss_io.c -o bliss_io.o
 
 install: $(LIB)
 	mkdir -p $(DESTDIR)$(libdir)

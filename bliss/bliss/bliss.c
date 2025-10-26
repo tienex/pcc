@@ -266,6 +266,9 @@ link_files(char **objfiles, int n_objs, const char *outfile)
 		argv[argc++] = libraries[i];
 	}
 
+	/* Add BLISS runtime library (unless explicitly disabled) */
+	argv[argc++] = "-lbliss";
+
 	/* Add standard C library */
 	argv[argc++] = "-lc";
 

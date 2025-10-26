@@ -1,8 +1,72 @@
 # BLISS Example Programs
 
-This directory contains example BLISS programs demonstrating various features of the language.
+This directory contains example BLISS programs demonstrating various features of the language, as well as working examples using the BLISS runtime library.
 
-## Examples
+## Runtime Library Examples (C)
+
+These examples demonstrate using the BLISS runtime library (libbliss) from C programs. They show the actual I/O and utility functions available.
+
+### hello_runtime.c
+Working Hello World using runtime library:
+- Character and string output
+- Numeric output (decimal, hex, octal)
+- Demonstrates bliss_main() entry point
+
+```bash
+cd bliss/examples
+make hello_runtime
+./hello_runtime
+```
+
+### vector_runtime.c
+Vector/array operations with runtime library:
+- Vector allocation (bliss_alloc_vector)
+- Element access and initialization
+- Sum calculation
+- Memory management (bliss_free_vector)
+
+```bash
+make vector_runtime
+./vector_runtime
+```
+
+### string_runtime.c
+String manipulation examples:
+- String creation (bliss_string_from_cstr)
+- String concatenation (bliss_string_concat)
+- String comparison (bliss_string_compare)
+- Substring extraction (bliss_string_substr)
+- String output (bliss_put_string)
+
+```bash
+make string_runtime
+./string_runtime
+```
+
+### bits_runtime.c
+Bit field and bit counting operations:
+- Field extraction (bliss_field_extract)
+- Field insertion (bliss_field_insert)
+- Bit counting (bliss_count_leading_zeros, bliss_count_trailing_zeros, bliss_popcount)
+- Hexadecimal output
+
+```bash
+make bits_runtime
+./bits_runtime
+```
+
+### Building All Runtime Examples
+
+```bash
+cd bliss/examples
+make          # Build all examples
+make run-all  # Build and run all examples
+make clean    # Clean built files
+```
+
+## BLISS Language Examples
+
+These are pure BLISS programs demonstrating language syntax (not yet fully functional as they require complete compiler implementation).
 
 ### hello.bli
 Basic "Hello World" program demonstrating:

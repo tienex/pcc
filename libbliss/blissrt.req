@@ -1,0 +1,47 @@
+!
+! BLISS Runtime Library Declarations
+! Include this file in BLISS programs to use runtime functions
+!
+! REQUIRE 'blissrt.req';
+!
+
+!
+! I/O Functions
+! These are EXTERNAL ROUTINE declarations for BLISS programs
+!
+
+! Character I/O
+EXTERNAL ROUTINE BLISS$PUTCHAR;      ! Output a character
+EXTERNAL ROUTINE BLISS$GETCHAR;      ! Input a character
+EXTERNAL ROUTINE BLISS$PUTCRLF;      ! Output newline
+
+! String output
+EXTERNAL ROUTINE BLISS$PUTS;         ! Output C string
+
+! Numeric output
+EXTERNAL ROUTINE BLISS$PUT_DECIMAL;  ! Output decimal number
+EXTERNAL ROUTINE BLISS$PUT_HEX;      ! Output hexadecimal number
+EXTERNAL ROUTINE BLISS$PUT_OCTAL;    ! Output octal number
+
+!
+! Simplified names (without BLISS$ prefix)
+!
+EXTERNAL ROUTINE putchar_bliss;
+EXTERNAL ROUTINE getchar_bliss;
+EXTERNAL ROUTINE putcrlf_bliss;
+EXTERNAL ROUTINE puts_bliss;
+EXTERNAL ROUTINE put_decimal_bliss;
+EXTERNAL ROUTINE put_hex_bliss;
+EXTERNAL ROUTINE put_octal_bliss;
+
+!
+! Common BLISS constants
+!
+LITERAL
+    TRUE = 1,
+    FALSE = 0,
+    NULL = 0;
+
+!
+! End of blissrt.req
+!

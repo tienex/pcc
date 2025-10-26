@@ -1,25 +1,45 @@
 # BLISS Compiler Tests
 
-This directory contains test files for the BLISS compiler.
+This directory contains test files for the BLISS compiler and runtime library.
 
-## Test Organization
+## Integration Tests
 
-Tests are organized by feature:
+Working integration tests for the runtime library:
+
+### test_runtime_io.c
+Tests I/O functions:
+- putchar, puts, putcrlf
+- put_decimal, put_hex, put_octal
+- Basic output functionality
+
+### test_runtime_memory.c
+Tests memory management:
+- malloc/free
+- Vector allocation and initialization
+- Vector freeing
+- Memory operations
+
+### Running Integration Tests
+
+```bash
+cd bliss/tests
+make          # Build all tests
+make run      # Build and run all tests
+make clean    # Clean test binaries
+```
+
+## Future Test Organization
+
+Tests will be organized by feature:
 - `lexer/` - Lexical analysis tests
 - `parser/` - Parser tests
 - `semantic/` - Semantic analysis tests
 - `codegen/` - Code generation tests
+- `runtime/` - Runtime library tests
 
-## Running Tests
+## Running Compiler Tests
 
-To run all tests:
-
-```bash
-cd bliss/tests
-./run_tests.sh
-```
-
-To run a specific test:
+To run a specific BLISS test:
 
 ```bash
 bliss test_file.bli
