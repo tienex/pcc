@@ -12,6 +12,9 @@
 /* Define path to alternate assembler */
 #undef ASSEMBLER
 
+/* Bootstrap stage number */
+#undef BOOTSTRAP_STAGE
+
 /* Using Classic 68k ABI */
 #undef CLASSIC68K
 
@@ -140,6 +143,9 @@
 
 /* Define if portable libckdint should be linked */
 #undef NEED_LIBCKDINT
+
+/* Define if portable libdecimal should be linked */
+#undef NEED_LIBDECIMAL
 
 /* Define if portable libstdbit should be linked */
 #undef NEED_LIBSTDBIT
