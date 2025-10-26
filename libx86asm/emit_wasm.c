@@ -206,30 +206,134 @@ wasm_emit_label(x86asm_ctx_t *ctx, const char *name, int global)
 static void
 wasm_emit_segment(x86asm_ctx_t *ctx, x86asm_segment_t seg, const char *name)
 {
+    const char *seg_name;
+
     if (name) {
         fprintf(ctx->output, "\t.%s\n", name);
         return;
     }
 
-    /* WASM uses dot-style segment directives similar to gas */
+    /* WASM uses dot-style segment directives
+     * Watcom primarily targets PE/COFF format (Windows/DOS)
+     */
     switch (seg) {
-    case SEG_TEXT:
-        fprintf(ctx->output, "\t.code\n");
-        break;
-    case SEG_DATA:
-        fprintf(ctx->output, "\t.data\n");
-        break;
-    case SEG_BSS:
-        fprintf(ctx->output, "\t.data?\n");  /* Watcom uses .data? for BSS */
-        break;
-    case SEG_RODATA:
-    case SEG_CONST:
-        fprintf(ctx->output, "\t.const\n");
-        break;
+    /* Common sections */
+    case SEG_TEXT:        seg_name = ".code"; break;
+    case SEG_DATA:        seg_name = ".data"; break;
+    case SEG_BSS:         seg_name = ".data?"; break;  /* Watcom uses .data? for BSS */
+    case SEG_RODATA:      seg_name = ".const"; break;
+    case SEG_CONST:       seg_name = ".const"; break;
+
+    /* PE/COFF sections */
+    case SEG_RDATA:       seg_name = ".data"; break;  /* Read-only data */
+    case SEG_IDATA:       seg_name = ".data"; break;  /* Import data */
+    case SEG_EDATA:       seg_name = ".data"; break;  /* Export data */
+    case SEG_PDATA:       seg_name = ".pdata"; break;
+    case SEG_XDATA:       seg_name = ".xdata"; break;
+    case SEG_RELOC:       seg_name = ".reloc"; break;
+    case SEG_RSRC:        seg_name = ".rsrc"; break;
+    case SEG_TLS:         seg_name = ".tls"; break;
+    case SEG_DRECTVE:     seg_name = ".drectve"; break;
+    case SEG_DEBUG:       seg_name = ".debug"; break;
+
+    /* Thread-Local Storage */
+    case SEG_TDATA:       seg_name = ".tls"; break;
+    case SEG_TBSS:        seg_name = ".tls"; break;
+
+    /* Constructors/Destructors (CRT init for PE/COFF) */
+    case SEG_INIT:
+    case SEG_CTORS:       seg_name = ".data"; break;  /* .CRT$XCU in PE */
+    case SEG_FINI:
+    case SEG_DTORS:       seg_name = ".data"; break;  /* .CRT$XTU in PE */
+
+    /* ELF-style sections (for Open Watcom ELF support) */
+    case SEG_INIT_ARRAY:
+    case SEG_FINI_ARRAY:
+    case SEG_PREINIT_ARRAY:
+        seg_name = ".data"; break;
+
+    /* Dynamic linking (ELF) */
+    case SEG_PLT:
+    case SEG_GOT:
+    case SEG_GOT_PLT:
+    case SEG_DYNAMIC:
+    case SEG_DYNSYM:
+    case SEG_DYNSTR:
+    case SEG_HASH:
+    case SEG_GNU_HASH:
+    case SEG_INTERP:
+    case SEG_NOTE:
+        seg_name = ".data"; break;
+
+    /* Exception handling */
+    case SEG_EH_FRAME:
+    case SEG_EH_FRAME_HDR:
+    case SEG_GCC_EXCEPT_TABLE:
+        seg_name = ".data"; break;
+
+    /* PIC sections */
+    case SEG_PIC_DATA:
+    case SEG_PIC_RODATA:
+    case SEG_PIC_LOCAL:
+        seg_name = ".data"; break;
+
+    /* Debug sections (DWARF) */
+    case SEG_DEBUG_INFO:
+    case SEG_DEBUG_ABBREV:
+    case SEG_DEBUG_LINE:
+    case SEG_DEBUG_STR:
+    case SEG_DEBUG_LOC:
+    case SEG_DEBUG_RANGES:
+    case SEG_DEBUG_FRAME:
+    case SEG_DEBUG_MACINFO:
+    case SEG_DEBUG_PUBNAMES:
+    case SEG_DEBUG_PUBTYPES:
+    case SEG_DEBUG_ARANGES:
+        seg_name = ".debug"; break;
+
+    /* Mach-O sections (not typically used in Watcom, but included for completeness) */
+    case SEG_CSTRING:
+    case SEG_LITERAL4:
+    case SEG_LITERAL8:
+    case SEG_LITERAL16:
+    case SEG_MOD_INIT_FUNC:
+    case SEG_MOD_TERM_FUNC:
+    case SEG_OBJC_CLASSLIST:
+    case SEG_OBJC_CATLIST:
+    case SEG_OBJC_PROTOLIST:
+    case SEG_OBJC_IMAGEINFO:
+    case SEG_OBJC_CONST:
+    case SEG_OBJC_DATA:
+        seg_name = ".data"; break;
+
+    /* Symbol and string tables */
+    case SEG_SYMTAB:
+    case SEG_STRTAB:
+    case SEG_SHSTRTAB:
+        seg_name = ".data"; break;
+
+    /* Relocation sections */
+    case SEG_REL:
+    case SEG_RELA:
+        seg_name = ".data"; break;
+
+    /* Other sections */
+    case SEG_STACK:
+    case SEG_HEAP:
+        seg_name = ".data"; break;
+
+    /* Other */
+    case SEG_COMMENT:
+        seg_name = ".comment"; break;
+
+    /* Default */
+    case SEG_CUSTOM:
     default:
-        fprintf(ctx->output, "\t.code\n");
+        seg_name = ".code";
         break;
     }
+
+    fprintf(ctx->output, "\t%s\n", seg_name);
 }
 
 /*

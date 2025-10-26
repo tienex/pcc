@@ -205,19 +205,76 @@ nasm_emit_segment(x86asm_ctx_t *ctx, x86asm_segment_t seg, const char *name)
     }
 
     switch (seg) {
-    case SEG_TEXT:
-        seg_name = ".text";
-        break;
-    case SEG_DATA:
-        seg_name = ".data";
-        break;
-    case SEG_BSS:
-        seg_name = ".bss";
-        break;
-    case SEG_RODATA:
-    case SEG_CONST:
-        seg_name = ".rodata";
-        break;
+    /* Common sections */
+    case SEG_TEXT:        seg_name = ".text"; break;
+    case SEG_DATA:        seg_name = ".data"; break;
+    case SEG_BSS:         seg_name = ".bss"; break;
+    case SEG_RODATA:      seg_name = ".rodata"; break;
+    case SEG_CONST:       seg_name = ".rodata"; break;
+
+    /* ELF sections */
+    case SEG_INIT:        seg_name = ".init"; break;
+    case SEG_FINI:        seg_name = ".fini"; break;
+    case SEG_INIT_ARRAY:  seg_name = ".init_array"; break;
+    case SEG_FINI_ARRAY:  seg_name = ".fini_array"; break;
+    case SEG_PREINIT_ARRAY: seg_name = ".preinit_array"; break;
+    case SEG_CTORS:       seg_name = ".ctors"; break;
+    case SEG_DTORS:       seg_name = ".dtors"; break;
+    case SEG_PLT:         seg_name = ".plt"; break;
+    case SEG_GOT:         seg_name = ".got"; break;
+    case SEG_GOT_PLT:     seg_name = ".got.plt"; break;
+    case SEG_DYNAMIC:     seg_name = ".dynamic"; break;
+    case SEG_DYNSYM:      seg_name = ".dynsym"; break;
+    case SEG_DYNSTR:      seg_name = ".dynstr"; break;
+    case SEG_HASH:        seg_name = ".hash"; break;
+    case SEG_GNU_HASH:    seg_name = ".gnu.hash"; break;
+    case SEG_INTERP:      seg_name = ".interp"; break;
+    case SEG_NOTE:        seg_name = ".note"; break;
+    case SEG_EH_FRAME:    seg_name = ".eh_frame"; break;
+    case SEG_EH_FRAME_HDR: seg_name = ".eh_frame_hdr"; break;
+    case SEG_GCC_EXCEPT_TABLE: seg_name = ".gcc_except_table"; break;
+    case SEG_SYMTAB:      seg_name = ".symtab"; break;
+    case SEG_STRTAB:      seg_name = ".strtab"; break;
+    case SEG_SHSTRTAB:    seg_name = ".shstrtab"; break;
+    case SEG_REL:         seg_name = ".rel"; break;
+    case SEG_RELA:        seg_name = ".rela"; break;
+    case SEG_COMMENT:     seg_name = ".comment"; break;
+
+    /* Thread-Local Storage */
+    case SEG_TDATA:       seg_name = ".tdata"; break;
+    case SEG_TBSS:        seg_name = ".tbss"; break;
+    case SEG_TLS:         seg_name = ".tls"; break;
+
+    /* Position Independent Code */
+    case SEG_PIC_DATA:    seg_name = ".data.rel.rw"; break;
+    case SEG_PIC_RODATA:  seg_name = ".data.rel.ro"; break;
+    case SEG_PIC_LOCAL:   seg_name = ".data.rel.local"; break;
+
+    /* DWARF debug sections */
+    case SEG_DEBUG_INFO:     seg_name = ".debug_info"; break;
+    case SEG_DEBUG_ABBREV:   seg_name = ".debug_abbrev"; break;
+    case SEG_DEBUG_LINE:     seg_name = ".debug_line"; break;
+    case SEG_DEBUG_STR:      seg_name = ".debug_str"; break;
+    case SEG_DEBUG_LOC:      seg_name = ".debug_loc"; break;
+    case SEG_DEBUG_RANGES:   seg_name = ".debug_ranges"; break;
+    case SEG_DEBUG_FRAME:    seg_name = ".debug_frame"; break;
+    case SEG_DEBUG_MACINFO:  seg_name = ".debug_macinfo"; break;
+    case SEG_DEBUG_PUBNAMES: seg_name = ".debug_pubnames"; break;
+    case SEG_DEBUG_PUBTYPES: seg_name = ".debug_pubtypes"; break;
+    case SEG_DEBUG_ARANGES:  seg_name = ".debug_aranges"; break;
+
+    /* PE/COFF sections */
+    case SEG_IDATA:       seg_name = ".idata"; break;
+    case SEG_EDATA:       seg_name = ".edata"; break;
+    case SEG_PDATA:       seg_name = ".pdata"; break;
+    case SEG_XDATA:       seg_name = ".xdata"; break;
+    case SEG_RELOC:       seg_name = ".reloc"; break;
+    case SEG_RSRC:        seg_name = ".rsrc"; break;
+    case SEG_RDATA:       seg_name = ".rdata"; break;
+    case SEG_DRECTVE:     seg_name = ".drectve"; break;
+    case SEG_DEBUG:       seg_name = ".debug"; break;
+
+    /* Default */
     default:
         seg_name = ".text";
         break;

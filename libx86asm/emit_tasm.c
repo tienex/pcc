@@ -195,6 +195,8 @@ tasm_emit_label(x86asm_ctx_t *ctx, const char *name, int global)
 static void
 tasm_emit_segment(x86asm_ctx_t *ctx, x86asm_segment_t seg, const char *name)
 {
+    const char *seg_name;
+
     if (name) {
         fprintf(ctx->output, "%s SEGMENT\n", name);
         return;
@@ -202,23 +204,56 @@ tasm_emit_segment(x86asm_ctx_t *ctx, x86asm_segment_t seg, const char *name)
 
     /* TASM uses MASM-compatible segment definitions */
     switch (seg) {
-    case SEG_TEXT:
-        fprintf(ctx->output, "_TEXT SEGMENT\n");
-        break;
-    case SEG_DATA:
-        fprintf(ctx->output, "_DATA SEGMENT\n");
-        break;
-    case SEG_BSS:
-        fprintf(ctx->output, "_BSS SEGMENT\n");
-        break;
-    case SEG_RODATA:
-    case SEG_CONST:
-        fprintf(ctx->output, "CONST SEGMENT\n");
-        break;
+    /* Common sections */
+    case SEG_TEXT:        seg_name = "_TEXT"; break;
+    case SEG_DATA:        seg_name = "_DATA"; break;
+    case SEG_BSS:         seg_name = "_BSS"; break;
+    case SEG_RODATA:      seg_name = "CONST"; break;
+    case SEG_CONST:       seg_name = "CONST"; break;
+
+    /* PE/COFF sections */
+    case SEG_RDATA:       seg_name = ".rdata"; break;
+    case SEG_IDATA:       seg_name = ".idata"; break;
+    case SEG_EDATA:       seg_name = ".edata"; break;
+    case SEG_PDATA:       seg_name = ".pdata"; break;
+    case SEG_XDATA:       seg_name = ".xdata"; break;
+    case SEG_RELOC:       seg_name = ".reloc"; break;
+    case SEG_RSRC:        seg_name = ".rsrc"; break;
+    case SEG_TLS:         seg_name = ".tls$"; break;
+    case SEG_DRECTVE:     seg_name = ".drectve"; break;
+    case SEG_DEBUG:       seg_name = ".debug"; break;
+
+    /* Thread-Local Storage */
+    case SEG_TDATA:       seg_name = ".tls$"; break;
+    case SEG_TBSS:        seg_name = ".tls$"; break;
+
+    /* Constructors/Destructors */
+    case SEG_INIT:
+    case SEG_CTORS:       seg_name = ".CRT$XCU"; break;
+    case SEG_FINI:
+    case SEG_DTORS:       seg_name = ".CRT$XTU"; break;
+
+    /* Debug sections */
+    case SEG_DEBUG_INFO:
+    case SEG_DEBUG_ABBREV:
+    case SEG_DEBUG_LINE:
+    case SEG_DEBUG_STR:
+    case SEG_DEBUG_LOC:
+    case SEG_DEBUG_RANGES:
+    case SEG_DEBUG_FRAME:
+    case SEG_DEBUG_MACINFO:
+    case SEG_DEBUG_PUBNAMES:
+    case SEG_DEBUG_PUBTYPES:
+    case SEG_DEBUG_ARANGES:
+        seg_name = ".debug"; break;
+
+    /* Default */
     default:
-        fprintf(ctx->output, "_TEXT SEGMENT\n");
+        seg_name = "_TEXT";
         break;
     }
+
+    fprintf(ctx->output, "%s SEGMENT\n", seg_name);
 }
 
 /*

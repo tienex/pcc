@@ -196,21 +196,75 @@ gnu_as_emit_segment(x86asm_ctx_t *ctx, x86asm_segment_t seg, const char *name)
     }
 
     switch (seg) {
-    case SEG_TEXT:
-        seg_name = ".text";
-        break;
-    case SEG_DATA:
-        seg_name = ".data";
-        break;
-    case SEG_BSS:
-        seg_name = ".bss";
-        break;
-    case SEG_RODATA:
-        seg_name = ".section .rodata";
-        break;
-    case SEG_CONST:
-        seg_name = ".section .rodata";
-        break;
+    /* Common sections */
+    case SEG_TEXT:        seg_name = ".text"; break;
+    case SEG_DATA:        seg_name = ".data"; break;
+    case SEG_BSS:         seg_name = ".bss"; break;
+    case SEG_RODATA:      seg_name = ".section .rodata"; break;
+    case SEG_CONST:       seg_name = ".section .rodata"; break;
+
+    /* ELF initialization/finalization */
+    case SEG_INIT:        seg_name = ".section .init"; break;
+    case SEG_FINI:        seg_name = ".section .fini"; break;
+    case SEG_INIT_ARRAY:  seg_name = ".section .init_array,\"aw\""; break;
+    case SEG_FINI_ARRAY:  seg_name = ".section .fini_array,\"aw\""; break;
+    case SEG_PREINIT_ARRAY: seg_name = ".section .preinit_array,\"aw\""; break;
+    case SEG_CTORS:       seg_name = ".section .ctors,\"aw\",@progbits"; break;
+    case SEG_DTORS:       seg_name = ".section .dtors,\"aw\",@progbits"; break;
+
+    /* Dynamic linking sections */
+    case SEG_PLT:         seg_name = ".section .plt,\"ax\",@progbits"; break;
+    case SEG_GOT:         seg_name = ".section .got,\"aw\",@progbits"; break;
+    case SEG_GOT_PLT:     seg_name = ".section .got.plt,\"aw\",@progbits"; break;
+    case SEG_DYNAMIC:     seg_name = ".section .dynamic,\"aw\",@progbits"; break;
+    case SEG_DYNSYM:      seg_name = ".section .dynsym,\"a\",@progbits"; break;
+    case SEG_DYNSTR:      seg_name = ".section .dynstr,\"aMS\",@progbits,1"; break;
+    case SEG_HASH:        seg_name = ".section .hash,\"a\",@hash"; break;
+    case SEG_GNU_HASH:    seg_name = ".section .gnu.hash,\"a\",@gnu.hash"; break;
+    case SEG_INTERP:      seg_name = ".section .interp,\"a\",@progbits"; break;
+
+    /* Exception handling and debugging */
+    case SEG_EH_FRAME:    seg_name = ".section .eh_frame,\"a\",@progbits"; break;
+    case SEG_EH_FRAME_HDR: seg_name = ".section .eh_frame_hdr,\"a\",@progbits"; break;
+    case SEG_GCC_EXCEPT_TABLE: seg_name = ".section .gcc_except_table,\"a\",@progbits"; break;
+
+    /* Symbol and relocation tables */
+    case SEG_SYMTAB:      seg_name = ".section .symtab,\"a\",@progbits"; break;
+    case SEG_STRTAB:      seg_name = ".section .strtab,\"aMS\",@progbits,1"; break;
+    case SEG_SHSTRTAB:    seg_name = ".section .shstrtab,\"aMS\",@progbits,1"; break;
+    case SEG_REL:         seg_name = ".section .rel,\"a\",@progbits"; break;
+    case SEG_RELA:        seg_name = ".section .rela,\"a\",@progbits"; break;
+
+    /* Miscellaneous */
+    case SEG_NOTE:        seg_name = ".section .note,\"a\",@note"; break;
+    case SEG_COMMENT:     seg_name = ".section .comment,\"MS\",@progbits,1"; break;
+
+    /* Thread-Local Storage */
+    case SEG_TDATA:       seg_name = ".section .tdata,\"awT\",@progbits"; break;
+    case SEG_TBSS:        seg_name = ".section .tbss,\"awT\",@nobits"; break;
+
+    /* Position Independent Code */
+    case SEG_PIC_DATA:    seg_name = ".section .data.rel.rw,\"aw\",@progbits"; break;
+    case SEG_PIC_RODATA:  seg_name = ".section .data.rel.ro,\"aw\",@progbits"; break;
+    case SEG_PIC_LOCAL:   seg_name = ".section .data.rel.local,\"aw\",@progbits"; break;
+
+    /* DWARF debug sections */
+    case SEG_DEBUG_INFO:     seg_name = ".section .debug_info,\"\",@progbits"; break;
+    case SEG_DEBUG_ABBREV:   seg_name = ".section .debug_abbrev,\"\",@progbits"; break;
+    case SEG_DEBUG_LINE:     seg_name = ".section .debug_line,\"\",@progbits"; break;
+    case SEG_DEBUG_STR:      seg_name = ".section .debug_str,\"MS\",@progbits,1"; break;
+    case SEG_DEBUG_LOC:      seg_name = ".section .debug_loc,\"\",@progbits"; break;
+    case SEG_DEBUG_RANGES:   seg_name = ".section .debug_ranges,\"\",@progbits"; break;
+    case SEG_DEBUG_FRAME:    seg_name = ".section .debug_frame,\"\",@progbits"; break;
+    case SEG_DEBUG_MACINFO:  seg_name = ".section .debug_macinfo,\"\",@progbits"; break;
+    case SEG_DEBUG_PUBNAMES: seg_name = ".section .debug_pubnames,\"\",@progbits"; break;
+    case SEG_DEBUG_PUBTYPES: seg_name = ".section .debug_pubtypes,\"\",@progbits"; break;
+    case SEG_DEBUG_ARANGES:  seg_name = ".section .debug_aranges,\"\",@progbits"; break;
+
+    /* PE/COFF sections (limited support in ELF tools) */
+    case SEG_RDATA:       seg_name = ".section .rdata,\"a\",@progbits"; break;
+
+    /* Default */
     default:
         seg_name = ".text";
         break;

@@ -193,20 +193,54 @@ apple_as_emit_segment(x86asm_ctx_t *ctx, x86asm_segment_t seg, const char *name)
     }
 
     switch (seg) {
-    case SEG_TEXT:
-        seg_name = ".text";
-        break;
-    case SEG_DATA:
-        seg_name = ".data";
-        break;
-    case SEG_BSS:
-        /* Mach-O uses zerofill instead of bss */
-        seg_name = ".section __DATA,__bss";
-        break;
-    case SEG_RODATA:
-    case SEG_CONST:
-        seg_name = ".const";
-        break;
+    /* Common sections */
+    case SEG_TEXT:        seg_name = ".text"; break;
+    case SEG_DATA:        seg_name = ".data"; break;
+    case SEG_BSS:         seg_name = ".section __DATA,__bss"; break;
+    case SEG_RODATA:      seg_name = ".const"; break;
+    case SEG_CONST:       seg_name = ".const"; break;
+
+    /* Mach-O specific sections */
+    case SEG_CSTRING:     seg_name = ".cstring"; break;
+    case SEG_LITERAL4:    seg_name = ".literal4"; break;
+    case SEG_LITERAL8:    seg_name = ".literal8"; break;
+    case SEG_LITERAL16:   seg_name = ".literal16"; break;
+    case SEG_MOD_INIT_FUNC: seg_name = ".mod_init_func"; break;
+    case SEG_MOD_TERM_FUNC: seg_name = ".mod_term_func"; break;
+
+    /* Objective-C sections */
+    case SEG_OBJC_CLASSLIST: seg_name = ".section __DATA,__objc_classlist,regular,no_dead_strip"; break;
+    case SEG_OBJC_CATLIST:   seg_name = ".section __DATA,__objc_catlist,regular,no_dead_strip"; break;
+    case SEG_OBJC_PROTOLIST: seg_name = ".section __DATA,__objc_protolist,coalesced,no_dead_strip"; break;
+    case SEG_OBJC_IMAGEINFO: seg_name = ".section __DATA,__objc_imageinfo,regular,no_dead_strip"; break;
+    case SEG_OBJC_CONST:     seg_name = ".section __DATA,__objc_const"; break;
+    case SEG_OBJC_DATA:      seg_name = ".section __DATA,__objc_data"; break;
+
+    /* Constructor/Destructor (Mach-O style) */
+    case SEG_CTORS:       seg_name = ".mod_init_func"; break;
+    case SEG_DTORS:       seg_name = ".mod_term_func"; break;
+
+    /* Thread-Local Storage */
+    case SEG_TDATA:       seg_name = ".section __DATA,__thread_data,thread_local_regular"; break;
+    case SEG_TBSS:        seg_name = ".section __DATA,__thread_bss,thread_local_zerofill"; break;
+
+    /* Exception handling */
+    case SEG_EH_FRAME:    seg_name = ".section __TEXT,__eh_frame,coalesced,no_toc+strip_static_syms+live_support"; break;
+
+    /* Debug sections (DWARF for Mach-O) */
+    case SEG_DEBUG_INFO:     seg_name = ".section __DWARF,__debug_info,regular,debug"; break;
+    case SEG_DEBUG_ABBREV:   seg_name = ".section __DWARF,__debug_abbrev,regular,debug"; break;
+    case SEG_DEBUG_LINE:     seg_name = ".section __DWARF,__debug_line,regular,debug"; break;
+    case SEG_DEBUG_STR:      seg_name = ".section __DWARF,__debug_str,regular,debug"; break;
+    case SEG_DEBUG_LOC:      seg_name = ".section __DWARF,__debug_loc,regular,debug"; break;
+    case SEG_DEBUG_RANGES:   seg_name = ".section __DWARF,__debug_ranges,regular,debug"; break;
+    case SEG_DEBUG_FRAME:    seg_name = ".section __DWARF,__debug_frame,regular,debug"; break;
+    case SEG_DEBUG_MACINFO:  seg_name = ".section __DWARF,__debug_macinfo,regular,debug"; break;
+    case SEG_DEBUG_PUBNAMES: seg_name = ".section __DWARF,__debug_pubnames,regular,debug"; break;
+    case SEG_DEBUG_PUBTYPES: seg_name = ".section __DWARF,__debug_pubtypes,regular,debug"; break;
+    case SEG_DEBUG_ARANGES:  seg_name = ".section __DWARF,__debug_aranges,regular,debug"; break;
+
+    /* Default */
     default:
         seg_name = ".text";
         break;

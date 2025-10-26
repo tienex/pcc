@@ -151,14 +151,95 @@ typedef enum {
     PREFIX_REPNZ  = (1 << 5)
 } x86asm_prefix_t;
 
-/* Segment types */
+/* Segment/Section types */
 typedef enum {
-    SEG_TEXT,        /* Code section */
-    SEG_DATA,        /* Initialized data */
-    SEG_BSS,         /* Uninitialized data */
-    SEG_RODATA,      /* Read-only data */
-    SEG_CONST,       /* Constants */
-    SEG_CUSTOM       /* Custom section */
+    /* Common sections (all formats) */
+    SEG_TEXT,        /* Code section (.text) */
+    SEG_DATA,        /* Initialized data (.data) */
+    SEG_BSS,         /* Uninitialized data (.bss) */
+    SEG_RODATA,      /* Read-only data (.rodata) */
+    SEG_CONST,       /* Constants (.const) */
+
+    /* ELF-specific sections */
+    SEG_INIT,        /* Initialization code (.init) */
+    SEG_FINI,        /* Finalization code (.fini) */
+    SEG_INIT_ARRAY,  /* Array of init function pointers (.init_array) */
+    SEG_FINI_ARRAY,  /* Array of fini function pointers (.fini_array) */
+    SEG_PREINIT_ARRAY, /* Array of preinit function pointers (.preinit_array) */
+    SEG_CTORS,       /* Global constructors (.ctors) */
+    SEG_DTORS,       /* Global destructors (.dtors) */
+    SEG_PLT,         /* Procedure linkage table (.plt) */
+    SEG_GOT,         /* Global offset table (.got) */
+    SEG_GOT_PLT,     /* GOT for PLT (.got.plt) */
+    SEG_DYNAMIC,     /* Dynamic linking info (.dynamic) */
+    SEG_DYNSYM,      /* Dynamic symbol table (.dynsym) */
+    SEG_DYNSTR,      /* Dynamic string table (.dynstr) */
+    SEG_HASH,        /* Symbol hash table (.hash) */
+    SEG_GNU_HASH,    /* GNU-style hash table (.gnu.hash) */
+    SEG_INTERP,      /* Program interpreter (.interp) */
+    SEG_NOTE,        /* Note section (.note) */
+    SEG_EH_FRAME,    /* Exception handling frames (.eh_frame) */
+    SEG_EH_FRAME_HDR,/* Exception handling header (.eh_frame_hdr) */
+    SEG_GCC_EXCEPT_TABLE, /* GCC exception table (.gcc_except_table) */
+    SEG_STRTAB,      /* String table (.strtab) */
+    SEG_SYMTAB,      /* Symbol table (.symtab) */
+    SEG_SHSTRTAB,    /* Section header string table (.shstrtab) */
+    SEG_REL,         /* Relocations without addends (.rel.*) */
+    SEG_RELA,        /* Relocations with addends (.rela.*) */
+    SEG_COMMENT,     /* Comments (.comment) */
+
+    /* Thread-Local Storage (TLS) */
+    SEG_TDATA,       /* TLS initialized data (.tdata) */
+    SEG_TBSS,        /* TLS uninitialized data (.tbss) */
+
+    /* Position Independent Code (PIC) */
+    SEG_PIC_DATA,    /* PIC data (.data.rel.rw) */
+    SEG_PIC_RODATA,  /* PIC read-only data (.data.rel.ro) */
+    SEG_PIC_LOCAL,   /* PIC local data (.data.rel.local) */
+
+    /* Debug sections (DWARF) */
+    SEG_DEBUG_INFO,      /* Debug information (.debug_info) */
+    SEG_DEBUG_ABBREV,    /* Debug abbreviations (.debug_abbrev) */
+    SEG_DEBUG_LINE,      /* Line number info (.debug_line) */
+    SEG_DEBUG_STR,       /* Debug strings (.debug_str) */
+    SEG_DEBUG_LOC,       /* Location lists (.debug_loc) */
+    SEG_DEBUG_RANGES,    /* Address ranges (.debug_ranges) */
+    SEG_DEBUG_FRAME,     /* Call frame info (.debug_frame) */
+    SEG_DEBUG_MACINFO,   /* Macro info (.debug_macinfo) */
+    SEG_DEBUG_PUBNAMES,  /* Public names (.debug_pubnames) */
+    SEG_DEBUG_PUBTYPES,  /* Public types (.debug_pubtypes) */
+    SEG_DEBUG_ARANGES,   /* Address ranges (.debug_aranges) */
+
+    /* PE/COFF-specific sections */
+    SEG_IDATA,       /* Import data (.idata) */
+    SEG_EDATA,       /* Export data (.edata) */
+    SEG_PDATA,       /* Exception handler data (.pdata) */
+    SEG_XDATA,       /* Exception handler data (.xdata) */
+    SEG_RELOC,       /* Base relocations (.reloc) */
+    SEG_RSRC,        /* Resources (.rsrc) */
+    SEG_TLS,         /* Thread-local storage (.tls) */
+    SEG_RDATA,       /* Read-only data (.rdata) */
+    SEG_DRECTVE,     /* Linker directives (.drectve) */
+    SEG_DEBUG,       /* Debug data (.debug) */
+
+    /* Mach-O sections */
+    SEG_CSTRING,     /* C string literals (__cstring) */
+    SEG_LITERAL4,    /* 4-byte literals (__literal4) */
+    SEG_LITERAL8,    /* 8-byte literals (__literal8) */
+    SEG_LITERAL16,   /* 16-byte literals (__literal16) */
+    SEG_MOD_INIT_FUNC, /* Module init functions (__mod_init_func) */
+    SEG_MOD_TERM_FUNC, /* Module term functions (__mod_term_func) */
+    SEG_OBJC_CLASSLIST,  /* Objective-C class list */
+    SEG_OBJC_CATLIST,    /* Objective-C category list */
+    SEG_OBJC_PROTOLIST,  /* Objective-C protocol list */
+    SEG_OBJC_IMAGEINFO,  /* Objective-C image info */
+    SEG_OBJC_CONST,      /* Objective-C constants */
+    SEG_OBJC_DATA,       /* Objective-C data */
+
+    /* Special sections */
+    SEG_STACK,       /* Stack section */
+    SEG_HEAP,        /* Heap section */
+    SEG_CUSTOM       /* Custom section (use string name) */
 } x86asm_segment_t;
 
 /* Data size types */
