@@ -45,12 +45,82 @@ deflab(int label)
 }
 
 /*
- * Generate function prologue
+ * Helper: print C type for a TWORD
+ */
+static void
+print_c_type(TWORD t)
+{
+	int ptr_count = 0;
+	TWORD base = t;
+
+	/* Count pointer levels */
+	while (ISPTR(base)) {
+		ptr_count++;
+		base = DECREF(base);
+	}
+
+	/* Print base type */
+	switch (BTYPE(base)) {
+	case CHAR:
+		printf("char");
+		break;
+	case UCHAR:
+		printf("unsigned char");
+		break;
+	case SHORT:
+		printf("short");
+		break;
+	case USHORT:
+		printf("unsigned short");
+		break;
+	case INT:
+		printf("int");
+		break;
+	case UNSIGNED:
+		printf("unsigned int");
+		break;
+	case LONG:
+		printf("long");
+		break;
+	case ULONG:
+		printf("unsigned long");
+		break;
+	case LONGLONG:
+		printf("long long");
+		break;
+	case ULONGLONG:
+		printf("unsigned long long");
+		break;
+	case FLOAT:
+		printf("float");
+		break;
+	case DOUBLE:
+		printf("double");
+		break;
+	case LDOUBLE:
+		printf("long double");
+		break;
+	case VOID:
+		printf("void");
+		break;
+	default:
+		printf("int");
+		break;
+	}
+
+	/* Print pointer stars */
+	while (ptr_count-- > 0)
+		printf(" *");
+}
+
+/*
+ * Generate function prologue with proper signature
  */
 void
 prologue(struct interpass_prolog *ipp)
 {
 	char *name = ipp->ipp_name;
+	TWORD rtype;
 	int i;
 
 	/* Emit function signature */
@@ -58,23 +128,39 @@ prologue(struct interpass_prolog *ipp)
 	if (ipp->ipp_vis)
 		printf("/* extern */ ");
 
-	printf("void %s(", name);
+	/* Return type */
+	rtype = DECREF(ipp->ipp_type);
+	if (rtype == VOID || !ISFTN(ipp->ipp_type)) {
+		printf("void");
+	} else {
+		print_c_type(rtype);
+	}
 
-	/* For simplicity, use void args - full implementation would
-	 * need to track actual parameter types */
-	printf("void)\n");
-	printf("{\n");
+	printf(" %s(", name);
+
+	/* Parameters - simplified for now */
+	/* TODO: Track actual parameter types through interpass */
+	printf("void");
+
+	printf(")\n{\n");
 
 	/* Declare local register variables */
-	printf("\t/* Register variables */\n");
+	printf("\t/* Virtual register variables */\n");
 	for (i = 0; i < MAXREGS; i++) {
 		if (TESTBIT(p2env.p_regs, i)) {
+			printf("\t");
 			if (i < 16)
-				printf("\tlong %s;\n", rnames[i]);
+				printf("long");
 			else
-				printf("\tdouble %s;\n", rnames[i]);
+				printf("double");
+			printf(" %s;\n", rnames[i]);
 		}
 	}
+
+	/* Declare temporary variables if needed */
+	printf("\t/* Temporary variables */\n");
+	printf("\tint CC;  /* Condition code pseudo-register */\n");
+
 	printf("\n");
 }
 
@@ -170,7 +256,35 @@ adrput(FILE *io, NODE *p)
 void
 cbgen(int op, int label)
 {
-	printf("\tif (CC %s 0) goto L%d;\n", opcode_to_c(op), label);
+	char *cmpop;
+
+	switch (op) {
+	case EQ: cmpop = "=="; break;
+	case NE: cmpop = "!="; break;
+	case LT: cmpop = "<"; break;
+	case LE: cmpop = "<="; break;
+	case GT: cmpop = ">"; break;
+	case GE: cmpop = ">="; break;
+	default: cmpop = "=="; break;
+	}
+
+	printf("\tif (CC %s 0) goto L%d;\n", cmpop, label);
+}
+
+/*
+ * Map builtin functions to C90 equivalents
+ */
+static char *
+map_builtin(char *name)
+{
+	if (strcmp(name, "__builtin_constant_p") == 0)
+		return "/* __builtin_constant_p */ 1";
+	if (strcmp(name, "__builtin_expect") == 0)
+		return "/* __builtin_expect */";
+	if (strcmp(name, "__builtin_alloca") == 0)
+		return "alloca";  /* Needs <alloca.h> */
+	/* Add more mappings as needed */
+	return name;
 }
 
 /*

@@ -25,6 +25,12 @@
  */
 
 #include "pass1.h"
+#include <string.h>
+
+/*
+ * Memory model selection (default: 32-bit)
+ */
+int mcc90model = MCC90_32BIT;
 
 /*
  * Local optimizations for C90 backend
@@ -33,7 +39,38 @@
 NODE *
 clocal(NODE *p)
 {
-	/* Minimal local optimizations */
+	struct symtab *sp;
+	NODE *l, *r;
+	int o = p->n_op;
+	TWORD t = p->n_type;
+
+	switch (o) {
+	case NAME:
+		/* Handle special variable names */
+		if ((sp = p->n_sp) != NULL) {
+			/* Preserve symbol attributes */
+		}
+		break;
+
+	case CALL:
+	case UCALL:
+		/* Map builtin functions to C90 equivalents */
+		l = p->n_left;
+		if (l->n_op == NAME && l->n_sp != NULL) {
+			char *name = l->n_sp->sname;
+
+			/* Map __builtin_* functions */
+			if (strncmp(name, "__builtin_", 10) == 0) {
+				/* These will be handled in code generation */
+			}
+		}
+		break;
+
+	case STASG:
+		/* Structure assignment - ensure proper handling */
+		break;
+	}
+
 	return p;
 }
 
@@ -109,6 +146,31 @@ void
 mflags(char *str)
 {
 	/* Process machine-specific flags */
+
+	/* Memory model selection */
+	if (strncmp(str, "-mcmodel=", 9) == 0) {
+		char *model = str + 9;
+
+		if (strcmp(model, "16bit") == 0 || strcmp(model, "small16") == 0) {
+			mcc90model = MCC90_16BIT;
+		} else if (strcmp(model, "32bit") == 0 || strcmp(model, "small") == 0) {
+			mcc90model = MCC90_32BIT;
+		} else if (strcmp(model, "64bit") == 0 || strcmp(model, "medium") == 0) {
+			mcc90model = MCC90_64BIT;
+		} else if (strcmp(model, "segmented") == 0) {
+			mcc90model = MCC90_SEGMENTED;
+		} else {
+			werror("unknown memory model: %s", model);
+		}
+	}
+
+	/* C dialect selection */
+	if (strcmp(str, "-std=c90") == 0 || strcmp(str, "-std=c89") == 0) {
+		/* Strict C90 mode - already default */
+	} else if (strcmp(str, "-std=c99") == 0) {
+		/* Enable C99 features in output */
+		/* TODO: add C99 mode flag */
+	}
 }
 
 int

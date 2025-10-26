@@ -31,39 +31,66 @@
 
 #define makecc(val,i)	lastcon = (lastcon<<8)|((val<<24)>>24);
 
-/* C90 standard type sizes (32-bit target assumed) */
+/* C90 standard type sizes (configurable based on memory model) */
 #define ARGINIT		0	/* arguments passed via C function calls */
 #define AUTOINIT	0	/* automatic variables in C */
 
 /*
+ * Memory Model Support (following i386/i86 patterns)
+ * Allows C90 backend to generate code targeting different architectures
+ */
+#define MCC90_16BIT	0001	/* 16-bit pointers (embedded/8/16-bit CPUs) */
+#define MCC90_32BIT	0002	/* 32-bit pointers (default, most common) */
+#define MCC90_64BIT	0004	/* 64-bit pointers (modern 64-bit systems) */
+#define MCC90_SEGMENTED	0010	/* Segmented addressing (16:16 or 16:32) */
+
+#ifndef MCC90MODEL
+extern int mcc90model;		/* Runtime memory model selection */
+#else
+#define mcc90model MCC90MODEL	/* Compile-time model */
+#endif
+
+/*
  * Storage space requirements (C90 standard)
+ * Configurable for different target architectures
  */
 #define SZCHAR		8
 #define SZBOOL		8
-#define SZINT		32
+#define SZINT		((mcc90model & MCC90_16BIT) ? 16 : 32)
 #define SZFLOAT		32
 #define SZDOUBLE	64
-#define SZLDOUBLE	64
-#define SZLONG		32
+#define SZLDOUBLE	((mcc90model & MCC90_16BIT) ? 64 : 80)
+#define SZLONG		((mcc90model & MCC90_64BIT) ? 64 : 32)
 #define SZSHORT		16
 #define SZLONGLONG	64
-#define SZPOINT(t)	32
 
 /*
- * Alignment constraints (C90 standard)
+ * Pointer size depends on memory model
+ * - 16-bit mode: 16-bit or 32-bit (segmented)
+ * - 32-bit mode: 32-bit (default)
+ * - 64-bit mode: 64-bit
+ */
+#define SZPOINT(t)	((mcc90model & MCC90_64BIT) ? 64 : \
+			 (mcc90model & MCC90_SEGMENTED) ? 32 : \
+			 (mcc90model & MCC90_16BIT) ? 16 : 32)
+
+/*
+ * Alignment constraints (C90 standard, model-aware)
  */
 #define ALCHAR		8
 #define ALBOOL		8
-#define ALINT		32
+#define ALINT		((mcc90model & MCC90_16BIT) ? 16 : 32)
 #define ALFLOAT		32
-#define ALDOUBLE	32
-#define ALLDOUBLE	32
-#define ALLONG		32
-#define ALLONGLONG	32
+#define ALDOUBLE	((mcc90model & MCC90_16BIT) ? 16 : 32)
+#define ALLDOUBLE	((mcc90model & MCC90_16BIT) ? 16 : 32)
+#define ALLONG		((mcc90model & MCC90_64BIT) ? 64 : 32)
+#define ALLONGLONG	((mcc90model & MCC90_16BIT) ? 16 : 32)
 #define ALSHORT		16
-#define ALPOINT		32
+#define ALPOINT		((mcc90model & MCC90_64BIT) ? 64 : \
+			 (mcc90model & MCC90_16BIT) ? 16 : 32)
 #define ALSTRUCT	8
-#define ALSTACK		32
+#define ALSTACK		((mcc90model & MCC90_64BIT) ? 64 : \
+			 (mcc90model & MCC90_16BIT) ? 16 : 32)
 
 /*
  * Min/max values
@@ -104,6 +131,22 @@ typedef long long OFFSZ;
 
 #undef	FIELDOPS
 #define TARGET_ENDIAN TARGET_LE
+
+/*
+ * Floating-point format support
+ * C90 backend can target different float representations
+ */
+#define USE_IEEEFP_32		/* IEEE 754 single precision (default) */
+#define USE_IEEEFP_64		/* IEEE 754 double precision */
+#define FLT_PREFIX IEEEFP_32
+#define DBL_PREFIX IEEEFP_64
+
+/*
+ * C90 standard library support macros
+ */
+#define C90_NEED_STDDEF		/* Include <stddef.h> for size_t, ptrdiff_t */
+#define C90_NEED_LIMITS		/* Include <limits.h> for INT_MAX, etc. */
+#define C90_NEED_FLOAT		/* Include <float.h> for FLT_MAX, etc. */
 
 /*
  * C90 backend uses virtual registers that map to C variables
