@@ -223,7 +223,6 @@ L?\"(\\.|[^\\"])*\"	{ yylval.strp = yytext; return C_STRING; }
 
 %%
 
-/* lineno is defined in mip/common.c and declared extern in pass1.h */
 int issyshdr;
 char *ftitle = "<stdin>";
 
