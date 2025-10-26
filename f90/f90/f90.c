@@ -33,7 +33,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-char xxxvers[] = "FORTRAN 90 DRIVER, VERSION 3.1 (F66-F2018 + OOP + Vendor Extensions)\n";
+char xxxvers[] = "FORTRAN 90 DRIVER, VERSION 3.2 (F66-F2018 + Smart Runtime Linking)\n";
 
 #include <sys/wait.h>
 
@@ -83,6 +83,8 @@ static char *shellname	= "/bin/sh";
 static char *aoutname	= "a.out" ;
 static char *libdir	= LIBDIR ;
 static char *liblist[] = F77LIBLIST;
+static char *dynamic_liblist[50];  /* Dynamically built library list */
+static flag use_dynamic_libs = NO; /* Use feature-based library selection */
 
 static char *infname;
 static char asmfname[15];
@@ -110,6 +112,10 @@ static flag fortonly	= NO;
 static flag macroflag	= NO;
 static int f_std	= 90;	/* Fortran standard: 66, 77, 90, 95, 2003, 2008, 2018 */
 
+/* Runtime library linking control */
+static flag static_link	= NO;	/* Use static linking (-static) */
+static flag shared_link	= YES;	/* Use shared/dynamic linking (default) */
+
 /* OOP and modern features flags */
 static flag enable_oop		= NO;	/* Enable OOP features (classes, inheritance) */
 static flag enable_coarrays	= NO;	/* Enable coarray parallelism */
@@ -136,6 +142,7 @@ static int await(int);
 static void rmf(char *), doload(char *[], char *[]), doasm(char *);
 static int callsys(char *, char **);
 static void errorx(char *, ...);
+static void build_library_list(void);
 
 static void
 addarg(char **ary, int *num, char *arg)
@@ -190,7 +197,7 @@ main(int argc, char **argv)
 				}
 				break;
 
-			case 's': /* -std=f66...f2018 */
+			case 's': /* -std=f66...f2018 or -static */
 				if (strncmp(s, "std=", 4) == 0) {
 					if (strcmp(s+4, "f66") == 0 || strcmp(s+4, "fortran66") == 0) {
 						f_std = 66;
@@ -207,12 +214,14 @@ main(int argc, char **argv)
 					} else if (strcmp(s+4, "f2003") == 0 || strcmp(s+4, "fortran2003") == 0) {
 						f_std = 2003;
 						enable_oop = YES;	/* F2003 introduces OOP */
+						use_dynamic_libs = YES;	/* F2003+ uses smart linking */
 						addarg(ffary, &ffmax, "-std=f2003");
 					} else if (strcmp(s+4, "f2008") == 0 || strcmp(s+4, "fortran2008") == 0) {
 						f_std = 2008;
 						enable_oop = YES;
 						enable_coarrays = YES;	/* F2008 adds coarrays */
 						enable_submodules = YES;	/* F2008 adds submodules */
+						use_dynamic_libs = YES;	/* F2008+ uses smart linking */
 						addarg(ffary, &ffmax, "-std=f2008");
 					} else if (strcmp(s+4, "f2018") == 0 || strcmp(s+4, "fortran2018") == 0) {
 						f_std = 2018;
@@ -220,10 +229,21 @@ main(int argc, char **argv)
 						enable_coarrays = YES;
 						enable_submodules = YES;
 						enable_teams = YES;	/* F2018 adds teams/events */
+						use_dynamic_libs = YES;	/* F2018 uses smart linking */
 						addarg(ffary, &ffmax, "-std=f2018");
 					} else {
 						fatal1("unknown standard '%s'", s+4);
 					}
+					goto endfor;
+				} else if (strcmp(s, "static") == 0) {
+					static_link = YES;
+					shared_link = NO;
+					use_dynamic_libs = YES;  /* Enable feature-based library selection */
+					goto endfor;
+				} else if (strcmp(s, "shared") == 0) {
+					static_link = NO;
+					shared_link = YES;
+					use_dynamic_libs = YES;  /* Enable feature-based library selection */
 					goto endfor;
 				}
 				break;
@@ -263,6 +283,7 @@ main(int argc, char **argv)
 			case 'f': /* Feature flags: -foop, -fcoarrays, etc. */
 				if (strcmp(s, "foop") == 0) {
 					enable_oop = YES;
+					use_dynamic_libs = YES;  /* Use smart linking for features */
 					addarg(ffary, &ffmax, "-foop");
 					goto endfor;
 				} else if (strcmp(s, "fno-oop") == 0) {
@@ -271,6 +292,7 @@ main(int argc, char **argv)
 					goto endfor;
 				} else if (strcmp(s, "fcoarrays") == 0) {
 					enable_coarrays = YES;
+					use_dynamic_libs = YES;  /* Use smart linking for features */
 					addarg(ffary, &ffmax, "-fcoarrays");
 					goto endfor;
 				} else if (strcmp(s, "fno-coarrays") == 0) {
@@ -279,6 +301,7 @@ main(int argc, char **argv)
 					goto endfor;
 				} else if (strcmp(s, "fsubmodules") == 0) {
 					enable_submodules = YES;
+					use_dynamic_libs = YES;  /* Use smart linking for features */
 					addarg(ffary, &ffmax, "-fsubmodules");
 					goto endfor;
 				} else if (strcmp(s, "fno-submodules") == 0) {
@@ -287,6 +310,7 @@ main(int argc, char **argv)
 					goto endfor;
 				} else if (strcmp(s, "fteams") == 0) {
 					enable_teams = YES;
+					use_dynamic_libs = YES;  /* Use smart linking for features */
 					addarg(ffary, &ffmax, "-fteams");
 					goto endfor;
 				} else if (strcmp(s, "fno-teams") == 0) {
@@ -560,12 +584,96 @@ doasm(char *s)
 }
 
 
+/*
+ * Build a dynamic library list based on enabled features and link mode.
+ * This enables conditional linking of OOP, coarray, and other feature-specific
+ * libraries only when those features are actually used.
+ */
+static void
+build_library_list(void)
+{
+	int idx = 0;
+	char *lib_ext = static_link ? ".a" : ".so";
+
+	/* Add library search path */
+	dynamic_liblist[idx++] = "-L/usr/local/lib";
+
+	/* Core Fortran runtime - always needed */
+	if (static_link) {
+		dynamic_liblist[idx++] = "-lgfortran";
+	} else {
+		dynamic_liblist[idx++] = "-lgfortran";
+	}
+
+	/* OOP support library (F2003+) - only if OOP features enabled */
+	if (enable_oop) {
+		if (verbose)
+			fprintf(diagfile, "Linking OOP support library\n");
+		dynamic_liblist[idx++] = "-lfortran_oop";
+	}
+
+	/* Coarray support (F2008+) - only if coarrays enabled */
+	if (enable_coarrays) {
+		if (verbose)
+			fprintf(diagfile, "Linking coarray support library\n");
+		dynamic_liblist[idx++] = "-lcaf_single";
+		/* Add pthread for parallel coarray execution */
+		dynamic_liblist[idx++] = "-lpthread";
+	}
+
+	/* Submodule support (F2008+) - only if submodules enabled */
+	if (enable_submodules) {
+		if (verbose)
+			fprintf(diagfile, "Linking submodule support\n");
+		/* Submodules may need additional runtime support in the future */
+	}
+
+	/* Team and events support (F2018) - only if teams enabled */
+	if (enable_teams) {
+		if (verbose)
+			fprintf(diagfile, "Linking teams/events support\n");
+		/* Teams require parallel execution support */
+		if (!enable_coarrays) {
+			/* pthread not yet added, add it now */
+			dynamic_liblist[idx++] = "-lpthread";
+		}
+	}
+
+	/* Quad-precision math library - needed for F2003+ KIND support */
+	if (f_std >= 2003) {
+		dynamic_liblist[idx++] = "-lquadmath";
+	}
+
+	/* Standard math and C libraries - always needed */
+	dynamic_liblist[idx++] = "-lm";
+	dynamic_liblist[idx++] = "-lc";
+
+	/* Terminate the list */
+	dynamic_liblist[idx] = NULL;
+
+	if (verbose) {
+		fprintf(diagfile, "Dynamic library list (%s linking):\n",
+		        static_link ? "static" : "shared");
+		for (int i = 0; dynamic_liblist[i]; i++)
+			fprintf(diagfile, "  %s\n", dynamic_liblist[i]);
+	}
+}
+
 static void
 doload(char *v0[], char *v[])
 {
 	int nparms, i;
 	char *params[MAXARGS];
 	char **p;
+	char **active_liblist;
+
+	/* Build dynamic library list if feature-based selection is enabled */
+	if (use_dynamic_libs) {
+		build_library_list();
+		active_liblist = dynamic_liblist;
+	} else {
+		active_liblist = liblist;
+	}
 
 	nparms = 0;
 	ADD(ldname);
@@ -583,7 +691,7 @@ doload(char *v0[], char *v[])
 		ADD(*p);
 	if (libdir)
 		ADD(libdir);
-	for(p = liblist ; *p ; p++)
+	for(p = active_liblist ; *p ; p++)
 		ADD(*p);
 	for (i = 0; endfiles[i]; i++)
 		ADD(endfiles[i]);
