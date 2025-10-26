@@ -62,6 +62,7 @@ static void pragma(void);
 static int dotfile;
 int notype, parbal, inattr, parlvl, nodinit, inoso;
 int kwdecode(struct symtab *s);
+int objc_keyword(char *kw);
 
 #define	CPP_IDENT 	2
 #define	CPP_LINE 	3
@@ -90,6 +91,20 @@ extern void yyset_lineno (int);
 %}
 
 %%
+
+@{UL}({UL}|{D})*	{ 	int i;
+			char *kw = yytext + 1; /* skip @ */
+
+			/* Check for Objective-C keywords */
+			if ((i = objc_keyword(kw)) > 0)
+				return i;
+
+			/* Not a keyword, treat as @ followed by identifier */
+			unput(yytext[yyleng-1]);
+			for (i = yyleng-2; i > 0; i--)
+				unput(yytext[i]);
+			return OBJC_AT;
+		}
 
 {UL}({UL}|{D})*	{ 	struct symtab *s;
 			int i = 0;
@@ -136,6 +151,7 @@ extern void yyset_lineno (int);
 0[xX]{H}+"."{P}{FS}?	{ yylval.flt = fhexcon(yytext); return(C_FCON); }
 0[xX]{H}+{P}{FS}?	{ yylval.flt = fhexcon(yytext); return(C_FCON); }
 
+@\"(\\.|[^\\"])*\"	{ yylval.strp = yytext; return OBJC_STRING; }
 {US}?\"(\\.|[^\\"])*\"	{ yylval.strp = yytext; return C_STRING; }
 
 "..."			{ return(C_ELLIPSIS); }
@@ -190,6 +206,7 @@ extern void yyset_lineno (int);
 "^"			{ return('^'); }
 "|"			{ return('|'); }
 "?"			{ if (doing_init) nodinit++; return('?'); }
+"@"			{ return OBJC_AT; }
 ^#pragma[ \t].*		{ pragma(); }
 ^#ident[ \t].*		{ control(CPP_IDENT); }
 ^#line[ \t].*		{ control(CPP_LINE); }
@@ -270,6 +287,9 @@ struct keywords {
 	{ "void", VOID, C_TYPE },
 	{ "volatile", VOL, C_QUALIFIER },
 	{ "while", C_WHILE, DEFKW },
+	{ "id", OBJC_ID, C_TYPE },
+	{ "Class", OBJC_CLASS, C_TYPE },
+	{ "SEL", OBJC_SEL, C_TYPE },
 };
 	
 
@@ -336,6 +356,47 @@ kwdecode(struct symtab *s)
 		cerror("keyword %s not found", kw->name);
 	}
 	return kw->wclass;
+}
+
+/* Objective-C keywords */
+struct objc_keywords {
+	char *name;
+	int token;
+} objc_keywords[] = {
+	{ "interface", OBJC_INTERFACE },
+	{ "implementation", OBJC_IMPLEMENTATION },
+	{ "protocol", OBJC_PROTOCOL },
+	{ "end", OBJC_END },
+	{ "class", OBJC_CLASS },
+	{ "public", OBJC_PUBLIC },
+	{ "private", OBJC_PRIVATE },
+	{ "protected", OBJC_PROTECTED },
+	{ "package", OBJC_PACKAGE },
+	{ "selector", OBJC_SELECTOR },
+	{ "encode", OBJC_ENCODE },
+	{ "property", OBJC_PROPERTY },
+	{ "synthesize", OBJC_SYNTHESIZE },
+	{ "dynamic", OBJC_DYNAMIC },
+	{ "optional", OBJC_OPTIONAL },
+	{ "required", OBJC_REQUIRED },
+	{ "try", OBJC_TRY },
+	{ "catch", OBJC_CATCH },
+	{ "finally", OBJC_FINALLY },
+	{ "throw", OBJC_THROW },
+	{ "synchronized", OBJC_SYNCHRONIZED },
+	{ NULL, 0 }
+};
+
+int
+objc_keyword(char *kw)
+{
+	int i;
+
+	for (i = 0; objc_keywords[i].name; i++) {
+		if (strcmp(kw, objc_keywords[i].name) == 0)
+			return objc_keywords[i].token;
+	}
+	return 0;
 }
 
 #ifdef notdef

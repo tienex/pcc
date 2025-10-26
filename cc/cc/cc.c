@@ -265,6 +265,7 @@ static int strlist_exec(struct strlist *l);
 char *cat(const char *, const char *);
 char *setsuf(char *, char);
 int cxxsuf(char *);
+int objcsuf(char *);
 int getsuf(char *);
 char *getsufp(char *s);
 int main(int, char *[]);
@@ -316,6 +317,7 @@ int	xuchar = 1;
 int	xuchar = 0;
 #endif
 int	cxxflag;
+int	objcflag;
 int	cppflag;
 int	printprogname, printfilename;
 enum { SC11, STRAD, SC89, SGNU89, SC99, SGNU99 } cstd;
@@ -1068,7 +1070,9 @@ main(int argc, char *argv[])
 		 * C preprocessor
 		 */
 		ascpp = match(suffix, "S");
-		if (ascpp || cppflag || match(suffix, "c") || cxxsuf(suffix)) {
+		if (ascpp || cppflag || match(suffix, "c") || cxxsuf(suffix) || objcsuf(suffix)) {
+			if (objcsuf(suffix))
+				objcflag = 1;
 			/* find out next output file */
 			if (Mflag || MDflag || MMDflag) {
 				char *Mofile = NULL;
@@ -1400,6 +1404,17 @@ cxxsuf(char *s)
 	return 0;
 }
 
+static char *objct[] = { "m" };
+int
+objcsuf(char *s)
+{
+	unsigned i;
+	for (i = 0; i < sizeof(objct)/sizeof(objct[0]); i++)
+		if (strcmp(s, objct[i]) == 0)
+			return 1;
+	return 0;
+}
+
 char *
 getsufp(char *s)
 {
@@ -1675,6 +1690,7 @@ struct flgcheck {
 	{ &freestanding, 1, "-D__STDC_HOSTED__=0" },
 	{ &freestanding, 0, "-D__STDC_HOSTED__=1" },
 	{ &cxxflag, 1, "-D__cplusplus" },
+	{ &objcflag, 1, "-D__OBJC__" },
 	{ &xuchar, 1, "-D__CHAR_UNSIGNED__" },
 	{ &sspflag, 1, "-D__SSP__" },
 	{ &pthreads, 1, "-D_PTHREADS" },
@@ -1888,6 +1904,7 @@ struct flgcheck ccomflgcheck[] = {
 	{ &xgnu89, 1, "-xgnu89" },
 	{ &xgnu99, 1, "-xgnu99" },
 	{ &xuchar, 1, "-xuchar" },
+	{ &objcflag, 1, "-xobjc" },
 #if !defined(os_sunos) && !defined(mach_i386)
 	{ &vflag, 1, "-v" },
 #endif
@@ -2064,6 +2081,10 @@ setup_ld_flags(void)
 #ifndef _WIN32
 			strlist_append(&late_linker_flags, "-lseh");
 #endif
+		}
+		/* Add Objective-C runtime library if needed */
+		if (objcflag) {
+			strlist_append(&late_linker_flags, "-lobjc");
 		}
 	}
 	if (!nostartfiles) {

@@ -80,8 +80,11 @@
 #define	XTYPE		17	/* Extended target-specific type */
 /* #define	MOETY		18 */	/* member of enum */
 #define	VOID		19
+#define	OBJC_ID		20	/* Objective-C id type */
+#define	OBJC_CLASS	21	/* Objective-C Class type */
+#define	OBJC_SEL	22	/* Objective-C SEL type */
 
-#define	MAXTYPES	19	/* highest type+1 to be used by lang code */
+#define	MAXTYPES	22	/* highest type+1 to be used by lang code */
 /*
  * Various flags
  */
