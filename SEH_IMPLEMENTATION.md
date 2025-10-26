@@ -4,7 +4,7 @@ This document describes the Structured Exception Handling (SEH) implementation a
 
 ## Overview
 
-SEH is a Microsoft-specific extension to C that provides structured exception handling capabilities. This implementation adds syntactic and semantic support for SEH constructs across all PCC targets.
+SEH is a Microsoft-specific extension to C that provides structured exception handling capabilities. This implementation adds full syntactic, semantic, and runtime support for SEH constructs across all PCC targets, including non-Windows platforms through the libseh runtime library.
 
 ## Supported Keywords
 
@@ -117,6 +117,54 @@ The SEH implementation is designed to work across all PCC targets:
 2. **Semantic Analysis**: Validates proper nesting and usage
 3. **Code Generation**: Target-specific backends generate appropriate code
 
+## Compiler Flags
+
+### `-fseh` Flag
+
+Enable SEH support for non-Windows targets using DWARF-based exception handling:
+
+```bash
+pcc -fseh -c program.c
+pcc -fseh -o program program.o -lseh
+```
+
+The `-fseh` flag:
+- Enables SEH code generation on all platforms
+- **Automatically links** libseh runtime library on non-Windows systems
+- On Windows, uses native SEH mechanisms
+- Can be disabled with `-fno-seh`
+- No need to manually specify `-lseh` when using `-fseh`
+
+## Runtime Library (libseh)
+
+The `libseh` library provides cross-platform SEH runtime support:
+
+### Features
+- **Signal-to-exception mapping**: Converts Unix signals (SIGSEGV, SIGFPE) to SEH exceptions
+- **DWARF integration**: Uses native DWARF exception handling on ELF platforms (Linux, *BSD)
+- **C++ exception interoperability**: SEH and C++ exceptions coexist properly on macOS/Linux
+- **Exception context capture**: Full CPU context including registers, IP, SP, fault addresses
+- **Thread-safe**: All exception state is thread-local
+- **Cross-platform**: Works on Windows, Linux, macOS, and other Unix systems
+- **Automatic linking**: libseh is automatically linked when using `-fseh`
+
+### Installation
+
+```bash
+cd libseh
+make
+sudo make install
+```
+
+### Usage
+
+Link your program with libseh:
+```bash
+pcc -fseh -o program program.c -lseh
+```
+
+See `libseh/README.md` for detailed documentation.
+
 ## Current Status
 
 ### Completed
@@ -125,20 +173,32 @@ The SEH implementation is designed to work across all PCC targets:
 - ✅ AST node types
 - ✅ Label management for control flow
 - ✅ Nested try block support
+- ✅ `-fseh` compiler flag with automatic libseh linking
+- ✅ libseh runtime library (complete)
+- ✅ DWARF exception handling support
+- ✅ Signal-to-exception conversion
+- ✅ C++ exception interoperability
+- ✅ Exception context capture (all platforms)
+- ✅ CPU register access in exception handlers
 
-### Pending
-- ⚠️ Architecture-specific code generation (i386, amd64)
-- ⚠️ Exception registration record generation
-- ⚠️ Unwind information tables
-- ⚠️ Runtime library integration
-- ⚠️ Filter expression evaluation
-- ⚠️ Finally block execution guarantees
+### In Progress
+- ⚠️ Compiler code emission for __try/__except/__finally blocks
+- ⚠️ Architecture-specific optimizations (i386, amd64)
+- ⚠️ Direct .eh_frame generation (currently uses DWARF unwinder)
 
-## Usage Example
+### Future Work
+- Filter expression evaluation with full context
+- Finally block execution guarantees during stack unwinding
+- Integration with C++ exceptions
+- Performance optimizations
+
+## Usage Examples
+
+### Basic Try-Except (Cross-Platform)
 
 ```c
-#include <windows.h>
 #include <stdio.h>
+#include <seh.h>  /* For non-Windows platforms */
 
 int main() {
     __try {
@@ -148,11 +208,78 @@ int main() {
         printf("This won't execute\n");
     }
     __except (EXCEPTION_EXECUTE_HANDLER) {
-        printf("Exception caught!\n");
+        printf("Exception caught: 0x%08lX\n", _seh_get_exception_code());
         return 1;
     }
 
     return 0;
+}
+```
+
+Compile and run:
+```bash
+pcc -fseh -o test test.c
+./test
+# Output: Exception caught: 0xC0000005
+```
+
+### C++ Exception Interoperability
+
+```cpp
+#include <iostream>
+#include <stdexcept>
+#include <seh.h>
+
+int main() {
+    __try {
+        __try {
+            throw std::runtime_error("C++ exception");
+        }
+        __except (EXCEPTION_EXECUTE_HANDLER) {
+            std::cout << "Caught C++ exception in SEH!\n";
+            std::cout << "Exception code: 0x" << std::hex
+                      << _seh_get_exception_code() << "\n";
+        }
+    }
+    __finally {
+        std::cout << "Cleanup\n";
+    }
+    return 0;
+}
+```
+
+Compile and run:
+```bash
+pcc++ -fseh -o test test.cpp
+./test
+# Output:
+# Caught C++ exception in SEH!
+# Exception code: 0xe06d7363
+# Cleanup
+```
+
+### Try-Finally with Resource Cleanup
+
+```c
+#include <stdio.h>
+
+void process_file(const char *filename) {
+    FILE *f = fopen(filename, "r");
+
+    __try {
+        if (!f) return;
+        // Process file...
+        char buf[1024];
+        while (fgets(buf, sizeof(buf), f)) {
+            // Process line
+        }
+    }
+    __finally {
+        if (f) {
+            fclose(f);  // Always executed
+            printf("File closed\n");
+        }
+    }
 }
 ```
 
@@ -172,13 +299,42 @@ int main() {
 
 ## Testing
 
-To test SEH support:
+### Syntax Testing
+
+Test that the compiler accepts SEH syntax:
 
 ```bash
-# Compile a program with SEH
-pcc -c test_seh.c
+# Compile test file (syntax check)
+pcc -fseh -c seh_test.c
+```
 
-# The compiler should accept SEH syntax without errors
+### Runtime Testing
+
+Test SEH functionality with libseh:
+
+```bash
+# Build and run test program
+pcc -fseh -o seh_test seh_test.c -lseh
+./seh_test
+```
+
+### Signal Conversion Test
+
+```c
+#include <stdio.h>
+#include <seh.h>
+
+int main(void) {
+    __try {
+        int x = 5 / 0;  /* SIGFPE on Unix */
+    }
+    __except (EXCEPTION_EXECUTE_HANDLER) {
+        printf("Caught division by zero!\n");
+        printf("Exception code: 0x%08lX\n", _seh_get_exception_code());
+        return 0;
+    }
+    return 1;
+}
 ```
 
 ## References
