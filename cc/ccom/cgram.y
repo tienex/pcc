@@ -105,13 +105,17 @@
 %token	C_SWITCH
 %token	C_BREAK
 %token	C_CONTINUE
-%token	C_WHILE	
+%token	C_WHILE
 %token	C_DO
 %token	C_FOR
 %token	C_DEFAULT
 %token	C_CASE
 %token	C_SIZEOF
 %token	C_ENUM
+%token	C_TRY
+%token	C_EXCEPT
+%token	C_FINALLY
+%token	C_LEAVE
 %token	C_ELLIPSIS
 %token	C_QUALIFIER
 %token	C_FUNSPEC
@@ -186,6 +190,8 @@ static void gcccase(P1ND *p, P1ND *);
 static struct attr *gcc_attr_wrapper(P1ND *p);
 static void adddef(void);
 static void savebc(void);
+static void saveseh(void);
+static void resetseh(void);
 static void swstart(int, TWORD);
 static void genswitch(int, TWORD, struct swents **, int);
 static char *mkpstr(char *str);
@@ -245,6 +251,17 @@ struct savbc {
 	int stoff;
 	int numnode;
 } *savbc, *savctx;
+
+/* SEH label save/restore stack */
+struct savseh {
+	struct savseh *next;
+	int sehleavlab;
+	int sehexcept;
+	int sehfinally;
+	int sehendlab;
+	int sehtrylab;
+	P1ND *sehfilter;
+} *savseh;
 
 %}
 
@@ -992,6 +1009,16 @@ statement:	   e ';' { ecomp(eve($1)); symclear(blevel); }
 		|  C_GOTO C_NAME ';' { gotolabel($2); goto rch; }
 		|  C_GOTO '*' e ';' { ecomp(biop(GOTO, eve($3), NULL)); }
 		|  asmstatement ';'
+		|  tryexceptstmt
+		|  tryfinallystmt
+		|  C_LEAVE ';' {
+			if (sehleavlab == NOLAB)
+				uerror("__leave statement not in __try block");
+			else if (reached)
+				branch(sehleavlab);
+			flostat |= FBRK;
+			reached = 0;
+		}
 		|   ';'
 		|  error  ';'
 		|  error '}'
@@ -1125,6 +1152,41 @@ switchpart:	   C_SWITCH  '('  e ')' {
 			branch( $$ = getlab());
 			swstart(num, t);
 			reached = 0;
+		}
+		;
+
+tryexceptstmt:	tryprefix compoundstmt C_EXCEPT '(' e ')' {
+			/* Generate exception filter expression */
+			sehfilter = eve($5);
+			plabel(sehexcept);
+		} compoundstmt {
+			/* End of __except handler */
+			plabel(sehendlab);
+			resetseh();
+			reached = 1;
+		}
+		;
+
+tryfinallystmt:	tryprefix compoundstmt C_FINALLY {
+			plabel(sehfinally);
+		} compoundstmt {
+			/* End of __finally handler */
+			plabel(sehendlab);
+			resetseh();
+			reached = 1;
+		}
+		;
+
+tryprefix:	C_TRY {
+			/* Setup SEH labels */
+			saveseh();
+			sehleavlab = getlab();
+			sehexcept = getlab();
+			sehfinally = getlab();
+			sehendlab = getlab();
+			sehtrylab = getlab();
+			plabel(sehtrylab);
+			reached = 1;
 		}
 		;
 /*	EXPRESSIONS	*/
@@ -1466,6 +1528,46 @@ resetbc(int mask)
 	bc = savbc->next;
 	free(savbc);
 	savbc = bc;
+}
+
+/*
+ * Save SEH (Structured Exception Handling) state for nested __try blocks.
+ */
+static void
+saveseh(void)
+{
+	struct savseh *seh = malloc(sizeof(struct savseh));
+
+	seh->sehleavlab = sehleavlab;
+	seh->sehexcept = sehexcept;
+	seh->sehfinally = sehfinally;
+	seh->sehendlab = sehendlab;
+	seh->sehtrylab = sehtrylab;
+	seh->sehfilter = sehfilter;
+	seh->next = savseh;
+	savseh = seh;
+}
+
+/*
+ * Restore SEH state after exiting a __try block.
+ */
+static void
+resetseh(void)
+{
+	struct savseh *seh;
+
+	if (savseh == NULL)
+		return;
+
+	sehleavlab = savseh->sehleavlab;
+	sehexcept = savseh->sehexcept;
+	sehfinally = savseh->sehfinally;
+	sehendlab = savseh->sehendlab;
+	sehtrylab = savseh->sehtrylab;
+	sehfilter = savseh->sehfilter;
+	seh = savseh->next;
+	free(savseh);
+	savseh = seh;
 }
 
 struct swdef {

@@ -92,6 +92,14 @@ int flostat;
 int blevel;
 int reached, prolab;
 
+/* SEH (Structured Exception Handling) support */
+int sehleavlab = NOLAB;	/* __leave target label */
+int sehexcept = NOLAB;		/* __except handler label */
+int sehfinally = NOLAB;		/* __finally handler label */
+int sehendlab = NOLAB;		/* end of SEH block label */
+int sehtrylab = NOLAB;		/* __try block label */
+P1ND *sehfilter;		/* __except filter expression */
+
 struct params;
 
 #define MKTY(p, t, d, s) r = p1alloc(); *r = *p; \
