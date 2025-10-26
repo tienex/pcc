@@ -41,6 +41,36 @@
 x86asm_ctx_t *asm_ctx = NULL;
 
 /*
+ * Convert ASM_FORMAT string to x86asm_format_t enum
+ */
+static x86asm_format_t
+get_asm_format(void)
+{
+#ifdef ASM_FORMAT
+	if (strcmp(ASM_FORMAT, "gnu-as") == 0)
+		return ASM_FMT_GNU_AS;
+	if (strcmp(ASM_FORMAT, "apple-as") == 0)
+		return ASM_FMT_APPLE_AS;
+	if (strcmp(ASM_FORMAT, "nasm") == 0)
+		return ASM_FMT_NASM;
+	if (strcmp(ASM_FORMAT, "yasm") == 0)
+		return ASM_FMT_YASM;
+	if (strcmp(ASM_FORMAT, "masm") == 0)
+		return ASM_FMT_MASM;
+	if (strcmp(ASM_FORMAT, "tasm") == 0)
+		return ASM_FMT_TASM;
+	if (strcmp(ASM_FORMAT, "wasm") == 0)
+		return ASM_FMT_WASM;
+#endif
+	/* Default based on ABI if ASM_FORMAT not set */
+#if defined(MACHOABI)
+	return ASM_FMT_APPLE_AS;
+#else
+	return ASM_FMT_GNU_AS;
+#endif
+}
+
+/*
  * Print out assembler segment name.
  */
 void
@@ -486,8 +516,6 @@ ejobcode(int flag)
 void
 bjobcode(void)
 {
-	x86asm_format_t format;
-
 #ifdef os_sunos
 	astypnames[SHORT] = astypnames[USHORT] = "\t.2byte";
 #endif
@@ -495,9 +523,6 @@ bjobcode(void)
 #if defined(MACHOABI)
 	DLIST_INIT(&stublist, link);
 	DLIST_INIT(&nlplist, link);
-	format = ASM_FMT_APPLE_AS;
-#else
-	format = ASM_FMT_GNU_AS;
 #endif
 #if defined(__GNUC__) || defined(__PCC__)
 	/* Be sure that the compiler uses full x87 */
@@ -509,7 +534,7 @@ bjobcode(void)
 #endif
 
 	/* Initialize x86asm context for 32-bit mode (i386) */
-	asm_ctx = x86asm_create(format, stdout, 32);
+	asm_ctx = x86asm_create(get_asm_format(), stdout, 32);
 }
 
 /*

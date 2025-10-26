@@ -42,6 +42,36 @@
 
 x86asm_ctx_t *asm_ctx = NULL;
 
+/*
+ * Convert ASM_FORMAT string to x86asm_format_t enum
+ */
+static x86asm_format_t
+get_asm_format(void)
+{
+#ifdef ASM_FORMAT
+	if (strcmp(ASM_FORMAT, "gnu-as") == 0)
+		return ASM_FMT_GNU_AS;
+	if (strcmp(ASM_FORMAT, "apple-as") == 0)
+		return ASM_FMT_APPLE_AS;
+	if (strcmp(ASM_FORMAT, "nasm") == 0)
+		return ASM_FMT_NASM;
+	if (strcmp(ASM_FORMAT, "yasm") == 0)
+		return ASM_FMT_YASM;
+	if (strcmp(ASM_FORMAT, "masm") == 0)
+		return ASM_FMT_MASM;
+	if (strcmp(ASM_FORMAT, "tasm") == 0)
+		return ASM_FMT_TASM;
+	if (strcmp(ASM_FORMAT, "wasm") == 0)
+		return ASM_FMT_WASM;
+#endif
+	/* Default based on ABI if ASM_FORMAT not set */
+#if defined(MACHOABI)
+	return ASM_FMT_APPLE_AS;
+#else
+	return ASM_FMT_GNU_AS;
+#endif
+}
+
 static int nsse, ngpr, nrsp, rsaoff;
 static int thissse, thisgpr, thisrsp;
 enum { INTEGER = 1, INTMEM, SSE, SSEMEM, X87,
@@ -558,7 +588,6 @@ bjobcode(void)
 	struct rstack *rp;
 	NODE *p, *q;
 	char *c;
-	x86asm_format_t format;
 
 #if defined(__GNUC__) || defined(__PCC__)
 	/* Be sure that the compiler uses full x87 */
@@ -573,14 +602,8 @@ bjobcode(void)
 	astypnames[INT] = astypnames[UNSIGNED] = "\t.long";
 	astypnames[LONG] = astypnames[ULONG] = "\t.quad";
 
-#ifdef MACHOABI
-	format = ASM_FMT_APPLE_AS;
-#else
-	format = ASM_FMT_GNU_AS;
-#endif
-
 	/* Initialize x86asm context for 64-bit mode (amd64) */
-	asm_ctx = x86asm_create(format, stdout, 64);
+	asm_ctx = x86asm_create(get_asm_format(), stdout, 64);
 
 	gp_offset = addname("gp_offset");
 	fp_offset = addname("fp_offset");

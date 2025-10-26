@@ -33,6 +33,32 @@
 x86asm_ctx_t *asm_ctx = NULL;
 
 /*
+ * Convert ASM_FORMAT string to x86asm_format_t enum
+ */
+static x86asm_format_t
+get_asm_format(void)
+{
+#ifdef ASM_FORMAT
+	if (strcmp(ASM_FORMAT, "gnu-as") == 0)
+		return ASM_FMT_GNU_AS;
+	if (strcmp(ASM_FORMAT, "apple-as") == 0)
+		return ASM_FMT_APPLE_AS;
+	if (strcmp(ASM_FORMAT, "nasm") == 0)
+		return ASM_FMT_NASM;
+	if (strcmp(ASM_FORMAT, "yasm") == 0)
+		return ASM_FMT_YASM;
+	if (strcmp(ASM_FORMAT, "masm") == 0)
+		return ASM_FMT_MASM;
+	if (strcmp(ASM_FORMAT, "tasm") == 0)
+		return ASM_FMT_TASM;
+	if (strcmp(ASM_FORMAT, "wasm") == 0)
+		return ASM_FMT_WASM;
+#endif
+	/* Default to GNU AS for i86 */
+	return ASM_FMT_GNU_AS;
+}
+
+/*
  * Print out assembler segment name.
  */
 void
@@ -275,8 +301,7 @@ bjobcode(void)
 	astypnames[INT] = astypnames[UNSIGNED] = "\t.long";
 
 	/* Initialize x86asm context for 16-bit mode (i86) */
-	/* Use GNU AS format by default */
-	asm_ctx = x86asm_create(ASM_FMT_GNU_AS, stdout, 16);
+	asm_ctx = x86asm_create(get_asm_format(), stdout, 16);
 }
 
 /*

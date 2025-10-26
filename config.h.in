@@ -6,6 +6,9 @@
 /* Using a.out ABI */
 #undef AOUTABI
 
+/* Define default assembly output format */
+#undef ASM_FORMAT
+
 /* Define path to alternate assembler */
 #undef ASSEMBLER
 

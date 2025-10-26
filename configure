@@ -763,6 +763,7 @@ enable_twopass
 enable_stripping
 enable_nativefp
 with_yasm
+with_asm_format
 enable_native
 enable_bootstrap
 with_bootstrap_stage
@@ -1427,6 +1428,9 @@ Optional Packages:
   --with-linker=<path>    Specify alternate linker.
   --with-libvmf=<path>    Use libvmf.
   --with-yasm             Use yasm assembler
+  --with-asm-format=<format>
+                          Specify assembly output format: gnu-as (default),
+                          nasm, yasm, apple-as, masm, tasm, wasm
   --with-bootstrap-stage=N
                           Set bootstrap stage number (default: 0)
 
@@ -2909,6 +2913,8 @@ stabs=no
 dwarf=no
 # allowed: UNSIGNED (4-char u_int), INT (4-char int), SHORT (2-char u_short)
 wchar_type=INT
+# Default assembler format (gnu-as, nasm, yasm, apple-as, masm, tasm, wasm)
+asm_format=gnu-as
 
 case "$target_os" in
 
@@ -2935,6 +2941,7 @@ case "$target_os" in
 	targos=darwin
 	abi=macho
 	stabs=yes
+	asm_format=apple-as
 	case "$target_os" in
 	    *10.*) targosver=10 ;;
 	    *9.*) targosver=9 ;;
@@ -3428,6 +3435,13 @@ if test "$useyasm" = "yes"; then
 	assembler="yasm"
 	ADD_CPPFLAGS="$ADD_CPPFLAGS -DUSE_YASM"
 fi
+
+# Check whether --with-asm-format was given.
+if test ${with_asm_format+y}
+then :
+  withval=$with_asm_format; asm_format=$withval
+fi
+
 # Check whether --enable-native was given.
 if test ${enable_native+y}
 then :
@@ -3563,6 +3577,11 @@ fi
 if test -n "$assembler"; then
 
 printf "%s\n" "#define ASSEMBLER \"$assembler\"" >>confdefs.h
+
+fi
+if test -n "$asm_format"; then
+
+printf "%s\n" "#define ASM_FORMAT \"$asm_format\"" >>confdefs.h
 
 fi
 if test -n "$linker"; then
