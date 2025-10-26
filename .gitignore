@@ -8,11 +8,12 @@
 *.dll
 *.exe
 
-# Compiler binaries
-ccom
-cxxcom
-cpp
-mkext
+# Compiler binaries (specific paths to avoid matching directories)
+/cc/ccom/ccom
+/cc/cxxcom/cxxcom
+/cc/cpp/cpp
+/cc/cxxcom/mkext
+/cc/ccom/mkext
 
 # Generated files from bison/yacc
 *.tab.c
