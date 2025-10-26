@@ -136,6 +136,12 @@ typedef enum {
 	DBGFMT_PLAN9,		/* Plan 9 from Bell Labs */
 	DBGFMT_TADS,		/* Turbo Assembler Debug Symbols (Borland) */
 
+	/* Enterprise/Mobile/Embedded formats */
+	DBGFMT_NLM,		/* NetWare Loadable Module (Novell NetWare) */
+	DBGFMT_SYMBIAN,		/* Symbian OS (Nokia, Sony Ericsson, Samsung) */
+	DBGFMT_PALMOS,		/* Palm OS (Palm Pilot, Handspring, Sony Clié) */
+	DBGFMT_VXWORKS,		/* VxWorks RTOS (Wind River) */
+
 	DBGFMT_MAX
 } debug_format_t;
 
@@ -600,6 +606,38 @@ void debugsym_tads_init(void);
 void debugsym_tads_emit(debug_symbol_t *sym);
 void debugsym_tads_finish(void);
 debug_symbol_t *debugsym_tads_parse(void *data, size_t len);
+
+/*
+ * NetWare NLM debug format support
+ */
+void debugsym_nlm_init(void);
+void debugsym_nlm_emit(debug_symbol_t *sym);
+void debugsym_nlm_finish(void);
+int debugsym_nlm_parse(void *data, size_t len);
+
+/*
+ * Symbian OS debug format support
+ */
+void debugsym_symbian_init(void);
+void debugsym_symbian_emit(debug_symbol_t *sym);
+void debugsym_symbian_finish(void);
+int debugsym_symbian_parse(void *data, size_t len);
+
+/*
+ * Palm OS debug format support
+ */
+void debugsym_palmos_init(void);
+void debugsym_palmos_emit(debug_symbol_t *sym);
+void debugsym_palmos_finish(void);
+int debugsym_palmos_parse(void *data, size_t len);
+
+/*
+ * VxWorks RTOS debug format support
+ */
+void debugsym_vxworks_init(void);
+void debugsym_vxworks_emit(debug_symbol_t *sym);
+void debugsym_vxworks_finish(void);
+int debugsym_vxworks_parse(void *data, size_t len);
 
 /* ===================================================================
  * UTILITY FUNCTIONS
