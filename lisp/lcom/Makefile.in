@@ -1,0 +1,69 @@
+#	$Id$
+#
+# Makefile.in for LISP compiler (lcom)
+#
+VPATH=@srcdir@
+srcdir=@srcdir@
+top_srcdir=@top_srcdir@
+top_builddir=@top_builddir@
+prefix=@prefix@
+exec_prefix=@exec_prefix@
+libexecdir=@libexecdir@
+
+CC=@CC@
+CFLAGS=@CFLAGS@ @ADD_CFLAGS@
+CPPFLAGS=@CPPFLAGS@ @ADD_CPPFLAGS@ -I$(top_builddir) -I$(top_srcdir)
+LDFLAGS=@LDFLAGS@
+LIBS=@LIBS@
+YACC=@YACC@
+LEX=@LEX@
+
+INSTALL=@INSTALL@
+INSTALL_PROGRAM=@INSTALL_PROGRAM@
+
+TARGET=lcom
+
+OBJS=main.o \
+     symtab.o \
+     types.o \
+     error.o \
+     builtins.o \
+     codegen.o \
+     lgram.o \
+     scan.o
+
+all: $(TARGET)
+
+$(TARGET): $(OBJS)
+	$(CC) $(LDFLAGS) -o $@ $(OBJS) $(LIBS)
+
+lgram.c lgram.h: lgram.y
+	$(YACC) -d -o lgram.c lgram.y
+
+scan.c: scan.l lgram.h
+	$(LEX) -o scan.c scan.l
+
+lgram.o: lgram.c lgram.h pass1.h
+	$(CC) $(CPPFLAGS) $(CFLAGS) -c lgram.c
+
+scan.o: scan.c lgram.h pass1.h
+	$(CC) $(CPPFLAGS) $(CFLAGS) -c scan.c
+
+.c.o:
+	$(CC) $(CPPFLAGS) $(CFLAGS) -c $<
+
+main.o: main.c pass1.h
+symtab.o: symtab.c pass1.h
+types.o: types.c pass1.h
+error.o: error.c pass1.h
+builtins.o: builtins.c pass1.h
+codegen.o: codegen.c pass1.h
+
+install: all
+	$(INSTALL_PROGRAM) $(TARGET) $(DESTDIR)$(libexecdir)/$(TARGET)
+
+clean:
+	rm -f $(OBJS) $(TARGET) lgram.c lgram.h scan.c
+
+distclean: clean
+	rm -f Makefile
