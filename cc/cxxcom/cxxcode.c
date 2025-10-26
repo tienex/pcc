@@ -26,6 +26,7 @@
 
 # include "pass1.h"
 # include "../../common/abi/abi.h"
+# include "seh.h"
 
 struct symtab spole0 = { 0, 0, 0, 0, 0, 0, 0, "base", "base", };
 struct symtab *spole = &spole0;
@@ -1362,33 +1363,60 @@ cxxabi_mangle_function(struct symtab *sp)
  *
  * try { ... } catch (Type e) { ... }
  *
- * Full implementation will:
- * 1. Create _seh_registration structure on stack
- * 2. Call _seh_register() to add to exception chain
- * 3. Use setjmp() for exception handling
- * 4. Generate handler code for each catch block
- * 5. Call _seh_unregister() when leaving scope
+ * Architecture limitations:
+ * PCC's current code generation architecture does not support the complex
+ * control flow needed for proper exception handling. A full implementation
+ * requires:
+ *
+ * 1. Stack frame modification to allocate _seh_registration structure
+ * 2. Prolog code to call _seh_register() before try block
+ * 3. setjmp() call to establish exception handler entry point
+ * 4. Exception type matching code for each catch block
+ * 5. Epilog code to call _seh_unregister() on all exit paths
+ * 6. Integration with RAII destructor unwinding
+ *
+ * This would require significant changes to:
+ * - Function prologue/epilogue generation (local.c, local2.c)
+ * - Stack frame layout (order.c)
+ * - Control flow graph management (optim.c)
+ * - Statement emission (ecomp() in pftn.c)
+ *
+ * Current implementation: Minimal stub with SEH headers included.
  */
 NODE *
 cxxtry(NODE *try_body, NODE *handler_seq)
 {
 	static int warned = 0;
-	
+
 	if (!warned) {
-		werror("try/catch blocks not yet fully implemented (stub)");
-		werror("Exception handling requires libseh integration");
+		werror("try/catch blocks not yet fully implemented");
+		werror("Exception handling requires architectural changes to code generator");
+		werror("See cxxcode.c:cxxtry() for details");
 		warned = 1;
 	}
 
-	/* For now, just execute the try body and ignore catch blocks */
-	/* TODO: Generate proper SEH frame setup code */
-	
+	/* For now, execute try body normally (no exception handling) */
 	if (try_body)
 		ecomp(try_body);
-	
+
 	if (handler_seq)
 		tfree(handler_seq);
-	
+
+	/* TODO: Full implementation requires:
+	 *
+	 * struct _seh_registration reg;
+	 * _seh_register(&reg, handler_func, NULL);
+	 * if (setjmp(reg.jmpbuf) == 0) {
+	 *     // try body
+	 * } else {
+	 *     // exception occurred - dispatch to catch blocks
+	 *     if (type_matches_catch1) { catch1_body; }
+	 *     else if (type_matches_catch2) { catch2_body; }
+	 *     else { _seh_reraise(); }
+	 * }
+	 * _seh_unregister(&reg);
+	 */
+
 	return NIL;
 }
 
@@ -1397,24 +1425,29 @@ cxxtry(NODE *try_body, NODE *handler_seq)
  *
  * catch (Type e) { ... }
  *
- * Full implementation will:
- * 1. Generate exception type matching code
- * 2. Extract exception object from SEH structure
- * 3. Bind exception to catch parameter
- * 4. Execute handler body
+ * This function is called during parsing to build the catch handler tree.
+ * In a full implementation, it would:
+ * 1. Extract type information from exception_decl
+ * 2. Create exception type descriptor for runtime type matching
+ * 3. Generate code to extract exception object from _seh_get_cxx_exception()
+ * 4. Bind exception to catch parameter variable
+ * 5. Return a node representing the catch block for cxxtry() to process
+ *
+ * Current implementation: Placeholder that frees nodes.
  */
 NODE *
 cxxcatch(NODE *exception_decl, NODE *handler_body)
 {
-	/* TODO: Generate catch block code */
-	/* For now, just free the nodes */
-	
+	/* TODO: Extract exception type and create type descriptor */
+	/* Would use: type_spec from exception_decl to create runtime type info */
+
 	if (exception_decl)
 		tfree(exception_decl);
-	
+
 	if (handler_body)
 		tfree(handler_body);
-	
+
+	/* TODO: Return node containing type descriptor and handler code */
 	return NIL;
 }
 
@@ -1424,36 +1457,48 @@ cxxcatch(NODE *exception_decl, NODE *handler_body)
  * throw expr;  - throw new exception
  * throw;       - re-throw current exception
  *
- * Full implementation will:
- * 1. Allocate exception object on heap
- * 2. Call constructor for exception object
- * 3. Create exception type descriptor
- * 4. Call _seh_raise_exception()
+ * A full implementation would generate code equivalent to:
+ *
+ * For "throw expr;":
+ *   1. void *exception_obj = malloc(sizeof(expr_type));
+ *   2. new (exception_obj) expr_type(expr);  // copy constructor
+ *   3. _seh_translate_cxx_exception(exception_obj);
+ *   4. _seh_raise_exception(EXCEPTION_CXX_EXCEPTION, 0, 1, &exception_obj);
+ *   5. [unreachable code - raise_exception does not return]
+ *
+ * For "throw;" (re-throw):
+ *   1. _seh_raise_exception(_seh_get_exception_code(), 0, 0, NULL);
+ *
+ * Current implementation: Placeholder warning.
  */
 NODE *
 cxxthrow(NODE *expr)
 {
 	static int warned = 0;
-	
+
 	if (!warned) {
-		werror("throw statements not yet fully implemented (stub)");
-		werror("Exception handling requires libseh integration");
+		werror("throw statements not yet fully implemented");
+		werror("Would require: exception object allocation, type descriptors, SEH calls");
+		werror("See cxxcode.c:cxxthrow() for implementation details");
 		warned = 1;
 	}
 
-	/* TODO: Generate proper throw code */
-	
 	if (expr) {
 		/* throw expr; - throw new exception */
 		tfree(expr);
+
+		/* TODO: Generate code:
+		 * - Evaluate expr
+		 * - Allocate exception object on heap
+		 * - Call copy/move constructor
+		 * - Call _seh_translate_cxx_exception()
+		 * - Call _seh_raise_exception()
+		 */
 	} else {
 		/* throw; - re-throw current exception */
-		/* Nothing to free */
+		/* TODO: Generate call to _seh_raise_exception() with current exception */
 	}
-	
-	/* For now, generate a simple error/abort placeholder */
-	/* In full implementation, this would call _seh_raise_exception() */
-	
+
 	return NIL;
 }
 
