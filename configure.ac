@@ -21,6 +21,8 @@ stabs=no
 dwarf=no
 # allowed: UNSIGNED (4-char u_int), INT (4-char int), SHORT (2-char u_short)
 wchar_type=INT
+# Default assembler format (gnu-as, nasm, yasm, fasm, apple-as, masm, jwasm, uasm, tasm, wasm)
+asm_format=gnu-as
 
 case "$target_os" in
 
@@ -47,6 +49,7 @@ case "$target_os" in
 	targos=darwin
 	abi=macho
 	stabs=yes
+	asm_format=apple-as
 	case "$target_os" in
 	    *10.*) targosver=10 ;;
 	    *9.*) targosver=9 ;;
@@ -484,6 +487,11 @@ if test "$useyasm" = "yes"; then
 	assembler="yasm"
 	ADD_CPPFLAGS="$ADD_CPPFLAGS -DUSE_YASM"
 fi
+AC_ARG_WITH(asm-format,
+	AS_HELP_STRING([--with-asm-format=<format>],
+		[Specify assembly output format: gnu-as (default), nasm, yasm, fasm, apple-as, masm, jwasm, uasm, tasm, wasm]),
+	asm_format=$withval,
+	[])
 AC_ARG_ENABLE(native,
 	AS_HELP_STRING([--enable-native],
 		[Build the compiler as a native rather than cross-build compiler]),
@@ -533,6 +541,7 @@ AC_SUBST(bootstrap)
 AC_SUBST(bootstrap_stage)
 AC_SUBST(bootstrap_stages)
 AC_SUBST(bootstrap_compare)
+AC_SUBST(asm_format)
 
 # Setup for ubuntu multiarch
 multiarch_path=
@@ -608,6 +617,10 @@ fi
 if test -n "$assembler"; then
 	AC_DEFINE_UNQUOTED(ASSEMBLER, "$assembler",
 		[Define path to alternate assembler])
+fi
+if test -n "$asm_format"; then
+	AC_DEFINE_UNQUOTED(ASM_FORMAT, "$asm_format",
+		[Define default assembly output format])
 fi
 if test -n "$linker"; then
 	AC_DEFINE_UNQUOTED(LINKER, "$linker",

@@ -36,6 +36,12 @@
 #include <unistd.h>
 
 #include "dwarf.h"
+#include "debug_emit.h"
+
+#if DEBUG_USE_X86ASM
+/* Access to x86 assembly context for conditional libx86asm usage */
+extern x86asm_ctx_t *asm_ctx;
+#endif
 
 /*
  * Basic DWARF definitions, from specification.
@@ -68,8 +74,7 @@ dwarfseg(int seg)
 {
 	if (seg == dwseg)
 		return;
-	/* XXX target code? */
-	printf("\t.section\t%s,\"\",@progbits\n", segn[seg]);
+	debug_emit_section(segn[seg], "", "@progbits");
 	lastloc = NOSEG;
 	dwseg = seg;
 }
@@ -77,20 +82,22 @@ dwarfseg(int seg)
 static void
 dwslab(int seg, int lbl)
 {
+	char labelbuf[64];
 	dwarfseg(seg);
-	printf(PRTPREF DLABEL ":\n", lbl);
+	snprintf(labelbuf, sizeof(labelbuf), DLABEL, lbl);
+	debug_emit_label(labelbuf);
 }
 
 static void
 p1b(int v)
 {
-	printf(PRTPREF "%s 0x%x\n", astypnames[CHAR], v);
+	debug_emit_byte((uint8_t)v);
 }
 
 static void
 p2w(int v)
 {
-	printf(PRTPREF "%s 0x%x\n", astypnames[SHORT], v);
+	debug_emit_word((uint16_t)v);
 }
 
 static int
@@ -120,7 +127,7 @@ apair(int d, int e)
 static void
 strng(char *s)
 {
-	printf(PRTPREF "\t.ascii \"%s\\0\"\n", s); /* XXX common code? */
+	debug_emit_asciz(s);
 }
 
 static void
@@ -141,9 +148,11 @@ dwslabstr(int lbl, char *s)
 static void
 ilbl(int l)
 {
+	char labelbuf[64];
 	dwarfseg(DINFO);
-	printf(PRTPREF "%s " DLABEL "\n", astypnames[LONG], l);
-	debug_info_sz += (DW64 * 4 + 4);
+	snprintf(labelbuf, sizeof(labelbuf), DLABEL, l);
+	debug_emit_ref(labelbuf, DW64 ? 8 : 4);
+	debug_info_sz += (DW64 ? 8 : 4);
 }
 
 static void
@@ -156,9 +165,11 @@ il128(int d)
 static void
 p412l(int lbl)
 {
+	char labelbuf[64];
 	if (DW64)
-		printf(PRTPREF "%s 0xffffff00\n", astypnames[INT]);
-	printf(PRTPREF "%s " DLABEL "\n", astypnames[LONG], lbl);
+		debug_emit_long(0xffffff00);
+	snprintf(labelbuf, sizeof(labelbuf), DLABEL, lbl);
+	debug_emit_ref(labelbuf, 4);
 }
 
 static void
@@ -231,7 +242,11 @@ dwarf_init(char *iname)
 	ilbl(dwetext = dwlab());
 
 	locctr(PROG, NULL);
-	printf(PRTPREF DLABEL ":\n", dwbtext);
+	{
+		char labelbuf[64];
+		snprintf(labelbuf, sizeof(labelbuf), DLABEL, dwbtext);
+		debug_emit_label(labelbuf);
+	}
 }
 
 void
@@ -248,12 +263,24 @@ dwarf_file(char *fn)
 void
 dwarf_end()
 {
+	char labelbuf[64];
+	char valbuf[32];
 	locctr(PROG, NULL);
-	printf(PRTPREF DLABEL ":\n", dwetext);
+	snprintf(labelbuf, sizeof(labelbuf), DLABEL, dwetext);
+	debug_emit_label(labelbuf);
 	if (dwcfl)
 		dwslabstr(dwcfl, dwname ? dwname : "<unknown>");
-	printf(PRTPREF "\t.set " DLABEL ",%d\n",
-	    debug_info_sz_lbl, debug_info_sz);
+	/* Emit .set directive for size */
+	snprintf(labelbuf, sizeof(labelbuf), DLABEL, debug_info_sz_lbl);
+	snprintf(valbuf, sizeof(valbuf), "%d", debug_info_sz);
+#if DEBUG_USE_X86ASM
+	if (asm_ctx) {
+		x86asm_set(asm_ctx, labelbuf, valbuf);
+	} else
+#endif
+	{
+		printf(PRTPREF "\t.set %s,%s\n", labelbuf, valbuf);
+	}
 }
 
 #endif

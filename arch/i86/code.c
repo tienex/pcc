@@ -28,6 +28,41 @@
 
 
 # include "pass1.h"
+# include "x86asm.h"
+
+x86asm_ctx_t *asm_ctx = NULL;
+
+/*
+ * Convert ASM_FORMAT string to x86asm_format_t enum
+ */
+static x86asm_format_t
+get_asm_format(void)
+{
+#ifdef ASM_FORMAT
+	if (strcmp(ASM_FORMAT, "gnu-as") == 0)
+		return ASM_FMT_GNU_AS;
+	if (strcmp(ASM_FORMAT, "apple-as") == 0)
+		return ASM_FMT_APPLE_AS;
+	if (strcmp(ASM_FORMAT, "nasm") == 0)
+		return ASM_FMT_NASM;
+	if (strcmp(ASM_FORMAT, "yasm") == 0)
+		return ASM_FMT_YASM;
+	if (strcmp(ASM_FORMAT, "fasm") == 0)
+		return ASM_FMT_FASM;
+	if (strcmp(ASM_FORMAT, "masm") == 0)
+		return ASM_FMT_MASM;
+	if (strcmp(ASM_FORMAT, "jwasm") == 0)
+		return ASM_FMT_JWASM;
+	if (strcmp(ASM_FORMAT, "uasm") == 0)
+		return ASM_FMT_UASM;
+	if (strcmp(ASM_FORMAT, "tasm") == 0)
+		return ASM_FMT_TASM;
+	if (strcmp(ASM_FORMAT, "wasm") == 0)
+		return ASM_FMT_WASM;
+#endif
+	/* Default to GNU AS for i86 */
+	return ASM_FMT_GNU_AS;
+}
 
 /*
  * Print out assembler segment name.
@@ -35,21 +70,27 @@
 void
 setseg(int seg, char *name)
 {
+	x86asm_segment_t segment;
+
+	if (!asm_ctx) return;
+
 	switch (seg) {
-	case PROG: name = ".TEXT"; break;
+	case PROG: segment = SEG_TEXT; break;
 	case DATA:
-	case LDATA: name = ".DATA"; break;
-	case UDATA: break;
+	case LDATA: segment = SEG_DATA; break;
+	case UDATA: return; /* BSS handled separately */
 	case STRNG:
-	case RDATA: name = ".DATA"; break;
-	case CTORS: name = ".section\t.ctors,\"aw\",@progbits"; break;
-	case DTORS: name = ".section\t.dtors,\"aw\",@progbits"; break;
-	case NMSEG: 
-		printf("\t.section %s,\"a%c\",@progbits\n", name,
-		    cftnsp ? 'x' : 'w');
+	case RDATA: segment = SEG_DATA; break;
+	case CTORS: segment = SEG_CTORS; break;
+	case DTORS: segment = SEG_DTORS; break;
+	case NMSEG:
+		/* Custom section - use the name parameter */
+		x86asm_segment(asm_ctx, SEG_CUSTOM, name);
+		return;
+	default:
 		return;
 	}
-	printf("\t%s\n", name);
+	x86asm_segment(asm_ctx, segment, NULL);
 }
 
 /*
@@ -60,16 +101,19 @@ void
 defloc(struct symtab *sp)
 {
 	char *name;
+	char labelbuf[64];
+
+	if (!asm_ctx) return;
 
 	if ((name = sp->soname) == NULL)
 		name = exname(sp->sname);
-	if (sp->sclass == EXTDEF) {
-		printf("	.globl %s\n", name);
+
+	if (sp->slevel == 0) {
+		x86asm_label(asm_ctx, name, sp->sclass == EXTDEF);
+	} else {
+		snprintf(labelbuf, sizeof(labelbuf), LABFMT, sp->soffset);
+		x86asm_label(asm_ctx, labelbuf, 0);
 	}
-	if (sp->slevel == 0)
-		printf("%s:\n", name);
-	else
-		printf(LABFMT ":\n", sp->soffset);
 }
 
 int structrettemp;
@@ -248,13 +292,22 @@ bfcode(struct symtab **sp, int cnt)
 void
 ejobcode(int flag)
 {
-	printf("\t.asciz \"PCC: %s\"\n", VERSSTR);
+	char ident_str[256];
+	if (asm_ctx) {
+		snprintf(ident_str, sizeof(ident_str), "PCC: %s", VERSSTR);
+		x86asm_ident(asm_ctx, ident_str);
+		x86asm_destroy(asm_ctx);
+		asm_ctx = NULL;
+	}
 }
 
 void
 bjobcode(void)
 {
 	astypnames[INT] = astypnames[UNSIGNED] = "\t.long";
+
+	/* Initialize x86asm context for 16-bit mode (i86) */
+	asm_ctx = x86asm_create(get_asm_format(), stdout, 16);
 }
 
 /*

@@ -343,6 +343,11 @@ extern int mcmodel;
 #define	HAVE_WEAKREF
 #define	TARGET_FLT_EVAL_METHOD	2	/* all as long double */
 
+/* libx86asm context for assembly generation */
+struct x86asm_ctx;
+typedef struct x86asm_ctx x86asm_ctx_t;
+extern x86asm_ctx_t *asm_ctx;
+
 /*
  * Extended assembler macros.
  */

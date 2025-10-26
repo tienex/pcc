@@ -34,7 +34,10 @@ typedef enum {
     ASM_FMT_WASM,        /* Watcom Assembler */
     ASM_FMT_OWASM,       /* Open Watcom Assembler */
     ASM_FMT_NASM,        /* Netwide Assembler */
-    ASM_FMT_YASM         /* Yet Another Assembler */
+    ASM_FMT_YASM,        /* Yet Another Assembler */
+    ASM_FMT_FASM,        /* Flat Assembler */
+    ASM_FMT_JWASM,       /* JWasm (MASM-compatible) */
+    ASM_FMT_UASM         /* UASM (JWasm successor) */
 } x86asm_format_t;
 
 /* Register types */
@@ -330,6 +333,47 @@ void x86asm_align(x86asm_ctx_t *ctx, int alignment);
 
 /* Emit a raw directive */
 void x86asm_directive(x86asm_ctx_t *ctx, const char *name, const char *value);
+
+/* High-level directive functions */
+
+/* Symbol type (for ELF: .type symbol,@function or @object) */
+typedef enum {
+	SYMBOL_TYPE_FUNCTION,
+	SYMBOL_TYPE_OBJECT,
+	SYMBOL_TYPE_NOTYPE
+} x86asm_symbol_type_t;
+
+void x86asm_symbol_type(x86asm_ctx_t *ctx, const char *symbol,
+                        x86asm_symbol_type_t type);
+
+/* Symbol size (for ELF: .size symbol,size) */
+void x86asm_symbol_size(x86asm_ctx_t *ctx, const char *symbol, size_t size);
+
+/* Ident/version string (e.g., .ident "compiler version") */
+void x86asm_ident(x86asm_ctx_t *ctx, const char *ident_string);
+
+/* Indirect symbol (for Mach-O: .indirect_symbol symbol) */
+void x86asm_indirect_symbol(x86asm_ctx_t *ctx, const char *symbol);
+
+/* End directive (for some formats like ELF: .end) */
+void x86asm_end(x86asm_ctx_t *ctx);
+
+/* Common/local common directives (for BSS allocation) */
+void x86asm_comm(x86asm_ctx_t *ctx, const char *symbol, size_t size, int alignment);
+void x86asm_lcomm(x86asm_ctx_t *ctx, const char *symbol, size_t size, int alignment);
+
+/* Symbol visibility directives */
+void x86asm_local(x86asm_ctx_t *ctx, const char *symbol);
+void x86asm_hidden(x86asm_ctx_t *ctx, const char *symbol);
+void x86asm_weak(x86asm_ctx_t *ctx, const char *symbol);
+void x86asm_weakref(x86asm_ctx_t *ctx, const char *symbol, const char *target);
+
+/* Symbol aliasing directive */
+void x86asm_set(x86asm_ctx_t *ctx, const char *symbol, const char *value);
+
+/* Section management directives */
+void x86asm_previous(x86asm_ctx_t *ctx);
+void x86asm_p2align(x86asm_ctx_t *ctx, int power);
 
 /* Helper functions for creating operands */
 x86asm_operand_t x86asm_op_reg(x86asm_reg_t reg, int size);
