@@ -1,0 +1,46 @@
+#	$Id$
+#
+# Makefile.in for libthread - C11 threading support library
+#
+VPATH=@srcdir@
+srcdir=@srcdir@
+top_srcdir=@top_srcdir@
+top_builddir=@top_builddir@
+CC = @CC@
+AR = ar
+RANLIB = @RANLIB@
+CFLAGS = @CFLAGS@ @ADD_CFLAGS@
+CPPFLAGS = @CPPFLAGS@ @ADD_CPPFLAGS@ -I$(srcdir) -I$(top_builddir)
+LIBS = @PTHREAD_LIBS@
+INSTALL = @INSTALL@
+INSTALL_DATA = @INSTALL_DATA@
+
+prefix = @prefix@
+exec_prefix = @exec_prefix@
+libdir = @libdir@
+includedir = @includedir@
+
+OBJS=	threads.o
+
+LIB=libthread.a
+
+all: $(LIB)
+
+$(LIB): $(OBJS)
+	$(AR) rv $@ $(OBJS)
+	$(RANLIB) $@
+
+threads.o: $(srcdir)/threads.c $(srcdir)/threads.h
+	$(CC) $(CFLAGS) $(CPPFLAGS) -c $(srcdir)/threads.c
+
+install: $(LIB)
+	test -z "$(DESTDIR)$(libdir)" || mkdir -p "$(DESTDIR)$(libdir)"
+	test -z "$(DESTDIR)$(includedir)" || mkdir -p "$(DESTDIR)$(includedir)"
+	$(INSTALL_DATA) $(LIB) $(DESTDIR)$(libdir)
+	$(INSTALL_DATA) $(srcdir)/threads.h $(DESTDIR)$(includedir)
+
+clean:
+	rm -f $(OBJS) $(LIB)
+
+distclean: clean
+	rm -f Makefile

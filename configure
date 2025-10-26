@@ -662,12 +662,22 @@ targmach
 targosver
 targos
 ALLOCA
-RANLIB
+PORTABLE_LIBS
+BUILD_LIBMETAWARE
+BUILD_LIBDECIMAL
+BUILD_LIBCKDINT
+BUILD_LIBSTDBIT
+BUILD_LIBTHREAD
+BUILD_LIBUNICODE
+PTHREAD_LIBS
+C23_CFLAGS
+C11_CFLAGS
 LEXLIB
 LEX_OUTPUT_ROOT
 LEX
 YFLAGS
 YACC
+RANLIB
 INSTALL_DATA
 INSTALL_SCRIPT
 INSTALL_PROGRAM
@@ -5163,6 +5173,108 @@ test -z "$INSTALL_SCRIPT" && INSTALL_SCRIPT='${INSTALL}'
 
 test -z "$INSTALL_DATA" && INSTALL_DATA='${INSTALL} -m 644'
 
+if test -n "$ac_tool_prefix"; then
+  # Extract the first word of "${ac_tool_prefix}ranlib", so it can be a program name with args.
+set dummy ${ac_tool_prefix}ranlib; ac_word=$2
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
+printf %s "checking for $ac_word... " >&6; }
+if test ${ac_cv_prog_RANLIB+y}
+then :
+  printf %s "(cached) " >&6
+else $as_nop
+  if test -n "$RANLIB"; then
+  ac_cv_prog_RANLIB="$RANLIB" # Let the user override the test.
+else
+as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  case $as_dir in #(((
+    '') as_dir=./ ;;
+    */) ;;
+    *) as_dir=$as_dir/ ;;
+  esac
+    for ac_exec_ext in '' $ac_executable_extensions; do
+  if as_fn_executable_p "$as_dir$ac_word$ac_exec_ext"; then
+    ac_cv_prog_RANLIB="${ac_tool_prefix}ranlib"
+    printf "%s\n" "$as_me:${as_lineno-$LINENO}: found $as_dir$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+  done
+IFS=$as_save_IFS
+
+fi
+fi
+RANLIB=$ac_cv_prog_RANLIB
+if test -n "$RANLIB"; then
+  { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $RANLIB" >&5
+printf "%s\n" "$RANLIB" >&6; }
+else
+  { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: no" >&5
+printf "%s\n" "no" >&6; }
+fi
+
+
+fi
+if test -z "$ac_cv_prog_RANLIB"; then
+  ac_ct_RANLIB=$RANLIB
+  # Extract the first word of "ranlib", so it can be a program name with args.
+set dummy ranlib; ac_word=$2
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
+printf %s "checking for $ac_word... " >&6; }
+if test ${ac_cv_prog_ac_ct_RANLIB+y}
+then :
+  printf %s "(cached) " >&6
+else $as_nop
+  if test -n "$ac_ct_RANLIB"; then
+  ac_cv_prog_ac_ct_RANLIB="$ac_ct_RANLIB" # Let the user override the test.
+else
+as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  case $as_dir in #(((
+    '') as_dir=./ ;;
+    */) ;;
+    *) as_dir=$as_dir/ ;;
+  esac
+    for ac_exec_ext in '' $ac_executable_extensions; do
+  if as_fn_executable_p "$as_dir$ac_word$ac_exec_ext"; then
+    ac_cv_prog_ac_ct_RANLIB="ranlib"
+    printf "%s\n" "$as_me:${as_lineno-$LINENO}: found $as_dir$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+  done
+IFS=$as_save_IFS
+
+fi
+fi
+ac_ct_RANLIB=$ac_cv_prog_ac_ct_RANLIB
+if test -n "$ac_ct_RANLIB"; then
+  { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_ct_RANLIB" >&5
+printf "%s\n" "$ac_ct_RANLIB" >&6; }
+else
+  { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: no" >&5
+printf "%s\n" "no" >&6; }
+fi
+
+  if test "x$ac_ct_RANLIB" = x; then
+    RANLIB=":"
+  else
+    case $cross_compiling:$ac_tool_warned in
+yes:)
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: WARNING: using cross tools not prefixed with host triplet" >&5
+printf "%s\n" "$as_me: WARNING: using cross tools not prefixed with host triplet" >&2;}
+ac_tool_warned=yes ;;
+esac
+    RANLIB=$ac_ct_RANLIB
+  fi
+else
+  RANLIB="$ac_cv_prog_RANLIB"
+fi
+
 for ac_prog in 'bison -y' byacc
 do
   # Extract the first word of "$ac_prog", so it can be a program name with args.
@@ -5543,6 +5655,86 @@ if test $libvmf != yes ; then
 fi
 fi
 
+# Check for C11 standard support
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for C11 support" >&5
+printf %s "checking for C11 support... " >&6; }
+save_CFLAGS="$CFLAGS"
+CFLAGS="$CFLAGS -std=c11"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+
+        #if __STDC_VERSION__ < 201112L
+        #error C11 not supported
+        #endif
+
+int
+main (void)
+{
+
+  ;
+  return 0;
+}
+
+_ACEOF
+if ac_fn_c_try_compile "$LINENO"
+then :
+
+    have_c11=yes
+    C11_CFLAGS="-std=c11"
+
+else $as_nop
+
+    have_c11=no
+    C11_CFLAGS=""
+
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.beam conftest.$ac_ext
+CFLAGS="$save_CFLAGS"
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $have_c11" >&5
+printf "%s\n" "$have_c11" >&6; }
+
+
+# Check for C23 standard support
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for C23 support" >&5
+printf %s "checking for C23 support... " >&6; }
+save_CFLAGS="$CFLAGS"
+CFLAGS="$CFLAGS -std=c2x"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+
+        #if __STDC_VERSION__ < 202000L
+        #error C23 not supported
+        #endif
+
+int
+main (void)
+{
+
+  ;
+  return 0;
+}
+
+_ACEOF
+if ac_fn_c_try_compile "$LINENO"
+then :
+
+    have_c23=yes
+    C23_CFLAGS="-std=c2x"
+
+else $as_nop
+
+    have_c23=no
+    C23_CFLAGS=""
+
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.beam conftest.$ac_ext
+CFLAGS="$save_CFLAGS"
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $have_c23" >&5
+printf "%s\n" "$have_c23" >&6; }
+
+
 # Checks for header files.
 # AC_CHECK_HEADERS([fcntl.h stdlib.h string.h unistd.h])
 ac_fn_c_check_header_compile "$LINENO" "string.h" "ac_cv_header_string_h" "$ac_includes_default"
@@ -5606,6 +5798,240 @@ if test $ac_cv_header_sys_wait_h = yes; then
 printf "%s\n" "#define HAVE_SYS_WAIT_H 1" >>confdefs.h
 
 fi
+
+
+# Check for C11 Unicode support (uchar.h)
+       for ac_header in uchar.h
+do :
+  ac_fn_c_check_header_compile "$LINENO" "uchar.h" "ac_cv_header_uchar_h" "$ac_includes_default"
+if test "x$ac_cv_header_uchar_h" = xyes
+then :
+  printf "%s\n" "#define HAVE_UCHAR_H 1" >>confdefs.h
+ have_uchar=yes
+else $as_nop
+  have_uchar=no
+fi
+
+done
+
+# Check for C11 threads support (threads.h)
+       for ac_header in threads.h
+do :
+  ac_fn_c_check_header_compile "$LINENO" "threads.h" "ac_cv_header_threads_h" "$ac_includes_default"
+if test "x$ac_cv_header_threads_h" = xyes
+then :
+  printf "%s\n" "#define HAVE_THREADS_H 1" >>confdefs.h
+ have_threads=yes
+else $as_nop
+  have_threads=no
+fi
+
+done
+
+# Check for C23 bit utilities (stdbit.h)
+       for ac_header in stdbit.h
+do :
+  ac_fn_c_check_header_compile "$LINENO" "stdbit.h" "ac_cv_header_stdbit_h" "$ac_includes_default"
+if test "x$ac_cv_header_stdbit_h" = xyes
+then :
+  printf "%s\n" "#define HAVE_STDBIT_H 1" >>confdefs.h
+ have_stdbit=yes
+else $as_nop
+  have_stdbit=no
+fi
+
+done
+
+# Check for C23 checked integer arithmetic (stdckdint.h)
+       for ac_header in stdckdint.h
+do :
+  ac_fn_c_check_header_compile "$LINENO" "stdckdint.h" "ac_cv_header_stdckdint_h" "$ac_includes_default"
+if test "x$ac_cv_header_stdckdint_h" = xyes
+then :
+  printf "%s\n" "#define HAVE_STDCKDINT_H 1" >>confdefs.h
+ have_stdckdint=yes
+else $as_nop
+  have_stdckdint=no
+fi
+
+done
+
+# Check for IEEE 754-2008 decimal floating point support
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for _Decimal64 support" >&5
+printf %s "checking for _Decimal64 support... " >&6; }
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+
+        #ifndef __STDC_DEC_FP__
+        /* Try to use _Decimal64 anyway */
+        _Decimal64 x;
+        #endif
+
+int
+main (void)
+{
+
+        _Decimal64 x = 1.0DD;
+        x = x + 1.0DD;
+
+  ;
+  return 0;
+}
+
+_ACEOF
+if ac_fn_c_try_compile "$LINENO"
+then :
+  have_decimal=yes
+else $as_nop
+  have_decimal=no
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.beam conftest.$ac_ext
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $have_decimal" >&5
+printf "%s\n" "$have_decimal" >&6; }
+
+# Check for POSIX threads if C11 threads not available
+PTHREAD_LIBS=""
+if test "$have_threads" = "no"; then
+    { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for library containing pthread_create" >&5
+printf %s "checking for library containing pthread_create... " >&6; }
+if test ${ac_cv_search_pthread_create+y}
+then :
+  printf %s "(cached) " >&6
+else $as_nop
+  ac_func_search_save_LIBS=$LIBS
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+char pthread_create ();
+int
+main (void)
+{
+return pthread_create ();
+  ;
+  return 0;
+}
+_ACEOF
+for ac_lib in '' pthread
+do
+  if test -z "$ac_lib"; then
+    ac_res="none required"
+  else
+    ac_res=-l$ac_lib
+    LIBS="-l$ac_lib  $ac_func_search_save_LIBS"
+  fi
+  if ac_fn_c_try_link "$LINENO"
+then :
+  ac_cv_search_pthread_create=$ac_res
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.beam \
+    conftest$ac_exeext
+  if test ${ac_cv_search_pthread_create+y}
+then :
+  break
+fi
+done
+if test ${ac_cv_search_pthread_create+y}
+then :
+
+else $as_nop
+  ac_cv_search_pthread_create=no
+fi
+rm conftest.$ac_ext
+LIBS=$ac_func_search_save_LIBS
+fi
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_cv_search_pthread_create" >&5
+printf "%s\n" "$ac_cv_search_pthread_create" >&6; }
+ac_res=$ac_cv_search_pthread_create
+if test "$ac_res" != no
+then :
+  test "$ac_res" = "none required" || LIBS="$ac_res $LIBS"
+
+        if test "$ac_cv_search_pthread_create" != "none required"; then
+            PTHREAD_LIBS="$ac_cv_search_pthread_create"
+        fi
+        have_pthreads=yes
+
+else $as_nop
+  have_pthreads=no
+fi
+
+fi
+
+
+# Determine which libraries to build
+BUILD_LIBUNICODE=no
+BUILD_LIBTHREAD=no
+BUILD_LIBSTDBIT=no
+BUILD_LIBCKDINT=no
+BUILD_LIBDECIMAL=no
+BUILD_LIBMETAWARE=yes  # Always build MetaWare extensions
+PORTABLE_LIBS=""
+
+if test "$have_uchar" = "no"; then
+    BUILD_LIBUNICODE=yes
+    PORTABLE_LIBS="$PORTABLE_LIBS libunicode"
+
+printf "%s\n" "#define NEED_LIBUNICODE 1" >>confdefs.h
+
+    { printf "%s\n" "$as_me:${as_lineno-$LINENO}: Will build portable libunicode (C11 Unicode support)" >&5
+printf "%s\n" "$as_me: Will build portable libunicode (C11 Unicode support)" >&6;}
+fi
+
+if test "$have_threads" = "no"; then
+    BUILD_LIBTHREAD=yes
+    PORTABLE_LIBS="$PORTABLE_LIBS libthread"
+
+printf "%s\n" "#define NEED_LIBTHREAD 1" >>confdefs.h
+
+    { printf "%s\n" "$as_me:${as_lineno-$LINENO}: Will build portable libthread (C11 threading support)" >&5
+printf "%s\n" "$as_me: Will build portable libthread (C11 threading support)" >&6;}
+fi
+
+if test "$have_stdbit" = "no"; then
+    BUILD_LIBSTDBIT=yes
+    PORTABLE_LIBS="$PORTABLE_LIBS libstdbit"
+
+printf "%s\n" "#define NEED_LIBSTDBIT 1" >>confdefs.h
+
+    { printf "%s\n" "$as_me:${as_lineno-$LINENO}: Will build portable libstdbit (C23 bit utilities)" >&5
+printf "%s\n" "$as_me: Will build portable libstdbit (C23 bit utilities)" >&6;}
+fi
+
+if test "$have_stdckdint" = "no"; then
+    BUILD_LIBCKDINT=yes
+    PORTABLE_LIBS="$PORTABLE_LIBS libckdint"
+
+printf "%s\n" "#define NEED_LIBCKDINT 1" >>confdefs.h
+
+    { printf "%s\n" "$as_me:${as_lineno-$LINENO}: Will build portable libckdint (C23 checked arithmetic)" >&5
+printf "%s\n" "$as_me: Will build portable libckdint (C23 checked arithmetic)" >&6;}
+fi
+
+if test "$have_decimal" = "no"; then
+    BUILD_LIBDECIMAL=yes
+    PORTABLE_LIBS="$PORTABLE_LIBS libdecimal"
+
+printf "%s\n" "#define NEED_LIBDECIMAL 1" >>confdefs.h
+
+    { printf "%s\n" "$as_me:${as_lineno-$LINENO}: Will build portable libdecimal (IEEE 754-2008 decimal FP)" >&5
+printf "%s\n" "$as_me: Will build portable libdecimal (IEEE 754-2008 decimal FP)" >&6;}
+fi
+
+# Always build MetaWare extensions library (it's opt-in via header)
+PORTABLE_LIBS="$PORTABLE_LIBS libmetaware"
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: Will build MetaWare High C extensions library (libmetaware)" >&5
+printf "%s\n" "$as_me: Will build MetaWare High C extensions library (libmetaware)" >&6;}
+
+
+
+
+
+
+
 
 
 # Checks for library functions.
@@ -6042,7 +6468,7 @@ esac
 
 
 
-ac_config_files="$ac_config_files Makefile cc/Makefile cc/cc/Makefile cc/cpp/Makefile cc/ccom/Makefile cc/cxxcom/Makefile cc/driver/Makefile f77/Makefile f77/f77/Makefile f77/fcom/Makefile pascal/Makefile pascal/pascal/Makefile pascal/pcom/Makefile common/abi/Makefile include/Makefile"
+ac_config_files="$ac_config_files Makefile cc/Makefile cc/cc/Makefile cc/cpp/Makefile cc/ccom/Makefile cc/cxxcom/Makefile cc/driver/Makefile f77/Makefile f77/f77/Makefile f77/fcom/Makefile pascal/Makefile pascal/pascal/Makefile pascal/pcom/Makefile common/abi/Makefile include/Makefile libunicode/Makefile libthread/Makefile libstdbit/Makefile libckdint/Makefile libdecimal/Makefile libmetaware/Makefile libblocks/Makefile"
 
 cat >confcache <<\_ACEOF
 # This file is a shell script that caches the results of configure
@@ -6747,6 +7173,13 @@ do
     "pascal/pcom/Makefile") CONFIG_FILES="$CONFIG_FILES pascal/pcom/Makefile" ;;
     "common/abi/Makefile") CONFIG_FILES="$CONFIG_FILES common/abi/Makefile" ;;
     "include/Makefile") CONFIG_FILES="$CONFIG_FILES include/Makefile" ;;
+    "libunicode/Makefile") CONFIG_FILES="$CONFIG_FILES libunicode/Makefile" ;;
+    "libthread/Makefile") CONFIG_FILES="$CONFIG_FILES libthread/Makefile" ;;
+    "libstdbit/Makefile") CONFIG_FILES="$CONFIG_FILES libstdbit/Makefile" ;;
+    "libckdint/Makefile") CONFIG_FILES="$CONFIG_FILES libckdint/Makefile" ;;
+    "libdecimal/Makefile") CONFIG_FILES="$CONFIG_FILES libdecimal/Makefile" ;;
+    "libmetaware/Makefile") CONFIG_FILES="$CONFIG_FILES libmetaware/Makefile" ;;
+    "libblocks/Makefile") CONFIG_FILES="$CONFIG_FILES libblocks/Makefile" ;;
 
   *) as_fn_error $? "invalid argument: \`$ac_config_target'" "$LINENO" 5;;
   esac
@@ -7356,6 +7789,14 @@ echo "Has native floating point ........ $nativefp"
 echo "Has GCC compatibility ............ $gcccompat"
 echo "Has PCC debugging ................ $pccdebug"
 echo "Type of wchar_t is ............... ${wchar_type} (${wchar_size} chars)"
+echo "C11 support ...................... ${have_c11:-no}"
+echo "C23 support ...................... ${have_c23:-no}"
+echo "Build portable Unicode library ... ${BUILD_LIBUNICODE}"
+echo "Build portable Threading library . ${BUILD_LIBTHREAD}"
+echo "Build portable Bit utils library . ${BUILD_LIBSTDBIT}"
+echo "Build portable Checked int library ${BUILD_LIBCKDINT}"
+echo "Build portable Decimal FP library  ${BUILD_LIBDECIMAL}"
+echo "Build MetaWare extensions library  ${BUILD_LIBMETAWARE}"
 echo
 echo "Configure finished.  Do 'make && make install' to compile and install.
 "

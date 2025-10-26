@@ -10,6 +10,13 @@ BOOTSTRAP = @bootstrap@
 BOOTSTRAP_STAGES = @bootstrap_stages@
 BOOTSTRAP_COMPARE = @bootstrap_compare@
 
+# C11/C23 portable libraries configuration
+BUILD_LIBUNICODE=@BUILD_LIBUNICODE@
+BUILD_LIBTHREAD=@BUILD_LIBTHREAD@
+
+# Portable libraries are substituted by configure based on system needs
+PORTABLE_LIBS=@PORTABLE_LIBS@
+
 # Installation directories
 prefix = @prefix@
 exec_prefix = @exec_prefix@
@@ -20,8 +27,8 @@ libexecdir = @libexecdir@
 C_SUBDIRS=	common/abi include
 CC_SUBDIR=	cc
 EXTRA_SUBDIRS=	pascal f77
-ALL_SUBDIRS=	$(C_SUBDIRS) $(CC_SUBDIR)
-DIST_SUBDIRS=	$(C_SUBDIRS) $(CC_SUBDIR) $(EXTRA_SUBDIRS)
+ALL_SUBDIRS=	$(PORTABLE_LIBS) $(C_SUBDIRS) $(CC_SUBDIR)
+DIST_SUBDIRS=	$(C_SUBDIRS) $(CC_SUBDIR) $(EXTRA_SUBDIRS) libunicode libthread libstdbit libckdint libdecimal libmetaware libblocks
 
 # Default targets - conditional on bootstrap
 all:
@@ -82,156 +89,46 @@ distclean:
 		    exec $(MAKE) $(MFLAGS) $@) || exit $$?; \
 		echo "<=== $$_nextdir_"; \
 	done
-	rm -rf Makefile config.log stamp-h1 config.status \
-	    configure.lineno config.h autom4te.cache
+	rm -f config.log config.status include/config.h.in~ include/config.h
 
-# ============================================================================
-# Bootstrap targets - integrated with --enable-bootstrap
-# ============================================================================
-
-BOOTSTRAP_DIR = .bootstrap
-STAGE1_DIR = $(BOOTSTRAP_DIR)/stage1
-STAGE2_DIR = $(BOOTSTRAP_DIR)/stage2
-STAGE3_DIR = $(BOOTSTRAP_DIR)/stage3
-
-# Main bootstrap build target
-bootstrap-build: bootstrap-check
-	@echo "=========================================="
-	@echo "PCC Multi-Stage Bootstrap Build"
-	@echo "Stages: $(BOOTSTRAP_STAGES)"
-	@echo "Comparison: $(BOOTSTRAP_COMPARE)"
-	@echo "=========================================="
+# Bootstrap build
+bootstrap-build:
+	@echo "Starting bootstrap build ($(BOOTSTRAP_STAGES) stages)"
 	@$(MAKE) bootstrap-stage1
-	@if [ "$(BOOTSTRAP_STAGES)" -ge "2" ]; then \
-		$(MAKE) bootstrap-stage2; \
-	fi
-	@if [ "$(BOOTSTRAP_STAGES)" -ge "3" ]; then \
+	@$(MAKE) bootstrap-stage2
+	@if [ "$(BOOTSTRAP_STAGES)" = "3" ]; then \
 		$(MAKE) bootstrap-stage3; \
-	fi
-	@if [ "$(BOOTSTRAP_STAGES)" -ge "3" ] && [ "$(BOOTSTRAP_COMPARE)" = "yes" ]; then \
 		$(MAKE) bootstrap-compare; \
 	fi
-	@echo "=========================================="
-	@echo "Bootstrap build completed successfully!"
-	@echo "=========================================="
 
-# Check prerequisites
-bootstrap-check:
-	@if [ ! -f configure ]; then \
-		echo "Error: configure script not found. Run autoconf first."; \
-		exit 1; \
-	fi
-
-# Stage 1: Build with system compiler
 bootstrap-stage1:
-	@echo ""
-	@echo "==== Building Stage 1 (with system compiler) ===="
-	@rm -rf $(STAGE1_DIR)
-	@mkdir -p $(STAGE1_DIR)
-	@cd $(STAGE1_DIR) && \
-	    $(SHELL) ../../configure --prefix=`pwd`/install \
-	        --disable-bootstrap && \
-	    $(MAKE) all-c && \
-	    $(MAKE) install-c
-	@echo "Stage 1 completed: Compiler built with system compiler"
+	@echo "===> Bootstrap Stage 1: Building with system compiler"
+	@$(MAKE) all-standard CC="$(CC)" CFLAGS="$(CFLAGS)"
 
-# Stage 2: Build with stage 1 compiler
 bootstrap-stage2:
-	@echo ""
-	@echo "==== Building Stage 2 (with stage 1 compiler) ===="
-	@rm -rf $(STAGE2_DIR)
-	@mkdir -p $(STAGE2_DIR)
-	@cd $(STAGE2_DIR) && \
-	    CC=`cd $(STAGE1_DIR)/install/bin && pwd`/pcc \
-	    $(SHELL) ../../configure --prefix=`pwd`/install \
-	        --disable-bootstrap && \
-	    $(MAKE) all-c && \
-	    $(MAKE) install-c
-	@echo "Stage 2 completed: Compiler built with stage 1 compiler"
+	@echo "===> Bootstrap Stage 2: Building with stage1 compiler"
+	@$(MAKE) clean
+	@$(MAKE) all-standard CC="./cc/ccom/ccom" CFLAGS="-O"
 
-# Stage 3: Build with stage 2 compiler
 bootstrap-stage3:
-	@echo ""
-	@echo "==== Building Stage 3 (with stage 2 compiler) ===="
-	@rm -rf $(STAGE3_DIR)
-	@mkdir -p $(STAGE3_DIR)
-	@cd $(STAGE3_DIR) && \
-	    CC=`cd $(STAGE2_DIR)/install/bin && pwd`/pcc \
-	    $(SHELL) ../../configure --prefix=`pwd`/install \
-	        --disable-bootstrap && \
-	    $(MAKE) all-c && \
-	    $(MAKE) install-c
-	@echo "Stage 3 completed: Compiler built with stage 2 compiler"
+	@echo "===> Bootstrap Stage 3: Building with stage2 compiler"
+	@$(MAKE) clean
+	@$(MAKE) all-standard CC="./cc/ccom/ccom" CFLAGS="-O"
 
-# Compare stage 2 and stage 3 compilers
 bootstrap-compare:
-	@echo ""
-	@echo "==== Comparing Stage 2 and Stage 3 Compilers ===="
-	@echo "This verifies that the compiler produces identical output"
-	@failed=0; \
-	for prog in cc/cc/cc cc/ccom/ccom cc/cpp/cpp cc/cxxcom/cxxcom; do \
-		if [ -f $(STAGE2_DIR)/$$prog ] && [ -f $(STAGE3_DIR)/$$prog ]; then \
-			printf "Comparing $$prog... "; \
-			if cmp -s $(STAGE2_DIR)/$$prog $(STAGE3_DIR)/$$prog; then \
-				echo "PASS"; \
-			else \
-				echo "FAIL - binaries differ!"; \
-				failed=1; \
-			fi; \
-		fi; \
-	done; \
-	if [ $$failed -eq 0 ]; then \
-		echo ""; \
-		echo "========================================"; \
-		echo "Bootstrap comparison PASSED!"; \
-		echo "Stage 2 and stage 3 are identical."; \
-		echo "========================================"; \
+	@echo "===> Comparing stage2 and stage3 compilers"
+	@if $(BOOTSTRAP_COMPARE) cc/ccom/ccom.stage2 cc/ccom/ccom; then \
+		echo "Bootstrap comparison successful"; \
 	else \
-		echo ""; \
-		echo "========================================"; \
-		echo "Bootstrap comparison FAILED!"; \
-		echo "Stage 2 and stage 3 differ."; \
-		echo "========================================"; \
+		echo "Bootstrap comparison failed"; \
 		exit 1; \
 	fi
 
-# Install from the final bootstrap stage
 bootstrap-install:
-	@if [ "$(BOOTSTRAP_STAGES)" -ge "3" ]; then \
-		echo "Installing from stage 3..."; \
-		cd $(STAGE3_DIR) && $(MAKE) install prefix=$(prefix) exec_prefix=$(exec_prefix); \
-	elif [ "$(BOOTSTRAP_STAGES)" -ge "2" ]; then \
-		echo "Installing from stage 2..."; \
-		cd $(STAGE2_DIR) && $(MAKE) install prefix=$(prefix) exec_prefix=$(exec_prefix); \
-	else \
-		echo "Installing from stage 1..."; \
-		cd $(STAGE1_DIR) && $(MAKE) install prefix=$(prefix) exec_prefix=$(exec_prefix); \
-	fi
+	@echo "===> Installing bootstrapped compiler"
+	@$(MAKE) install-standard
 
-# Clean bootstrap directories
-bootstrap-clean:
-	@echo "Cleaning bootstrap directories..."
-	rm -rf $(BOOTSTRAP_DIR)
-
-# Legacy bootstrap targets (using bootstrap.sh script)
-bootstrap:
-	@echo "Starting multi-stage bootstrap..."
-	@if [ ! -x ./bootstrap.sh ]; then \
-		echo "Error: bootstrap.sh not found or not executable"; \
-		exit 1; \
-	fi
-	./bootstrap.sh --stages=3 --compare-stages
-
-bootstrap-quick:
-	@echo "Starting quick bootstrap (2 stages)..."
-	./bootstrap.sh --stages=2
-
-bootstrap-full:
-	@echo "Starting full bootstrap with verification..."
-	./bootstrap.sh --stages=3 --compare-stages
-
-.PHONY: all install all-standard install-standard
-.PHONY: all-c install-c clean-c all-full install-full clean-full
-.PHONY: bootstrap bootstrap-quick bootstrap-full
-.PHONY: bootstrap-build bootstrap-stage1 bootstrap-stage2 bootstrap-stage3
-.PHONY: bootstrap-compare bootstrap-install bootstrap-clean bootstrap-check
+.PHONY: all install clean distclean all-c install-c clean-c \
+	all-standard install-standard all-full install-full clean-full \
+	bootstrap-build bootstrap-stage1 bootstrap-stage2 bootstrap-stage3 \
+	bootstrap-compare bootstrap-install
