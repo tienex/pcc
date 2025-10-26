@@ -1,0 +1,386 @@
+/*	$Id$	*/
+
+/*
+ * Copyright (c) 2025 Claude AI Assistant.
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+ * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+ * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+ * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+ * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
+/*
+ * Universal Debug Symbol Parser/Generator
+ *
+ * Provides a unified interface for multiple debug symbol formats:
+ * - CodeView (CV4, CV5, CV6, CV7, CV8 - Microsoft formats)
+ * - DWARF (v1, v2, v3, v4, v5 - ELF standard)
+ * - COFF/ECOFF/XCOFF/PECOFF debugging (AT&T/Unix/Windows)
+ * - STABS (Berkeley/SunOS/Linux)
+ * - DBX (System V Unix)
+ * - Borland Debug Symbols (TD32, TDS)
+ * - Watcom Debug Symbols (WDI)
+ */
+
+#ifndef DEBUGSYM_H
+#define DEBUGSYM_H
+
+#include <sys/types.h>
+
+/* Forward declarations */
+struct symtab;
+union dimfun;
+struct attr;
+
+/*
+ * Debug symbol format enumeration
+ */
+typedef enum {
+	DBGFMT_NONE = 0,
+
+	/* DWARF family */
+	DBGFMT_DWARF1,		/* DWARF version 1 (1992) */
+	DBGFMT_DWARF2,		/* DWARF version 2 (1993) */
+	DBGFMT_DWARF3,		/* DWARF version 3 (2005) */
+	DBGFMT_DWARF4,		/* DWARF version 4 (2010) */
+	DBGFMT_DWARF5,		/* DWARF version 5 (2017) */
+
+	/* CodeView family (Microsoft) */
+	DBGFMT_CV4,		/* CodeView 4.x (VC++ 4.x) */
+	DBGFMT_CV5,		/* CodeView 5.x (VC++ 5.x-6.x) */
+	DBGFMT_CV6,		/* CodeView 6.x (VC++ 7.x) */
+	DBGFMT_CV7,		/* CodeView 7.x (VC++ 2002-2003) */
+	DBGFMT_CV8,		/* CodeView 8.x (VC++ 2005+, PDB 7.0) */
+
+	/* COFF family */
+	DBGFMT_COFF,		/* COFF debugging (AT&T Unix System V) */
+	DBGFMT_ECOFF,		/* Extended COFF (MIPS, Alpha) */
+	DBGFMT_XCOFF,		/* Extended COFF (IBM AIX) */
+	DBGFMT_PECOFF,		/* Portable Executable COFF (Windows) */
+
+	/* Berkeley/Unix formats */
+	DBGFMT_STABS,		/* STABS (Symbol TABle Strings) */
+	DBGFMT_DBX,		/* DBX format (System V Unix) */
+
+	/* Vendor-specific formats */
+	DBGFMT_BORLAND_TD32,	/* Borland Turbo Debugger 32-bit */
+	DBGFMT_BORLAND_TDS,	/* Borland symbol files (.TDS) */
+	DBGFMT_WATCOM,		/* Watcom debug info (WDI) */
+
+	DBGFMT_MAX
+} debug_format_t;
+
+/*
+ * Debug symbol types
+ */
+typedef enum {
+	DBGSYM_VARIABLE,	/* Variable (local, global, static) */
+	DBGSYM_FUNCTION,	/* Function or procedure */
+	DBGSYM_PARAMETER,	/* Function parameter */
+	DBGSYM_TYPE,		/* Type definition */
+	DBGSYM_STRUCT,		/* Structure or union */
+	DBGSYM_ENUM,		/* Enumeration */
+	DBGSYM_TYPEDEF,		/* Type alias */
+	DBGSYM_LABEL,		/* Code label */
+	DBGSYM_NAMESPACE,	/* Namespace (C++) */
+	DBGSYM_CLASS,		/* Class (C++/Pascal) */
+	DBGSYM_TEMPLATE,	/* Template (C++) */
+	DBGSYM_CONSTANT,	/* Compile-time constant */
+	DBGSYM_MODULE,		/* Module (Fortran/Pascal) */
+	DBGSYM_COMMON,		/* Common block (Fortran) */
+} debug_symbol_type_t;
+
+/*
+ * Debug scope information
+ */
+typedef enum {
+	DBGSCOPE_GLOBAL,	/* Global scope */
+	DBGSCOPE_FILE,		/* File/compilation unit scope */
+	DBGSCOPE_FUNCTION,	/* Function scope */
+	DBGSCOPE_BLOCK,		/* Block scope */
+	DBGSCOPE_CLASS,		/* Class scope */
+	DBGSCOPE_NAMESPACE,	/* Namespace scope */
+} debug_scope_t;
+
+/*
+ * Debug location information
+ */
+typedef struct debug_location {
+	char *filename;		/* Source file name */
+	int line;		/* Line number */
+	int column;		/* Column number (optional) */
+	unsigned long address;	/* Code address */
+} debug_location_t;
+
+/*
+ * Type encoding for primitive types
+ */
+typedef enum {
+	DBGTYPE_VOID = 0,
+	DBGTYPE_INT8,
+	DBGTYPE_INT16,
+	DBGTYPE_INT32,
+	DBGTYPE_INT64,
+	DBGTYPE_INT128,
+	DBGTYPE_UINT8,
+	DBGTYPE_UINT16,
+	DBGTYPE_UINT32,
+	DBGTYPE_UINT64,
+	DBGTYPE_UINT128,
+	DBGTYPE_FLOAT32,
+	DBGTYPE_FLOAT64,
+	DBGTYPE_FLOAT80,
+	DBGTYPE_FLOAT128,
+	DBGTYPE_COMPLEX_FLOAT,
+	DBGTYPE_COMPLEX_DOUBLE,
+	DBGTYPE_POINTER,
+	DBGTYPE_ARRAY,
+	DBGTYPE_STRUCT,
+	DBGTYPE_UNION,
+	DBGTYPE_ENUM,
+	DBGTYPE_FUNCTION,
+	DBGTYPE_BOOL,
+	DBGTYPE_CHAR,
+	DBGTYPE_WCHAR,
+	DBGTYPE_STRING,
+} debug_type_encoding_t;
+
+/*
+ * Type information
+ */
+typedef struct debug_type {
+	debug_type_encoding_t encoding;
+	unsigned int size;	/* Size in bytes */
+	int is_const;		/* const qualified */
+	int is_volatile;	/* volatile qualified */
+	int is_restrict;	/* restrict qualified */
+	struct debug_type *base_type; /* For pointers, arrays */
+	int array_dimensions;	/* For arrays */
+	int *array_bounds;	/* Array dimension sizes */
+	char *name;		/* Type name (for structs, typedefs) */
+} debug_type_t;
+
+/*
+ * Universal debug symbol record
+ */
+typedef struct debug_symbol {
+	debug_symbol_type_t kind;
+	char *name;		/* Symbol name */
+	char *linkage_name;	/* Mangled/linkage name (C++, etc.) */
+	debug_location_t location;
+	debug_scope_t scope;
+	debug_type_t *type;	/* Type information */
+
+	/* Storage information */
+	int storage_class;	/* AUTO, STATIC, EXTERN, etc. */
+	long offset;		/* Stack offset or address */
+	int register_num;	/* Register number (if in register) */
+	int is_register;	/* Symbol in register */
+
+	/* Function-specific */
+	int is_inline;		/* Inline function */
+	int is_extern;		/* External linkage */
+	int is_static;		/* Static linkage */
+	int is_artificial;	/* Compiler-generated */
+	unsigned long low_pc;	/* Function start address */
+	unsigned long high_pc;	/* Function end address */
+	int frame_base;		/* Frame base register */
+
+	/* Block scope */
+	int block_level;	/* Nesting level */
+
+	/* Backend-specific data */
+	void *format_data;	/* Format-specific extension data */
+
+	/* Linked list */
+	struct debug_symbol *next;
+} debug_symbol_t;
+
+/*
+ * Debug information context
+ */
+typedef struct debug_context {
+	debug_format_t format;		/* Selected output format */
+	char *source_file;		/* Current source file */
+	int current_line;		/* Current line number */
+	int block_level;		/* Current block nesting */
+	debug_symbol_t *symbols;	/* Symbol list */
+	debug_symbol_t *current_func;	/* Current function being compiled */
+
+	/* Format-specific state */
+	void *format_state;
+
+	/* Options */
+	int emit_line_info;		/* Emit line number information */
+	int emit_locals;		/* Emit local variable info */
+	int emit_types;			/* Emit full type information */
+	int optimize_debug;		/* Optimize debug info size */
+	int dwarf_version;		/* DWARF version (1-5) */
+	int codeview_version;		/* CodeView version (4-8) */
+} debug_context_t;
+
+/*
+ * Global debug context
+ */
+extern debug_context_t *dbg_ctx;
+
+/* ===================================================================
+ * UNIVERSAL DEBUG SYMBOL API
+ * =================================================================== */
+
+/*
+ * Initialization and cleanup
+ */
+void debugsym_init(debug_format_t format);
+void debugsym_finish(void);
+void debugsym_set_format(debug_format_t format);
+void debugsym_set_options(int line_info, int locals, int types);
+
+/*
+ * File and compilation unit management
+ */
+void debugsym_file_begin(char *filename);
+void debugsym_file_end(char *filename);
+void debugsym_line(int line);
+void debugsym_set_column(int column);
+
+/*
+ * Symbol recording
+ */
+debug_symbol_t *debugsym_new_symbol(void);
+void debugsym_free_symbol(debug_symbol_t *sym);
+void debugsym_record_symbol(debug_symbol_t *sym);
+void debugsym_record_variable(struct symtab *s);
+void debugsym_record_function(struct symtab *s);
+void debugsym_record_parameter(struct symtab *s);
+void debugsym_record_type(struct symtab *s);
+
+/*
+ * Scope management
+ */
+void debugsym_enter_scope(debug_scope_t scope);
+void debugsym_exit_scope(void);
+void debugsym_enter_function(struct symtab *s);
+void debugsym_exit_function(void);
+void debugsym_enter_block(int level);
+void debugsym_exit_block(int level);
+
+/*
+ * Type information
+ */
+debug_type_t *debugsym_get_type(struct symtab *s);
+debug_type_t *debugsym_primitive_type(debug_type_encoding_t enc, unsigned int size);
+debug_type_t *debugsym_pointer_type(debug_type_t *base);
+debug_type_t *debugsym_array_type(debug_type_t *base, int *dims, int ndims);
+
+/*
+ * Emit debug information
+ */
+void debugsym_emit_all(void);
+void debugsym_emit_symbol(debug_symbol_t *sym);
+void debugsym_emit_preamble(void);
+void debugsym_emit_postamble(void);
+
+/* ===================================================================
+ * FORMAT-SPECIFIC PARSERS AND GENERATORS
+ * =================================================================== */
+
+/*
+ * DWARF format support (v1-5)
+ */
+void debugsym_dwarf_init(int version);
+void debugsym_dwarf_emit(debug_symbol_t *sym);
+void debugsym_dwarf_finish(void);
+debug_symbol_t *debugsym_dwarf_parse(void *data, size_t len);
+
+/*
+ * CodeView format support (CV4-CV8)
+ */
+void debugsym_codeview_init(int version);
+void debugsym_codeview_emit(debug_symbol_t *sym);
+void debugsym_codeview_finish(void);
+debug_symbol_t *debugsym_codeview_parse(void *data, size_t len);
+
+/*
+ * COFF family support
+ */
+void debugsym_coff_init(debug_format_t type);
+void debugsym_coff_emit(debug_symbol_t *sym);
+void debugsym_coff_finish(void);
+debug_symbol_t *debugsym_coff_parse(void *data, size_t len);
+
+/*
+ * STABS format support
+ */
+void debugsym_stabs_init(void);
+void debugsym_stabs_emit(debug_symbol_t *sym);
+void debugsym_stabs_finish(void);
+debug_symbol_t *debugsym_stabs_parse(void *data, size_t len);
+
+/*
+ * DBX format support
+ */
+void debugsym_dbx_init(void);
+void debugsym_dbx_emit(debug_symbol_t *sym);
+void debugsym_dbx_finish(void);
+debug_symbol_t *debugsym_dbx_parse(void *data, size_t len);
+
+/*
+ * Borland debug format support
+ */
+void debugsym_borland_init(debug_format_t type);
+void debugsym_borland_emit(debug_symbol_t *sym);
+void debugsym_borland_finish(void);
+debug_symbol_t *debugsym_borland_parse(void *data, size_t len);
+
+/*
+ * Watcom debug format support
+ */
+void debugsym_watcom_init(void);
+void debugsym_watcom_emit(debug_symbol_t *sym);
+void debugsym_watcom_finish(void);
+debug_symbol_t *debugsym_watcom_parse(void *data, size_t len);
+
+/* ===================================================================
+ * UTILITY FUNCTIONS
+ * =================================================================== */
+
+/*
+ * Format identification and conversion
+ */
+const char *debugsym_format_name(debug_format_t format);
+debug_format_t debugsym_detect_format(void *data, size_t len);
+int debugsym_can_convert(debug_format_t from, debug_format_t to);
+int debugsym_convert(debug_symbol_t *sym, debug_format_t from, debug_format_t to);
+
+/*
+ * Symbol dumping and debugging
+ */
+void debugsym_dump_symbol(debug_symbol_t *sym);
+void debugsym_dump_all(void);
+void debugsym_print_statistics(void);
+
+/*
+ * Memory management
+ */
+void *debugsym_alloc(size_t size);
+void debugsym_free(void *ptr);
+char *debugsym_strdup(const char *s);
+
+#endif /* DEBUGSYM_H */
