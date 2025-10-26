@@ -355,6 +355,23 @@ void x86asm_indirect_symbol(x86asm_ctx_t *ctx, const char *symbol);
 /* End directive (for some formats like ELF: .end) */
 void x86asm_end(x86asm_ctx_t *ctx);
 
+/* Common/local common directives (for BSS allocation) */
+void x86asm_comm(x86asm_ctx_t *ctx, const char *symbol, size_t size, int alignment);
+void x86asm_lcomm(x86asm_ctx_t *ctx, const char *symbol, size_t size, int alignment);
+
+/* Symbol visibility directives */
+void x86asm_local(x86asm_ctx_t *ctx, const char *symbol);
+void x86asm_hidden(x86asm_ctx_t *ctx, const char *symbol);
+void x86asm_weak(x86asm_ctx_t *ctx, const char *symbol);
+void x86asm_weakref(x86asm_ctx_t *ctx, const char *symbol, const char *target);
+
+/* Symbol aliasing directive */
+void x86asm_set(x86asm_ctx_t *ctx, const char *symbol, const char *value);
+
+/* Section management directives */
+void x86asm_previous(x86asm_ctx_t *ctx);
+void x86asm_p2align(x86asm_ctx_t *ctx, int power);
+
 /* Helper functions for creating operands */
 x86asm_operand_t x86asm_op_reg(x86asm_reg_t reg, int size);
 x86asm_operand_t x86asm_op_imm(int64_t value, int size);
