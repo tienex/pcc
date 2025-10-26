@@ -79,8 +79,8 @@ CSString *CS_String_Concat(CSString *s1, CSString *s2) {
 	uint16_t *new_data = (uint16_t *)CS_Malloc((new_length + 1) * sizeof(uint16_t));
 	if (!new_data) return NULL;
 
-	memcpy(new_data, s1->data, s1->length * sizeof(uint16_t));
-	memcpy(new_data + s1->length, s2->data, s2->length * sizeof(uint16_t));
+	memcpy(new_data, s1->chars, s1->length * sizeof(uint16_t));
+	memcpy(new_data + s1->length, s2->chars, s2->length * sizeof(uint16_t));
 	new_data[new_length] = 0;
 
 	CSString *result = CS_String_CreateFromUTF16(new_data, new_length);
@@ -94,7 +94,7 @@ CSString *CS_String_Substring(CSString *str, int32_t start, int32_t length) {
 		return NULL;
 	}
 
-	return CS_String_CreateFromUTF16(str->data + start, length);
+	return CS_String_CreateFromUTF16(str->chars + start, length);
 }
 
 int32_t CS_String_IndexOf(CSString *str, CSString *value) {
@@ -179,7 +179,7 @@ CSString *CS_String_Replace(CSString *str, CSString *old, CSString *new) {
 			}
 			if (match) {
 				/* Copy replacement */
-				memcpy(new_data + dst_pos, new->data, new->length * sizeof(uint16_t));
+				memcpy(new_data + dst_pos, new->chars, new->length * sizeof(uint16_t));
 				src_pos += old->length;
 				dst_pos += new->length;
 				continue;
@@ -260,7 +260,7 @@ CSString *CS_String_Trim(CSString *str) {
 		return CS_String_CreateEmpty();
 	}
 
-	return CS_String_CreateFromUTF16(str->data + start, new_length);
+	return CS_String_CreateFromUTF16(str->chars + start, new_length);
 }
 
 /* ========== String Comparison ========== */
