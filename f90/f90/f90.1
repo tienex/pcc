@@ -186,6 +186,19 @@ Includes IBM-specific directives (SMP, parallel processing), POINTER extensions,
 Enable or disable Cray Fortran extensions.
 Includes Cray pointers, TASK COMMON, Cray directives, vector intrinsics, and Cray-specific optimizations.
 .TP
+.SM
+.BR \-static
+Link using static libraries instead of shared/dynamic libraries.
+This creates a standalone executable with all runtime libraries statically linked.
+Automatically enables smart runtime linking (see RUNTIME LIBRARY LINKING below).
+.TP
+.SM
+.BR \-shared
+Link using shared/dynamic libraries (default behavior).
+When combined with F2003+ standards or feature flags like
+.BR -foop " or " -fcoarrays ,
+enables intelligent library selection that only links feature-specific libraries when needed.
+.TP
 .BR \-u
 Make the default type of a variable `undefined' rather than using the default Fortran rules.
 .TP
@@ -417,6 +430,129 @@ When multiple vendor extension sets are enabled simultaneously, the compiler wil
 attempt to resolve conflicts by prioritizing in this order: Cray, IBM, DEC, HP, Microsoft.
 For maximum compatibility with legacy code, enable only the specific vendor
 extension set required for your codebase.
+.SH RUNTIME LIBRARY LINKING
+The
+.I f90
+compiler uses intelligent, feature-based runtime library selection to optimize
+executable size and dependencies. This "smart linking" system automatically
+determines which runtime libraries are needed based on the Fortran standard
+selected and features enabled.
+.PP
+.B Link Modes:
+.TP
+.B Legacy Mode (F66/F77/F90/F95)
+When using older Fortran standards without modern feature flags, the compiler
+links all runtime libraries for maximum compatibility. This ensures backward
+compatibility with existing F77 codebases.
+.TP
+.B Smart Linking Mode (F2003+)
+When using
+.B -std=f2003
+or later, or when explicitly enabling features with flags like
+.BR -foop ", " -fcoarrays ", or " -fteams ,
+the compiler automatically activates smart linking mode. In this mode, only
+the libraries actually required for enabled features are linked.
+.PP
+.B Library Selection Rules:
+.PP
+The compiler conditionally links runtime libraries as follows:
+.TP
+.B Core Runtime (always linked)
+.BR libgfortran :
+GNU Fortran runtime library (or vendor equivalent) providing basic Fortran
+language support including intrinsics, I/O, and standard library functions.
+.TP
+.B OOP Support (conditional)
+.BR libfortran_oop :
+Linked only when OOP features are enabled via
+.B -std=f2003+
+or
+.BR -foop .
+Provides runtime support for type extension, inheritance, polymorphism,
+type-bound procedures, and finalization.
+.TP
+.B Coarray Support (conditional)
+.BR libcaf_single :
+Linked only when coarrays are enabled via
+.B -std=f2008+
+or
+.BR -fcoarrays .
+Provides single-image coarray runtime support. For multi-image programs,
+replace with
+.BR libcaf_mpi " or " libcaf_gasnet
+for distributed memory parallelism.
+.TP
+.B Parallel Execution (conditional)
+.BR libpthread :
+POSIX threads library, automatically linked when coarrays or teams are enabled.
+Provides thread support for parallel execution of coarray and team constructs.
+.TP
+.B Quad-Precision Math (conditional)
+.BR libquadmath :
+Linked when using
+.B -std=f2003+
+to support SELECTED_REAL_KIND with extended precision requirements and
+REAL(16) quad-precision floating-point operations.
+.TP
+.B System Libraries (always linked)
+.B libm
+and
+.B libc
+are always linked to provide mathematical functions and C standard library support.
+.PP
+.B Examples:
+.PP
+Compile F77 program (legacy mode, all libraries linked):
+.nf
+    f90 -std=f77 program.f
+.fi
+.PP
+Compile F2003 OOP program (smart linking, only OOP libs):
+.nf
+    f90 -std=f2003 shapes.f
+    # Links: libgfortran, libfortran_oop, libquadmath, libm, libc
+.fi
+.PP
+Compile F2008 coarray program (smart linking with parallel support):
+.nf
+    f90 -std=f2008 parallel.f
+    # Links: libgfortran, libfortran_oop, libcaf_single,
+    #        libquadmath, libpthread, libm, libc
+.fi
+.PP
+Compile F90 with explicit OOP (smart linking activated):
+.nf
+    f90 -std=f90 -foop legacy_oop.f
+    # Links: libgfortran, libfortran_oop, libm, libc
+.fi
+.PP
+Static linking (all libraries statically linked):
+.nf
+    f90 -static -std=f2008 program.f
+    # Creates standalone executable with no dynamic dependencies
+.fi
+.PP
+.B Benefits:
+.RS
+.TP
+\(bu Smaller executables when advanced features aren't used
+.TP
+\(bu Fewer runtime dependencies for simple programs
+.TP
+\(bu Automatic optimization without manual library specification
+.TP
+\(bu Backward compatibility with legacy F77 code
+.TP
+\(bu Forward compatibility with modern Fortran standards
+.RE
+.PP
+.B Verbose Mode:
+Use
+.B -v
+flag to see exactly which libraries are being linked:
+.nf
+    f90 -v -std=f2008 -foop program.f
+.fi
 .SH FILES
 .nf
 .ta \w'/usr/local/lib/libfortran_oop.a   'u
