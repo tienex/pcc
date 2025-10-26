@@ -129,6 +129,8 @@
 %token	CXX_TYPENAME
 %token	CXX_CASTS
 %token	CXX_THROW
+%token	CXX_TRY
+%token	CXX_CATCH
 %token	CXX_MORENM
 %token	CXX_NEW
 %token	CXX_DELETE
@@ -249,6 +251,7 @@ struct savbc {
 		designator_list designator xasm oplist oper cnstr 
 		typeof attribute attribute_specifier /* COMPAT_GCC */
 		attribute_list attr_spec_list attr_var /* COMPAT_GCC */
+		try_block handler_seq handler exception_declaration /* C++ exceptions */
 		new_ma new_type_sq new_ds nmrec
 %type <strp>	string C_STRING GCC_DESIG nsname CXX_MORENM
 %type <rp>	str_head
@@ -1001,6 +1004,7 @@ statement:	   e ';' { /* fwalk($1, eprint, 0); */ ecomp(eve($1)); symclear(bleve
 		|  C_GOTO C_NAME ';' { gotolabel($2); goto rch; }
 		|  C_GOTO '*' e ';' { ecomp(biop(GOTO, eve($3), NIL)); }
 		|  asmstatement ';'
+		|  try_block
 		|   ';'
 		|  error  ';'
 		|  error '}'
@@ -1043,6 +1047,48 @@ label:		   C_NAME ':' attr_var { deflabel($1, $3); reached = 1; }
 #endif
 		}
 		|  C_DEFAULT ':' { reached = 1; adddef(); flostat |= FDEF; }
+		;
+
+/* C++ exception handling */
+try_block:	   CXX_TRY compoundstmt handler_seq {
+			/* TODO: Implement exception handling */
+			uerror("try/catch not yet implemented");
+			$$ = NIL;
+		}
+		;
+
+handler_seq:	   handler {
+			$$ = $1;
+		}
+		|  handler_seq handler {
+			/* Chain multiple catch blocks */
+			$$ = cmop($1, $2);
+		}
+		;
+
+handler:	   CXX_CATCH '(' exception_declaration ')' compoundstmt {
+			/* TODO: Implement catch block */
+			$$ = NIL;
+		}
+		;
+
+exception_declaration:
+		   specifier_qualifier_list declarator {
+			/* catch (Type varname) */
+			$$ = $2;
+		}
+		|  specifier_qualifier_list abstract_declarator {
+			/* catch (Type) */
+			$$ = $2;
+		}
+		|  specifier_qualifier_list {
+			/* catch (Type) */
+			$$ = $1;
+		}
+		|  C_ELLIPSIS {
+			/* catch (...) */
+			$$ = NIL;
+		}
 		;
 
 doprefix:	C_DO {
@@ -1313,6 +1359,17 @@ term:		   term C_INCOP {  $$ = biop($2, $1, bcon(1)); }
 		|  CXX_DELETE '[' ']' term %prec '-' {
 			$$ = biop(DELETE, $4, bcon(NM_DLA));
 		}
+	|  CXX_THROW {
+		/* throw; - re-throw current exception */
+		uerror("throw not yet implemented");
+		$$ = bcon(0);
+	}
+	|  CXX_THROW e %prec C_UNOP {
+		/* throw expr; - throw new exception */
+		uerror("throw not yet implemented");
+		tfree($2);
+		$$ = bcon(0);
+	}
 		;
 
 nmrec:		  CXX_MORENM { $$ = bdty(NAME, $1); }
