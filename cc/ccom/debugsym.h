@@ -46,12 +46,30 @@
  * - a.out (Original Unix executable format)
  * - Mach-O (Modern macOS/iOS/Darwin)
  * - OMF (MS-DOS/OS/2 Object Module Format)
+ * - PDB (Program Database - Microsoft Visual Studio)
+ * - CTF (Compact C Type Format - Solaris/illumos/FreeBSD DTrace)
+ * - BTF (BPF Type Format - Linux eBPF)
+ * - Plan 9 (Bell Labs)
+ * - TADS (Turbo Assembler Debug Symbols)
+ *
+ * Supports 22+ programming languages:
+ * - C, C++, Objective-C, Objective-C++
+ * - Fortran (77, 90, 95, 2003, 2008, 2018)
+ * - Go, Rust, Zig, D, Crystal
+ * - Pascal, Modula-2, Modula-3, Oberon
+ * - Ada (83, 95, 2005, 2012)
+ * - COBOL (74, 85, 2002)
+ * - Haskell, OCaml, Prolog
+ * - Dart, Kotlin, Java, C#
  */
 
 #ifndef DEBUGSYM_H
 #define DEBUGSYM_H
 
 #include <sys/types.h>
+
+/* Forward declaration for language support */
+typedef struct language_attributes language_attributes_t;
 
 /* Forward declarations */
 struct symtab;
@@ -194,6 +212,23 @@ typedef enum {
 	DBGTYPE_CHAR,
 	DBGTYPE_WCHAR,
 	DBGTYPE_STRING,
+
+	/* Language-specific types */
+	DBGTYPE_CLASS,			/* C++ class */
+	DBGTYPE_INTERFACE,		/* Go interface, Rust trait, etc. */
+	DBGTYPE_REFERENCE,		/* C++ reference */
+	DBGTYPE_RVALUE_REFERENCE,	/* C++ rvalue reference (&&) */
+	DBGTYPE_SET,			/* Pascal set */
+	DBGTYPE_SUBRANGE,		/* Pascal subrange */
+	DBGTYPE_MODULE,			/* Fortran module, Ada package */
+	DBGTYPE_VARIANT,		/* OCaml variant, Rust enum */
+	DBGTYPE_CHANNEL,		/* Go channel */
+	DBGTYPE_SLICE,			/* Go slice */
+	DBGTYPE_MAP,			/* Go map */
+	DBGTYPE_OPTION,			/* Rust Option<T> */
+	DBGTYPE_RESULT,			/* Rust Result<T, E> */
+	DBGTYPE_ERROR_UNION,		/* Zig error union */
+	DBGTYPE_OPTIONAL,		/* Zig optional (?T) */
 } debug_type_encoding_t;
 
 /*
@@ -227,6 +262,7 @@ typedef struct debug_type {
 	struct debug_type *base_type; /* For pointers, arrays, functions */
 	int array_dimensions;	/* For arrays */
 	int *array_bounds;	/* Array dimension sizes */
+	int *array_sizes;	/* Array dimension sizes (Fortran) */
 	char *name;		/* Type name (for structs, typedefs) */
 
 	/* Composite type members */
@@ -274,6 +310,10 @@ typedef struct debug_symbol {
 	/* Block scope */
 	int block_level;	/* Nesting level */
 
+	/* Language-specific extensions */
+	int language_tag;	/* Language-specific tag (see debugsym_lang.h) */
+	language_attributes_t *lang_attrs;	/* Language-specific attributes */
+
 	/* Backend-specific data */
 	void *format_data;	/* Format-specific extension data */
 
@@ -286,6 +326,7 @@ typedef struct debug_symbol {
  */
 typedef struct debug_context {
 	debug_format_t format;		/* Selected output format */
+	int source_language;		/* Source language (from debugsym_lang.h) */
 	char *source_file;		/* Current source file */
 	int current_line;		/* Current line number */
 	int block_level;		/* Current block nesting */
