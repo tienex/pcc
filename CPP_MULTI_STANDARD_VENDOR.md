@@ -54,7 +54,7 @@ The PCC C++ compiler now supports multiple C++ standards and multiple vendor ABI
 - [x] Multi-vendor ABI support (7 ABIs)
 - [x] ABI library integration (libpccabi.a)
 - [x] ABI context initialization
-- [ ] Command-line flags (-std=c++XX, -fabi=VENDOR)
+- [x] Command-line flags (-fstd=c++XX, -fabi=VENDOR)
 - [ ] Use ABI for name mangling
 - [ ] Use ABI for class layout
 - [ ] Use ABI for vtable management
@@ -75,54 +75,80 @@ The PCC C++ compiler now supports multiple C++ standards and multiple vendor ABI
 - [ ] RTTI
 - [ ] Namespaces
 
-## Usage (Planned)
+## Usage
 
 ### Selecting C++ Standard
 
 ```bash
 # C++98 (default)
-pcc -xc++ -std=c++98 myfile.cpp
+cxxcom -fstd=c++98 < myfile.cpp > output.s
 
-# C++11
-pcc -xc++ -std=c++11 myfile.cpp
+# C++11 (also accepts legacy c++0x)
+cxxcom -fstd=c++11 < myfile.cpp > output.s
 
-# C++17
-pcc -xc++ -std=c++17 myfile.cpp
+# C++14 (also accepts c++1y)
+cxxcom -fstd=c++14 < myfile.cpp > output.s
 
-# C++20
-pcc -xc++ -std=c++20 myfile.cpp
+# C++17 (also accepts c++1z)
+cxxcom -fstd=c++17 < myfile.cpp > output.s
 
-# C++23 (latest)
-pcc -xc++ -std=c++23 myfile.cpp
+# C++20 (also accepts c++2a)
+cxxcom -fstd=c++20 < myfile.cpp > output.s
+
+# C++23 (latest, also accepts c++2b)
+cxxcom -fstd=c++23 < myfile.cpp > output.s
+
+# C++26 (future, also accepts c++2c)
+cxxcom -fstd=c++26 < myfile.cpp > output.s
 ```
 
 ### Selecting ABI Vendor
 
 ```bash
-# Itanium ABI (default - GCC/Clang compatible)
-pcc -xc++ -fabi=itanium myfile.cpp
+# Itanium ABI (default - GCC/Clang compatible, also accepts 'gcc')
+cxxcom -fabi=itanium < myfile.cpp > output.s
 
-# MSVC ABI (Microsoft Visual C++ compatible)
-pcc -xc++ -fabi=msvc myfile.cpp
+# MSVC ABI (Microsoft Visual C++ compatible, also accepts 'microsoft')
+cxxcom -fabi=msvc < myfile.cpp > output.s
 
 # Watcom ABI (Watcom C++ compatible)
-pcc -xc++ -fabi=watcom myfile.cpp
+cxxcom -fabi=watcom < myfile.cpp > output.s
 
 # Borland ABI (Borland C++ compatible)
-pcc -xc++ -fabi=borland myfile.cpp
+cxxcom -fabi=borland < myfile.cpp > output.s
+
+# Old GNU ABI (GCC 2.x, also accepts 'gnu2')
+cxxcom -fabi=gnu-old < myfile.cpp > output.s
+
+# Digital Mars ABI (also accepts 'digimars')
+cxxcom -fabi=dmc < myfile.cpp > output.s
+
+# ARM ABI (ARM C++)
+cxxcom -fabi=arm < myfile.cpp > output.s
 ```
 
 ### Combining Standard and ABI
 
 ```bash
 # C++11 with Itanium ABI (GCC/Clang on Linux)
-pcc -xc++ -std=c++11 -fabi=itanium myfile.cpp
+cxxcom -fstd=c++11 -fabi=itanium < myfile.cpp > output.s
 
 # C++17 with MSVC ABI (MSVC on Windows)
-pcc -xc++ -std=c++17 -fabi=msvc myfile.cpp
+cxxcom -fstd=c++17 -fabi=msvc < myfile.cpp > output.s
 
 # C++20 with Watcom ABI
-pcc -xc++ -std=c++20 -fabi=watcom myfile.cpp
+cxxcom -fstd=c++20 -fabi=watcom < myfile.cpp > output.s
+
+# C++23 with Borland ABI
+cxxcom -fstd=c++23 -fabi=borland < myfile.cpp > output.s
+```
+
+### Debugging Output
+
+```bash
+# Enable C++ debug output to see ABI initialization
+cxxcom -X+ -fstd=c++17 -fabi=msvc < myfile.cpp
+# Output: "Initialized MSVC ABI (C++17)"
 ```
 
 ## ABI Library Integration
@@ -324,11 +350,11 @@ Different C++ standards have different performance characteristics:
 ### Current Commit
 
 ```
-commit 35272d2
+commit fd1b963
 Author: Claude
 Date:   2025-10-26
 
-Add multi-standard and multi-vendor C++ support with ABI library integration
+Add command-line flags for C++ standard and ABI selection
 ```
 
 ### Recent Achievements
@@ -339,15 +365,18 @@ Add multi-standard and multi-vendor C++ support with ABI library integration
 4. ✅ **Added multi-vendor ABI support** - 7 major C++ ABIs
 5. ✅ **Integrated ABI library** - Linked into C++ compiler
 6. ✅ **Successfully compiled** - cxxcom builds with ABI support
+7. ✅ **Command-line flags implemented** - `-fstd=c++XX` and `-fabi=VENDOR` fully working
+8. ✅ **ABI initialization** - Automatic initialization based on selected flags
+9. ✅ **Tested all combinations** - All standards and ABIs verified working
 
 ### Next Steps
 
-1. 🚧 **Add command-line flags** - `-std=c++XX` and `-fabi=VENDOR`
-2. 🔜 **Use ABI for name mangling** - Replace manual mangling
-3. 🔜 **Use ABI for class layout** - Proper field layout
-4. 🔜 **Use ABI for vtables** - Virtual function support
-5. 🔜 **Integrate SEH library** - Exception handling
-6. 🔜 **Complete Phase 3** - Destructor auto-invocation (RAII)
+1. 🔜 **Use ABI for name mangling** - Replace manual mangling with abi_mangle_function()
+2. 🔜 **Use ABI for class layout** - Proper field layout and alignment
+3. 🔜 **Use ABI for vtables** - Virtual function table support
+4. 🔜 **Integrate SEH library** - Exception handling support
+5. 🔜 **Complete Phase 3** - Destructor auto-invocation (RAII)
+6. 🔜 **Template support** - Basic template functionality
 
 ## Technical Details
 
