@@ -1,0 +1,4 @@
+# Compiled library and object files
+*.o
+*.a
+libbliss.a
