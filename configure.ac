@@ -1100,6 +1100,9 @@ AC_CONFIG_FILES([Makefile
 		pascal/Makefile
 		pascal/pascal/Makefile
 		pascal/pcom/Makefile
+		algol60/Makefile
+		algol60/algol/Makefile
+		algol60/acom/Makefile
 		common/abi/Makefile
 		include/Makefile
 		libunicode/Makefile
