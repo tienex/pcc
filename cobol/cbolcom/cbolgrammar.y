@@ -48,7 +48,7 @@ static struct cobol_method *current_method = NULL;
 %token POINTER OBJECT_REFERENCE
 
 /* Procedure keywords */
-%token ACCEPT ADD CALL COMPUTE DELETE DISPLAY DIVIDE EVALUATE EXIT GOTO
+%token ACCEPT ADD CALL COMPUTE DELETE DISPLAY DIVIDE_OP EVALUATE EXIT GOTO
 %token IF ELSE END_IF MOVE MULTIPLY PERFORM END_PERFORM READ RETURN RETURNING
 %token REWRITE SEARCH SET STOP STRING_STMT SUBTRACT UNSTRING WRITE
 
@@ -61,11 +61,12 @@ static struct cobol_method *current_method = NULL;
 
 /* Operators */
 %token AND OR NOT EQUAL GREATER LESS GREATER_EQUAL LESS_EQUAL NOT_EQUAL
-%token PLUS MINUS DIVIDE POWER
+%token PLUS MINUS POWER
 
 /* Misc */
 %token PROGRAM_ID AUTHOR DATE_WRITTEN IS ARE TO OF IN WITH ALL USING
 %token TRUE FALSE ZERO SPACE NULL_TOK
+%token INITIAL CONTROL FILLER END PROGRAM RUN
 
 /* Punctuation */
 %token DOT COMMA SEMICOLON COLON LPAREN RPAREN
@@ -82,9 +83,11 @@ static struct cobol_method *current_method = NULL;
 
 %type <node> expression arithmetic_expr condition statement_list
 %type <node> statement move_stmt add_stmt compute_stmt if_stmt perform_stmt
-%type <symbol> data_item
-%type <pic> picture_clause
-%type <string> identifier
+%type <node> literal_expr display_stmt accept_stmt call_stmt invoke_stmt exit_stmt stop_stmt
+%type <node> statement_list_opt statements_opt
+%type <symbol> data_item data_items
+%type <pic> picture_clause picture_clause_opt
+%type <string> identifier picture_string
 
 %%
 
@@ -582,7 +585,7 @@ arithmetic_expr:
 	  { $$ = buildtree(MINUS, $1, $3); }
 	| expression TIMES expression
 	  { $$ = buildtree(MUL, $1, $3); }
-	| expression DIVIDE expression
+	| expression DIVIDE_OP expression
 	  { $$ = buildtree(DIV, $1, $3); }
 	| expression POWER expression
 	  { $$ = NULL; /* Handle power */ }
@@ -602,12 +605,5 @@ end_program_opt:
 	| END PROGRAM identifier DOT
 	| END CLASS identifier DOT
 	;
-
-/* Dummy tokens for simplified parsing */
-INITIAL: IDENTIFIER;
-FILLER: IDENTIFIER;
-FILE: FILE | IDENTIFIER;
-MINUS: MINUS | IDENTIFIER;
-RUN: IDENTIFIER;
 
 %%

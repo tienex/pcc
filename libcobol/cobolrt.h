@@ -38,6 +38,12 @@ typedef struct cobol_field {
 #define COB_ACCESS_RANDOM       2
 #define COB_ACCESS_DYNAMIC      3
 
+/* File open modes */
+#define COB_OPEN_INPUT   1
+#define COB_OPEN_OUTPUT  2
+#define COB_OPEN_IO      3
+#define COB_OPEN_EXTEND  4
+
 /* File handle */
 typedef struct cobol_file {
 	FILE *fp;
