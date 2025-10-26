@@ -17,6 +17,12 @@ typedef enum {
 	DIALECT_POWERBASIC,     /* PowerBASIC */
 	DIALECT_FREEBASIC,      /* FreeBASIC */
 	DIALECT_ISO,            /* ISO BASIC Advanced */
+	DIALECT_QUICKBASIC,     /* Macintosh QuickBASIC */
+	DIALECT_ATARI_ST,       /* Atari ST BASIC */
+	DIALECT_AMIGA,          /* Amiga BASIC */
+	DIALECT_DEC,            /* DEC BASIC-PLUS/BASIC-PLUS-2 */
+	DIALECT_HP,             /* HP BASIC */
+	DIALECT_IBM,            /* IBM BASIC (PC BASIC, BASICA) */
 	DIALECT_AUTO            /* Auto-detect from source */
 } basic_dialect_t;
 
@@ -155,5 +161,11 @@ extern dialect_features_t pds_features;
 extern dialect_features_t powerbasic_features;
 extern dialect_features_t freebasic_features;
 extern dialect_features_t iso_features;
+extern dialect_features_t quickbasic_features;
+extern dialect_features_t atari_st_features;
+extern dialect_features_t amiga_features;
+extern dialect_features_t dec_features;
+extern dialect_features_t hp_features;
+extern dialect_features_t ibm_features;
 
 #endif /* DIALECT_H */

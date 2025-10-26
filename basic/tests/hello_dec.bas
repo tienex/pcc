@@ -1,0 +1,4 @@
+10 REM Hello World in DEC BASIC-PLUS
+20 PRINT "Hello, World!"
+30 PRINT "This is DEC BASIC-PLUS"
+40 END
