@@ -1,0 +1,65 @@
+#	$Id$
+#
+# Makefile.in for COBOL compiler driver
+
+srcdir=@srcdir@
+top_srcdir=@top_srcdir@
+top_builddir=@top_builddir@
+VPATH=@srcdir@
+prefix=@prefix@
+exec_prefix=@exec_prefix@
+bindir=@bindir@
+libexecdir=@libexecdir@
+mandir=@mandir@
+strip=@strip@
+CC=@CC@
+EXEEXT=@EXEEXT@
+CFLAGS=@CFLAGS@ @ADD_CFLAGS@
+CPPFLAGS=@CPPFLAGS@ @ADD_CPPFLAGS@ \
+	-DLIBEXECDIR=\"$(libexecdir)\" \
+	-DINCLUDEDIR=\"$(prefix)/include\" \
+	-DPCCINCDIR=\"$(pkgdatadir)/include\" \
+	-DPCCLIBDIR=\"$(pkgdatadir)/lib\" \
+	-Dmach_$(TARGMACH) -Dos_$(TARGOS) \
+	-I$(top_builddir) -I$(top_srcdir)/common -I$(top_srcdir)/cc/driver \
+	-I$(srcdir) -I$(COMMONDIR)
+LIBS=@LIBS@
+LDFLAGS=@LDFLAGS@
+INSTALL=@INSTALL@
+INSTALL_PROGRAM=@INSTALL_PROGRAM@
+INSTALL_DATA=@INSTALL_DATA@
+
+COMMONDIR=$(top_srcdir)/common
+DEST=@BINPREFIX@cobol$(EXEEXT)
+
+OBJS=cobol.o strlist.o compat.o
+HDRS=
+
+all: ${DEST}
+
+${DEST}: $(OBJS)
+	$(CC) $(CFLAGS) $(LDFLAGS) $(OBJS) -o $@ $(LIBS)
+
+.c.o:
+	$(CC) $(DEFS) $(CPPFLAGS) $(CFLAGS) -c $<
+
+cobol.o: $(srcdir)/cobol.c
+	$(CC) $(DEFS) $(CPPFLAGS) $(CFLAGS) -c $(srcdir)/cobol.c
+
+strlist.o: $(top_srcdir)/cc/driver/strlist.c
+	$(CC) $(DEFS) $(CPPFLAGS) $(CFLAGS) -c $(top_srcdir)/cc/driver/strlist.c
+
+compat.o: $(COMMONDIR)/compat.c
+	$(CC) $(DEFS) $(CPPFLAGS) $(CFLAGS) -c $(COMMONDIR)/compat.c
+
+install:
+	test -z "$(DESTDIR)$(bindir)" || mkdir -p "$(DESTDIR)$(bindir)"
+	$(INSTALL_PROGRAM) $(DEST) $(DESTDIR)$(bindir)
+	@if [ $(strip) != ":" ]; then $(strip) $(DESTDIR)$(bindir)/$(DEST); fi
+	test -z "$(DESTDIR)$(mandir)/man1" || mkdir -p "$(DESTDIR)$(mandir)/man1"
+
+clean:
+	/bin/rm -f $(OBJS) $(DEST)
+
+distclean: clean
+	/bin/rm -f Makefile
