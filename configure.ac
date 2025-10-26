@@ -1090,6 +1090,7 @@ AC_CONFIG_FILES([Makefile
 		pxc/Makefile
 		pxc/pxc/Makefile
 		pxc/pxccom/Makefile
+		pxc/libxbrt/Makefile
 		common/abi/Makefile
 		include/Makefile
 		libunicode/Makefile
