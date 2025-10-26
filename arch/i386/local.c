@@ -460,7 +460,7 @@ clocal(P1ND *p)
 #endif
 
 #ifdef PECOFFABI
-			if (attr_find(q->sap, ATTR_i386_SDLLINDIRECT))
+			if (attr_find(q->sap, ATTR_I386_DLLINDIRECT))
 				p = import(p);
 #endif
 #ifdef GCC_COMPAT

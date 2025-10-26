@@ -236,8 +236,12 @@ bfcode(struct symtab **sp, int cnt)
                 p = block(XASM, p, bcon(0), INT, 0, 0);
 
 #if defined(MACHOABI)
-                if ((name = cftnsp->soname) == NULL)
-                        name = cftnsp->sname;
+                /* Get SO name from attribute or fall back to sname */
+                {
+                        struct attr *ap;
+                        name = (ap = attr_find(cftnsp->sap, ATTR_SONAME)) ?
+                            ap->sarg(0) : cftnsp->sname;
+                }
                 if (snprintf(str, STL, "call L%s$pb\nL%s$pb:\n\tpopl %%0\n",
                     name, name) >= STL)
                         cerror("bfcode");
@@ -383,10 +387,23 @@ bfcode(struct symtab **sp, int cnt)
                 /*
                  * mangle name in symbol table as a callee.
                  */
-                if ((name = cftnsp->soname) == NULL)
-                        name = exname(cftnsp->sname);
-                snprintf(buf, 256, "%s@%d", name, argstacksize);
-                cftnsp->soname = addname(buf);
+                {
+                        struct attr *ap;
+                        /* Get existing soname or use exname(sname) */
+                        if ((ap = attr_find(cftnsp->sap, ATTR_SONAME)) != NULL)
+                                name = ap->sarg(0);
+                        else
+                                name = exname(cftnsp->sname);
+                        /* Create mangled name */
+                        snprintf(buf, 256, "%s@%d", name, argstacksize);
+                        /* Store as ATTR_SONAME */
+                        if (ap == NULL) {
+                                cftnsp->sap = attr_add(cftnsp->sap,
+                                    attr_new(ATTR_SONAME, 1));
+                                ap = attr_find(cftnsp->sap, ATTR_SONAME);
+                        }
+                        ap->sarg(0) = addname(buf);
+                }
 #endif
         }
 
