@@ -21,7 +21,7 @@ stabs=no
 dwarf=no
 # allowed: UNSIGNED (4-char u_int), INT (4-char int), SHORT (2-char u_short)
 wchar_type=INT
-# Default assembler format (gnu-as, nasm, yasm, fasm, apple-as, masm, jwasm, uasm, tasm, wasm)
+# Default assembler format (gnu-as, nasm, yasm, fasm, apple-as, masm, jwasm, uasm, tasm, wasm, javascript)
 asm_format=gnu-as
 
 case "$target_os" in
@@ -124,6 +124,8 @@ case "$target_os" in
 	    mips*) targmach=mips ;;
 	    wasm32) targmach=wasm ;;
 	    wasm64) targmach=wasm ;;
+	    javascript) targmach=javascript asm_format=javascript ;;
+	    js) targmach=javascript asm_format=javascript ;;
 	esac
 	case "$target_os" in
 	    *-musl*) ADD_CPPFLAGS="$ADD_CPPFLAGS -DUSE_MUSL" ;;
@@ -281,6 +283,16 @@ case "$target_os" in
 	esac
 	;;
 
+    javascript*|js*)
+	targos=javascript
+	abi=none
+	asm_format=javascript
+	case "$target_cpu" in
+	    javascript|js) targmach=javascript ;;
+	    *) targmach=javascript ;;
+	esac
+	;;
+
     windows*|pe*)
 	target_alias=i386-pe
 	targos=win32
@@ -298,6 +310,8 @@ case "$target_os" in
 	    pdp7) targmach=pdp7 ;;
 	    wasm32) targmach=wasm ;;
 	    wasm64) targmach=wasm ;;
+	    javascript) targmach=javascript asm_format=javascript ;;
+	    js) targmach=javascript asm_format=javascript ;;
 	esac
 	;;
 esac
@@ -502,7 +516,7 @@ if test "$useyasm" = "yes"; then
 fi
 AC_ARG_WITH(asm-format,
 	AS_HELP_STRING([--with-asm-format=<format>],
-		[Specify assembly output format: gnu-as (default), nasm, yasm, fasm, apple-as, masm, jwasm, uasm, tasm, wasm]),
+		[Specify assembly output format: gnu-as (default), nasm, yasm, fasm, apple-as, masm, jwasm, uasm, tasm, wasm, javascript]),
 	asm_format=$withval,
 	[])
 AC_ARG_ENABLE(native,
