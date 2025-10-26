@@ -68,3 +68,8 @@ test-multiarch/
 # Bootstrap build directories
 bootstrap-build/
 .bootstrap/
+
+# Test binaries
+test_metaware
+test_metaware_syntax
+test_blocks
