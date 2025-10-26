@@ -1094,9 +1094,9 @@ AC_CONFIG_FILES([Makefile
 		cc/ccom/Makefile
 		cc/cxxcom/Makefile
 		cc/driver/Makefile
-		f77/Makefile
-		f77/f77/Makefile
-		f77/fcom/Makefile
+		f90/Makefile
+		f90/f90/Makefile
+		f90/fcom/Makefile
 		pascal/Makefile
 		pascal/pascal/Makefile
 		pascal/pcom/Makefile
