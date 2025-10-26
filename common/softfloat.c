@@ -1054,6 +1054,177 @@ FPI * fpis[3] = {
 };
 
 /*
+ * Format-specific helper functions for partially implemented formats
+ */
+
+#ifdef USE_VAXFP_F
+/*
+ * VAX F_floating byte order conversion
+ * VAX format: [exp+sign(8)][frac_hi(8)][frac_mid(8)][frac_lo(8)]
+ * Memory layout is different from IEEE
+ */
+static inline uint32_t vax_f_to_ieee32(uint32_t vax) {
+	/* VAX has exponent bias 128, IEEE has 127 */
+	/* TODO: Full conversion including byte swapping */
+	return vax; /* Placeholder - needs implementation */
+}
+
+static inline uint32_t ieee32_to_vax_f(uint32_t ieee) {
+	/* TODO: Full conversion including byte swapping */
+	return ieee; /* Placeholder - needs implementation */
+}
+#endif
+
+#ifdef USE_VAXFP_D
+/* VAX D_floating conversion helpers */
+static inline uint64_t vax_d_to_ieee64(uint64_t vax) {
+	return vax; /* Placeholder - needs implementation */
+}
+
+static inline uint64_t ieee64_to_vax_d(uint64_t ieee) {
+	return ieee; /* Placeholder - needs implementation */
+}
+#endif
+
+#ifdef USE_OCP_E4M3FN
+/*
+ * OCP E4M3FN special value handling
+ * This format has no INF - max exponent values are used for NaN only
+ * All values are finite numbers except NaN (0xFF for positive, 0xFF for negative)
+ */
+static inline int ocp_e4m3fn_is_nan(uint8_t val) {
+	return (val & 0x7F) == 0x7F; /* All exponent bits set */
+}
+
+static inline uint8_t ocp_e4m3fn_make_nan(int sign) {
+	return sign ? 0xFF : 0x7F; /* NaN encoding */
+}
+#endif
+
+#ifdef USE_OCP_E5M2FNUZ
+/*
+ * OCP E5M2FNUZ special value handling
+ * Finite only, No negative zero, Unsigned Zero
+ * No INF, no negative zero (-0 is treated as +0)
+ */
+static inline int ocp_e5m2fnuz_is_nan(uint8_t val) {
+	return (val & 0x7F) == 0x7C; /* Special NaN encoding */
+}
+
+static inline uint8_t ocp_e5m2fnuz_make_nan(void) {
+	return 0x7C; /* NaN encoding (no sign distinction) */
+}
+
+static inline uint8_t ocp_e5m2fnuz_normalize_zero(uint8_t val) {
+	/* Convert -0 to +0 */
+	if ((val & 0x7F) == 0)
+		return 0; /* Always positive zero */
+	return val;
+}
+#endif
+
+#ifdef USE_OCP_E4M3FNUZ
+/* OCP E4M3FNUZ special value handling */
+static inline int ocp_e4m3fnuz_is_nan(uint8_t val) {
+	return (val & 0x7F) == 0x7F;
+}
+
+static inline uint8_t ocp_e4m3fnuz_make_nan(void) {
+	return 0x7F; /* NaN encoding (no sign distinction) */
+}
+
+static inline uint8_t ocp_e4m3fnuz_normalize_zero(uint8_t val) {
+	if ((val & 0x7F) == 0)
+		return 0; /* Always positive zero */
+	return val;
+}
+#endif
+
+#ifdef USE_DOUBLE_DOUBLE
+/*
+ * Double-Double arithmetic helpers
+ * Double-double uses two IEEE doubles (hi, lo) where:
+ * - hi contains the high-order bits (main value)
+ * - lo contains the low-order bits (correction term)
+ * - Value = hi + lo, where |lo| <= 0.5 * ulp(hi)
+ *
+ * This provides ~106 bits of precision using two 53-bit mantissas
+ */
+
+typedef struct {
+	double hi;
+	double lo;
+} dd_float;
+
+/* Quick two-sum: Assumes |a| >= |b| */
+static inline dd_float dd_quick_two_sum(double a, double b) {
+	dd_float result;
+	double s = a + b;
+	result.hi = s;
+	result.lo = b - (s - a);
+	return result;
+}
+
+/* Two-sum: No assumption on relative magnitude */
+static inline dd_float dd_two_sum(double a, double b) {
+	double s = a + b;
+	double v = s - a;
+	dd_float result;
+	result.hi = s;
+	result.lo = (a - (s - v)) + (b - v);
+	return result;
+}
+
+/* Two-product: Exact product of two doubles */
+static inline dd_float dd_two_prod(double a, double b) {
+	dd_float result;
+	double p = a * b;
+	result.hi = p;
+	/* Assuming FMA (fused multiply-add) available, otherwise needs Split */
+#ifdef FP_FAST_FMA
+	result.lo = fma(a, b, -p);
+#else
+	/* Dekker's algorithm for exact product (needs splitting) */
+	/* TODO: Implement Split algorithm */
+	result.lo = 0; /* Placeholder */
+#endif
+	return result;
+}
+
+/* Add: (a_hi, a_lo) + (b_hi, b_lo) */
+static inline dd_float dd_add(dd_float a, dd_float b) {
+	dd_float s = dd_two_sum(a.hi, b.hi);
+	dd_float t = dd_two_sum(a.lo, b.lo);
+	s.lo += t.hi;
+	s = dd_quick_two_sum(s.hi, s.lo);
+	s.lo += t.lo;
+	s = dd_quick_two_sum(s.hi, s.lo);
+	return s;
+}
+
+/* Multiply: (a_hi, a_lo) * (b_hi, b_lo) */
+static inline dd_float dd_mul(dd_float a, dd_float b) {
+	dd_float p = dd_two_prod(a.hi, b.hi);
+	p.lo += a.hi * b.lo + a.lo * b.hi;
+	p = dd_quick_two_sum(p.hi, p.lo);
+	return p;
+}
+
+/* Negate */
+static inline dd_float dd_neg(dd_float a) {
+	dd_float result;
+	result.hi = -a.hi;
+	result.lo = -a.lo;
+	return result;
+}
+
+/* Subtract */
+static inline dd_float dd_sub(dd_float a, dd_float b) {
+	return dd_add(a, dd_neg(b));
+}
+#endif
+
+/*
  * Constant rounding control mode (cf. TS 18661 clause 11).
  * Default is to have no effect. Set through #pragma STDC FENV_ROUND
  */
