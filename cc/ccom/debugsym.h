@@ -36,6 +36,13 @@
  * - DBX (System V Unix)
  * - Borland Debug Symbols (TD32, TDS)
  * - Watcom Debug Symbols (WDI)
+ * - IBM HLL (VisualAge, XL C/C++)
+ * - HP SOM (HP-UX)
+ * - VMS DST (VAX/VMS, OpenVMS)
+ * - Classic Mac OS (MPW/PEF for 68k/PowerPC)
+ * - Atari TOS/GEMDOS (DRI/GST)
+ * - Amiga (Hunk/SAS/C)
+ * - Acorn RISC OS (AOF/AIF)
  */
 
 #ifndef DEBUGSYM_H
@@ -85,6 +92,16 @@ typedef enum {
 	DBGFMT_IBM_HLL,		/* IBM High Level Language (VisualAge, XL C/C++) */
 	DBGFMT_HP_SOM,		/* HP System Object Model (HP-UX) */
 	DBGFMT_VMS_DST,		/* VMS/OpenVMS Debug Symbol Table */
+
+	/* Classic platform formats */
+	DBGFMT_MACOS_MPW,	/* Classic Mac OS MPW (68k) */
+	DBGFMT_MACOS_PEF,	/* Classic Mac OS PEF (PowerPC) */
+	DBGFMT_ATARI_DRI,	/* Atari TOS/GEMDOS DRI format */
+	DBGFMT_ATARI_GST,	/* Atari GEM Symbol Table (GST) */
+	DBGFMT_AMIGA_HUNK,	/* Amiga Hunk format */
+	DBGFMT_AMIGA_SASC,	/* Amiga SAS/C debug format */
+	DBGFMT_ACORN_AOF,	/* Acorn ARM Object Format (AOF) */
+	DBGFMT_ACORN_AIF,	/* Acorn ARM Image Format (AIF) */
 
 	DBGFMT_MAX
 } debug_format_t;
@@ -431,6 +448,38 @@ void debugsym_vms_init(void);
 void debugsym_vms_emit(debug_symbol_t *sym);
 void debugsym_vms_finish(void);
 debug_symbol_t *debugsym_vms_parse(void *data, size_t len);
+
+/*
+ * Classic Mac OS debug format support (MPW/PEF)
+ */
+void debugsym_macos_init(void);
+void debugsym_macos_emit(debug_symbol_t *sym);
+void debugsym_macos_finish(void);
+debug_symbol_t *debugsym_macos_parse(void *data, size_t len);
+
+/*
+ * Atari TOS/GEMDOS debug format support (DRI/GST)
+ */
+void debugsym_atari_init(void);
+void debugsym_atari_emit(debug_symbol_t *sym);
+void debugsym_atari_finish(void);
+debug_symbol_t *debugsym_atari_parse(void *data, size_t len);
+
+/*
+ * Amiga debug format support (Hunk/SAS/C)
+ */
+void debugsym_amiga_init(void);
+void debugsym_amiga_emit(debug_symbol_t *sym);
+void debugsym_amiga_finish(void);
+debug_symbol_t *debugsym_amiga_parse(void *data, size_t len);
+
+/*
+ * Acorn debug format support (AOF/AIF)
+ */
+void debugsym_acorn_init(void);
+void debugsym_acorn_emit(debug_symbol_t *sym);
+void debugsym_acorn_finish(void);
+debug_symbol_t *debugsym_acorn_parse(void *data, size_t len);
 
 /* ===================================================================
  * UTILITY FUNCTIONS

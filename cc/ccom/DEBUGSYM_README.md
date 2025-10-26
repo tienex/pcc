@@ -88,6 +88,42 @@ This is a comprehensive debug symbol generation and parsing system for the Porta
 **Platforms**: VAX/VMS, OpenVMS (VAX, Alpha, I64)
 **File**: `debugsym_vms.c`
 
+### Classic Mac OS Debug Formats
+- **MPW (Macintosh Programmer's Workshop)** - 68k Macintosh
+- **PEF (Preferred Executable Format)** - PowerPC Macintosh
+- **CodeWarrior Debug** - Metrowerks extended format
+- Used by MPW C/C++, THINK C, Symantec C++, CodeWarrior
+
+**Platforms**: Mac OS Classic (68000, 68020, 68030, 68040, PowerPC)
+**File**: `debugsym_macos.c`
+
+### Atari TOS/GEMDOS Debug Formats
+- **DRI (Digital Research Inc.)** - Standard debug format
+- **GST (GEM Symbol Table)** - Extended symbol table format
+- **Pure C Debug** - Enhanced type information
+- Used by Pure C, Turbo C, Lattice C, Aztec C
+
+**Platforms**: Atari ST, STe, TT, Falcon (68000, 68020, 68030, 68040)
+**File**: `debugsym_atari.c`
+
+### Amiga Debug Formats
+- **Hunk Format** - Standard AmigaOS debug hunks (HUNK_DEBUG)
+- **SAS/C Debug** - Enhanced debug format with full type info
+- **DICE Debug** - Matt Dillon's DICE C compiler format
+- Used by SAS/C, DICE, Aztec C, Lattice C, Manx Aztec C
+
+**Platforms**: AmigaOS 1.x-3.x (68000, 68020, 68030, 68040, 68060)
+**File**: `debugsym_amiga.c`
+
+### Acorn Debug Formats
+- **AOF (ARM Object Format)** - Standard object file debug areas
+- **AIF (ARM Image Format)** - Executable debug tables
+- **DDT (Desktop Debug Table)** - Enhanced debug format
+- Used by Acorn C, Acorn C++, Norcroft C, ARM SDT
+
+**Platforms**: Archimedes, RISC PC, RISC OS (ARM2, ARM3, ARM6, ARM7, StrongARM)
+**File**: `debugsym_acorn.c`
+
 ## Architecture
 
 ### Core Components
@@ -105,6 +141,10 @@ debugsym_watcom.c   - Watcom WDI implementation
 debugsym_hll.c      - IBM HLL implementation
 debugsym_hpsom.c    - HP SOM implementation
 debugsym_vms.c      - VMS/OpenVMS DST implementation
+debugsym_macos.c    - Classic Mac OS MPW/PEF implementation
+debugsym_atari.c    - Atari TOS/GEMDOS DRI/GST implementation
+debugsym_amiga.c    - Amiga Hunk/SAS/C implementation
+debugsym_acorn.c    - Acorn AOF/AIF implementation
 ```
 
 ### Data Flow
@@ -133,7 +173,11 @@ Symbol Table Construction
     ├─→ Watcom    → debugsym_watcom_emit()
     ├─→ IBM HLL   → debugsym_hll_emit()
     ├─→ HP SOM    → debugsym_hpsom_emit()
-    └─→ VMS DST   → debugsym_vms_emit()
+    ├─→ VMS DST   → debugsym_vms_emit()
+    ├─→ Mac OS    → debugsym_macos_emit()
+    ├─→ Atari     → debugsym_atari_emit()
+    ├─→ Amiga     → debugsym_amiga_emit()
+    └─→ Acorn     → debugsym_acorn_emit()
     ↓
 Debug Information in Object File
 ```

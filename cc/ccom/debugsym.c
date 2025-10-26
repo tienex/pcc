@@ -145,6 +145,26 @@ debugsym_init(debug_format_t format)
 		debugsym_vms_init();
 		break;
 
+	case DBGFMT_MACOS_MPW:
+	case DBGFMT_MACOS_PEF:
+		debugsym_macos_init();
+		break;
+
+	case DBGFMT_ATARI_DRI:
+	case DBGFMT_ATARI_GST:
+		debugsym_atari_init();
+		break;
+
+	case DBGFMT_AMIGA_HUNK:
+	case DBGFMT_AMIGA_SASC:
+		debugsym_amiga_init();
+		break;
+
+	case DBGFMT_ACORN_AOF:
+	case DBGFMT_ACORN_AIF:
+		debugsym_acorn_init();
+		break;
+
 	default:
 		break;
 	}
@@ -219,6 +239,26 @@ debugsym_finish(void)
 
 	case DBGFMT_VMS_DST:
 		debugsym_vms_finish();
+		break;
+
+	case DBGFMT_MACOS_MPW:
+	case DBGFMT_MACOS_PEF:
+		debugsym_macos_finish();
+		break;
+
+	case DBGFMT_ATARI_DRI:
+	case DBGFMT_ATARI_GST:
+		debugsym_atari_finish();
+		break;
+
+	case DBGFMT_AMIGA_HUNK:
+	case DBGFMT_AMIGA_SASC:
+		debugsym_amiga_finish();
+		break;
+
+	case DBGFMT_ACORN_AOF:
+	case DBGFMT_ACORN_AIF:
+		debugsym_acorn_finish();
 		break;
 
 	default:
@@ -845,6 +885,26 @@ debugsym_emit_symbol(debug_symbol_t *sym)
 		debugsym_vms_emit(sym);
 		break;
 
+	case DBGFMT_MACOS_MPW:
+	case DBGFMT_MACOS_PEF:
+		debugsym_macos_emit(sym);
+		break;
+
+	case DBGFMT_ATARI_DRI:
+	case DBGFMT_ATARI_GST:
+		debugsym_atari_emit(sym);
+		break;
+
+	case DBGFMT_AMIGA_HUNK:
+	case DBGFMT_AMIGA_SASC:
+		debugsym_amiga_emit(sym);
+		break;
+
+	case DBGFMT_ACORN_AOF:
+	case DBGFMT_ACORN_AIF:
+		debugsym_acorn_emit(sym);
+		break;
+
 	default:
 		break;
 	}
@@ -887,7 +947,11 @@ debugsym_format_name(debug_format_t format)
 		"COFF", "ECOFF", "XCOFF", "PECOFF",
 		"STABS", "DBX",
 		"Borland TD32", "Borland TDS", "Watcom",
-		"IBM HLL", "HP SOM", "VMS DST"
+		"IBM HLL", "HP SOM", "VMS DST",
+		"Mac OS MPW", "Mac OS PEF",
+		"Atari DRI", "Atari GST",
+		"Amiga Hunk", "Amiga SAS/C",
+		"Acorn AOF", "Acorn AIF"
 	};
 
 	if (format < 0 || format >= DBGFMT_MAX)
