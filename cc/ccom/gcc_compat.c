@@ -73,6 +73,51 @@ static struct kw {
 /* 22 */{ "__typeof", NULL, C_TYPEOF },
 /* 23 */{ "__alignof", NULL, C_ALIGNOF },
 /* 24 */{ "__restrict__", NULL, -1 },
+#ifdef mach_i86
+	/* DOS-era i86 keywords (Microsoft/Watcom/Borland/Zortech compatibility) */
+	/* Pointer type modifiers */
+/* 25 */{ "__far", NULL, 0 },
+/* 26 */{ "__near", NULL, 0 },
+/* 27 */{ "__huge", NULL, 0 },
+/* 28 */{ "__based", NULL, 0 },
+/* 29 */{ "__far16", NULL, 0 },		/* Watcom */
+/* 30 */{ "__segment", NULL, 0 },
+/* 31 */{ "__self", NULL, 0 },
+	/* Calling conventions */
+/* 32 */{ "__cdecl", NULL, 0 },
+/* 33 */{ "__pascal", NULL, 0 },
+/* 34 */{ "__fortran", NULL, 0 },
+/* 35 */{ "__syscall", NULL, 0 },		/* Watcom */
+/* 36 */{ "__watcall", NULL, 0 },		/* Watcom */
+	/* Function modifiers */
+/* 37 */{ "__interrupt", NULL, 0 },
+/* 38 */{ "__loadds", NULL, 0 },
+/* 39 */{ "__saveregs", NULL, 0 },
+/* 40 */{ "__export", NULL, 0 },
+	/* Segment registers */
+/* 41 */{ "__ss", NULL, 0 },
+/* 42 */{ "__cs", NULL, 0 },
+/* 43 */{ "__ds", NULL, 0 },
+/* 44 */{ "__es", NULL, 0 },
+	/* Raw byte emission */
+/* 45 */{ "__emit", NULL, 0 },
+/* 46 */{ "__emit__", NULL, 0 },
+#endif
+#if defined(mach_i86) || defined(mach_i386)
+	/* i386-compatible extensions (also on i86 for forward compat) */
+/* 47 */{ "__far16", NULL, 0 },		/* Watcom: 16-bit far pointer */
+	/* MSVC-style inline assembly (both i86 and i386) */
+/* 48 */{ "__asm", NULL, 0 },		/* Note: conflicts with index 0, handled specially */
+#endif
+#if defined(mach_i86) || defined(mach_i386) || defined(mach_amd64)
+	/* Segment registers available on all x86 architectures */
+/* 49 */{ "__fs", NULL, 0 },
+/* 50 */{ "__gs", NULL, 0 },
+#endif
+#ifdef mach_amd64
+	/* x86-64 specific extensions */
+/* 51 */{ "__near32", NULL, 0 },		/* 32-bit near pointer for macOS */
+#endif
 	{ NULL, NULL, 0 },
 };
 
@@ -326,6 +371,101 @@ gcc_keyword(char *str)
 	case 18: /* __imag__ */
 		yylval.intval = XIMAG;
 		return C_UNOP;
+#ifdef mach_i86
+	/* DOS-era i86 keywords - work like inline __attribute__((name)) */
+	/* These keywords act as shorthand for __attribute__((keyword)) */
+
+	/* Pointer type modifiers (25-31) */
+	case 25: /* __far */
+	case 26: /* __near */
+	case 27: /* __huge */
+	case 28: /* __based */
+	case 30: /* __segment */
+	case 31: /* __self */
+	/* Calling conventions (32-36) */
+	case 32: /* __cdecl */
+	case 33: /* __pascal */
+	case 34: /* __fortran */
+	case 35: /* __syscall */
+	case 36: /* __watcall */
+	/* Function modifiers (37-40) */
+	case 37: /* __interrupt */
+	case 38: /* __loadds */
+	case 39: /* __saveregs */
+	case 40: /* __export */
+	/* Segment registers (41-44) */
+	case 41: /* __ss */
+	case 42: /* __cs */
+	case 43: /* __ds */
+	case 44: /* __es */
+		/* Map keyword index to attribute type */
+		switch (i) {
+		case 25: yylval.intval = GCC_ATYP_FAR; break;
+		case 26: yylval.intval = GCC_ATYP_NEAR; break;
+		case 27: yylval.intval = GCC_ATYP_HUGE; break;
+		case 28: yylval.intval = GCC_ATYP_BASED; break;
+		case 30: yylval.intval = GCC_ATYP_SEGMENT; break;
+		case 31: yylval.intval = GCC_ATYP_SELF; break;
+		case 32: yylval.intval = GCC_ATYP_CDECL; break;
+		case 33: yylval.intval = GCC_ATYP_PASCAL; break;
+		case 34: yylval.intval = GCC_ATYP_FORTRAN; break;
+		case 35: yylval.intval = GCC_ATYP_SYSCALL; break;
+		case 36: yylval.intval = GCC_ATYP_WATCALL; break;
+		case 37: yylval.intval = GCC_ATYP_INTERRUPT; break;
+		case 38: yylval.intval = GCC_ATYP_LOADDS; break;
+		case 39: yylval.intval = GCC_ATYP_SAVEREGS; break;
+		case 40: yylval.intval = GCC_ATYP_EXPORT; break;
+		case 41: yylval.intval = GCC_ATYP_SS; break;
+		case 42: yylval.intval = GCC_ATYP_CS; break;
+		case 43: yylval.intval = GCC_ATYP_DS; break;
+		case 44: yylval.intval = GCC_ATYP_ES; break;
+		}
+		/* Enter attribute mode for parsing */
+		inattr = 1;
+		parlvl = parbal;
+		return C_ATTRIBUTE;
+	/* __emit keyword - emit raw bytes into code stream */
+	case 45: /* __emit */
+	case 46: /* __emit__ */
+		yylval.intval = GCC_ATYP_EMIT;
+		inattr = 1;
+		parlvl = parbal;
+		return C_ATTRIBUTE;
+#endif
+#if defined(mach_i86) || defined(mach_i386)
+	/* __far16 keyword (Watcom 16-bit far pointer for i386 large model) */
+	case 47: /* __far16 */
+		yylval.intval = GCC_ATYP_FAR16;
+		inattr = 1;
+		parlvl = parbal;
+		return C_ATTRIBUTE;
+	/* MSVC-style __asm keyword */
+	case 48: /* __asm */
+		/* MSVC __asm is different from GCC __asm (index 0) */
+		/* For now, treat as regular C_ASM but mark for MSVC-style parsing */
+		yylval.intval = GCC_ATYP_ASM_MSVC;
+		return C_ASM;  /* Return C_ASM to trigger inline assembly parsing */
+#endif
+#if defined(mach_i86) || defined(mach_i386) || defined(mach_amd64)
+	/* Segment register keywords (FS/GS available on all x86 architectures) */
+	case 49: /* __fs */
+	case 50: /* __gs */
+		switch (i) {
+		case 49: yylval.intval = GCC_ATYP_FS; break;
+		case 50: yylval.intval = GCC_ATYP_GS; break;
+		}
+		inattr = 1;
+		parlvl = parbal;
+		return C_ATTRIBUTE;
+#endif
+#ifdef mach_amd64
+	/* x86-64 specific extensions */
+	case 51: /* __near32 */
+		yylval.intval = GCC_ATYP_NEAR32;
+		inattr = 1;
+		parlvl = parbal;
+		return C_ATTRIBUTE;
+#endif
 	}
 	cerror("gcc_keyword");
 	return 0;
@@ -413,6 +553,57 @@ struct atax {
 	CS(GCC_ATYP_BOUNDED)	{ A_3ARG|A_MANY|A1_NAME, "bounded" },
 
 	CS(GCC_ATYP_WEAKIMPORT)	{ A_0ARG, "weak_import" },
+
+#ifdef mach_i86
+	/* DOS-era i86 attributes (Microsoft/Watcom/Borland/Zortech) */
+
+	/* Pointer type modifiers */
+	CS(GCC_ATYP_FAR)	{ A_0ARG, "far" },
+	CS(GCC_ATYP_NEAR)	{ A_0ARG, "near" },
+	CS(GCC_ATYP_HUGE)	{ A_0ARG, "huge" },
+	CS(GCC_ATYP_BASED)	{ A_0ARG|A_1ARG|A1_NAME, "based" },
+	CS(GCC_ATYP_SEGMENT)	{ A_0ARG, "segment" },
+	CS(GCC_ATYP_SELF)	{ A_0ARG, "self" },
+
+	/* Calling conventions */
+	CS(GCC_ATYP_PASCAL)	{ A_0ARG, "pascal" },
+	CS(GCC_ATYP_FORTRAN)	{ A_0ARG, "fortran" },
+	CS(GCC_ATYP_SYSCALL)	{ A_0ARG, "syscall" },
+	CS(GCC_ATYP_WATCALL)	{ A_0ARG, "watcall" },
+
+	/* Function modifiers */
+	CS(GCC_ATYP_INTERRUPT)	{ A_0ARG|A_1ARG, "interrupt" },
+	CS(GCC_ATYP_LOADDS)	{ A_0ARG, "loadds" },
+	CS(GCC_ATYP_SAVEREGS)	{ A_0ARG, "saveregs" },
+	CS(GCC_ATYP_EXPORT)	{ A_0ARG, "export" },
+
+	/* Segment registers (i86 only: SS, CS, DS, ES) */
+	CS(GCC_ATYP_SS)		{ A_0ARG, "ss" },
+	CS(GCC_ATYP_CS)		{ A_0ARG, "cs" },
+	CS(GCC_ATYP_DS)		{ A_0ARG, "ds" },
+	CS(GCC_ATYP_ES)		{ A_0ARG, "es" },
+
+	/* Borland/MSVC extensions */
+	CS(GCC_ATYP_EMIT)	{ A_1ARG|A_MANY, "emit" },  /* 1 or more byte arguments */
+#endif
+
+#if defined(mach_i86) || defined(mach_i386)
+	/* i386-compatible extensions (also available on i86 for forward compat) */
+	CS(GCC_ATYP_FAR16)	{ A_0ARG, "far16" },
+	/* MSVC inline assembly */
+	CS(GCC_ATYP_ASM_MSVC)	{ A_0ARG, "asm_msvc" },
+#endif
+
+#if defined(mach_i86) || defined(mach_i386) || defined(mach_amd64)
+	/* Segment registers available on all x86 architectures */
+	CS(GCC_ATYP_FS)		{ A_0ARG, "fs" },
+	CS(GCC_ATYP_GS)		{ A_0ARG, "gs" },
+#endif
+
+#ifdef mach_amd64
+	/* x86-64 specific extensions */
+	CS(GCC_ATYP_NEAR32)	{ A_0ARG, "near32" },
+#endif
 };
 
 #if SZPOINT(CHAR) == SZLONGLONG

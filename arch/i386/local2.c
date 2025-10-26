@@ -37,6 +37,7 @@
 #endif
 
 int msettings = MI686;
+int mcmodel = MCI386_SMALL;  /* Default to small (flat) memory model */
 static int stkpos;
 
 void
@@ -1375,11 +1376,19 @@ mflags(char *str)
 {
 #define	MSET(s,a) if (strcmp(str, s) == 0) \
 	msettings = (msettings & ~MCPUMSK) | a
+#define	S(x)	(strcmp(x, str) == 0)
 
 	MSET("arch=i386",MI386);
 	MSET("arch=i486",MI486);
 	MSET("arch=i586",MI586);
 	MSET("arch=i686",MI686);
+
+	/* Memory model options */
+	if (S("cmodel=small"))
+		mcmodel = MCI386_SMALL;
+	else if (S("cmodel=large"))
+		mcmodel = MCI386_LARGE;
+#undef S
 }
 
 /*

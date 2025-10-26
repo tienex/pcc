@@ -34,6 +34,9 @@
 
 static int stkpos;
 
+/* Memory model - defaults to small */
+int mcmodel = MCSMALL;
+
 static int suppress_type;		/* Don't display a type on the
 					   next expansion */
 
@@ -1337,6 +1340,23 @@ special(NODE *p, int shape)
 void
 mflags(char *str)
 {
+#define	S(x)	(strcmp(x, str) == 0)
+
+	if (S("cmodel=tiny"))
+		mcmodel = MCTINY;
+	else if (S("cmodel=small"))
+		mcmodel = MCSMALL;
+	else if (S("cmodel=medium"))
+		mcmodel = MCMEDIUM;
+	else if (S("cmodel=compact"))
+		mcmodel = MCCOMPACT;
+	else if (S("cmodel=large"))
+		mcmodel = MCLARGE;
+	else if (S("cmodel=huge"))
+		mcmodel = MCHUGE;
+	else
+		; /* Ignore unknown flags for now */
+#undef S
 }
 
 /*

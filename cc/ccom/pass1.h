@@ -583,6 +583,58 @@ enum {	ATTR_FIRST = ATTR_MI_MAX + 1,
 	/* OSX toolchain */
 	GCC_ATYP_WEAKIMPORT,
 
+#ifdef mach_i86
+	/* DOS-era i86 pointer type attributes (Microsoft/Watcom/Borland) */
+	GCC_ATYP_FAR,		/* far pointer (segment:offset, 32-bit) */
+	GCC_ATYP_NEAR,		/* near pointer (offset only, 16-bit) */
+	GCC_ATYP_HUGE,		/* huge pointer (normalized far, 32-bit) */
+	GCC_ATYP_BASED,		/* based pointer (relative to segment, with 1 arg) */
+	GCC_ATYP_SEGMENT,	/* segment type */
+	GCC_ATYP_SELF,		/* self-relative addressing */
+
+	/* DOS-era i86 calling conventions */
+	GCC_ATYP_PASCAL,	/* Pascal calling convention (reverse params, callee cleans) */
+	GCC_ATYP_FORTRAN,	/* Fortran calling convention (similar to Pascal) */
+	GCC_ATYP_SYSCALL,	/* Watcom: system call convention */
+	GCC_ATYP_WATCALL,	/* Watcom: register-based calling convention */
+
+	/* DOS-era i86 function modifiers */
+	GCC_ATYP_INTERRUPT,	/* interrupt service routine */
+	GCC_ATYP_LOADDS,	/* load DS register on function entry */
+	GCC_ATYP_SAVEREGS,	/* save/restore all registers */
+	GCC_ATYP_EXPORT,	/* export function (DLL) */
+
+	/* Segment register keywords (i86 only: SS, CS, DS, ES) */
+	GCC_ATYP_SS,		/* stack segment register */
+	GCC_ATYP_CS,		/* code segment register */
+	GCC_ATYP_DS,		/* data segment register */
+	GCC_ATYP_ES,		/* extra segment register */
+
+	/* Borland register pseudo-variables (direct register access) */
+	GCC_ATYP_EMIT,		/* __emit - emit raw bytes */
+#endif
+
+#if defined(mach_i86) || defined(mach_i386)
+	/* i386-compatible extensions (also available on i86 for forward compat) */
+	GCC_ATYP_FAR16,		/* Watcom: 16-bit far pointer (i386 large model) */
+#endif
+
+#if defined(mach_i86) || defined(mach_i386) || defined(mach_amd64)
+	/* Segment register keywords available on all x86 architectures */
+	GCC_ATYP_FS,		/* FS segment register (386+, used for TLS on x86-64) */
+	GCC_ATYP_GS,		/* GS segment register (386+, used for TLS on x86-64) */
+#endif
+
+#ifdef mach_amd64
+	/* x86-64 specific extensions */
+	GCC_ATYP_NEAR32,	/* 32-bit near pointer (macOS 32-bit routine export) */
+#endif
+
+#if defined(mach_i86) || defined(mach_i386)
+	/* MSVC/Borland inline assembly */
+	GCC_ATYP_ASM_MSVC,	/* __asm - MSVC-style inline assembly */
+#endif
+
 	GCC_ATYP_MAX,
 #endif
 #ifdef ATTR_P1_TARGET
