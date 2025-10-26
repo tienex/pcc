@@ -1,0 +1,85 @@
+#	$Id$
+#
+# Makefile.in for Prolog compiler (plogcom)
+#
+VPATH=@srcdir@
+srcdir=@srcdir@
+top_srcdir=@top_srcdir@
+top_builddir=@top_builddir@
+prefix = @prefix@
+exec_prefix = @exec_prefix@
+bindir = @bindir@
+libexecdir = @libexecdir@
+datarootdir = @datarootdir@
+mandir = @mandir@
+CC = @CC@
+EXEEXT = @EXEEXT@
+TARGOS = @targos@
+TARGMACH = @targmach@
+YACC = @YACC@
+LEX = @LEX@
+CFLAGS = @CFLAGS@ @ADD_CFLAGS@
+CPPFLAGS = @CPPFLAGS@ @ADD_CPPFLAGS@ \
+	-I$(srcdir) -I$(top_builddir) \
+	-I$(top_srcdir)/mip -I$(top_srcdir)/common \
+	-DLIBEXECDIR=\"$(libexecdir)\" \
+	-Dmach_$(TARGMACH) -Dos_$(TARGOS)
+LIBS = @LIBS@
+LDFLAGS = @LDFLAGS@
+INSTALL = @INSTALL@
+INSTALL_PROGRAM = @INSTALL_PROGRAM@
+INSTALL_DATA = @INSTALL_DATA@
+
+OBJS=	main.o error.o symtab.o terms.o builtins.o util.o codegen.o \
+	scan.o plgram.o
+
+DEST=plogcom$(EXEEXT)
+
+all: $(DEST)
+
+$(DEST): $(OBJS)
+	$(CC) $(LDFLAGS) $(OBJS) -o $@ $(LIBS)
+
+scan.c: $(srcdir)/scan.l
+	$(LEX) -t $(srcdir)/scan.l > scan.c
+
+plgram.c y.tab.h: $(srcdir)/plgram.y
+	$(YACC) -d $(srcdir)/plgram.y
+	mv y.tab.c plgram.c
+
+scan.o: scan.c y.tab.h pass1.h
+	$(CC) $(DEFS) $(CPPFLAGS) $(CFLAGS) -c scan.c
+
+plgram.o: plgram.c pass1.h
+	$(CC) $(DEFS) $(CPPFLAGS) $(CFLAGS) -c plgram.c
+
+main.o: $(srcdir)/main.c pass1.h
+	$(CC) $(DEFS) $(CPPFLAGS) $(CFLAGS) -c $(srcdir)/main.c
+
+error.o: $(srcdir)/error.c pass1.h
+	$(CC) $(DEFS) $(CPPFLAGS) $(CFLAGS) -c $(srcdir)/error.c
+
+symtab.o: $(srcdir)/symtab.c pass1.h
+	$(CC) $(DEFS) $(CPPFLAGS) $(CFLAGS) -c $(srcdir)/symtab.c
+
+terms.o: $(srcdir)/terms.c pass1.h
+	$(CC) $(DEFS) $(CPPFLAGS) $(CFLAGS) -c $(srcdir)/terms.c
+
+builtins.o: $(srcdir)/builtins.c pass1.h
+	$(CC) $(DEFS) $(CPPFLAGS) $(CFLAGS) -c $(srcdir)/builtins.c
+
+util.o: $(srcdir)/util.c pass1.h
+	$(CC) $(DEFS) $(CPPFLAGS) $(CFLAGS) -c $(srcdir)/util.c
+
+codegen.o: $(srcdir)/codegen.c pass1.h
+	$(CC) $(DEFS) $(CPPFLAGS) $(CFLAGS) -c $(srcdir)/codegen.c
+
+install: all
+	test -z "$(DESTDIR)$(libexecdir)" || mkdir -p "$(DESTDIR)$(libexecdir)"
+	$(INSTALL_PROGRAM) $(DEST) $(DESTDIR)$(libexecdir)
+
+clean:
+	rm -f $(OBJS) $(DEST) scan.c plgram.c y.tab.h y.tab.c
+
+distclean: clean
+	rm -f Makefile
