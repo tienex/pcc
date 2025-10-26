@@ -1,0 +1,15 @@
+# Compiled binaries
+test_x86asm
+example
+
+# Object files
+*.o
+*.a
+*.so
+
+# Test output
+test_output_*.asm
+test_addressing_*.asm
+test_simd_*.asm
+strlen_*.asm
+vec_add_*.asm
