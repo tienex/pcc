@@ -1051,9 +1051,11 @@ label:		   C_NAME ':' attr_var { deflabel($1, $3); reached = 1; }
 
 /* C++ exception handling */
 try_block:	   CXX_TRY compoundstmt handler_seq {
-			/* TODO: Implement exception handling */
-			uerror("try/catch not yet implemented");
-			$$ = NIL;
+			/* For now, just emit a warning - full implementation later */
+			/* compoundstmt already emitted its code */
+			/* TODO: Add exception frame setup before compoundstmt */
+			/* TODO: Add exception frame teardown after handlers */
+			cxxtry(NIL, $3);  /* Pass handler_seq for future use */
 		}
 		;
 
@@ -1067,23 +1069,23 @@ handler_seq:	   handler {
 		;
 
 handler:	   CXX_CATCH '(' exception_declaration ')' compoundstmt {
-			/* TODO: Implement catch block */
-			$$ = NIL;
+			/* compoundstmt already emitted its code */
+			$$ = cxxcatch($3, NIL);
 		}
 		;
 
 exception_declaration:
 		   specifier_qualifier_list declarator {
 			/* catch (Type varname) */
-			$$ = $2;
+			$$ = cxxexception_decl($1, $2);
 		}
 		|  specifier_qualifier_list abstract_declarator {
 			/* catch (Type) */
-			$$ = $2;
+			$$ = cxxexception_decl($1, $2);
 		}
 		|  specifier_qualifier_list {
 			/* catch (Type) */
-			$$ = $1;
+			$$ = cxxexception_decl($1, NIL);
 		}
 		|  C_ELLIPSIS {
 			/* catch (...) */
@@ -1361,14 +1363,11 @@ term:		   term C_INCOP {  $$ = biop($2, $1, bcon(1)); }
 		}
 	|  CXX_THROW {
 		/* throw; - re-throw current exception */
-		uerror("throw not yet implemented");
-		$$ = bcon(0);
+		$$ = cxxthrow(NIL);
 	}
 	|  CXX_THROW e %prec C_UNOP {
 		/* throw expr; - throw new exception */
-		uerror("throw not yet implemented");
-		tfree($2);
-		$$ = bcon(0);
+		$$ = cxxthrow($2);
 	}
 		;
 

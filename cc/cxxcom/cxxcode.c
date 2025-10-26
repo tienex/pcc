@@ -1346,3 +1346,137 @@ cxxabi_mangle_function(struct symtab *sp)
 
 	return result;
 }
+
+/*
+ * C++ Exception Handling Code Generation
+ *
+ * These functions generate code for try/catch/throw statements.
+ * Currently using stub implementations - full implementation will
+ * require integration with libseh (SEH runtime library).
+ *
+ * See SEH_LIBRARY_STATUS.md for details on library integration status.
+ */
+
+/*
+ * Generate code for try-catch block
+ *
+ * try { ... } catch (Type e) { ... }
+ *
+ * Full implementation will:
+ * 1. Create _seh_registration structure on stack
+ * 2. Call _seh_register() to add to exception chain
+ * 3. Use setjmp() for exception handling
+ * 4. Generate handler code for each catch block
+ * 5. Call _seh_unregister() when leaving scope
+ */
+NODE *
+cxxtry(NODE *try_body, NODE *handler_seq)
+{
+	static int warned = 0;
+	
+	if (!warned) {
+		werror("try/catch blocks not yet fully implemented (stub)");
+		werror("Exception handling requires libseh integration");
+		warned = 1;
+	}
+
+	/* For now, just execute the try body and ignore catch blocks */
+	/* TODO: Generate proper SEH frame setup code */
+	
+	if (try_body)
+		ecomp(try_body);
+	
+	if (handler_seq)
+		tfree(handler_seq);
+	
+	return NIL;
+}
+
+/*
+ * Generate code for catch block
+ *
+ * catch (Type e) { ... }
+ *
+ * Full implementation will:
+ * 1. Generate exception type matching code
+ * 2. Extract exception object from SEH structure
+ * 3. Bind exception to catch parameter
+ * 4. Execute handler body
+ */
+NODE *
+cxxcatch(NODE *exception_decl, NODE *handler_body)
+{
+	/* TODO: Generate catch block code */
+	/* For now, just free the nodes */
+	
+	if (exception_decl)
+		tfree(exception_decl);
+	
+	if (handler_body)
+		tfree(handler_body);
+	
+	return NIL;
+}
+
+/*
+ * Generate code for throw statement
+ *
+ * throw expr;  - throw new exception
+ * throw;       - re-throw current exception
+ *
+ * Full implementation will:
+ * 1. Allocate exception object on heap
+ * 2. Call constructor for exception object
+ * 3. Create exception type descriptor
+ * 4. Call _seh_raise_exception()
+ */
+NODE *
+cxxthrow(NODE *expr)
+{
+	static int warned = 0;
+	
+	if (!warned) {
+		werror("throw statements not yet fully implemented (stub)");
+		werror("Exception handling requires libseh integration");
+		warned = 1;
+	}
+
+	/* TODO: Generate proper throw code */
+	
+	if (expr) {
+		/* throw expr; - throw new exception */
+		tfree(expr);
+	} else {
+		/* throw; - re-throw current exception */
+		/* Nothing to free */
+	}
+	
+	/* For now, generate a simple error/abort placeholder */
+	/* In full implementation, this would call _seh_raise_exception() */
+	
+	return NIL;
+}
+
+/*
+ * Generate code for exception declaration in catch block
+ *
+ * This handles:
+ * - catch (Type var)
+ * - catch (Type)
+ * - catch (...)
+ *
+ * Full implementation will create a symbol table entry for the
+ * exception variable and generate code to extract it from the
+ * SEH exception structure.
+ */
+NODE *
+cxxexception_decl(NODE *type_spec, NODE *declarator)
+{
+	/* TODO: Process exception declaration */
+	/* For now, just return the declarator node */
+	
+	if (type_spec)
+		tfree(type_spec);
+	
+	return declarator;
+}

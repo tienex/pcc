@@ -87,3 +87,9 @@ NODE *cxxaddhidden(NODE *, NODE *);
 NODE *cxxstructref(NODE *p, int f, char *name);
 void cxxregister_dtor(struct symtab *obj, struct symtab *dtor, int level);
 void cxxcall_dtors(int level);
+
+/* C++ exception handling (Phase 5) */
+NODE *cxxtry(NODE *try_body, NODE *handler_seq);
+NODE *cxxcatch(NODE *exception_decl, NODE *handler_body);
+NODE *cxxthrow(NODE *expr);
+NODE *cxxexception_decl(NODE *type_spec, NODE *declarator);
