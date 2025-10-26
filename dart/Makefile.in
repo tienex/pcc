@@ -1,0 +1,20 @@
+#	$Id$
+
+SUBDIR=	dart dcom tests
+
+all: subdirs
+
+subdirs:
+	@for dir in $(SUBDIR); do \
+		(cd $$dir && $(MAKE) all) || exit 1; \
+	done
+
+clean:
+	@for dir in $(SUBDIR); do \
+		(cd $$dir && $(MAKE) clean); \
+	done
+
+install:
+	@for dir in $(SUBDIR); do \
+		(cd $$dir && $(MAKE) install); \
+	done
