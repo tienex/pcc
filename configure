@@ -3016,6 +3016,8 @@ case "$target_os" in
 	    mips64) targmach=mips64 endian=big ;;
 	    mipseb) targmach=mips endian=big ;;
 	    mips*) targmach=mips ;;
+	    wasm32) targmach=wasm ;;
+	    wasm64) targmach=wasm ;;
 	esac
 	case "$target_os" in
 	    *-musl*) ADD_CPPFLAGS="$ADD_CPPFLAGS -DUSE_MUSL" ;;
@@ -3164,6 +3166,15 @@ case "$target_os" in
         esac
         ;;
 
+    wasm*)
+	targos=wasm
+	abi=elf
+	case "$target_cpu" in
+	    wasm32) targmach=wasm ;;
+	    wasm64) targmach=wasm ;;
+	esac
+	;;
+
     windows*|pe*)
 	target_alias=i386-pe
 	targos=win32
@@ -3179,6 +3190,8 @@ case "$target_os" in
 	    nova) targmach=nova ;;
 	    i86) targmach=i86 ;;
 	    pdp7) targmach=pdp7 ;;
+	    wasm32) targmach=wasm ;;
+	    wasm64) targmach=wasm ;;
 	esac
 	;;
 esac
@@ -6490,7 +6503,7 @@ esac
 
 
 
-ac_config_files="$ac_config_files Makefile cc/Makefile cc/cc/Makefile cc/cpp/Makefile cc/ccom/Makefile cc/cxxcom/Makefile cc/driver/Makefile f77/Makefile f77/f77/Makefile f77/fcom/Makefile pascal/Makefile pascal/pascal/Makefile pascal/pcom/Makefile common/abi/Makefile include/Makefile libunicode/Makefile libthread/Makefile libstdbit/Makefile libckdint/Makefile libdecimal/Makefile libmetaware/Makefile libblocks/Makefile"
+ac_config_files="$ac_config_files Makefile cc/Makefile cc/cc/Makefile cc/cpp/Makefile cc/ccom/Makefile cc/cxxcom/Makefile cc/driver/Makefile f90/Makefile f90/f90/Makefile f90/fcom/Makefile pascal/Makefile pascal/pascal/Makefile pascal/pcom/Makefile common/abi/Makefile include/Makefile libunicode/Makefile libthread/Makefile libstdbit/Makefile libckdint/Makefile libdecimal/Makefile libmetaware/Makefile libblocks/Makefile"
 
 cat >confcache <<\_ACEOF
 # This file is a shell script that caches the results of configure
@@ -7187,9 +7200,9 @@ do
     "cc/ccom/Makefile") CONFIG_FILES="$CONFIG_FILES cc/ccom/Makefile" ;;
     "cc/cxxcom/Makefile") CONFIG_FILES="$CONFIG_FILES cc/cxxcom/Makefile" ;;
     "cc/driver/Makefile") CONFIG_FILES="$CONFIG_FILES cc/driver/Makefile" ;;
-    "f77/Makefile") CONFIG_FILES="$CONFIG_FILES f77/Makefile" ;;
-    "f77/f77/Makefile") CONFIG_FILES="$CONFIG_FILES f77/f77/Makefile" ;;
-    "f77/fcom/Makefile") CONFIG_FILES="$CONFIG_FILES f77/fcom/Makefile" ;;
+    "f90/Makefile") CONFIG_FILES="$CONFIG_FILES f90/Makefile" ;;
+    "f90/f90/Makefile") CONFIG_FILES="$CONFIG_FILES f90/f90/Makefile" ;;
+    "f90/fcom/Makefile") CONFIG_FILES="$CONFIG_FILES f90/fcom/Makefile" ;;
     "pascal/Makefile") CONFIG_FILES="$CONFIG_FILES pascal/Makefile" ;;
     "pascal/pascal/Makefile") CONFIG_FILES="$CONFIG_FILES pascal/pascal/Makefile" ;;
     "pascal/pcom/Makefile") CONFIG_FILES="$CONFIG_FILES pascal/pcom/Makefile" ;;
