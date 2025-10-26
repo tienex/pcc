@@ -21,12 +21,11 @@ config.h
 config.log
 config.status
 autom4te.cache/
-/Makefile
+Makefile
 configure
 configure~
 
-# Exception: Don't ignore source Makefiles in subdirectories
-!*/Makefile
+# Exception: Don't ignore Makefile.in templates
 !Makefile.in
 !*/Makefile.in
 !libseh/Makefile
