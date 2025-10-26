@@ -141,6 +141,10 @@ debugsym_init(debug_format_t format)
 		debugsym_hpsom_init();
 		break;
 
+	case DBGFMT_VMS_DST:
+		debugsym_vms_init();
+		break;
+
 	default:
 		break;
 	}
@@ -211,6 +215,10 @@ debugsym_finish(void)
 
 	case DBGFMT_HP_SOM:
 		debugsym_hpsom_finish();
+		break;
+
+	case DBGFMT_VMS_DST:
+		debugsym_vms_finish();
 		break;
 
 	default:
@@ -833,6 +841,10 @@ debugsym_emit_symbol(debug_symbol_t *sym)
 		debugsym_hpsom_emit(sym);
 		break;
 
+	case DBGFMT_VMS_DST:
+		debugsym_vms_emit(sym);
+		break;
+
 	default:
 		break;
 	}
@@ -875,7 +887,7 @@ debugsym_format_name(debug_format_t format)
 		"COFF", "ECOFF", "XCOFF", "PECOFF",
 		"STABS", "DBX",
 		"Borland TD32", "Borland TDS", "Watcom",
-		"IBM HLL", "HP SOM"
+		"IBM HLL", "HP SOM", "VMS DST"
 	};
 
 	if (format < 0 || format >= DBGFMT_MAX)

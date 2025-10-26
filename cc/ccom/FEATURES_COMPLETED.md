@@ -100,6 +100,15 @@ The universal debug symbol parser/generator for PCC is now **feature-complete** 
     - Value Table (VT)
     - PA-RISC and Itanium support
 
+14. **debugsym_vms.c** - VMS/OpenVMS DST (550+ lines)
+    - VMS Debug Symbol Table format
+    - 30+ DST record types
+    - Comprehensive type descriptors
+    - PC correlation tables
+    - VAX, Alpha, and Itanium support
+    - Module, routine, block tracking
+    - Register usage and stack frames
+
 ### ✅ Testing and Validation (2 files, 800+ lines)
 
 12. **test_debugsym.c** - Comprehensive test suite
@@ -167,12 +176,13 @@ The universal debug symbol parser/generator for PCC is now **feature-complete** 
 | Watcom | WDI | Watcom C/C++ | ✅ Complete |
 | IBM HLL | - | IBM compilers (AIX, OS/2, OS/400) | ✅ Complete |
 | HP SOM | - | HP-UX (PA-RISC, Itanium) | ✅ Complete |
+| VMS DST | - | VAX/VMS, OpenVMS (VAX, Alpha, I64) | ✅ Complete |
 
 ## Statistics
 
-- **Total files**: 18 (15 implementation + 2 tests + 1 example)
-- **Total lines of code**: ~5,800+
-- **Debug formats supported**: 11 format families, 17+ specific versions
+- **Total files**: 19 (16 implementation + 2 tests + 1 example)
+- **Total lines of code**: ~6,350+
+- **Debug formats supported**: 12 format families, 18+ specific versions
 - **API functions**: 80+
 - **Test cases**: 13 comprehensive tests
 - **Type system features**: 25+ type encodings

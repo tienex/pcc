@@ -84,6 +84,7 @@ typedef enum {
 	DBGFMT_WATCOM,		/* Watcom debug info (WDI) */
 	DBGFMT_IBM_HLL,		/* IBM High Level Language (VisualAge, XL C/C++) */
 	DBGFMT_HP_SOM,		/* HP System Object Model (HP-UX) */
+	DBGFMT_VMS_DST,		/* VMS/OpenVMS Debug Symbol Table */
 
 	DBGFMT_MAX
 } debug_format_t;
@@ -422,6 +423,14 @@ void debugsym_hpsom_init(void);
 void debugsym_hpsom_emit(debug_symbol_t *sym);
 void debugsym_hpsom_finish(void);
 debug_symbol_t *debugsym_hpsom_parse(void *data, size_t len);
+
+/*
+ * VMS/OpenVMS DST debug format support
+ */
+void debugsym_vms_init(void);
+void debugsym_vms_emit(debug_symbol_t *sym);
+void debugsym_vms_finish(void);
+debug_symbol_t *debugsym_vms_parse(void *data, size_t len);
 
 /* ===================================================================
  * UTILITY FUNCTIONS

@@ -79,6 +79,15 @@ This is a comprehensive debug symbol generation and parsing system for the Porta
 **Platforms**: HP-UX (PA-RISC, Itanium)
 **File**: `debugsym_hpsom.c`
 
+### VMS/OpenVMS DST (Debug Symbol Table)
+- Digital Equipment Corporation (DEC) debug format
+- VAX/VMS, OpenVMS on VAX, Alpha, and Itanium
+- Comprehensive type descriptors
+- PC correlation and source line tables
+
+**Platforms**: VAX/VMS, OpenVMS (VAX, Alpha, I64)
+**File**: `debugsym_vms.c`
+
 ## Architecture
 
 ### Core Components
@@ -95,6 +104,7 @@ debugsym_borland.c  - Borland TD32/TDS implementation
 debugsym_watcom.c   - Watcom WDI implementation
 debugsym_hll.c      - IBM HLL implementation
 debugsym_hpsom.c    - HP SOM implementation
+debugsym_vms.c      - VMS/OpenVMS DST implementation
 ```
 
 ### Data Flow
@@ -122,7 +132,8 @@ Symbol Table Construction
     ├─→ Borland   → debugsym_borland_emit()
     ├─→ Watcom    → debugsym_watcom_emit()
     ├─→ IBM HLL   → debugsym_hll_emit()
-    └─→ HP SOM    → debugsym_hpsom_emit()
+    ├─→ HP SOM    → debugsym_hpsom_emit()
+    └─→ VMS DST   → debugsym_vms_emit()
     ↓
 Debug Information in Object File
 ```
@@ -146,6 +157,7 @@ DBGFMT_BORLAND_TD32, DBGFMT_BORLAND_TDS
 DBGFMT_WATCOM
 DBGFMT_IBM_HLL
 DBGFMT_HP_SOM
+DBGFMT_VMS_DST
 ```
 
 ### Symbol Recording
