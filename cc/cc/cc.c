@@ -284,6 +284,7 @@ char *win32pathsubst(char *);
 char *win32commandline(struct strlist *l);
 #endif
 int	sspflag;
+int	sehflag;
 int	freestanding;
 int	Sflag;
 int	cflag;
@@ -1892,6 +1893,7 @@ struct flgcheck ccomflgcheck[] = {
 	{ &kflag, 1, "-k" },
 #endif
 	{ &sspflag, 1, "-fstack-protector" },
+	{ &sehflag, 1, "-fseh" },
 	{ 0 }
 };
 
@@ -2049,6 +2051,12 @@ setup_ld_flags(void)
 		} else {
 			for (i = 0; deflibs[i]; i++)
 				strlist_append(&late_linker_flags, deflibs[i]);
+		}
+		/* SEH runtime library (non-Windows platforms) */
+		if (sehflag) {
+#ifndef _WIN32
+			strlist_append(&late_linker_flags, "-lseh");
+#endif
 		}
 	}
 	if (!nostartfiles) {
