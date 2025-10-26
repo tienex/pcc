@@ -1,0 +1,43 @@
+#	$Id$
+#
+# Makefile.in for Pascal driver
+#
+VPATH=@srcdir@
+srcdir=@srcdir@
+top_srcdir=@top_srcdir@
+top_builddir=@top_builddir@
+prefix = @prefix@
+exec_prefix = @exec_prefix@
+bindir = @bindir@
+libexecdir = @libexecdir@
+datarootdir = @datarootdir@
+mandir = @mandir@
+CC = @CC@
+EXEEXT = @EXEEXT@
+CFLAGS = @CFLAGS@ @ADD_CFLAGS@
+CPPFLAGS = @CPPFLAGS@ @ADD_CPPFLAGS@ \
+	-DLIBEXECDIR=\"$(libexecdir)\" \
+	-DINCLUDEDIR=\"$(includedir)\" \
+	-DPCCINCDIR=\"$(libexecdir)/include\" \
+	-I$(srcdir) -I$(top_builddir)
+LIBS = @LIBS@
+LDFLAGS = @LDFLAGS@
+INSTALL = @INSTALL@
+INSTALL_PROGRAM = @INSTALL_PROGRAM@
+
+DEST=pascal$(EXEEXT)
+
+all: $(DEST)
+
+$(DEST): $(srcdir)/pascal.c
+	$(CC) $(CFLAGS) $(CPPFLAGS) $(LDFLAGS) -o $@ $(srcdir)/pascal.c $(LIBS)
+
+install: all
+	test -z "$(DESTDIR)$(bindir)" || mkdir -p "$(DESTDIR)$(bindir)"
+	$(INSTALL_PROGRAM) $(DEST) $(DESTDIR)$(bindir)
+
+clean:
+	rm -f $(DEST) *.o
+
+distclean: clean
+	rm -f Makefile
