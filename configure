@@ -3016,6 +3016,8 @@ case "$target_os" in
 	    mips64) targmach=mips64 endian=big ;;
 	    mipseb) targmach=mips endian=big ;;
 	    mips*) targmach=mips ;;
+	    wasm32) targmach=wasm ;;
+	    wasm64) targmach=wasm ;;
 	esac
 	case "$target_os" in
 	    *-musl*) ADD_CPPFLAGS="$ADD_CPPFLAGS -DUSE_MUSL" ;;
@@ -3164,6 +3166,15 @@ case "$target_os" in
         esac
         ;;
 
+    wasm*)
+	targos=wasm
+	abi=elf
+	case "$target_cpu" in
+	    wasm32) targmach=wasm ;;
+	    wasm64) targmach=wasm ;;
+	esac
+	;;
+
     windows*|pe*)
 	target_alias=i386-pe
 	targos=win32
@@ -3179,6 +3190,8 @@ case "$target_os" in
 	    nova) targmach=nova ;;
 	    i86) targmach=i86 ;;
 	    pdp7) targmach=pdp7 ;;
+	    wasm32) targmach=wasm ;;
+	    wasm64) targmach=wasm ;;
 	esac
 	;;
 esac
@@ -6490,7 +6503,7 @@ esac
 
 
 
-ac_config_files="$ac_config_files Makefile cc/Makefile cc/cc/Makefile cc/cpp/Makefile cc/ccom/Makefile cc/cxxcom/Makefile cc/driver/Makefile f77/Makefile f77/f77/Makefile f77/fcom/Makefile pascal/Makefile pascal/pascal/Makefile pascal/pcom/Makefile common/abi/Makefile include/Makefile libunicode/Makefile libthread/Makefile libstdbit/Makefile libckdint/Makefile libdecimal/Makefile libmetaware/Makefile libblocks/Makefile"
+ac_config_files="$ac_config_files Makefile cc/Makefile cc/cc/Makefile cc/cpp/Makefile cc/ccom/Makefile cc/cxxcom/Makefile cc/driver/Makefile f77/Makefile f77/f77/Makefile f77/fcom/Makefile pascal/Makefile pascal/pascal/Makefile pascal/pcom/Makefile algol60/Makefile algol60/algol/Makefile algol60/acom/Makefile common/abi/Makefile include/Makefile libunicode/Makefile libthread/Makefile libstdbit/Makefile libckdint/Makefile libdecimal/Makefile libmetaware/Makefile libblocks/Makefile libalgol60/Makefile"
 
 cat >confcache <<\_ACEOF
 # This file is a shell script that caches the results of configure
@@ -7193,6 +7206,9 @@ do
     "pascal/Makefile") CONFIG_FILES="$CONFIG_FILES pascal/Makefile" ;;
     "pascal/pascal/Makefile") CONFIG_FILES="$CONFIG_FILES pascal/pascal/Makefile" ;;
     "pascal/pcom/Makefile") CONFIG_FILES="$CONFIG_FILES pascal/pcom/Makefile" ;;
+    "algol60/Makefile") CONFIG_FILES="$CONFIG_FILES algol60/Makefile" ;;
+    "algol60/algol/Makefile") CONFIG_FILES="$CONFIG_FILES algol60/algol/Makefile" ;;
+    "algol60/acom/Makefile") CONFIG_FILES="$CONFIG_FILES algol60/acom/Makefile" ;;
     "common/abi/Makefile") CONFIG_FILES="$CONFIG_FILES common/abi/Makefile" ;;
     "include/Makefile") CONFIG_FILES="$CONFIG_FILES include/Makefile" ;;
     "libunicode/Makefile") CONFIG_FILES="$CONFIG_FILES libunicode/Makefile" ;;
@@ -7202,6 +7218,7 @@ do
     "libdecimal/Makefile") CONFIG_FILES="$CONFIG_FILES libdecimal/Makefile" ;;
     "libmetaware/Makefile") CONFIG_FILES="$CONFIG_FILES libmetaware/Makefile" ;;
     "libblocks/Makefile") CONFIG_FILES="$CONFIG_FILES libblocks/Makefile" ;;
+    "libalgol60/Makefile") CONFIG_FILES="$CONFIG_FILES libalgol60/Makefile" ;;
 
   *) as_fn_error $? "invalid argument: \`$ac_config_target'" "$LINENO" 5;;
   esac
