@@ -122,6 +122,8 @@ case "$target_os" in
 	    mips64) targmach=mips64 endian=big ;;
 	    mipseb) targmach=mips endian=big ;;
 	    mips*) targmach=mips ;;
+	    wasm32) targmach=wasm ;;
+	    wasm64) targmach=wasm ;;
 	esac
 	case "$target_os" in
 	    *-musl*) ADD_CPPFLAGS="$ADD_CPPFLAGS -DUSE_MUSL" ;;
@@ -270,6 +272,15 @@ case "$target_os" in
         esac
         ;;
 
+    wasm*)
+	targos=wasm
+	abi=elf
+	case "$target_cpu" in
+	    wasm32) targmach=wasm ;;
+	    wasm64) targmach=wasm ;;
+	esac
+	;;
+
     windows*|pe*)
 	target_alias=i386-pe
 	targos=win32
@@ -285,6 +296,8 @@ case "$target_os" in
 	    nova) targmach=nova ;;
 	    i86) targmach=i86 ;;
 	    pdp7) targmach=pdp7 ;;
+	    wasm32) targmach=wasm ;;
+	    wasm64) targmach=wasm ;;
 	esac
 	;;
 esac
