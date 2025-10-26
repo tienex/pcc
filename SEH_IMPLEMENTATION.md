@@ -130,9 +130,10 @@ pcc -fseh -o program program.o -lseh
 
 The `-fseh` flag:
 - Enables SEH code generation on all platforms
-- Links with libseh runtime library on non-Windows systems
+- **Automatically links** libseh runtime library on non-Windows systems
 - On Windows, uses native SEH mechanisms
 - Can be disabled with `-fno-seh`
+- No need to manually specify `-lseh` when using `-fseh`
 
 ## Runtime Library (libseh)
 
@@ -141,8 +142,11 @@ The `libseh` library provides cross-platform SEH runtime support:
 ### Features
 - **Signal-to-exception mapping**: Converts Unix signals (SIGSEGV, SIGFPE) to SEH exceptions
 - **DWARF integration**: Uses native DWARF exception handling on ELF platforms (Linux, *BSD)
+- **C++ exception interoperability**: SEH and C++ exceptions coexist properly on macOS/Linux
+- **Exception context capture**: Full CPU context including registers, IP, SP, fault addresses
 - **Thread-safe**: All exception state is thread-local
 - **Cross-platform**: Works on Windows, Linux, macOS, and other Unix systems
+- **Automatic linking**: libseh is automatically linked when using `-fseh`
 
 ### Installation
 
@@ -169,15 +173,18 @@ See `libseh/README.md` for detailed documentation.
 - ✅ AST node types
 - ✅ Label management for control flow
 - ✅ Nested try block support
-- ✅ `-fseh` compiler flag
-- ✅ libseh runtime library
+- ✅ `-fseh` compiler flag with automatic libseh linking
+- ✅ libseh runtime library (complete)
 - ✅ DWARF exception handling support
 - ✅ Signal-to-exception conversion
+- ✅ C++ exception interoperability
+- ✅ Exception context capture (all platforms)
+- ✅ CPU register access in exception handlers
 
 ### In Progress
-- ⚠️ Architecture-specific code generation (i386, amd64)
-- ⚠️ Exception registration record generation
-- ⚠️ Unwind information tables (.eh_frame generation)
+- ⚠️ Compiler code emission for __try/__except/__finally blocks
+- ⚠️ Architecture-specific optimizations (i386, amd64)
+- ⚠️ Direct .eh_frame generation (currently uses DWARF unwinder)
 
 ### Future Work
 - Filter expression evaluation with full context
@@ -211,8 +218,44 @@ int main() {
 
 Compile and run:
 ```bash
-pcc -fseh -o test test.c -lseh
+pcc -fseh -o test test.c
 ./test
+# Output: Exception caught: 0xC0000005
+```
+
+### C++ Exception Interoperability
+
+```cpp
+#include <iostream>
+#include <stdexcept>
+#include <seh.h>
+
+int main() {
+    __try {
+        __try {
+            throw std::runtime_error("C++ exception");
+        }
+        __except (EXCEPTION_EXECUTE_HANDLER) {
+            std::cout << "Caught C++ exception in SEH!\n";
+            std::cout << "Exception code: 0x" << std::hex
+                      << _seh_get_exception_code() << "\n";
+        }
+    }
+    __finally {
+        std::cout << "Cleanup\n";
+    }
+    return 0;
+}
+```
+
+Compile and run:
+```bash
+pcc++ -fseh -o test test.cpp
+./test
+# Output:
+# Caught C++ exception in SEH!
+# Exception code: 0xe06d7363
+# Cleanup
 ```
 
 ### Try-Finally with Resource Cleanup

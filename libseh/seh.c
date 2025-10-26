@@ -114,9 +114,12 @@ _seh_signal_handler(int signo, void *info, void *context)
 	_seh_current_exception.ExceptionCode = signal_to_exception_code(signo);
 	_seh_current_exception.ExceptionFlags = 0;
 	_seh_current_exception.ExceptionRecord = NULL;
-	_seh_current_exception.ExceptionAddress = NULL; /* Could get from context */
+	_seh_current_exception.ExceptionAddress = NULL;
 	_seh_current_exception.NumberParameters = 0;
 	_seh_current_context = context;
+
+	/* Extract detailed context information (IP, fault address, etc.) */
+	_seh_extract_signal_context(context, &_seh_current_exception);
 
 	/* Walk the exception chain looking for a handler */
 	for (reg = _seh_chain_head; reg != NULL; reg = reg->prev) {

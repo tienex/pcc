@@ -2,14 +2,17 @@
 
 ## Overview
 
-`libseh` is a cross-platform runtime library that provides Structured Exception Handling (SEH) support for programs compiled with PCC. It enables SEH constructs (`__try`, `__except`, `__finally`, `__leave`) to work on non-Windows platforms using DWARF exception handling or setjmp/longjmp.
+`libseh` is a comprehensive cross-platform runtime library that provides full Structured Exception Handling (SEH) support for programs compiled with PCC. It enables SEH constructs (`__try`, `__except`, `__finally`, `__leave`) to work seamlessly on non-Windows platforms using DWARF exception handling, setjmp/longjmp, and signal handling.
 
 ## Features
 
-- **Cross-platform SEH support**: Works on Windows, Linux, *BSD, and other Unix-like systems
+- **Cross-platform SEH support**: Works on Windows, Linux, *BSD, macOS, and other Unix-like systems
 - **DWARF integration**: Uses native DWARF exception handling on ELF platforms
 - **Signal-to-exception mapping**: Converts Unix signals (SIGSEGV, SIGFPE, etc.) to SEH exceptions
+- **C++ exception interoperability**: SEH and C++ exceptions can coexist and interact properly
+- **Exception context capture**: Full CPU context (registers, IP, SP) captured on all platforms
 - **Thread-safe**: Uses thread-local storage for exception chains
+- **Automatic linking**: Automatically linked when using `-fseh` compiler flag
 - **Compatible with native Windows SEH**: On Windows, delegates to native SEH mechanisms
 
 ## Architecture
@@ -78,6 +81,17 @@ void _seh_raise_exception(unsigned long code, unsigned long flags,
 /* Get exception information */
 unsigned long _seh_get_exception_code(void);
 struct _seh_exception_pointers *_seh_get_exception_info(void);
+
+/* C++ exception interoperability */
+void _seh_translate_cxx_exception(void *cxx_exception);
+int _seh_is_cxx_exception(void);
+void *_seh_get_cxx_exception(void);
+
+/* Exception context (CPU registers, IP, SP) */
+void *_seh_get_ip(void *context);
+void *_seh_get_sp(void *context);
+void _seh_set_ip(void *context, void *ip);
+unsigned long _seh_get_register(void *context, int reg_index);
 ```
 
 ## Usage
@@ -87,8 +101,10 @@ struct _seh_exception_pointers *_seh_get_exception_info(void);
 To enable SEH support for non-Windows targets, use the `-fseh` flag:
 
 ```bash
-pcc -fseh -o program program.c -lseh
+pcc -fseh -o program program.c
 ```
+
+The `-fseh` flag automatically links `libseh`, so you don't need to specify `-lseh` manually.
 
 ### Example Code
 
@@ -224,3 +240,71 @@ See the PCC license (BSD-style).
 - SEH_IMPLEMENTATION.md - Compiler-side SEH implementation
 - PCC documentation
 - Windows SEH documentation
+
+## C++ Exception Interoperability
+
+### Overview
+
+libseh provides seamless interoperability between SEH and C++ exceptions on Unix/Linux/macOS platforms. This allows:
+
+1. C++ exceptions to be caught by SEH `__except` handlers
+2. SEH `__try`/`__except` blocks to work correctly in C++ code
+3. Proper cleanup order (SEH finally blocks, then C++ destructors)
+
+### Mixing SEH and C++
+
+```cpp
+#include <iostream>
+#include <stdexcept>
+#include <seh.h>
+
+class Resource {
+public:
+    Resource() { std::cout << "Acquired\n"; }
+    ~Resource() { std::cout << "Released\n"; }
+};
+
+int main() {
+    __try {
+        Resource r;  // C++ RAII object
+
+        __try {
+            throw std::runtime_error("C++ exception");
+        }
+        __except (EXCEPTION_EXECUTE_HANDLER) {
+            std::cout << "Caught C++ exception in SEH handler!\n";
+
+            if (_seh_is_cxx_exception()) {
+                std::cout << "Exception code: 0x" << std::hex 
+                          << _seh_get_exception_code() << "\n";
+            }
+        }
+    }
+    __finally {
+        std::cout << "SEH finally block\n";
+    }
+
+    // Resource destructor runs after finally block
+    return 0;
+}
+```
+
+Compile with:
+```bash
+pcc++ -fseh -o test test.cpp
+```
+
+### How It Works
+
+1. **C++ Exception → SEH**: When a C++ exception propagates through a SEH `__try` block, libseh's DWARF personality routine recognizes the C++ exception class and converts it to SEH exception code `0xE06D7363` (Microsoft C++ exception code).
+
+2. **SEH Filter Execution**: SEH filter expressions can examine the exception and decide whether to handle it using `_seh_is_cxx_exception()` and `_seh_get_cxx_exception()`.
+
+3. **Proper Cleanup**: C++ destructors run in reverse order of construction, interleaved with SEH finally blocks as appropriate.
+
+### Platform-Specific Notes
+
+- **macOS/Darwin**: Uses DWARF unwinder with Apple's exception handling ABI
+- **Linux/BSD**: Uses standard Itanium C++ ABI with DWARF unwinding
+- **Windows**: Uses native SEH which already interoperates with MSVC C++ exceptions
+

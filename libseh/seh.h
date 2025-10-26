@@ -183,6 +183,44 @@ int _seh_dwarf_personality(int version, int actions,
  */
 void _seh_save_context(void *context);
 void _seh_restore_context(void *context);
+void _seh_extract_signal_context(void *sigcontext, struct _seh_exception_record *exc);
+void *_seh_get_ip(void *context);
+void *_seh_get_sp(void *context);
+void _seh_set_ip(void *context, void *ip);
+unsigned long _seh_get_register(void *context, int reg_index);
+
+/*
+ * C++ exception interoperability
+ */
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+/* Translate C++ exception to SEH exception */
+void _seh_translate_cxx_exception(void *cxx_exception);
+
+/* Catch-all handler for C++ exceptions in SEH context */
+void _seh_cxx_catch_all(void);
+
+/* C++-aware DWARF personality routine */
+int _seh_dwarf_personality_cxx(int version, int actions,
+                               unsigned long exception_class,
+                               void *exception_object,
+                               void *context);
+
+/* Execute finally block with C++ exception safety */
+void _seh_execute_finally_cxx(struct _seh_registration *reg,
+                              void (*finally_block)(void));
+
+/* Check if current exception is a C++ exception */
+int _seh_is_cxx_exception(void);
+
+/* Get C++ exception object (NULL if not a C++ exception) */
+void *_seh_get_cxx_exception(void);
+
+#ifdef __cplusplus
+}
+#endif
 
 /*
  * Helper macros for compiler code generation
@@ -201,5 +239,8 @@ void _seh_restore_context(void *context);
 
 #define SEH_ENTER_FINALLY(reg, finally_func) \
 	_seh_execute_finally(&(reg), (finally_func))
+
+#define SEH_ENTER_FINALLY_CXX(reg, finally_func) \
+	_seh_execute_finally_cxx(&(reg), (finally_func))
 
 #endif /* _SEH_H_ */

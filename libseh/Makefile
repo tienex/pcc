@@ -4,6 +4,7 @@
 #
 
 CC?=		pcc
+CXX?=		pcc++
 AR?=		ar
 RANLIB?=	ranlib
 INSTALL?=	install
@@ -13,14 +14,16 @@ LIBDIR=		$(PREFIX)/lib
 INCDIR=		$(PREFIX)/include
 
 CFLAGS+=	-fPIC -Wall
+CXXFLAGS+=	-fPIC -Wall
 LDFLAGS+=	-shared
 
 LIB=		libseh.a
 SOLIB=		libseh.so
 SOVERSION=	0.1
 
-SRCS=		seh.c seh_dwarf.c
-OBJS=		$(SRCS:.c=.o)
+SRCS=		seh.c seh_dwarf.c seh_context.c
+CXXSRCS=	seh_cxx.cpp
+OBJS=		$(SRCS:.c=.o) $(CXXSRCS:.cpp=.o)
 
 HEADERS=	seh.h
 
@@ -36,6 +39,9 @@ $(SOLIB): $(OBJS)
 
 .c.o:
 	$(CC) $(CFLAGS) -c $< -o $@
+
+.cpp.o:
+	$(CXX) $(CXXFLAGS) -c $< -o $@
 
 install: $(LIB) $(SOLIB)
 	$(INSTALL) -d $(DESTDIR)$(LIBDIR)
