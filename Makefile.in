@@ -29,7 +29,7 @@ C_SUBDIRS=	common/abi libx86asm include
 CC_SUBDIR=	cc
 EXTRA_SUBDIRS=	pascal f77 cobol
 ALL_SUBDIRS=	$(PORTABLE_LIBS) $(C_SUBDIRS) $(CC_SUBDIR)
-DIST_SUBDIRS=	$(C_SUBDIRS) $(CC_SUBDIR) $(EXTRA_SUBDIRS) libunicode libthread libstdbit libckdint libdecimal libmetaware libblocks
+DIST_SUBDIRS=	$(C_SUBDIRS) $(CC_SUBDIR) $(EXTRA_SUBDIRS) libunicode libthread libstdbit libckdint libdecimal libmetaware libblocks libcobol
 
 # Default targets - conditional on bootstrap
 all:
