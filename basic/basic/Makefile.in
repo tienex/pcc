@@ -6,11 +6,12 @@ top_builddir=@top_builddir@
 prefix = @prefix@
 exec_prefix = @exec_prefix@
 bindir = @bindir@
+libdir = @libdir@
 libexecdir = @libexecdir@
 CC = @CC@
 EXEEXT = @EXEEXT@
 CFLAGS = @CFLAGS@
-CPPFLAGS = @CPPFLAGS@ -DLIBEXECDIR=\"$(libexecdir)\"
+CPPFLAGS = @CPPFLAGS@ -DLIBEXECDIR=\"$(libexecdir)\" -DLIBDIR=\"$(libdir)\"
 LDFLAGS = @LDFLAGS@
 LIBS = @LIBS@
 INSTALL = @INSTALL@
