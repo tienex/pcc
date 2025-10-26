@@ -18,6 +18,9 @@ prefix = @prefix@
 exec_prefix = @exec_prefix@
 libdir = @libdir@
 includedir = @includedir@
+TARGET = @target@
+VERSION = @PACKAGE_VERSION@
+PCCLIBDIR = $(libdir)/pcc/$(TARGET)/$(VERSION)/lib
 
 OBJS=	abi.o \
 	itanium.o msvc.o watcom.o borland.o gnu_old.o dmc.o cfront.o edg.o \
@@ -71,11 +74,13 @@ demangle_msvc.o: $(srcdir)/demangle_msvc.c $(srcdir)/demangle.h $(srcdir)/abi.h
 install: $(LIB)
 	test -z "$(DESTDIR)$(libdir)" || mkdir -p "$(DESTDIR)$(libdir)"
 	test -z "$(DESTDIR)$(includedir)" || mkdir -p "$(DESTDIR)$(includedir)"
+	test -z "$(DESTDIR)$(PCCLIBDIR)" || mkdir -p "$(DESTDIR)$(PCCLIBDIR)"
 	$(INSTALL_DATA) $(LIB) $(DESTDIR)$(libdir)
 	$(INSTALL_DATA) $(srcdir)/abi.h $(DESTDIR)$(includedir)
 	$(INSTALL_DATA) $(srcdir)/demangle.h $(DESTDIR)$(includedir)
 	$(INSTALL_DATA) $(srcdir)/template_renamer.h $(DESTDIR)$(includedir)
 	$(INSTALL_DATA) $(srcdir)/universal_demangle.h $(DESTDIR)$(includedir)
+	ln -sf $(DESTDIR)$(libdir)/$(LIB) $(DESTDIR)$(PCCLIBDIR)/libpcc.a
 
 clean:
 	rm -f $(OBJS) $(LIB)

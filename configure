@@ -650,6 +650,7 @@ ac_includes_default="\
 ac_header_c_list=
 ac_subst_vars='LTLIBOBJS
 LIBOBJS
+gcclibdir
 CF1
 CF0
 CCNAMES
@@ -661,6 +662,7 @@ targmach
 targosver
 targos
 ALLOCA
+RANLIB
 LEXLIB
 LEX_OUTPUT_ROOT
 LEX
@@ -679,6 +681,10 @@ LDFLAGS
 CFLAGS
 CC
 BINPREFIX
+bootstrap_compare
+bootstrap_stages
+bootstrap_stage
+bootstrap
 target_os
 target_vendor
 target_cpu
@@ -748,6 +754,8 @@ enable_stripping
 enable_nativefp
 with_yasm
 enable_native
+enable_bootstrap
+with_bootstrap_stage
 '
       ac_precious_vars='build_alias
 host_alias
@@ -1393,6 +1401,12 @@ Optional Features:
   --disable-nativefp      Disable use of compiler host floating point.
   --enable-native         Build the compiler as a native rather than
                           cross-build compiler
+  --enable-bootstrap[=ARG]
+                          Enable multi-stage bootstrap build (yes/no/lean,
+                          default: no) - yes: 3-stage bootstrap with
+                          stage2/stage3 comparison - lean: 2-stage bootstrap
+                          without comparison - no: single-stage build
+                          (default)
 
 Optional Packages:
   --with-PACKAGE[=ARG]    use PACKAGE [ARG=yes]
@@ -1403,6 +1417,8 @@ Optional Packages:
   --with-linker=<path>    Specify alternate linker.
   --with-libvmf=<path>    Use libvmf.
   --with-yasm             Use yasm assembler
+  --with-bootstrap-stage=N
+                          Set bootstrap stage number (default: 0)
 
 Some influential environment variables:
   CC          C compiler command
@@ -3174,7 +3190,7 @@ case "$host_os" in
         hostos=freebsd
 	;;
     linux*)
-	ADD_CPPFLAGS="$ADD_CPPFLAGS -D_BSD_SOURCE"
+	ADD_CPPFLAGS="$ADD_CPPFLAGS -D_DEFAULT_SOURCE"
         hostos=linux
 	;;
     litebsd*)
@@ -3407,6 +3423,56 @@ if test ${enable_native+y}
 then :
   enableval=$enable_native; native=$enableval
 fi
+
+
+# Bootstrap options
+bootstrap_stage=0
+# Check whether --enable-bootstrap was given.
+if test ${enable_bootstrap+y}
+then :
+  enableval=$enable_bootstrap; bootstrap=$enableval
+else $as_nop
+  bootstrap=no
+fi
+
+
+# Check whether --with-bootstrap-stage was given.
+if test ${with_bootstrap_stage+y}
+then :
+  withval=$with_bootstrap_stage; bootstrap_stage=$withval
+fi
+
+
+# Normalize bootstrap values
+case "$bootstrap" in
+yes|"")
+	bootstrap=yes
+	bootstrap_stages=3
+	bootstrap_compare=yes
+	;;
+lean)
+	bootstrap=yes
+	bootstrap_stages=2
+	bootstrap_compare=no
+	;;
+no)
+	bootstrap=no
+	bootstrap_stages=1
+	bootstrap_compare=no
+	;;
+*)
+	as_fn_error $? "Invalid --enable-bootstrap argument '$bootstrap'. Use yes, lean, or no." "$LINENO" 5
+	;;
+esac
+
+if test "$bootstrap" = "yes" -o "$bootstrap_stage" != "0"; then
+
+printf "%s\n" "#define BOOTSTRAP_STAGE $bootstrap_stage" >>confdefs.h
+
+fi
+
+
+
 
 
 # Setup for ubuntu multiarch
@@ -5321,68 +5387,7 @@ then :
 else $as_nop
   LEXLIB=$ac_cv_lib_lex
 fi
-  ac_save_LIBS="$LIBS"
-      LIBS=
-      { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for library containing yywrap" >&5
-printf %s "checking for library containing yywrap... " >&6; }
-if test ${ac_cv_search_yywrap+y}
-then :
-  printf %s "(cached) " >&6
-else $as_nop
-  ac_func_search_save_LIBS=$LIBS
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
 
-/* Override any GCC internal prototype to avoid an error.
-   Use char because int might match the return type of a GCC
-   builtin and then its argument prototype would still apply.  */
-char yywrap ();
-int
-main (void)
-{
-return yywrap ();
-  ;
-  return 0;
-}
-_ACEOF
-for ac_lib in '' fl l
-do
-  if test -z "$ac_lib"; then
-    ac_res="none required"
-  else
-    ac_res=-l$ac_lib
-    LIBS="-l$ac_lib  $ac_func_search_save_LIBS"
-  fi
-  if ac_fn_c_try_link "$LINENO"
-then :
-  ac_cv_search_yywrap=$ac_res
-fi
-rm -f core conftest.err conftest.$ac_objext conftest.beam \
-    conftest$ac_exeext
-  if test ${ac_cv_search_yywrap+y}
-then :
-  break
-fi
-done
-if test ${ac_cv_search_yywrap+y}
-then :
-
-else $as_nop
-  ac_cv_search_yywrap=no
-fi
-rm conftest.$ac_ext
-LIBS=$ac_func_search_save_LIBS
-fi
-{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_cv_search_yywrap" >&5
-printf "%s\n" "$ac_cv_search_yywrap" >&6; }
-ac_res=$ac_cv_search_yywrap
-if test "$ac_res" != no
-then :
-  test "$ac_res" = "none required" || LIBS="$ac_res $LIBS"
-  LEXLIB="$LIBS"
-fi
-
-      LIBS="$ac_save_LIBS"
 fi
 
 
@@ -5424,6 +5429,108 @@ fi
 rm -f conftest.l $LEX_OUTPUT_ROOT.c
 
 fi
+if test -n "$ac_tool_prefix"; then
+  # Extract the first word of "${ac_tool_prefix}ranlib", so it can be a program name with args.
+set dummy ${ac_tool_prefix}ranlib; ac_word=$2
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
+printf %s "checking for $ac_word... " >&6; }
+if test ${ac_cv_prog_RANLIB+y}
+then :
+  printf %s "(cached) " >&6
+else $as_nop
+  if test -n "$RANLIB"; then
+  ac_cv_prog_RANLIB="$RANLIB" # Let the user override the test.
+else
+as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  case $as_dir in #(((
+    '') as_dir=./ ;;
+    */) ;;
+    *) as_dir=$as_dir/ ;;
+  esac
+    for ac_exec_ext in '' $ac_executable_extensions; do
+  if as_fn_executable_p "$as_dir$ac_word$ac_exec_ext"; then
+    ac_cv_prog_RANLIB="${ac_tool_prefix}ranlib"
+    printf "%s\n" "$as_me:${as_lineno-$LINENO}: found $as_dir$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+  done
+IFS=$as_save_IFS
+
+fi
+fi
+RANLIB=$ac_cv_prog_RANLIB
+if test -n "$RANLIB"; then
+  { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $RANLIB" >&5
+printf "%s\n" "$RANLIB" >&6; }
+else
+  { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: no" >&5
+printf "%s\n" "no" >&6; }
+fi
+
+
+fi
+if test -z "$ac_cv_prog_RANLIB"; then
+  ac_ct_RANLIB=$RANLIB
+  # Extract the first word of "ranlib", so it can be a program name with args.
+set dummy ranlib; ac_word=$2
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
+printf %s "checking for $ac_word... " >&6; }
+if test ${ac_cv_prog_ac_ct_RANLIB+y}
+then :
+  printf %s "(cached) " >&6
+else $as_nop
+  if test -n "$ac_ct_RANLIB"; then
+  ac_cv_prog_ac_ct_RANLIB="$ac_ct_RANLIB" # Let the user override the test.
+else
+as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  case $as_dir in #(((
+    '') as_dir=./ ;;
+    */) ;;
+    *) as_dir=$as_dir/ ;;
+  esac
+    for ac_exec_ext in '' $ac_executable_extensions; do
+  if as_fn_executable_p "$as_dir$ac_word$ac_exec_ext"; then
+    ac_cv_prog_ac_ct_RANLIB="ranlib"
+    printf "%s\n" "$as_me:${as_lineno-$LINENO}: found $as_dir$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+  done
+IFS=$as_save_IFS
+
+fi
+fi
+ac_ct_RANLIB=$ac_cv_prog_ac_ct_RANLIB
+if test -n "$ac_ct_RANLIB"; then
+  { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_ct_RANLIB" >&5
+printf "%s\n" "$ac_ct_RANLIB" >&6; }
+else
+  { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: no" >&5
+printf "%s\n" "no" >&6; }
+fi
+
+  if test "x$ac_ct_RANLIB" = x; then
+    RANLIB=":"
+  else
+    case $cross_compiling:$ac_tool_warned in
+yes:)
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: WARNING: using cross tools not prefixed with host triplet" >&5
+printf "%s\n" "$as_me: WARNING: using cross tools not prefixed with host triplet" >&2;}
+ac_tool_warned=yes ;;
+esac
+    RANLIB=$ac_ct_RANLIB
+  fi
+else
+  RANLIB="$ac_cv_prog_RANLIB"
+fi
+
 
 # Checks for libraries.
 if test $libvmf != no ; then
@@ -5763,7 +5870,179 @@ printf "%s\n" "#define VERSSTR $versstr" >>confdefs.h
 printf "%s\n" "#define TARGSTR $targstr" >>confdefs.h
 
 
-ac_config_files="$ac_config_files Makefile cc/Makefile cc/cc/Makefile cc/cpp/Makefile cc/ccom/Makefile cc/cxxcom/Makefile cc/driver/Makefile f77/Makefile f77/f77/Makefile f77/fcom/Makefile pascal/Makefile pascal/pascal/Makefile pascal/pcom/Makefile common/abi/Makefile"
+# Find compiler runtime library directory for crtbegin.o/crtend.o (or MSVC equivalent)
+# Supports GCC, Clang, and MSVC
+gcclibdir=""
+
+# Detect compiler type
+cc_type=""
+if test -n "$CC" ; then
+	cc_type=`$CC --version 2>/dev/null | head -1`
+	case "$cc_type" in
+	*clang*|*Clang*|*CLANG*)
+		cc_type="clang"
+		;;
+	*gcc*|*GCC*|*GNU*)
+		cc_type="gcc"
+		;;
+	*Microsoft*|*MSVC*|*msvc*)
+		cc_type="msvc"
+		;;
+	*)
+		# Default: try gcc if CC not set or unrecognized
+		cc_type="gcc"
+		;;
+	esac
+else
+	# No CC set, try to auto-detect
+	if command -v gcc >/dev/null 2>&1; then
+		cc_type="gcc"
+	elif command -v clang >/dev/null 2>&1; then
+		cc_type="clang"
+	elif command -v cl.exe >/dev/null 2>&1; then
+		cc_type="msvc"
+	else
+		cc_type="gcc"  # fallback
+	fi
+fi
+
+# Find library directory based on compiler type
+case "$cc_type" in
+gcc)
+	# GCC: Find version and library directory
+	gccver=`$CC -dumpversion 2>/dev/null || gcc -dumpversion 2>/dev/null | cut -d. -f1`
+	if test -n "$gccver" ; then
+		case "$target_cpu" in
+		x86_64|amd64)
+			gcclibdir="/usr/lib/gcc/x86_64-linux-gnu/$gccver"
+			;;
+		i?86)
+			gcclibdir="/usr/lib/gcc/i686-linux-gnu/$gccver"
+			;;
+		aarch64|arm64)
+			gcclibdir="/usr/lib/gcc/aarch64-linux-gnu/$gccver"
+			;;
+		arm*)
+			gcclibdir="/usr/lib/gcc/arm-linux-gnueabihf/$gccver"
+			;;
+		esac
+	fi
+	# Fallback for GCC
+	if test -z "$gcclibdir" ; then
+		gcclibdir="/usr/lib/gcc/x86_64-linux-gnu/4.4"
+	fi
+	;;
+
+clang)
+	# Clang: Find version and library directory
+	clangver=`$CC --version 2>/dev/null | head -1 | sed 's/.*version \([0-9]*\)\..*/\1/'`
+	if test -z "$clangver" ; then
+		clangver=`clang --version 2>/dev/null | head -1 | sed 's/.*version \([0-9]*\)\..*/\1/'`
+	fi
+
+	# Try to find Clang's resource directory
+	if test -n "$clangver" ; then
+		case "$target_os" in
+		*darwin*|*macos*)
+			# macOS: Clang uses Xcode or CommandLineTools paths
+			if test -d "/Library/Developer/CommandLineTools/usr/lib/clang/$clangver" ; then
+				gcclibdir="/Library/Developer/CommandLineTools/usr/lib/clang/$clangver/lib/darwin"
+			elif test -d "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/$clangver" ; then
+				gcclibdir="/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/$clangver/lib/darwin"
+			fi
+			;;
+		*linux*)
+			# Linux: Clang often uses GCC's libraries for compatibility
+			# First try clang's own runtime
+			if test -d "/usr/lib/clang/$clangver/lib/linux" ; then
+				gcclibdir="/usr/lib/clang/$clangver/lib/linux"
+			elif test -d "/usr/lib/llvm-$clangver/lib/clang/$clangver/lib/linux" ; then
+				gcclibdir="/usr/lib/llvm-$clangver/lib/clang/$clangver/lib/linux"
+			else
+				# Fall back to GCC's crtbegin.o for Clang on Linux
+				gccver=`gcc -dumpversion 2>/dev/null | cut -d. -f1`
+				if test -n "$gccver" ; then
+					case "$target_cpu" in
+					x86_64|amd64)
+						gcclibdir="/usr/lib/gcc/x86_64-linux-gnu/$gccver"
+						;;
+					i?86)
+						gcclibdir="/usr/lib/gcc/i686-linux-gnu/$gccver"
+						;;
+					esac
+				fi
+			fi
+			;;
+		*bsd*)
+			# BSD: Check /usr/lib/clang
+			if test -d "/usr/lib/clang/$clangver" ; then
+				gcclibdir="/usr/lib/clang/$clangver/lib"
+			fi
+			;;
+		esac
+	fi
+
+	# Fallback for Clang (use GCC's on Linux)
+	if test -z "$gcclibdir" ; then
+		case "$target_os" in
+		*linux*)
+			gcclibdir="/usr/lib/gcc/x86_64-linux-gnu/4.4"
+			;;
+		*darwin*)
+			gcclibdir="/Library/Developer/CommandLineTools/usr/lib/clang/13/lib/darwin"
+			;;
+		*)
+			gcclibdir="/usr/lib"
+			;;
+		esac
+	fi
+	;;
+
+msvc)
+	# MSVC: Find Visual Studio installation
+	# Check common Visual Studio paths
+	if test -d "C:/Program Files (x86)/Microsoft Visual Studio/2022/Community/VC/Tools/MSVC" ; then
+		msvcver=`ls "C:/Program Files (x86)/Microsoft Visual Studio/2022/Community/VC/Tools/MSVC" | tail -1`
+		case "$target_cpu" in
+		x86_64|amd64)
+			gcclibdir="C:/Program Files (x86)/Microsoft Visual Studio/2022/Community/VC/Tools/MSVC/$msvcver/lib/x64"
+			;;
+		i?86)
+			gcclibdir="C:/Program Files (x86)/Microsoft Visual Studio/2022/Community/VC/Tools/MSVC/$msvcver/lib/x86"
+			;;
+		esac
+	elif test -d "C:/Program Files (x86)/Microsoft Visual Studio/2019/Community/VC/Tools/MSVC" ; then
+		msvcver=`ls "C:/Program Files (x86)/Microsoft Visual Studio/2019/Community/VC/Tools/MSVC" | tail -1`
+		case "$target_cpu" in
+		x86_64|amd64)
+			gcclibdir="C:/Program Files (x86)/Microsoft Visual Studio/2019/Community/VC/Tools/MSVC/$msvcver/lib/x64"
+			;;
+		i?86)
+			gcclibdir="C:/Program Files (x86)/Microsoft Visual Studio/2019/Community/VC/Tools/MSVC/$msvcver/lib/x86"
+			;;
+		esac
+	elif test -d "C:/Program Files/Microsoft Visual Studio/2022/Community/VC/Tools/MSVC" ; then
+		msvcver=`ls "C:/Program Files/Microsoft Visual Studio/2022/Community/VC/Tools/MSVC" | tail -1`
+		case "$target_cpu" in
+		x86_64|amd64)
+			gcclibdir="C:/Program Files/Microsoft Visual Studio/2022/Community/VC/Tools/MSVC/$msvcver/lib/x64"
+			;;
+		i?86)
+			gcclibdir="C:/Program Files/Microsoft Visual Studio/2022/Community/VC/Tools/MSVC/$msvcver/lib/x86"
+			;;
+		esac
+	fi
+
+	# Fallback for MSVC
+	if test -z "$gcclibdir" ; then
+		gcclibdir="C:/Program Files (x86)/Microsoft Visual Studio/14.0/VC/lib"
+	fi
+	;;
+esac
+
+
+
+ac_config_files="$ac_config_files Makefile cc/Makefile cc/cc/Makefile cc/cpp/Makefile cc/ccom/Makefile cc/cxxcom/Makefile cc/driver/Makefile f77/Makefile f77/f77/Makefile f77/fcom/Makefile pascal/Makefile pascal/pascal/Makefile pascal/pcom/Makefile common/abi/Makefile include/Makefile"
 
 cat >confcache <<\_ACEOF
 # This file is a shell script that caches the results of configure
@@ -6467,6 +6746,7 @@ do
     "pascal/pascal/Makefile") CONFIG_FILES="$CONFIG_FILES pascal/pascal/Makefile" ;;
     "pascal/pcom/Makefile") CONFIG_FILES="$CONFIG_FILES pascal/pcom/Makefile" ;;
     "common/abi/Makefile") CONFIG_FILES="$CONFIG_FILES common/abi/Makefile" ;;
+    "include/Makefile") CONFIG_FILES="$CONFIG_FILES include/Makefile" ;;
 
   *) as_fn_error $? "invalid argument: \`$ac_config_target'" "$LINENO" 5;;
   esac

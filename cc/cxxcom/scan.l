@@ -223,8 +223,14 @@ L?\"(\\.|[^\\"])*\"	{ yylval.strp = yytext; return C_STRING; }
 
 %%
 
-int lineno, issyshdr;
+/* lineno is defined in mip/common.c and declared extern in pass1.h */
+int issyshdr;
 char *ftitle = "<stdin>";
+
+/* Watcom pragma aux support - struct defined in pass1.h */
+struct pragma_aux_info pragma_aux_pending;
+int pragma_allpacked;
+int pragma_packed, pragma_aligned;
 
 static int
 namechk(void)

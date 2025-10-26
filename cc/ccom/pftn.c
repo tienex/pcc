@@ -1817,6 +1817,7 @@ typwalk(NODE *p, void *arg)
 		case CHAR:
 		case FLOAT:
 		case VOID:
+		case LDOUBLE:
 			if (tc->type)
 				tc->err = 1;
 			tc->type = p->n_type;

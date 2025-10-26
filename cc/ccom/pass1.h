@@ -192,13 +192,16 @@ extern	int flostat;
 extern	int retlab;
 extern	int doing_init, statinit;
 
+/* Forward declaration for SEH filter */
+struct p1node;
+
 /* SEH (Structured Exception Handling) labels */
 extern	int sehleavlab;
 extern	int sehexcept;
 extern	int sehfinally;
 extern	int sehendlab;
 extern	int sehtrylab;
-extern	P1ND *sehfilter;
+extern	struct p1node *sehfilter;
 extern	short sztable[];
 extern	char *astypnames[];
 

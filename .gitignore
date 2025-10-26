@@ -63,3 +63,8 @@ core
 # Test outputs
 *.test
 test-results/
+test-multiarch/
+
+# Bootstrap build directories
+bootstrap-build/
+.bootstrap/

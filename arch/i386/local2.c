@@ -381,7 +381,7 @@ ulltofp(NODE *p)
 	expand(p, 0, "	cmpl $0,UL\n");
 	printf("	jge " LABFMT "\n", jmplab);
 
-#if defined(ELFABI) || defined(AOUTABI)
+#if defined(ELFABI) || defined(AOUTABI) || defined(PECOFFABI)
 	printf("	fldt " LABFMT "%s\n", loadlab, kflag ? "@GOTOFF" : "");
 #elif defined(MACHOABI)
 	printf("\tpushl 0x5f800000\n");
