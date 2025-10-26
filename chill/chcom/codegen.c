@@ -19,7 +19,9 @@ static char *codegen_module_name = NULL;
 void
 codegen_init(const char *output_filename, const char *modname)
 {
-	if (output_filename == NULL || strcmp(output_filename, "-") == 0) {
+	if (output_filename == NULL) {
+		codegen_outfile = stdout;
+	} else if (strcmp(output_filename, "-") == 0) {
 		codegen_outfile = stdout;
 	} else {
 		codegen_outfile = fopen(output_filename, "w");
