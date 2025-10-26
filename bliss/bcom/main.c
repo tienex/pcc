@@ -67,6 +67,7 @@ static void usage(void) {
 /* Initialize compiler */
 void init_compiler(void) {
 	symtab_init();
+	init_builtins();
 	blevel = 0;
 	errors = 0;
 	warnings = 0;

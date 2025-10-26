@@ -97,4 +97,10 @@ int eval_constant(NODE *p);
 void init_compiler(void);
 void finish_compilation(void);
 
+/* Built-in functions */
+int is_builtin(const char *name);
+const char *builtin_description(int code);
+void print_builtins(void);
+void init_builtins(void);
+
 #endif /* PASS1_H */

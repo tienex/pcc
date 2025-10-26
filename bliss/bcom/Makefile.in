@@ -30,7 +30,7 @@ INSTALL = @INSTALL@
 INSTALL_PROGRAM = @INSTALL_PROGRAM@
 INSTALL_DATA = @INSTALL_DATA@
 
-OBJS=	main.o symtab.o trees.o \
+OBJS=	main.o symtab.o trees.o builtins.o \
 	scan.o bgram.o
 
 DEST=bcom$(EXEEXT)
@@ -61,6 +61,9 @@ symtab.o: $(srcdir)/symtab.c pass1.h
 
 trees.o: $(srcdir)/trees.c pass1.h
 	$(CC) $(DEFS) $(CPPFLAGS) $(CFLAGS) -c $(srcdir)/trees.c
+
+builtins.o: $(srcdir)/builtins.c pass1.h
+	$(CC) $(DEFS) $(CPPFLAGS) $(CFLAGS) -c $(srcdir)/builtins.c
 
 install: all
 	test -z "$(DESTDIR)$(libexecdir)" || mkdir -p "$(DESTDIR)$(libexecdir)"
