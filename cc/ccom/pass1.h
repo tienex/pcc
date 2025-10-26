@@ -583,6 +583,18 @@ enum {	ATTR_FIRST = ATTR_MI_MAX + 1,
 	/* OSX toolchain */
 	GCC_ATYP_WEAKIMPORT,
 
+#ifdef mach_i86
+	/* DOS-era i86 pointer type attributes (Microsoft/Watcom/Borland) */
+	GCC_ATYP_FAR,		/* far pointer (segment:offset, 32-bit) */
+	GCC_ATYP_NEAR,		/* near pointer (offset only, 16-bit) */
+	GCC_ATYP_HUGE,		/* huge pointer (normalized far, 32-bit) */
+	GCC_ATYP_BASED,		/* based pointer (relative to segment, with 1 arg) */
+
+	/* DOS-era i86 calling conventions */
+	GCC_ATYP_PASCAL,	/* Pascal calling convention (reverse params, callee cleans) */
+	GCC_ATYP_FORTRAN,	/* Fortran calling convention (similar to Pascal) */
+#endif
+
 	GCC_ATYP_MAX,
 #endif
 #ifdef ATTR_P1_TARGET

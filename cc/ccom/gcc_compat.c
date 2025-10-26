@@ -73,6 +73,16 @@ static struct kw {
 /* 22 */{ "__typeof", NULL, C_TYPEOF },
 /* 23 */{ "__alignof", NULL, C_ALIGNOF },
 /* 24 */{ "__restrict__", NULL, -1 },
+#ifdef mach_i86
+	/* DOS-era i86 keywords (Microsoft/Watcom/Borland compatibility) */
+/* 25 */{ "__far", NULL, 0 },
+/* 26 */{ "__near", NULL, 0 },
+/* 27 */{ "__huge", NULL, 0 },
+/* 28 */{ "__based", NULL, 0 },
+/* 29 */{ "__cdecl", NULL, 0 },
+/* 30 */{ "__pascal", NULL, 0 },
+/* 31 */{ "__fortran", NULL, 0 },
+#endif
 	{ NULL, NULL, 0 },
 };
 
@@ -326,6 +336,31 @@ gcc_keyword(char *str)
 	case 18: /* __imag__ */
 		yylval.intval = XIMAG;
 		return C_UNOP;
+#ifdef mach_i86
+	/* DOS-era i86 keywords - work like inline __attribute__((name)) */
+	case 25: /* __far */
+	case 26: /* __near */
+	case 27: /* __huge */
+	case 28: /* __based */
+	case 29: /* __cdecl */
+	case 30: /* __pascal */
+	case 31: /* __fortran */
+		/* These keywords act as shorthand for __attribute__((keyword)) */
+		/* They enable attribute parsing and set the attribute type */
+		switch (i) {
+		case 25: yylval.intval = GCC_ATYP_FAR; break;
+		case 26: yylval.intval = GCC_ATYP_NEAR; break;
+		case 27: yylval.intval = GCC_ATYP_HUGE; break;
+		case 28: yylval.intval = GCC_ATYP_BASED; break;
+		case 29: yylval.intval = GCC_ATYP_CDECL; break;  /* Use existing CDECL */
+		case 30: yylval.intval = GCC_ATYP_PASCAL; break;
+		case 31: yylval.intval = GCC_ATYP_FORTRAN; break;
+		}
+		/* Enter attribute mode for parsing */
+		inattr = 1;
+		parlvl = parbal;
+		return C_ATTRIBUTE;
+#endif
 	}
 	cerror("gcc_keyword");
 	return 0;
@@ -413,6 +448,16 @@ struct atax {
 	CS(GCC_ATYP_BOUNDED)	{ A_3ARG|A_MANY|A1_NAME, "bounded" },
 
 	CS(GCC_ATYP_WEAKIMPORT)	{ A_0ARG, "weak_import" },
+
+#ifdef mach_i86
+	/* DOS-era i86 attributes */
+	CS(GCC_ATYP_FAR)	{ A_0ARG, "far" },
+	CS(GCC_ATYP_NEAR)	{ A_0ARG, "near" },
+	CS(GCC_ATYP_HUGE)	{ A_0ARG, "huge" },
+	CS(GCC_ATYP_BASED)	{ A_0ARG|A_1ARG|A1_NAME, "based" },
+	CS(GCC_ATYP_PASCAL)	{ A_0ARG, "pascal" },
+	CS(GCC_ATYP_FORTRAN)	{ A_0ARG, "fortran" },
+#endif
 };
 
 #if SZPOINT(CHAR) == SZLONGLONG
