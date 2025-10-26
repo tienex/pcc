@@ -1,75 +1,66 @@
 /*
  * Copyright (c) 2025 PCC OCaml Runtime Library
  *
- * Memory management and garbage collection
- * Simple mark-and-sweep collector
+ * Memory management using generic GC
  */
 
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
 #include "ocaml_runtime.h"
+#include "../libgc/gc.h"
 
-/* GC colors */
-#define COLOR_WHITE 0
-#define COLOR_GRAY  1
-#define COLOR_BLACK 2
-
-/* Heap management */
-typedef struct heap_block {
-	void *start;
-	size_t size;
-	size_t used;
-	struct heap_block *next;
-} heap_block_t;
-
-static heap_block_t *heap_blocks = NULL;
-static size_t total_allocated = 0;
-static size_t gc_threshold = 1024 * 1024; /* 1MB default */
-
-/* Root set for GC */
-#define MAX_ROOTS 1024
-static ocaml_value_t *gc_roots[MAX_ROOTS];
-static size_t num_roots = 0;
-
-/* Allocation list for GC */
-typedef struct alloc_node {
-	ocaml_header_t *header;
-	void *data;
-	struct alloc_node *next;
-} alloc_node_t;
-
-static alloc_node_t *alloc_list = NULL;
+/* Global GC context */
+static gc_context_t *ocaml_gc = NULL;
 
 /*
- * Initialize garbage collector
+ * Mark callback for OCaml values
+ */
+static void
+ocaml_mark_value(gc_context_t *gc, void *obj, void *userdata)
+{
+	ocaml_value_t val = (ocaml_value_t)obj;
+	ocaml_header_t *hdr;
+	size_t i;
+
+	/* Get header */
+	hdr = HEADER(val);
+
+	/* Mark children based on tag */
+	for (i = 0; i < hdr->size; i++) {
+		ocaml_value_t field = FIELD(val, i);
+
+		/* Only mark if it's a pointer (not an integer) */
+		if (IS_BLOCK(field)) {
+			gc_mark(gc, (void *)field);
+		}
+	}
+}
+
+/*
+ * Initialize OCaml GC
  */
 void
 ocaml_gc_init(size_t heap_size)
 {
-	heap_block_t *block;
+	gc_config_t config = GC_DEFAULT_CONFIG;
 
-	if (heap_size == 0)
-		heap_size = 16 * 1024 * 1024; /* 16MB default */
+	if (heap_size > 0) {
+		config.heap_size = heap_size;
+		config.gc_threshold = heap_size / 2;
+	}
 
-	block = malloc(sizeof(heap_block_t));
-	if (!block) {
-		fprintf(stderr, "ocaml_gc_init: out of memory\n");
+	config.verbose = 0;
+	config.enable_compaction = 0;
+
+	ocaml_gc = gc_init(&config);
+	if (!ocaml_gc) {
+		fprintf(stderr, "ocaml_gc_init: failed to initialize GC\n");
 		exit(1);
 	}
 
-	block->size = heap_size;
-	block->start = malloc(heap_size);
-	if (!block->start) {
-		fprintf(stderr, "ocaml_gc_init: out of memory\n");
-		exit(1);
-	}
-
-	block->used = 0;
-	block->next = NULL;
-	heap_blocks = block;
-
-	gc_threshold = heap_size / 2;
+	/* Set mark callback */
+	gc_set_mark_callback(ocaml_gc, ocaml_mark_value, NULL);
 }
 
 /*
@@ -78,74 +69,8 @@ ocaml_gc_init(size_t heap_size)
 void
 ocaml_gc_register_root(ocaml_value_t *root)
 {
-	if (num_roots >= MAX_ROOTS) {
-		fprintf(stderr, "ocaml_gc_register_root: too many roots\n");
-		return;
-	}
-
-	gc_roots[num_roots++] = root;
-}
-
-/*
- * Mark phase of GC
- */
-static void
-mark_value(ocaml_value_t val)
-{
-	ocaml_header_t *hdr;
-	size_t i;
-
-	if (IS_INT(val))
-		return;
-
-	hdr = HEADER(val);
-
-	/* Already marked? */
-	if (hdr->color == COLOR_BLACK)
-		return;
-
-	/* Mark this block */
-	hdr->color = COLOR_BLACK;
-
-	/* Mark children */
-	for (i = 0; i < hdr->size; i++) {
-		mark_value(FIELD(val, i));
-	}
-}
-
-/*
- * Sweep phase of GC
- */
-static void
-sweep(void)
-{
-	alloc_node_t *node, *prev, *next;
-	size_t freed = 0;
-
-	prev = NULL;
-	node = alloc_list;
-
-	while (node) {
-		next = node->next;
-
-		if (node->header->color == COLOR_WHITE) {
-			/* Free unmarked block */
-			free(node->header);
-			free(node);
-
-			if (prev)
-				prev->next = next;
-			else
-				alloc_list = next;
-
-			freed++;
-		} else {
-			/* Reset color for next GC */
-			node->header->color = COLOR_WHITE;
-			prev = node;
-		}
-
-		node = next;
+	if (ocaml_gc) {
+		gc_register_root(ocaml_gc, (void **)root);
 	}
 }
 
@@ -155,65 +80,53 @@ sweep(void)
 void
 ocaml_gc_collect(void)
 {
-	size_t i;
-
-	/* Mark phase: mark all reachable values */
-	for (i = 0; i < num_roots; i++) {
-		if (gc_roots[i])
-			mark_value(*gc_roots[i]);
+	if (ocaml_gc) {
+		gc_collect(ocaml_gc);
 	}
-
-	/* Sweep phase: free unmarked blocks */
-	sweep();
 }
 
 /*
- * Allocate a block
+ * Allocate a block using generic GC
  */
 ocaml_value_t
 ocaml_alloc(size_t size, uint8_t tag)
 {
 	ocaml_header_t *hdr;
 	void *data;
-	alloc_node_t *node;
 	size_t total_size;
 
-	/* Check if GC is needed */
-	if (total_allocated > gc_threshold) {
-		ocaml_gc_collect();
+	if (!ocaml_gc) {
+		fprintf(stderr, "ocaml_alloc: GC not initialized\n");
+		exit(1);
 	}
 
-	/* Allocate header + data */
+	/* Allocate header + data from GC */
 	total_size = sizeof(ocaml_header_t) + size * sizeof(ocaml_value_t);
-	hdr = calloc(1, total_size);
+	hdr = gc_alloc(ocaml_gc, total_size);
+
 	if (!hdr) {
-		/* Try GC and retry */
-		ocaml_gc_collect();
-		hdr = calloc(1, total_size);
-		if (!hdr) {
-			fprintf(stderr, "ocaml_alloc: out of memory\n");
-			exit(1);
-		}
+		fprintf(stderr, "ocaml_alloc: out of memory\n");
+		exit(1);
 	}
 
-	/* Initialize header */
+	/* Initialize OCaml header */
 	hdr->size = size;
 	hdr->tag = tag;
-	hdr->color = COLOR_WHITE;
+	hdr->color = 0;
 
 	/* Data follows header */
 	data = (void *)(hdr + 1);
 
-	/* Add to allocation list */
-	node = malloc(sizeof(alloc_node_t));
-	if (node) {
-		node->header = hdr;
-		node->data = data;
-		node->next = alloc_list;
-		alloc_list = node;
-	}
-
-	total_allocated += total_size;
-
 	return (ocaml_value_t)data;
+}
+
+/*
+ * Get GC statistics
+ */
+void
+ocaml_gc_stats(void)
+{
+	if (ocaml_gc) {
+		gc_print_stats(ocaml_gc);
+	}
 }

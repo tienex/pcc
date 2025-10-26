@@ -1103,6 +1103,7 @@ AC_CONFIG_FILES([Makefile
 		ocaml/Makefile
 		ocaml/ocaml/Makefile
 		ocaml/ocom/Makefile
+		libgc/Makefile
 		libocaml/Makefile
 		common/abi/Makefile
 		include/Makefile
