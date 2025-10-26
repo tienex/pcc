@@ -112,3 +112,9 @@ test_gc_pascal_integration
 test_simple
 test_weak_simple
 test_ocaml_runtime
+test_gc_ocaml_integration
+test_gc_finalizers
+test_gc_statistics
+test_ocaml_compiler.sh
+run_all_gc_tests.sh
+ocaml_tests/
