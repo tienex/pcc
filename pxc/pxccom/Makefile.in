@@ -31,6 +31,7 @@ INSTALL_PROGRAM = @INSTALL_PROGRAM@
 INSTALL_DATA = @INSTALL_DATA@
 
 OBJS=	main.o symtab.o types.o tree.o builtins.o \
+	codegen.o semantic.o preprocessor.o \
 	scan.o xgram.o
 
 DEST=pxccom$(EXEEXT)
@@ -67,6 +68,15 @@ tree.o: $(srcdir)/tree.c pass1.h
 
 builtins.o: $(srcdir)/builtins.c pass1.h
 	$(CC) $(DEFS) $(CPPFLAGS) $(CFLAGS) -c $(srcdir)/builtins.c
+
+codegen.o: $(srcdir)/codegen.c pass1.h
+	$(CC) $(DEFS) $(CPPFLAGS) $(CFLAGS) -c $(srcdir)/codegen.c
+
+semantic.o: $(srcdir)/semantic.c pass1.h
+	$(CC) $(DEFS) $(CPPFLAGS) $(CFLAGS) -c $(srcdir)/semantic.c
+
+preprocessor.o: $(srcdir)/preprocessor.c pass1.h
+	$(CC) $(DEFS) $(CPPFLAGS) $(CFLAGS) -c $(srcdir)/preprocessor.c
 
 install: all
 	test -z "$(DESTDIR)$(libexecdir)" || mkdir -p "$(DESTDIR)$(libexecdir)"
