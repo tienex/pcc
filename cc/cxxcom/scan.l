@@ -135,6 +135,7 @@ extern void yyset_lineno (int);
 "struct"		{ yylval.intval = STNAME; notype=1; return(C_STRUCT); }
 "switch"		{ return(C_SWITCH); }
 "template"		{ return(CXX_TEMPLATE); }
+"this"			{ return(CXX_THIS); }
 "typedef"		{ 	return resw(TYPEDEF, C_CLASS); }
 "typename"		{ return(CXX_TYPENAME); }
 "union"			{ yylval.intval = UNAME; notype=1; return(C_STRUCT); }

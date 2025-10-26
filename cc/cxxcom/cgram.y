@@ -133,6 +133,7 @@
 %token	CXX_NEW
 %token	CXX_DELETE
 %token	CXX_CLASS
+%token	CXX_THIS
 
 /*
  * Precedence
@@ -1254,6 +1255,16 @@ term:		   term C_INCOP {  $$ = biop($2, $1, bcon(1)); }
 		|  term C_STROP C_NAME { $$ = biop($2, $1, bdty(NAME, $3)); }
 		|  term C_STROP C_TYPENAME { $$ = biop($2, $1, bdty(NAME, $3));}
 		|  C_NAME %prec C_SIZEOF /* below ( */{ $$ = bdty(NAME, $1); }
+		|  CXX_THIS %prec C_SIZEOF {
+			/* 'this' keyword - resolve to __%THIS hidden parameter */
+			struct symtab *sp = lookup("__%THIS", 0);
+			if (sp == NULL || sp->stype == FARG) {
+				uerror("'this' used outside member function");
+				sp = lookup("__%THIS", STEMP);
+				sp->stype = VOID;
+			}
+			$$ = nametree(sp);
+		}
 		|  nmrec C_NAME %prec C_SIZEOF {
 			$$ = biop(NMLIST, $1, bdty(NAME, $2));
 		}
