@@ -11,13 +11,7 @@
 #include <wchar.h>
 #include "../include/csruntime.h"
 
-/* String structure (UTF-16 based) */
-struct CSString {
-	CSObject base;
-	int32_t length;      /* Length in UTF-16 code units */
-	uint16_t *data;      /* UTF-16 data */
-	char *utf8_cache;    /* Cached UTF-8 conversion */
-};
+/* CSString is defined in csruntime_types.h */
 
 /* ========== String Creation ========== */
 
@@ -45,8 +39,7 @@ CSString *CS_String_Create(const char *utf8) {
 	utf16_len = (int32_t)utf8_len;
 
 	str->length = utf16_len;
-	str->data = utf16_data;
-	str->utf8_cache = NULL;
+	str->chars = utf16_data;
 
 	return str;
 }
@@ -67,8 +60,7 @@ CSString *CS_String_CreateFromUTF16(const uint16_t *utf16, int32_t length) {
 	data[length] = 0;
 
 	str->length = length;
-	str->data = data;
-	str->utf8_cache = NULL;
+	str->chars = data;
 
 	return str;
 }
@@ -113,7 +105,7 @@ int32_t CS_String_IndexOf(CSString *str, CSString *value) {
 	for (int32_t i = 0; i <= str->length - value->length; i++) {
 		int32_t match = 1;
 		for (int32_t j = 0; j < value->length; j++) {
-			if (str->data[i + j] != value->data[j]) {
+			if (str->chars[i + j] != value->chars[j]) {
 				match = 0;
 				break;
 			}
@@ -132,7 +124,7 @@ int32_t CS_String_LastIndexOf(CSString *str, CSString *value) {
 	for (int32_t i = str->length - value->length; i >= 0; i--) {
 		int32_t match = 1;
 		for (int32_t j = 0; j < value->length; j++) {
-			if (str->data[i + j] != value->data[j]) {
+			if (str->chars[i + j] != value->chars[j]) {
 				match = 0;
 				break;
 			}
@@ -154,7 +146,7 @@ CSString *CS_String_Replace(CSString *str, CSString *old, CSString *new) {
 	while (pos <= str->length - old->length) {
 		int32_t match = 1;
 		for (int32_t j = 0; j < old->length; j++) {
-			if (str->data[pos + j] != old->data[j]) {
+			if (str->chars[pos + j] != old->chars[j]) {
 				match = 0;
 				break;
 			}
@@ -180,7 +172,7 @@ CSString *CS_String_Replace(CSString *str, CSString *old, CSString *new) {
 		if (src_pos <= str->length - old->length) {
 			int32_t match = 1;
 			for (int32_t j = 0; j < old->length; j++) {
-				if (str->data[src_pos + j] != old->data[j]) {
+				if (str->chars[src_pos + j] != old->chars[j]) {
 					match = 0;
 					break;
 				}
@@ -194,7 +186,7 @@ CSString *CS_String_Replace(CSString *str, CSString *old, CSString *new) {
 			}
 		}
 		/* Copy original character */
-		new_data[dst_pos++] = str->data[src_pos++];
+		new_data[dst_pos++] = str->chars[src_pos++];
 	}
 	new_data[new_length] = 0;
 
@@ -212,10 +204,10 @@ CSString *CS_String_ToLower(CSString *str) {
 
 	for (int32_t i = 0; i < str->length; i++) {
 		/* Simple ASCII lowercase (full Unicode would be more complex) */
-		if (str->data[i] >= 'A' && str->data[i] <= 'Z') {
-			new_data[i] = str->data[i] + ('a' - 'A');
+		if (str->chars[i] >= 'A' && str->chars[i] <= 'Z') {
+			new_data[i] = str->chars[i] + ('a' - 'A');
 		} else {
-			new_data[i] = str->data[i];
+			new_data[i] = str->chars[i];
 		}
 	}
 	new_data[str->length] = 0;
@@ -234,10 +226,10 @@ CSString *CS_String_ToUpper(CSString *str) {
 
 	for (int32_t i = 0; i < str->length; i++) {
 		/* Simple ASCII uppercase (full Unicode would be more complex) */
-		if (str->data[i] >= 'a' && str->data[i] <= 'z') {
-			new_data[i] = str->data[i] - ('a' - 'A');
+		if (str->chars[i] >= 'a' && str->chars[i] <= 'z') {
+			new_data[i] = str->chars[i] - ('a' - 'A');
 		} else {
-			new_data[i] = str->data[i];
+			new_data[i] = str->chars[i];
 		}
 	}
 	new_data[str->length] = 0;
@@ -254,12 +246,12 @@ CSString *CS_String_Trim(CSString *str) {
 	int32_t start = 0, end = str->length - 1;
 
 	/* Trim leading whitespace */
-	while (start < str->length && str->data[start] <= ' ') {
+	while (start < str->length && str->chars[start] <= ' ') {
 		start++;
 	}
 
 	/* Trim trailing whitespace */
-	while (end >= start && str->data[end] <= ' ') {
+	while (end >= start && str->chars[end] <= ' ') {
 		end--;
 	}
 
@@ -281,8 +273,8 @@ int32_t CS_String_Compare(CSString *s1, CSString *s2) {
 	int32_t min_len = s1->length < s2->length ? s1->length : s2->length;
 
 	for (int32_t i = 0; i < min_len; i++) {
-		if (s1->data[i] != s2->data[i]) {
-			return (int32_t)s1->data[i] - (int32_t)s2->data[i];
+		if (s1->chars[i] != s2->chars[i]) {
+			return (int32_t)s1->chars[i] - (int32_t)s2->chars[i];
 		}
 	}
 
@@ -298,7 +290,7 @@ CSBool CS_String_StartsWith(CSString *str, CSString *prefix) {
 	if (prefix->length > str->length) return 0;
 
 	for (int32_t i = 0; i < prefix->length; i++) {
-		if (str->data[i] != prefix->data[i]) {
+		if (str->chars[i] != prefix->chars[i]) {
 			return 0;
 		}
 	}
@@ -312,7 +304,7 @@ CSBool CS_String_EndsWith(CSString *str, CSString *suffix) {
 
 	int32_t offset = str->length - suffix->length;
 	for (int32_t i = 0; i < suffix->length; i++) {
-		if (str->data[offset + i] != suffix->data[i]) {
+		if (str->chars[offset + i] != suffix->chars[i]) {
 			return 0;
 		}
 	}
@@ -373,20 +365,17 @@ CSString *CS_String_Interpolate(int count, ...) {
 const char *CS_String_ToUTF8(CSString *str) {
 	if (!str) return NULL;
 
-	/* Use cached version if available */
-	if (str->utf8_cache) return str->utf8_cache;
-
 	/* Convert UTF-16 to UTF-8 (simple ASCII conversion for now) */
-	char *utf8 = (char *)CS_Malloc(str->length + 1);
-	if (!utf8) return NULL;
+	/* Note: Caller is responsible for freeing this memory */
+	static __thread char utf8_buffer[4096];
 
-	for (int32_t i = 0; i < str->length; i++) {
-		utf8[i] = (char)(str->data[i] & 0xFF);
+	int32_t len = str->length < 4095 ? str->length : 4095;
+	for (int32_t i = 0; i < len; i++) {
+		utf8_buffer[i] = (char)(str->chars[i] & 0xFF);
 	}
-	utf8[str->length] = '\0';
+	utf8_buffer[len] = '\0';
 
-	str->utf8_cache = utf8;
-	return utf8;
+	return utf8_buffer;
 }
 
 int32_t CS_String_ToInt32(CSString *str) {

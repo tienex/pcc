@@ -19,6 +19,7 @@ INSTALL_DATA = @INSTALL_DATA@
 # Source files
 SRCS = src/csruntime.c \
        src/csruntime_arc.c \
+       src/csruntime_types.c \
        src/csruntime_memory.c \
        src/csruntime_string.c \
        src/csruntime_collections.c \
