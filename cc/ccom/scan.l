@@ -240,6 +240,7 @@ struct keywords {
 	{ "do", C_DO, DEFKW },
 	{ "double", DOUBLE, C_TYPE },
 	{ "else", C_ELSE, DEFKW },
+	{ "__float128", LDOUBLE, C_TYPE },
 	{ "enum", C_ENUM, KWNOT },
 	{ "extern", EXTERN, C_CLASS },
 	{ "float", FLOAT, C_TYPE },

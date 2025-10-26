@@ -1761,8 +1761,6 @@ static char *gcppflags[] = {
 	"-D__GNUC__=4",
 	"-D__GNUC_MINOR__=3",
 	"-D__GNUC_PATCHLEVEL__=1",
-	"-D__HAVE_FLOAT128=0",		/* PCC doesn't support __float128 */
-	"-D__HAVE_FLOAT64X=0",		/* PCC doesn't support _Float64x */
 	"-D__REGISTER_PREFIX__=" REGISTER_PREFIX,
 	"-D__USER_LABEL_PREFIX__=" USER_LABEL_PREFIX,
 #if SZLONG == 64
