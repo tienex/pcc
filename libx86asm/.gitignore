@@ -1,6 +1,10 @@
 # Compiled binaries
 test_x86asm
 example
+simple_demo
+apx_demo
+multi_format_demo
+complex_addressing
 
 # Object files
 *.o
@@ -13,3 +17,8 @@ test_addressing_*.asm
 test_simd_*.asm
 strlen_*.asm
 vec_add_*.asm
+demo_output.asm
+apx_output.asm
+addressing.asm
+multiply_*.asm
+multiply_*.s
