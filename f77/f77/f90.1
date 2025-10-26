@@ -34,17 +34,17 @@
 .\"
 .TH F90 1
 .SH NAME
-f90 \- Fortran 90 compiler (with F66/F77 compatibility)
+f90 \- Fortran 90 compiler (with F66/F77/F95 compatibility)
 .SH SYNOPSIS
 .B f90
 [ option ] ... file ...
 .SH DESCRIPTION
 .I F90
-is the UNIX Fortran 90 compiler with F66 and F77 compatibility modes.
+is the UNIX Fortran 90 compiler with F66, F77, and F95 compatibility modes.
 It accepts several types of arguments:
 .PP
 Arguments whose names end with `.f' are taken to be
-Fortran 90 source programs (or F66/F77 when using compatibility mode);
+Fortran 90 source programs (or F66/F77/F95 when using compatibility mode);
 they are compiled, and
 each object program is left on the file in the current directory
 whose name is that of the source with `.o' substituted
@@ -101,10 +101,12 @@ Specify the Fortran standard to use. Valid values are:
 .B f66
 (Fortran 66),
 .B f77
-(Fortran 77), and
+(Fortran 77),
 .B f90
-(Fortran 90, default).
-This allows the compiler to operate in compatibility mode for older Fortran standards.
+(Fortran 90, default), and
+.B f95
+(Fortran 95).
+This allows the compiler to operate in compatibility mode for different Fortran standards.
 .TP
 .SM
 .BR \-onetrip
