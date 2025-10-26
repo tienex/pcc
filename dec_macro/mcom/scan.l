@@ -47,28 +47,28 @@ WHITESPACE      [ \t]
 }
 
     /* Directives */
-\\.TITLE        { return DIR_TITLE; }
-\\.IDENT        { return DIR_IDENT; }
-\\.PSECT        { return DIR_PSECT; }
-\\.ENTRY        { return DIR_ENTRY; }
-\\.END          { return DIR_END; }
-\\.GLOBL        { return DIR_GLOBL; }
-\\.GLOBAL       { return DIR_GLOBL; }
-\\.EXTERN       { return DIR_EXTERN; }
-\\.EXTRN        { return DIR_EXTERN; }
-\\.BYTE         { return DIR_BYTE; }
-\\.WORD         { return DIR_WORD; }
-\\.LONG         { return DIR_LONG; }
-\\.ASCII        { return DIR_ASCII; }
-\\.ASCIZ        { return DIR_ASCIZ; }
-\\.BLKB         { return DIR_BLKB; }
-\\.BLKW         { return DIR_BLKW; }
-\\.BLKL         { return DIR_BLKL; }
-\\.ALIGN        { return DIR_ALIGN; }
-\\.EVEN         { return DIR_EVEN; }
-\\.ODD          { return DIR_ODD; }
-\\.PAGE         { return DIR_PAGE; }
-\\.SBTTL        { return DIR_SBTTL; }
+".TITLE"        { return DIR_TITLE; }
+".IDENT"        { return DIR_IDENT; }
+".PSECT"        { return DIR_PSECT; }
+".ENTRY"        { return DIR_ENTRY; }
+".END"          { return DIR_END; }
+".GLOBL"        { return DIR_GLOBL; }
+".GLOBAL"       { return DIR_GLOBL; }
+".EXTERN"       { return DIR_EXTERN; }
+".EXTRN"        { return DIR_EXTERN; }
+".BYTE"         { return DIR_BYTE; }
+".WORD"         { return DIR_WORD; }
+".LONG"         { return DIR_LONG; }
+".ASCII"        { return DIR_ASCII; }
+".ASCIZ"        { return DIR_ASCIZ; }
+".BLKB"         { return DIR_BLKB; }
+".BLKW"         { return DIR_BLKW; }
+".BLKL"         { return DIR_BLKL; }
+".ALIGN"        { return DIR_ALIGN; }
+".EVEN"         { return DIR_EVEN; }
+".ODD"          { return DIR_ODD; }
+".PAGE"         { return DIR_PAGE; }
+".SBTTL"        { return DIR_SBTTL; }
 
     /* Macro directives */
 \\.MACRO        { return DIR_MACRO; }
@@ -133,7 +133,7 @@ AC14|ac14       { yylval.ival = 14; return ACCUMULATOR; }
 AC15|ac15       { yylval.ival = 15; return ACCUMULATOR; }
 
     /* Numbers - Decimal */
-{DIGIT}+\\.?    {
+{DIGIT}+    {
 	yylval.lval = strtol(yytext, NULL, 10);
 	return NUMBER;
 }
@@ -256,10 +256,5 @@ AC15|ac15       { yylval.ival = 15; return ACCUMULATOR; }
 %%
 
 /*
- * Called when EOF is reached
+ * yywrap is defined by %option noyywrap above
  */
-int
-yywrap(void)
-{
-	return 1;
-}

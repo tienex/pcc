@@ -1,0 +1,5 @@
+; Minimal test
+	.PSECT	CODE
+START:	MOV	#100, R0
+	HALT
+	.END

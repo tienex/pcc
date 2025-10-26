@@ -10,6 +10,7 @@
 #include <stdarg.h>
 #include <string.h>
 #include "pass1.h"
+#include "y.tab.h"  /* For DIR_* token definitions */
 
 /* Current program section */
 int current_psect = 0;

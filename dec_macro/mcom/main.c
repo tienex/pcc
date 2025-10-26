@@ -68,6 +68,71 @@ pass2_compile(struct interpass *ip)
 }
 
 /*
+ * Implement send_passt for standalone assembler
+ * This creates interpass structures and sends them to pass2_compile
+ */
+void
+send_passt(int type, ...)
+{
+	struct interpass *ip;
+	struct interpass_prolog *ipp;
+	va_list ap;
+	int sz;
+
+	va_start(ap, type);
+
+	/* Allocate interpass structure */
+	if (type == IP_PROLOG || type == IP_EPILOG)
+		sz = sizeof(struct interpass_prolog);
+	else
+		sz = sizeof(struct interpass);
+
+	ip = (struct interpass *)malloc(sz);
+	if (ip == NULL)
+		fatal("out of memory");
+
+	memset(ip, 0, sz);
+	ip->type = type;
+	ip->lineno = lineno;
+
+	/* Fill in type-specific data */
+	switch (type) {
+	case IP_NODE:
+		ip->ip_node = va_arg(ap, NODE *);
+		break;
+
+	case IP_DEFLAB:
+		ip->ip_lbl = va_arg(ap, int);
+		break;
+
+	case IP_ASM:
+		ip->ip_asm = va_arg(ap, char *);
+		break;
+
+	case IP_PROLOG:
+	case IP_EPILOG:
+		ipp = (struct interpass_prolog *)ip;
+		/* We don't use these for assembly, but set up basic fields */
+		ipp->ipp_autos = 0;
+		ipp->ipp_name = "";
+		ipp->ipp_type = 0;
+		ipp->ipp_vis = 0;
+		break;
+
+	default:
+		fprintf(stderr, "unknown interpass type %d\n", type);
+		free(ip);
+		va_end(ap);
+		return;
+	}
+
+	va_end(ap);
+
+	/* Send to pass2 */
+	pass2_compile(ip);
+}
+
+/*
  * Print usage information
  */
 static void

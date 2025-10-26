@@ -294,6 +294,14 @@ operand:
 		$$.symbol = NULL;
 		$$.flags = OF_AUTOINC;
 	}
+	| '(' REGISTER ')' {
+		/* Register indirect (same as 0(Rn)) */
+		$$.type = OP_INDEXED;
+		$$.reg = $2;
+		$$.value = 0;
+		$$.symbol = NULL;
+		$$.flags = OF_INDEXED;
+	}
 	| expression '(' REGISTER ')' {
 		/* Indexed (displacement) */
 		$$.type = OP_INDEXED;

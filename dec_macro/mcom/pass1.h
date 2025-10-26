@@ -86,47 +86,11 @@ typedef struct instruction {
 	int lineno;             /* Source line number */
 } INSTRUCTION;
 
-/* Directive types */
-#define DIR_TITLE      1
-#define DIR_IDENT      2
-#define DIR_PSECT      3
-#define DIR_ENTRY      4
-#define DIR_END        5
-#define DIR_GLOBL      6
-#define DIR_EXTERN     7
-#define DIR_BYTE       8
-#define DIR_WORD       9
-#define DIR_LONG       10
-#define DIR_ASCII      11
-#define DIR_ASCIZ      12
-#define DIR_BLKB       13
-#define DIR_BLKW       14
-#define DIR_BLKL       15
-#define DIR_ALIGN      16
-#define DIR_EVEN       17
-#define DIR_ODD        18
-#define DIR_PAGE       19
-#define DIR_SBTTL      20
-#define DIR_MACRO      21
-#define DIR_ENDM       22
-#define DIR_MEXIT      23
-#define DIR_IRP        24
-#define DIR_IRPC       25
-#define DIR_REPT       26
-#define DIR_ENDR       27
-#define DIR_IF         28
-#define DIR_IFF        29
-#define DIR_IFT        30
-#define DIR_IFTF       31
-#define DIR_IFB        32
-#define DIR_IFNB       33
-#define DIR_IFDEF      34
-#define DIR_IFNDEF     35
-#define DIR_ENDC       36
-#define DIR_LIST       37
-#define DIR_NLIST      38
-#define DIR_ENABLE     39
-#define DIR_DISABLE    40
+/*
+ * Directive types are defined as tokens in mgram.y
+ * They are available in y.tab.h as:
+ * DIR_TITLE, DIR_IDENT, DIR_PSECT, etc.
+ */
 
 /* Register definitions (PDP-11/VAX style) */
 #define REG_R0         0
