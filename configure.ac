@@ -1272,7 +1272,8 @@ CONFIG_MAKEFILES="Makefile
 		libvm/Makefile
 		libfs/Makefile
 		libalgol60/Makefile
-		libchill/Makefile"
+		libchill/Makefile
+		libcobol/Makefile"
 
 # C language is always included (required for bootstrap)
 CONFIG_MAKEFILES="$CONFIG_MAKEFILES
@@ -1364,6 +1365,14 @@ if test "$enable_ocaml" = "yes"; then
 		libocaml/Makefile"
 fi
 
+# Add COBOL if enabled
+if test "$enable_cobol" = "yes"; then
+	CONFIG_MAKEFILES="$CONFIG_MAKEFILES
+		cobol/Makefile
+		cobol/cobol/Makefile
+		cobol/cbolcom/Makefile"
+fi
+
 AC_CONFIG_FILES([$CONFIG_MAKEFILES])
 AC_OUTPUT
 
@@ -1384,6 +1393,7 @@ test "$enable_pli" = "yes" && ENABLED_LANGUAGES="$ENABLED_LANGUAGES pli"
 test "$enable_chill" = "yes" && ENABLED_LANGUAGES="$ENABLED_LANGUAGES chill"
 test "$enable_algol" = "yes" && ENABLED_LANGUAGES="$ENABLED_LANGUAGES algol60"
 test "$enable_ocaml" = "yes" && ENABLED_LANGUAGES="$ENABLED_LANGUAGES ocaml"
+test "$enable_cobol" = "yes" && ENABLED_LANGUAGES="$ENABLED_LANGUAGES cobol"
 ENABLED_LANGUAGES=`echo $ENABLED_LANGUAGES | sed 's/^ *//'`
 
 echo
