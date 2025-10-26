@@ -19,7 +19,7 @@ exec_prefix = @exec_prefix@
 libdir = @libdir@
 includedir = @includedir@
 
-OBJS=	gc.o gc_compact.o
+OBJS=	gc.o gc_compact.o gc_pool.o gc_weak.o
 
 LIB=libgc.a
 
@@ -29,11 +29,17 @@ $(LIB): $(OBJS)
 	$(AR) rv $@ $(OBJS)
 	$(RANLIB) $@
 
-gc.o: $(srcdir)/gc.c $(srcdir)/gc.h
+gc.o: $(srcdir)/gc.c $(srcdir)/gc.h $(srcdir)/gc_internal.h
 	$(CC) $(CFLAGS) $(CPPFLAGS) -c $(srcdir)/gc.c
 
 gc_compact.o: $(srcdir)/gc_compact.c $(srcdir)/gc.h
 	$(CC) $(CFLAGS) $(CPPFLAGS) -c $(srcdir)/gc_compact.c
+
+gc_pool.o: $(srcdir)/gc_pool.c $(srcdir)/gc.h $(srcdir)/gc_internal.h
+	$(CC) $(CFLAGS) $(CPPFLAGS) -c $(srcdir)/gc_pool.c
+
+gc_weak.o: $(srcdir)/gc_weak.c $(srcdir)/gc.h $(srcdir)/gc_internal.h
+	$(CC) $(CFLAGS) $(CPPFLAGS) -c $(srcdir)/gc_weak.c
 
 install: $(LIB)
 	test -z "$(DESTDIR)$(libdir)" || mkdir -p "$(DESTDIR)$(libdir)"

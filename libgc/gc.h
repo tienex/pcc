@@ -38,6 +38,7 @@ typedef struct gc_config {
 	size_t gc_threshold;        /* Trigger GC when usage exceeds this */
 	float growth_factor;        /* Heap growth factor (default: 1.5) */
 	int enable_compaction;      /* Enable heap compaction */
+	int enable_pools;           /* Enable memory pools for small objects */
 	int verbose;                /* Print GC debug messages */
 } gc_config_t;
 
@@ -110,12 +111,25 @@ size_t gc_usage(gc_context_t *gc);
 /* Resize heap */
 int gc_resize_heap(gc_context_t *gc, size_t new_size);
 
+/* Weak reference support */
+typedef struct gc_weak gc_weak_t;
+
+/* Create a weak reference to an object */
+gc_weak_t *gc_weak_create(gc_context_t *gc, void *obj);
+
+/* Get object from weak reference (returns NULL if collected) */
+void *gc_weak_get(gc_weak_t *weak);
+
+/* Release weak reference */
+void gc_weak_release(gc_weak_t *weak);
+
 /* Default configuration */
 #define GC_DEFAULT_CONFIG { \
 	.heap_size = 16 * 1024 * 1024,  /* 16MB */ \
 	.gc_threshold = 8 * 1024 * 1024, /* 8MB */ \
 	.growth_factor = 1.5, \
 	.enable_compaction = 0, \
+	.enable_pools = 1, \
 	.verbose = 0 \
 }
 

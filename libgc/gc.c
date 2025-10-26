@@ -8,14 +8,10 @@
 #include <string.h>
 #include <stdio.h>
 #include "gc.h"
+#include "gc_internal.h"
 
 /* Root set for GC */
 #define MAX_ROOTS 4096
-
-typedef struct root_entry {
-	void **root;
-	struct root_entry *next;
-} root_entry_t;
 
 /* GC context structure */
 struct gc_context {
@@ -29,6 +25,12 @@ struct gc_context {
 	root_entry_t *roots;
 	size_t num_roots;
 
+	/* Weak references */
+	gc_weak_t *weak_refs;
+
+	/* Memory pools */
+	gc_pool_manager_t *pool_manager;
+
 	/* Callbacks */
 	gc_mark_fn mark_callback;
 	void *mark_userdata;
@@ -41,6 +43,17 @@ struct gc_context {
 	/* Automatic GC */
 	int auto_gc;
 };
+
+/* Forward declarations for weak reference support */
+void gc_weak_invalidate(gc_context_t *gc, void *obj);
+void gc_weak_cleanup(gc_context_t *gc);
+
+/* Internal helper to access weak_refs field */
+gc_weak_t **
+gc_get_weak_refs(gc_context_t *gc)
+{
+	return &gc->weak_refs;
+}
 
 /*
  * Initialize GC with configuration
@@ -65,12 +78,22 @@ gc_init(const gc_config_t *config)
 	/* Initialize stats */
 	gc->stats.heap_size = gc->config.heap_size;
 
+	/* Initialize memory pools */
+	if (gc->config.enable_pools) {
+		gc->pool_manager = gc_pool_init();
+		if (!gc->pool_manager) {
+			free(gc);
+			return NULL;
+		}
+	}
+
 	/* Enable auto GC by default */
 	gc->auto_gc = 1;
 
 	if (gc->config.verbose) {
-		printf("GC initialized: heap_size=%zu, threshold=%zu\n",
-		       gc->config.heap_size, gc->config.gc_threshold);
+		printf("GC initialized: heap_size=%zu, threshold=%zu, pools=%s\n",
+		       gc->config.heap_size, gc->config.gc_threshold,
+		       gc->config.enable_pools ? "enabled" : "disabled");
 	}
 
 	return gc;
@@ -110,6 +133,14 @@ gc_destroy(gc_context_t *gc)
 		root = root_next;
 	}
 
+	/* Clean up weak references */
+	gc_weak_cleanup(gc);
+
+	/* Destroy pool manager */
+	if (gc->pool_manager) {
+		gc_pool_destroy(gc->pool_manager);
+	}
+
 	free(gc);
 }
 
@@ -138,6 +169,25 @@ gc_alloc_aligned(gc_context_t *gc, size_t size, size_t align)
 	/* Check if GC is needed */
 	if (gc->auto_gc && gc->stats.current_usage > gc->config.gc_threshold) {
 		gc_collect(gc);
+	}
+
+	/* Try pool allocation for small objects first */
+	if (gc->pool_manager && align <= sizeof(void *)) {
+		ptr = gc_pool_alloc(gc->pool_manager, size);
+		if (ptr) {
+			obj = gc_get_header(ptr);
+			/* Add to object list */
+			obj->next = gc->objects;
+			gc->objects = obj;
+
+			/* Update stats */
+			total_size = sizeof(gc_object_t) + size;
+			gc->stats.total_allocated += total_size;
+			gc->stats.current_usage += total_size;
+			gc->stats.num_objects++;
+
+			return ptr;
+		}
 	}
 
 	/* Allocate header + data */
@@ -319,6 +369,9 @@ gc_collect(gc_context_t *gc)
 			/* Free unmarked object */
 			void *obj_ptr = gc_get_object(obj);
 
+			/* Invalidate weak references */
+			gc_weak_invalidate(gc, obj_ptr);
+
 			/* Call finalizer if set */
 			if (gc->finalize_callback) {
 				gc->finalize_callback(obj_ptr, gc->finalize_userdata);
@@ -335,7 +388,12 @@ gc_collect(gc_context_t *gc)
 			freed_bytes += obj_size;
 			freed++;
 
-			free(obj);
+			/* Free object (return to pool if pooled) */
+			if (gc->pool_manager && gc_pool_is_pooled(obj_ptr)) {
+				gc_pool_free(gc->pool_manager, obj_ptr);
+			} else {
+				free(obj);
+			}
 		} else {
 			/* Reset mark for next GC */
 			obj->marked = 0;

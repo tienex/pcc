@@ -11,6 +11,8 @@ This library provides a language-agnostic garbage collector that can be used by 
 - **Callback-Based Marking**: Language runtimes provide mark callbacks
 - **Root Registration**: Register global and local roots
 - **Heap Compaction**: Optional compaction to reduce fragmentation
+- **Memory Pools**: Small object optimization for frequently allocated sizes
+- **Weak References**: Support for non-owning references to objects
 - **Statistics**: Detailed GC metrics and debugging
 
 ## Features
@@ -156,6 +158,52 @@ size_t moved = gc_compact(gc);
 printf("Moved %zu objects\n", moved);
 ```
 
+### Memory Pools
+
+Memory pools optimize small object allocation by reusing freed objects:
+
+```c
+/* Enable pools in config (enabled by default) */
+config.enable_pools = 1;
+
+/* Small objects (16-256 bytes) automatically use pools */
+void *small_obj = gc_alloc(gc, 32);  /* Uses pool */
+void *large_obj = gc_alloc(gc, 512); /* Direct allocation */
+```
+
+Pools maintain free lists for common size classes (16, 32, 64, 128, 256 bytes),
+reducing allocation overhead and improving cache locality.
+
+### Weak References
+
+Weak references allow non-owning pointers to objects that don't prevent collection:
+
+```c
+void *obj = gc_alloc(gc, 100);
+
+/* Create weak reference */
+gc_weak_t *weak = gc_weak_create(gc, obj);
+
+/* Access object through weak reference */
+void *ptr = gc_weak_get(weak);
+if (ptr) {
+    /* Object still alive */
+    printf("Object at %p\n", ptr);
+}
+
+/* After GC collects the object, weak reference returns NULL */
+gc_collect(gc);
+ptr = gc_weak_get(weak);  /* Returns NULL */
+
+/* Release weak reference */
+gc_weak_release(weak);
+```
+
+Common use cases:
+- Caches that don't prevent collection
+- Observer patterns without strong ownership
+- Parent-child relationships where child doesn't own parent
+
 ### Cleanup
 
 ```c
@@ -214,6 +262,7 @@ typedef struct gc_config {
     size_t gc_threshold;       /* Trigger GC at this usage */
     float growth_factor;       /* Heap growth (default: 1.5) */
     int enable_compaction;     /* Enable compaction (default: 0) */
+    int enable_pools;          /* Enable memory pools (default: 1) */
     int verbose;               /* Debug output (default: 0) */
 } gc_config_t;
 ```
@@ -224,7 +273,9 @@ typedef struct gc_config {
 2. **Set proper threshold**: Balance between memory usage and GC overhead
 3. **Register roots sparingly**: Too many roots slow down marking
 4. **Use compaction judiciously**: Compaction has overhead
-5. **Disable auto-GC for batch jobs**: Manual control can be more efficient
+5. **Enable memory pools**: Pools significantly improve performance for small objects (enabled by default)
+6. **Use weak references for caches**: Prevents memory leaks while allowing collection
+7. **Disable auto-GC for batch jobs**: Manual control can be more efficient
 
 ## Thread Safety
 
@@ -245,9 +296,8 @@ typedef struct gc_config {
 - Generational GC for better performance
 - Incremental collection to reduce pause times
 - Concurrent marking for multi-core systems
-- Better compaction with object relocation
-- Memory pools for common object sizes
-- Finalizer support for resource cleanup
+- Better compaction with object relocation (current version reorders only)
+- Thread-safe version for multi-threaded applications
 
 ## Building
 
