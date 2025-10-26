@@ -106,6 +106,9 @@ test_gc
 test_gc_enhanced
 test_gc_pools
 test_gc_weak
+test_gc_edge_cases
+test_gc_benchmark
+test_gc_pascal_integration
 test_simple
 test_weak_simple
 test_ocaml_runtime
