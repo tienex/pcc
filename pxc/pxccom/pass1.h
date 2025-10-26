@@ -225,9 +225,31 @@ void walk_tree(NODE *n);
 void init_builtins(void);
 SYMTAB *lookup_builtin(char *name);
 
+/* codegen.c */
+void codegen_init(void);
+void codegen_function(SYMTAB *func, struct node *body);
+
+/* semantic.c */
+void semantic_init(void);
+void semantic_enter_scope(void);
+void semantic_exit_scope(void);
+void semantic_analyze_function(SYMTAB *func, struct node *body);
+
+/* preprocessor.c */
+void pp_init(void);
+void pp_cleanup(void);
+void pp_define(const char *name, const char *value);
+const char *pp_lookup(const char *name);
+void pp_undef(const char *name);
+void pp_add_include_path(const char *path);
+int pp_include(const char *filename, int is_system);
+int pp_pop_include(void);
+char *pp_expand_macros(const char *line);
+
 /* main.c */
 void yyerror(const char *s);
 void error(const char *fmt, ...);
 void warning(const char *fmt, ...);
+extern FILE *yyin;
 
 #endif /* PASS1_H */

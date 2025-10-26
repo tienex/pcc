@@ -19,7 +19,7 @@ CPPFLAGS = @CPPFLAGS@ @ADD_CPPFLAGS@ \
 INSTALL = @INSTALL@
 INSTALL_DATA = @INSTALL_DATA@
 
-OBJS=	value.o string.o numeric.o array.o datetime.o io.o
+OBJS=	value.o string.o numeric.o array.o datetime.o io.o oop.o arc.o
 
 DEST=libxbrt.a
 
@@ -46,6 +46,12 @@ datetime.o: $(srcdir)/datetime.c $(srcdir)/xbrt.h
 
 io.o: $(srcdir)/io.c $(srcdir)/xbrt.h
 	$(CC) $(CFLAGS) $(CPPFLAGS) -c $(srcdir)/io.c
+
+oop.o: $(srcdir)/oop.c $(srcdir)/xbrt.h
+	$(CC) $(CFLAGS) $(CPPFLAGS) -c $(srcdir)/oop.c
+
+arc.o: $(srcdir)/arc.c $(srcdir)/xbrt.h
+	$(CC) $(CFLAGS) $(CPPFLAGS) -c $(srcdir)/arc.c
 
 install: all
 	test -z "$(DESTDIR)$(libdir)" || mkdir -p "$(DESTDIR)$(libdir)"

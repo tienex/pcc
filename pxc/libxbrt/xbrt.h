@@ -184,4 +184,27 @@ void xb_qout(const xb_value_t *val);
 int32_t xb_julian_from_ymd(int year, int month, int day);
 void xb_ymd_from_julian(int32_t julian, int *year, int *month, int *day);
 
+/* OOP Support */
+typedef struct class_def CLASS_DEF;
+CLASS_DEF *xb_register_class(const char *name, const char *parent_name);
+void xb_class_add_field(CLASS_DEF *cls, const char *name);
+void xb_class_add_method(CLASS_DEF *cls, const char *name, void (*func)(void));
+xb_object_t *xb_object_new(const char *class_name);
+xb_value_t *xb_object_get_field(xb_object_t *obj, const char *name);
+void xb_object_set_field(xb_object_t *obj, const char *name, const xb_value_t *val);
+xb_value_t *xb_object_call_method(xb_object_t *obj, const char *method_name, xb_value_t **args, int arg_count);
+void xb_object_free(xb_object_t *obj);
+
+/* ARC (Automatic Reference Counting) */
+void *xb_arc_alloc(size_t size, void (*destructor)(void*));
+void *xb_arc_retain(void *ptr);
+void xb_arc_release(void *ptr);
+size_t xb_arc_ref_count(void *ptr);
+
+typedef struct autorelease_pool AUTORELEASE_POOL;
+AUTORELEASE_POOL *xb_arc_pool_create(void);
+void *xb_arc_autorelease(void *ptr);
+void xb_arc_pool_drain(AUTORELEASE_POOL *pool);
+xb_value_t *xb_value_new_arc(xb_type_t type);
+
 #endif /* XBRT_H */
