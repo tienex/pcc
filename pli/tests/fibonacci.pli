@@ -1,0 +1,38 @@
+/* Fibonacci sequence in PL/I */
+
+FIBONACCI_DEMO: PROCEDURE OPTIONS(MAIN);
+    DECLARE I FIXED BINARY(31);
+    DECLARE N FIXED BINARY(31);
+    DECLARE FIB FIXED BINARY(31);
+
+    N = 10;
+    PUT SKIP LIST('First ', N, ' Fibonacci numbers:');
+
+    DO I = 0 TO N - 1;
+        FIB = FIBONACCI(I);
+        PUT SKIP LIST('F(', I, ') = ', FIB);
+    END;
+
+    /* Iterative Fibonacci function */
+    FIBONACCI: PROCEDURE(X) RETURNS(FIXED BINARY(31));
+        DECLARE X FIXED BINARY(31);
+        DECLARE A FIXED BINARY(31) INITIAL(0);
+        DECLARE B FIXED BINARY(31) INITIAL(1);
+        DECLARE C FIXED BINARY(31);
+        DECLARE J FIXED BINARY(31);
+
+        IF X = 0 THEN
+            RETURN(0);
+        IF X = 1 THEN
+            RETURN(1);
+
+        DO J = 2 TO X;
+            C = A + B;
+            A = B;
+            B = C;
+        END;
+
+        RETURN(B);
+    END FIBONACCI;
+
+END FIBONACCI_DEMO;

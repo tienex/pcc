@@ -1,0 +1,31 @@
+/* PL/M-86 example: LED blink pattern */
+/* This demonstrates PL/M syntax */
+
+BLINK: DO;
+    /* PL/M declarations */
+    DECLARE PORT BYTE;
+    DECLARE DELAY WORD;
+    DECLARE PATTERN BYTE;
+
+    /* Initialize */
+    PORT = 0FFH;
+    PATTERN = 01H;
+
+    /* Main loop */
+    DO WHILE 1;
+        /* Output pattern to port */
+        OUTPUT(PORT) = PATTERN;
+
+        /* Shift pattern */
+        IF PATTERN = 80H THEN
+            PATTERN = 01H;
+        ELSE
+            PATTERN = SHL(PATTERN, 1);
+
+        /* Delay */
+        DO DELAY = 0 TO 0FFFFH;
+            /* Busy wait */
+        END;
+    END;
+
+END BLINK;
