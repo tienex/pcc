@@ -8,9 +8,16 @@
 #ifndef PASS1_H
 #define PASS1_H
 
+/* Include PCC infrastructure */
 #include "../../mip/manifest.h"
+#include "../../mip/pass2.h"
+
+/* PL/I-specific includes */
 #include "error.h"
 #include "dialect.h"
+
+/* Use PCC's NODE as P1ND for consistency with C compiler */
+#define P1ND NODE
 
 /* Symbol table entry */
 typedef struct symtab {
