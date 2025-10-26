@@ -541,6 +541,7 @@ AC_SUBST(bootstrap)
 AC_SUBST(bootstrap_stage)
 AC_SUBST(bootstrap_stages)
 AC_SUBST(bootstrap_compare)
+AC_SUBST(asm_format)
 
 # Setup for ubuntu multiarch
 multiarch_path=

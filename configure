@@ -691,6 +691,7 @@ LDFLAGS
 CFLAGS
 CC
 BINPREFIX
+asm_format
 bootstrap_compare
 bootstrap_stages
 bootstrap_stage
@@ -3494,6 +3495,7 @@ if test "$bootstrap" = "yes" -o "$bootstrap_stage" != "0"; then
 printf "%s\n" "#define BOOTSTRAP_STAGE $bootstrap_stage" >>confdefs.h
 
 fi
+
 
 
 

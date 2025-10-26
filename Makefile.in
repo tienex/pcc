@@ -9,6 +9,7 @@
 BOOTSTRAP = @bootstrap@
 BOOTSTRAP_STAGES = @bootstrap_stages@
 BOOTSTRAP_COMPARE = @bootstrap_compare@
+ASM_FORMAT = @asm_format@
 
 # C11/C23 portable libraries configuration
 BUILD_LIBUNICODE=@BUILD_LIBUNICODE@
