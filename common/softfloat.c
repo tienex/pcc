@@ -517,6 +517,10 @@ FPI fpi_binary128 = { 113,   1-16383-113+1,
 FPI fpi_binary32 = { 24,  1-127-24+1,
                         254-127-24+1, 1, 0,
         0, 1, 1, 0,  32,    127+24-1 };
+#elif defined(USE_MSBFP_32)
+#define FPI_FLOAT	fpi_msbf32
+#elif defined(USE_IBMFP_32)
+#define FPI_FLOAT	fpi_ibm32
 #else
 #error need float definition
 #endif
@@ -525,6 +529,12 @@ FPI fpi_binary32 = { 24,  1-127-24+1,
 FPI fpi_binary64 = { 53,   1-1023-53+1,
                         2046-1023-53+1, 1, 0,
         0, 1, 1, 0,  64,     1023+53-1 };
+#elif defined(USE_MSBFP_64)
+#define FPI_DOUBLE	fpi_msbf64
+#elif defined(USE_IBMFP_64)
+#define FPI_DOUBLE	fpi_ibm64
+#elif defined(USE_CRAYFP_64)
+#define FPI_DOUBLE	fpi_cray64
 #else
 #error need double definition
 #endif
@@ -540,8 +550,70 @@ FPI fpi_binaryx80 = { 64,   1-16383-64+1,
 #define	FPI_LDOUBLE_ISZ(sf)	(sf.fp[0] == 0 && sf.fp[1] == 0 && \
 	sf.fp[2] == 0 && sf.fp[3] == 0 && (sf.fp[4] & 0x7fff) == 0)
 #define	FPI_LDOUBLE_NEG(sf)	sf.fp[4] ^= 0x8000
+#elif defined(USE_IBMFP_128)
+#define FPI_LDOUBLE	fpi_ibm128
+#elif defined(USE_CRAYFP_64)
+#define FPI_LDOUBLE	fpi_cray64
 #else
 #error need long double definition
+#endif
+
+/*
+ * Microsoft Binary Format (MBF) - Used in Microsoft BASIC and early MS products
+ * MBF uses bias of 129, no implicit bit, no INF/NaN support
+ */
+#ifdef USE_MSBFP_32
+#define FPI_MSBF_SINGLE	fpi_msbf32
+/* MBF Single: 1 sign + 8 exponent (bias 129) + 23 mantissa */
+FPI fpi_msbf32 = { 24, 1-129-24+1,
+                      254-129-24+1, 1, 0,
+        0, 0, 0, 0,  32,    129 };
+#endif
+#ifdef USE_MSBFP_64
+#define FPI_MSBF_DOUBLE	fpi_msbf64
+/* MBF Double: 1 sign + 8 exponent (bias 129) + 55 mantissa */
+FPI fpi_msbf64 = { 56, 1-129-56+1,
+                      254-129-56+1, 1, 0,
+        0, 0, 0, 0,  64,    129 };
+#endif
+
+/*
+ * IBM Hexadecimal Floating Point - Used on IBM System/360, 370, and successors
+ * Radix 16 (hexadecimal), 7-bit exponent with bias 64
+ * Has negative zero but no INF/NaN
+ */
+#ifdef USE_IBMFP_32
+#define FPI_IBM_SINGLE	fpi_ibm32
+/* IBM Single: 1 sign + 7 exponent (bias 64) + 24 mantissa (6 hex digits) */
+FPI fpi_ibm32 = { 24, 0-64,
+                     127-64, 1, 0,
+        0, 0, 1, 1,  32,    64 };
+#endif
+#ifdef USE_IBMFP_64
+#define FPI_IBM_DOUBLE	fpi_ibm64
+/* IBM Double: 1 sign + 7 exponent (bias 64) + 56 mantissa (14 hex digits) */
+FPI fpi_ibm64 = { 56, 0-64,
+                     127-64, 1, 0,
+        0, 0, 1, 1,  64,    64 };
+#endif
+#ifdef USE_IBMFP_128
+#define FPI_IBM_EXTENDED fpi_ibm128
+/* IBM Extended: 1 sign + 7 exponent (bias 64) + 112 mantissa (28 hex digits) */
+FPI fpi_ibm128 = { 112, 0-64,
+                      127-64, 1, 0,
+        0, 0, 1, 1,  128,   64 };
+#endif
+
+/*
+ * Cray Floating Point - Used on Cray supercomputers (Cray-1, X-MP, Y-MP, etc.)
+ * 64-bit format: 1 sign + 15 exponent (bias 16384) + 48 mantissa
+ * Has negative zero but no INF/NaN, no denormals
+ */
+#ifdef USE_CRAYFP_64
+#define FPI_CRAY_DOUBLE	fpi_cray64
+FPI fpi_cray64 = { 48, 1-16384-48+1,
+                      65534-16384-48+1, 1, 0,
+        0, 0, 1, 0,  64,    16384 };
 #endif
 
 FPI * fpis[3] = {

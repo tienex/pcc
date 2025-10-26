@@ -89,6 +89,72 @@ typedef SF *SFP;
 #ifdef IEEEFP_128
 #endif
 
+/* Microsoft Binary Format (MBF) constants */
+#ifdef USE_MSBFP_32
+#define MSBFP_32_RADIX 2
+#define MSBFP_32_DIG 6
+#define MSBFP_32_MAX_10_EXP +38
+#define MSBFP_32_MAX_EXP +127
+#define MSBFP_32_MIN_10_EXP -38
+#define MSBFP_32_MIN_EXP -127
+#define MSBFP_32_MANT_DIG 24
+#define MSBFP_32_HAS_SUBNORM 0
+#endif
+#ifdef USE_MSBFP_64
+#define MSBFP_64_RADIX 2
+#define MSBFP_64_DIG 16
+#define MSBFP_64_MAX_10_EXP +38
+#define MSBFP_64_MAX_EXP +127
+#define MSBFP_64_MIN_10_EXP -38
+#define MSBFP_64_MIN_EXP -127
+#define MSBFP_64_MANT_DIG 56
+#define MSBFP_64_HAS_SUBNORM 0
+#endif
+
+/* IBM Hexadecimal Floating Point constants */
+#ifdef USE_IBMFP_32
+#define IBMFP_32_RADIX 16
+#define IBMFP_32_DIG 6
+#define IBMFP_32_MAX_10_EXP +75
+#define IBMFP_32_MAX_EXP +63
+#define IBMFP_32_MIN_10_EXP -78
+#define IBMFP_32_MIN_EXP -64
+#define IBMFP_32_MANT_DIG 24
+#define IBMFP_32_HAS_SUBNORM 0
+#endif
+#ifdef USE_IBMFP_64
+#define IBMFP_64_RADIX 16
+#define IBMFP_64_DIG 16
+#define IBMFP_64_MAX_10_EXP +75
+#define IBMFP_64_MAX_EXP +63
+#define IBMFP_64_MIN_10_EXP -78
+#define IBMFP_64_MIN_EXP -64
+#define IBMFP_64_MANT_DIG 56
+#define IBMFP_64_HAS_SUBNORM 0
+#endif
+#ifdef USE_IBMFP_128
+#define IBMFP_128_RADIX 16
+#define IBMFP_128_DIG 33
+#define IBMFP_128_MAX_10_EXP +75
+#define IBMFP_128_MAX_EXP +63
+#define IBMFP_128_MIN_10_EXP -78
+#define IBMFP_128_MIN_EXP -64
+#define IBMFP_128_MANT_DIG 112
+#define IBMFP_128_HAS_SUBNORM 0
+#endif
+
+/* Cray Floating Point constants */
+#ifdef USE_CRAYFP_64
+#define CRAYFP_64_RADIX 2
+#define CRAYFP_64_DIG 14
+#define CRAYFP_64_MAX_10_EXP +2465
+#define CRAYFP_64_MAX_EXP +8189
+#define CRAYFP_64_MIN_10_EXP -2465
+#define CRAYFP_64_MIN_EXP -8189
+#define CRAYFP_64_MANT_DIG 48
+#define CRAYFP_64_HAS_SUBNORM 0
+#endif
+
 #define	TARGET_FLT_RADIX	C(FLT_FP,_RADIX)
 
 /*
