@@ -1,0 +1,50 @@
+# Makefile for libpascal (Pascal Runtime Library)
+
+CC = @CC@
+AR = ar
+RANLIB = @RANLIB@
+CFLAGS = @CFLAGS@ -I. -Wall -Wextra -std=c99
+DESTDIR = @DESTDIR@
+prefix = @prefix@
+exec_prefix = @exec_prefix@
+libdir = @libdir@
+includedir = @includedir@
+
+LIB = libpascal.a
+HEADERS = pascalrt.h
+OBJS = pascalrt.o pascalio.o pascalstr.o pascalmath.o pascalmem.o
+
+all: $(LIB)
+
+$(LIB): $(OBJS)
+	$(AR) rcs $(LIB) $(OBJS)
+	$(RANLIB) $(LIB)
+
+pascalrt.o: pascalrt.c pascalrt.h
+	$(CC) $(CFLAGS) -c pascalrt.c -o pascalrt.o
+
+pascalio.o: pascalio.c pascalrt.h
+	$(CC) $(CFLAGS) -c pascalio.c -o pascalio.o
+
+pascalstr.o: pascalstr.c pascalrt.h
+	$(CC) $(CFLAGS) -c pascalstr.c -o pascalstr.o
+
+pascalmath.o: pascalmath.c pascalrt.h
+	$(CC) $(CFLAGS) -c pascalmath.c -o pascalmath.o
+
+pascalmem.o: pascalmem.c pascalrt.h
+	$(CC) $(CFLAGS) -c pascalmem.c -o pascalmem.o
+
+install: $(LIB)
+	mkdir -p $(DESTDIR)$(libdir)
+	mkdir -p $(DESTDIR)$(includedir)
+	install -m 644 $(LIB) $(DESTDIR)$(libdir)/
+	install -m 644 $(HEADERS) $(DESTDIR)$(includedir)/
+
+clean:
+	rm -f $(OBJS) $(LIB)
+
+distclean: clean
+	rm -f Makefile
+
+.PHONY: all install clean distclean
