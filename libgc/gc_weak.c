@@ -59,16 +59,19 @@ gc_weak_get(gc_weak_t *weak)
 void
 gc_weak_release(gc_weak_t *weak)
 {
+	/* Note: We don't actually remove from the GC's list here
+	 * because we don't have a reference to the GC context.
+	 * Instead, we just mark it as invalid and it will be
+	 * cleaned up during GC or gc_destroy().
+	 */
 	if (!weak)
 		return;
 
-	/* Remove from list */
-	if (weak->prev)
-		weak->prev->next = weak->next;
-	if (weak->next)
-		weak->next->prev = weak->prev;
+	/* Mark as invalid */
+	weak->valid = 0;
+	weak->object = NULL;
 
-	free(weak);
+	/* Note: Memory is not freed here - it will be freed during gc_weak_cleanup */
 }
 
 /*
