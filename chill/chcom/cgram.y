@@ -85,7 +85,11 @@ program:
 /* Module definition */
 module:
 	  MODULE IDENT ';' opt_spec_part opt_body END ';'
-		{ if (verbose) printf("Module: %s\n", $2); }
+		{
+			if (module_name) free(module_name);
+			module_name = strdup($2);
+			if (verbose) printf("Module: %s\n", $2);
+		}
 	;
 
 opt_spec_part:

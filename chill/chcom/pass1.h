@@ -169,6 +169,7 @@ extern int blevel;          /* Current block nesting level */
 extern int nerrors;         /* Error count */
 extern int nwarnings;       /* Warning count */
 extern int verbose;         /* Verbose output flag */
+extern char *module_name;   /* Current module name */
 
 /* Symbol table functions */
 void symtab_init(void);
@@ -215,5 +216,16 @@ void emit_code(int op, ...);
 void emit_label(int label);
 int new_label(void);
 int new_temp(void);
+
+/* Assembly code generation */
+void codegen_init(const char *output_filename, const char *modname);
+void codegen_prologue(void);
+void codegen_data_section(void);
+void codegen_procedure(const char *name);
+void codegen_module_init(void);
+void codegen_main(void);
+void codegen_epilogue(void);
+void codegen_finish(void);
+void codegen_module(const char *output_filename, const char *modname);
 
 #endif /* PASS1_H */

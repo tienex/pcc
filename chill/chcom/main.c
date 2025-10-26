@@ -25,11 +25,13 @@ int blevel = 0;
 int nerrors = 0;
 int nwarnings = 0;
 int verbose = 0;   /* Global verbose flag */
+char *module_name = NULL; /* Current module name */
 
 /* Command-line options */
 static int dump_ast = 0;
 static int dump_symtab = 0;
 static int max_errors = 20;
+static char *output_filename = NULL;
 
 /* Forward declarations */
 extern void init_modes(void);
@@ -71,6 +73,7 @@ parse_args(int argc, char **argv)
 					fprintf(stderr, "error: -o requires argument\n");
 					usage();
 				}
+				output_filename = argv[i];
 				outfile = fopen(argv[i], "w");
 				if (outfile == NULL) {
 					perror(argv[i]);
@@ -201,11 +204,22 @@ main(int argc, char **argv)
 		fprintf(stderr, "Compilation successful.\n");
 	}
 
-	/* Close files */
+	/* Close input file */
 	if (yyin != stdin)
 		fclose(yyin);
-	if (outfile != stdout)
+
+	/* Close output file before code generation */
+	if (outfile != stdout && outfile != NULL) {
 		fclose(outfile);
+		outfile = NULL;
+	}
+
+	/* Generate assembly code */
+	if (module_name != NULL) {
+		codegen_module(output_filename, module_name);
+		free(module_name);
+		module_name = NULL;
+	}
 
 	return ret;
 }
