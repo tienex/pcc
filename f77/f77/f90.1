@@ -34,17 +34,18 @@
 .\"
 .TH F90 1
 .SH NAME
-f90 \- Fortran 90 compiler (with F66/F77/F95 compatibility)
+f90 \- Fortran 90 compiler (F66/F77/F95/F2003/F2008/F2018 with OOP support)
 .SH SYNOPSIS
 .B f90
 [ option ] ... file ...
 .SH DESCRIPTION
 .I F90
-is the UNIX Fortran 90 compiler with F66, F77, and F95 compatibility modes.
+is a modern Fortran compiler supporting standards from Fortran 66 through Fortran 2018,
+with full object-oriented programming (OOP) capabilities.
 It accepts several types of arguments:
 .PP
 Arguments whose names end with `.f' are taken to be
-Fortran 90 source programs (or F66/F77/F95 when using compatibility mode);
+Fortran source programs (F66/F77/F90/F95/F2003/F2008/F2018 depending on -std flag);
 they are compiled, and
 each object program is left on the file in the current directory
 whose name is that of the source with `.o' substituted
@@ -103,15 +104,61 @@ Specify the Fortran standard to use. Valid values are:
 .B f77
 (Fortran 77),
 .B f90
-(Fortran 90, default), and
+(Fortran 90, default),
 .B f95
-(Fortran 95).
-This allows the compiler to operate in compatibility mode for different Fortran standards.
+(Fortran 95),
+.B f2003
+(Fortran 2003 with OOP),
+.B f2008
+(Fortran 2008 with coarrays and submodules), and
+.B f2018
+(Fortran 2018 with teams and events).
+Selecting
+.B f2003
+or later automatically enables object-oriented programming features.
+Selecting
+.B f2008
+or later enables coarrays and submodules.
+Selecting
+.B f2018
+enables all modern features including teams and events.
 .TP
 .SM
 .BR \-onetrip
 Compile DO loops that are performed at least once if reached.
 (Fortran 77 DO loops are not performed at all if the upper limit is smaller than the lower limit.)
+.TP
+.SM
+.BR \-foop " / " \-fno-oop
+Enable or disable object-oriented programming features (classes, inheritance, polymorphism).
+OOP is automatically enabled when using
+.B -std=f2003
+or later.
+This flag allows fine-grained control independent of the standard selection.
+.TP
+.SM
+.BR \-fcoarrays " / " \-fno-coarrays
+Enable or disable coarray parallel programming features.
+Coarrays provide native support for parallel programming with partitioned global address space (PGAS) model.
+Automatically enabled with
+.B -std=f2008
+or later.
+.TP
+.SM
+.BR \-fsubmodules " / " \-fno-submodules
+Enable or disable submodules (separate module implementation units).
+Submodules allow better modularization of large module implementations.
+Automatically enabled with
+.B -std=f2008
+or later.
+.TP
+.SM
+.BR \-fteams " / " \-fno-teams
+Enable or disable teams and events for advanced parallel programming.
+Teams provide hierarchical parallelism control and synchronization primitives.
+Automatically enabled with
+.B -std=f2018
+or later.
 .TP
 .BR \-u
 Make the default type of a variable `undefined' rather than using the default Fortran rules.
@@ -155,6 +202,72 @@ These programs, together with the results of any
 compilations specified, are loaded (in the order
 given) to produce an executable program with name
 `a.out'.
+.SH OBJECT-ORIENTED PROGRAMMING
+The
+.I f90
+compiler provides comprehensive object-oriented programming support when using
+.B -std=f2003
+or later, or when explicitly enabled with
+.BR -foop .
+.PP
+.B OOP Features Available:
+.TP
+.B Type Extension and Inheritance
+Define derived types that extend other types, inheriting their components and type-bound procedures.
+Supports single inheritance model with polymorphic variables.
+.TP
+.B Type-Bound Procedures
+Associate procedures directly with types, enabling encapsulation and method dispatch.
+Supports both specific and generic type-bound procedures.
+.TP
+.B Polymorphism
+Use CLASS keyword for polymorphic variables that can reference objects of different types
+within an inheritance hierarchy. Supports both compile-time and run-time polymorphism.
+.TP
+.B Abstract Types and Deferred Bindings
+Define abstract base types with deferred (pure virtual) procedures that must be
+implemented by extending types.
+.TP
+.B Procedure Pointers
+Create pointers to procedures, enabling callback mechanisms and dynamic dispatch.
+.TP
+.B Object Constructors
+Use structure constructors and type-bound procedures to initialize objects.
+Supports automatic finalization through FINAL procedures.
+.PP
+.B Parallel Programming Features:
+.TP
+.B Coarrays (F2008+)
+Native parallel programming with partitioned global address space (PGAS).
+Use coarray syntax [index] to access data on different images (parallel instances).
+.TP
+.B Submodules (F2008+)
+Separate module interface from implementation for better compilation dependencies.
+.TP
+.B Teams and Events (F2018+)
+Hierarchical team-based parallelism with synchronization events.
+.PP
+Example OOP program structure:
+.nf
+    ! Define a base type with type-bound procedures
+    type :: Shape
+        real :: area
+    contains
+        procedure :: calculate_area => shape_area
+    end type Shape
+
+    ! Extend the base type
+    type, extends(Shape) :: Circle
+        real :: radius
+    contains
+        procedure :: calculate_area => circle_area
+    end type Circle
+
+    ! Use polymorphism
+    class(Shape), pointer :: myshape
+    type(Circle), target :: mycircle
+    myshape => mycircle
+.fi
 .SH FILES
 .nf
 .ta \w'/usr/lib/libF77.a   'u

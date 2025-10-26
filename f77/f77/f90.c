@@ -33,7 +33,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-char xxxvers[] = "FORTRAN 90 DRIVER, VERSION 2.0 (with F66/F77/F95 compatibility)\n";
+char xxxvers[] = "FORTRAN 90 DRIVER, VERSION 3.0 (F66/F77/F95/F2003/F2008/F2018 + OOP)\n";
 
 #include <sys/wait.h>
 
@@ -108,7 +108,13 @@ static flag debugflag	= NO;
 static flag verbose	= NO;
 static flag fortonly	= NO;
 static flag macroflag	= NO;
-static int f_std	= 90;	/* Fortran standard: 66, 77, 90, or 95 */
+static int f_std	= 90;	/* Fortran standard: 66, 77, 90, 95, 2003, 2008, 2018 */
+
+/* OOP and modern features flags */
+static flag enable_oop		= NO;	/* Enable OOP features (classes, inheritance) */
+static flag enable_coarrays	= NO;	/* Enable coarray parallelism */
+static flag enable_submodules	= NO;	/* Enable submodules (F2008) */
+static flag enable_teams	= NO;	/* Enable teams and events (F2018) */
 
 static char *setdoto(char *), *lastchar(char *), *lastfield(char *);
 static void intrupt(int);
@@ -177,7 +183,7 @@ main(int argc, char **argv)
 				}
 				break;
 
-			case 's': /* -std=f66, -std=f77, -std=f90, -std=f95 */
+			case 's': /* -std=f66...f2018 */
 				if (strncmp(s, "std=", 4) == 0) {
 					if (strcmp(s+4, "f66") == 0 || strcmp(s+4, "fortran66") == 0) {
 						f_std = 66;
@@ -191,6 +197,23 @@ main(int argc, char **argv)
 					} else if (strcmp(s+4, "f95") == 0 || strcmp(s+4, "fortran95") == 0) {
 						f_std = 95;
 						addarg(ffary, &ffmax, "-std=f95");
+					} else if (strcmp(s+4, "f2003") == 0 || strcmp(s+4, "fortran2003") == 0) {
+						f_std = 2003;
+						enable_oop = YES;	/* F2003 introduces OOP */
+						addarg(ffary, &ffmax, "-std=f2003");
+					} else if (strcmp(s+4, "f2008") == 0 || strcmp(s+4, "fortran2008") == 0) {
+						f_std = 2008;
+						enable_oop = YES;
+						enable_coarrays = YES;	/* F2008 adds coarrays */
+						enable_submodules = YES;	/* F2008 adds submodules */
+						addarg(ffary, &ffmax, "-std=f2008");
+					} else if (strcmp(s+4, "f2018") == 0 || strcmp(s+4, "fortran2018") == 0) {
+						f_std = 2018;
+						enable_oop = YES;
+						enable_coarrays = YES;
+						enable_submodules = YES;
+						enable_teams = YES;	/* F2018 adds teams/events */
+						addarg(ffary, &ffmax, "-std=f2018");
 					} else {
 						fatal1("unknown standard '%s'", s+4);
 					}
@@ -228,6 +251,42 @@ main(int argc, char **argv)
 				if(s[1] == '4')
 					++s;
 				macroflag = YES;
+				break;
+
+			case 'f': /* Feature flags: -foop, -fcoarrays, etc. */
+				if (strcmp(s, "foop") == 0) {
+					enable_oop = YES;
+					addarg(ffary, &ffmax, "-foop");
+					goto endfor;
+				} else if (strcmp(s, "fno-oop") == 0) {
+					enable_oop = NO;
+					addarg(ffary, &ffmax, "-fno-oop");
+					goto endfor;
+				} else if (strcmp(s, "fcoarrays") == 0) {
+					enable_coarrays = YES;
+					addarg(ffary, &ffmax, "-fcoarrays");
+					goto endfor;
+				} else if (strcmp(s, "fno-coarrays") == 0) {
+					enable_coarrays = NO;
+					addarg(ffary, &ffmax, "-fno-coarrays");
+					goto endfor;
+				} else if (strcmp(s, "fsubmodules") == 0) {
+					enable_submodules = YES;
+					addarg(ffary, &ffmax, "-fsubmodules");
+					goto endfor;
+				} else if (strcmp(s, "fno-submodules") == 0) {
+					enable_submodules = NO;
+					addarg(ffary, &ffmax, "-fno-submodules");
+					goto endfor;
+				} else if (strcmp(s, "fteams") == 0) {
+					enable_teams = YES;
+					addarg(ffary, &ffmax, "-fteams");
+					goto endfor;
+				} else if (strcmp(s, "fno-teams") == 0) {
+					enable_teams = NO;
+					addarg(ffary, &ffmax, "-fno-teams");
+					goto endfor;
+				}
 				break;
 
 			case 'S':
