@@ -681,7 +681,10 @@ LDFLAGS
 CFLAGS
 CC
 BINPREFIX
+bootstrap_compare
+bootstrap_stages
 bootstrap_stage
+bootstrap
 target_os
 target_vendor
 target_cpu
@@ -1398,7 +1401,12 @@ Optional Features:
   --disable-nativefp      Disable use of compiler host floating point.
   --enable-native         Build the compiler as a native rather than
                           cross-build compiler
-  --enable-bootstrap      Enable bootstrap build verification
+  --enable-bootstrap[=ARG]
+                          Enable multi-stage bootstrap build (yes/no/lean,
+                          default: no) - yes: 3-stage bootstrap with
+                          stage2/stage3 comparison - lean: 2-stage bootstrap
+                          without comparison - no: single-stage build
+                          (default)
 
 Optional Packages:
   --with-PACKAGE[=ARG]    use PACKAGE [ARG=yes]
@@ -3434,11 +3442,37 @@ then :
   withval=$with_bootstrap_stage; bootstrap_stage=$withval
 fi
 
+
+# Normalize bootstrap values
+case "$bootstrap" in
+yes|"")
+	bootstrap=yes
+	bootstrap_stages=3
+	bootstrap_compare=yes
+	;;
+lean)
+	bootstrap=yes
+	bootstrap_stages=2
+	bootstrap_compare=no
+	;;
+no)
+	bootstrap=no
+	bootstrap_stages=1
+	bootstrap_compare=no
+	;;
+*)
+	as_fn_error $? "Invalid --enable-bootstrap argument '$bootstrap'. Use yes, lean, or no." "$LINENO" 5
+	;;
+esac
+
 if test "$bootstrap" = "yes" -o "$bootstrap_stage" != "0"; then
 
 printf "%s\n" "#define BOOTSTRAP_STAGE $bootstrap_stage" >>confdefs.h
 
 fi
+
+
+
 
 
 # Setup for ubuntu multiarch

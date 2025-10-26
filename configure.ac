@@ -492,18 +492,47 @@ AC_ARG_ENABLE(native,
 # Bootstrap options
 bootstrap_stage=0
 AC_ARG_ENABLE(bootstrap,
-	AS_HELP_STRING([--enable-bootstrap],
-		[Enable bootstrap build verification]),
+	AS_HELP_STRING([--enable-bootstrap@<:@=ARG@:>@],
+		[Enable multi-stage bootstrap build (yes/no/lean, default: no)
+		 - yes: 3-stage bootstrap with stage2/stage3 comparison
+		 - lean: 2-stage bootstrap without comparison
+		 - no: single-stage build (default)]),
 	[bootstrap=$enableval], [bootstrap=no])
 AC_ARG_WITH(bootstrap-stage,
 	AS_HELP_STRING([--with-bootstrap-stage=N],
 		[Set bootstrap stage number (default: 0)]),
 	[bootstrap_stage=$withval], [])
+
+# Normalize bootstrap values
+case "$bootstrap" in
+yes|"")
+	bootstrap=yes
+	bootstrap_stages=3
+	bootstrap_compare=yes
+	;;
+lean)
+	bootstrap=yes
+	bootstrap_stages=2
+	bootstrap_compare=no
+	;;
+no)
+	bootstrap=no
+	bootstrap_stages=1
+	bootstrap_compare=no
+	;;
+*)
+	AC_MSG_ERROR([Invalid --enable-bootstrap argument '$bootstrap'. Use yes, lean, or no.])
+	;;
+esac
+
 if test "$bootstrap" = "yes" -o "$bootstrap_stage" != "0"; then
 	AC_DEFINE_UNQUOTED(BOOTSTRAP_STAGE, $bootstrap_stage,
 		[Bootstrap stage number])
 fi
+AC_SUBST(bootstrap)
 AC_SUBST(bootstrap_stage)
+AC_SUBST(bootstrap_stages)
+AC_SUBST(bootstrap_compare)
 
 # Setup for ubuntu multiarch
 multiarch_path=
