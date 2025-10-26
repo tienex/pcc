@@ -1,0 +1,36 @@
+#	$Id$
+#
+# Top-level Makefile for Perl 5 compiler
+#
+
+VPATH = @srcdir@
+srcdir = @srcdir@
+top_srcdir = @top_srcdir@
+top_builddir = @top_builddir@
+prefix = @prefix@
+exec_prefix = @exec_prefix@
+
+SUBDIRS = perlcom perl5
+
+all:
+	@for dir in $(SUBDIRS); do \
+		(cd $$dir && $(MAKE) all) || exit 1; \
+	done
+
+install:
+	@for dir in $(SUBDIRS); do \
+		(cd $$dir && $(MAKE) install) || exit 1; \
+	done
+
+clean:
+	@for dir in $(SUBDIRS); do \
+		(cd $$dir && $(MAKE) clean) || exit 1; \
+	done
+
+distclean: clean
+	@for dir in $(SUBDIRS); do \
+		(cd $$dir && $(MAKE) distclean) || exit 1; \
+	done
+	rm -f Makefile
+
+.PHONY: all install clean distclean
