@@ -261,11 +261,21 @@ link_files(char **objfiles, int n_objs, const char *outfile)
 		argv[argc++] = library_paths[i];
 	}
 
+	/* Add BASIC runtime library path */
+	argv[argc++] = "-L";
+	argv[argc++] = LIBDIR;
+
 	/* Add libraries */
 	for (i = 0; i < num_libraries; i++) {
 		argv[argc++] = "-l";
 		argv[argc++] = libraries[i];
 	}
+
+	/* Add BASIC runtime library */
+	argv[argc++] = "-lbasic";
+
+	/* Add math library (required by libbasic) */
+	argv[argc++] = "-lm";
 
 	/* Add standard C library */
 	argv[argc++] = "-lc";

@@ -2,6 +2,7 @@
 basic/basic
 pbc/pbc
 libbasic/libbasic.a
+tests/test_runtime
 *.o
 
 # Generated files
