@@ -419,18 +419,42 @@ For maximum compatibility with legacy code, enable only the specific vendor
 extension set required for your codebase.
 .SH FILES
 .nf
-.ta \w'/usr/lib/libF77.a   'u
+.ta \w'/usr/local/lib/libfortran_oop.a   'u
 file.[fresc]	input file
 file.o	object file
 a.out	loaded output
 ./fort[pid].?	temporary
-/usr/lib/f77pass1	compiler
+/usr/lib/f77pass1	legacy compiler pass 1
 /lib/f1	pass 2
 /lib/c2	optional optimizer
-/usr/lib/libF77.a	intrinsic function library
-/usr/lib/libI77.a	Fortran I/O library
-/lib/libc.a	C library, see section 3
 .fi
+.PP
+.B Runtime Libraries:
+.nf
+/usr/local/lib/libgfortran.a	GNU Fortran runtime library
+/usr/local/lib/libfortran_oop.a	OOP support library (F2003+)
+/usr/local/lib/libcaf_single.a	Coarray support (single-image, F2008+)
+/usr/local/lib/libquadmath.a	Quad-precision math library
+/usr/lib/libm.a	Math library
+/usr/lib/libpthread.a	POSIX threads (for parallel features)
+/usr/lib/libc.a	C standard library
+.fi
+.PP
+.B Legacy Libraries (for backward compatibility):
+.nf
+/usr/lib/libF77.a	Legacy F77 intrinsic function library
+/usr/lib/libI77.a	Legacy F77 I/O library
+.fi
+.PP
+.B Notes:
+The compiler automatically links the appropriate runtime libraries based on
+the selected Fortran standard and enabled features. When using
+.B -std=f2003
+or later, OOP libraries are automatically linked. Coarray libraries are linked
+when using
+.B -std=f2008
+or later, or when explicitly enabled with
+.BR -fcoarrays .
 .SH "SEE ALSO"
 S. I. Feldman,
 P. J. Weinberger,

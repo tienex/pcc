@@ -38,8 +38,20 @@
 #define CRTI		0
 #define CRTN		0
 
-#ifdef LANG_F77
-#define F77LIBLIST { "-L/usr/lib", "-lF77", "-lI77", "-lm", "-lc", NULL };
+/* Fortran runtime library support (F66-F2018) */
+#if defined(LANG_F77) || defined(LANG_F90)
+/* Modern Fortran runtime libraries with backward compatibility */
+#define F90LIBLIST { "-L/usr/lib", \
+	"-lgfortran",      /* GNU Fortran runtime (or -lfortran) */ \
+	"-lfortran_oop",   /* OOP support (F2003+) */ \
+	"-lcaf_single",    /* Coarray support (single-image, F2008+) */ \
+	"-lquadmath",      /* Quad-precision math */ \
+	"-lm",             /* Math library */ \
+	"-lpthread",       /* POSIX threads for parallel features */ \
+	"-lc",             /* C library */ \
+	NULL };
+/* Legacy F77 library list for compatibility */
+#define F77LIBLIST F90LIBLIST
 #endif
 
 #if defined(mach_pdp11)
