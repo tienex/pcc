@@ -226,6 +226,9 @@ void walk_tree(NODE *n);
 void init_builtins(void);
 SYMTAB *lookup_builtin(char *name);
 
+/* dialect.c - include dialect support */
+#include "dialect.h"
+
 /* codegen.c */
 void codegen_init(void);
 void codegen_set_output(FILE *fp);

@@ -151,6 +151,142 @@ static BUILTIN builtins[] = {
 	{ "COL",        0, 0,  NULL },  /* Get cursor column */
 	{ "QOUT",       1, -1, NULL },  /* Output */
 
+	/* =================================================================
+	 * Dialect-Specific Functions (non-duplicates)
+	 * ================================================================= */
+
+	/* Additional Clipper Functions */
+	{ "ATAIL",      1, 1,  NULL },  /* Last array element */
+	{ "SAVESCREEN", 0, 4,  NULL },  /* Save screen */
+	{ "RESTSCREEN", 1, 5,  NULL },  /* Restore screen */
+	{ "SETCOLOR",   0, 1,  NULL },  /* Set colors */
+	{ "SETCURSOR",  0, 1,  NULL },  /* Set cursor */
+	{ "DEVPOS",     2, 2,  NULL },  /* Position device */
+	{ "DEVOUT",     1, 2,  NULL },  /* Output to device */
+	{ "DISPBEGIN",  0, 0,  NULL },  /* Begin display */
+	{ "DISPEND",    0, 0,  NULL },  /* End display */
+	{ "DISPCOUNT",  0, 0,  NULL },  /* Display nesting count */
+	{ "SCROLL",     5, 6,  NULL },  /* Scroll screen region */
+	{ "HARDCR",     1, 1,  NULL },  /* Hard carriage return in memo */
+	{ "MLCOUNT",    1, 4,  NULL },  /* Memo line count */
+	{ "MLPOS",      1, 4,  NULL },  /* Memo line position */
+	{ "MLINE",      2, 5,  NULL },  /* Extract memo line */
+	{ "STRZERO",    2, 3,  NULL },  /* Number to string with zeros */
+	{ "PADR",       2, 3,  NULL },  /* Pad right */
+	{ "PADL",       2, 3,  NULL },  /* Pad left */
+	{ "PADC",       2, 3,  NULL },  /* Pad center */
+
+	/* FoxPro/Visual FoxPro Functions */
+	{ "CREATEOBJECT", 1, -1, NULL }, /* Create object */
+	{ "ADDOBJECT",  3, 3,  NULL },  /* Add object */
+	{ "REMOVEOBJECT",1,1,  NULL },  /* Remove object */
+	{ "DODEFAULT",  0, -1, NULL },  /* Call parent method */
+	{ "BINDEVENT",  3, 5,  NULL },  /* Bind event */
+	{ "UNBINDEVENTS",0,3,  NULL },  /* Unbind events */
+	{ "PEMSTATUS",  3, 3,  NULL },  /* Property/method status */
+	{ "AMEMBERS",   2, 3,  NULL },  /* Get object members */
+	{ "ADDPROPERTY",2, 3,  NULL },  /* Add property */
+	{ "REMOVEPROPERTY",2,2,NULL },  /* Remove property */
+	{ "GETWORDCOUNT",1,2,  NULL },  /* Word count */
+	{ "GETWORDNUM", 2, 3,  NULL },  /* Get word */
+	{ "STREXTRACT", 2, 5,  NULL },  /* Extract string */
+	{ "TEXTMERGE",  1, 3,  NULL },  /* Text merge */
+	{ "EVALUATE",   1, 1,  NULL },  /* Evaluate expression */
+	{ "EXECSCRIPT", 1, -1, NULL },  /* Execute script */
+	{ "SYS",        1, -1, NULL },  /* System function */
+	{ "CURSORGETPROP",1,2, NULL },  /* Get cursor property */
+	{ "CURSORSETPROP",2,3, NULL },  /* Set cursor property */
+	{ "SQLEXEC",    1, 4,  NULL },  /* SQL execute */
+	{ "SQLCONNECT", 0, 3,  NULL },  /* SQL connect */
+	{ "SQLDISCONNECT",1,1, NULL },  /* SQL disconnect */
+	{ "CREATEOBJECTEX",2,-1,NULL }, /* Create COM object */
+	{ "GETOBJECT",  0, 2,  NULL },  /* Get COM object */
+	{ "VARREAD",    0, 0,  NULL },  /* Variable being read */
+
+	/* Harbour/xHarbour Extensions */
+	{ "HB_VERSION", 0, 1,  NULL },  /* Harbour version */
+	{ "HB_COMPILER",0, 0,  NULL },  /* Compiler version */
+	{ "HB_BUILDDATE",0,0,  NULL },  /* Build date */
+	{ "HB_VALTOEXP",1, 1,  NULL },  /* Value to expression */
+	{ "HB_DESERIALIZE",1,1,NULL },  /* Deserialize */
+	{ "HB_SERIALIZE",1, 1,  NULL },  /* Serialize */
+	{ "HB_JSONENCODE",1,2, NULL },  /* JSON encode */
+	{ "HB_JSONDECODE",1,2, NULL },  /* JSON decode */
+	{ "HB_BASE64ENCODE",1,1,NULL }, /* Base64 encode */
+	{ "HB_BASE64DECODE",1,1,NULL }, /* Base64 decode */
+	{ "HB_MD5",     1, 1,  NULL },  /* MD5 hash */
+	{ "HB_SHA1",    1, 1,  NULL },  /* SHA1 hash */
+	{ "HB_SHA256",  1, 1,  NULL },  /* SHA256 hash */
+	{ "HB_BLOWFISH",2, 3,  NULL },  /* Blowfish encryption */
+	{ "HB_AES",     2, 3,  NULL },  /* AES encryption */
+	{ "HB_REGEX",   2, 5,  NULL },  /* Regular expression */
+	{ "HB_ATOKENS", 1, 3,  NULL },  /* String to tokens */
+	{ "HB_HHASKEY", 2, 2,  NULL },  /* Hash has key */
+	{ "HB_HGET",    2, 3,  NULL },  /* Hash get */
+	{ "HB_HSET",    3, 3,  NULL },  /* Hash set */
+	{ "HB_HDEL",    2, 2,  NULL },  /* Hash delete */
+	{ "HB_HKEYS",   1, 1,  NULL },  /* Hash keys */
+	{ "HB_HVALUES", 1, 1,  NULL },  /* Hash values */
+	{ "HB_HPAIRSAT",2, 2,  NULL },  /* Hash pair at */
+	{ "HB_HCLONE",  1, 1,  NULL },  /* Hash clone */
+	{ "HB_HMERGE",  3, 4,  NULL },  /* Hash merge */
+	{ "HB_THREADSTART",1,-1,NULL }, /* Start thread */
+	{ "HB_THREADJOIN",1, 2, NULL }, /* Join thread */
+	{ "HB_THREADQUIT",0, 1, NULL }, /* Quit thread */
+	{ "HB_MUTEXCREATE",0,0,NULL },  /* Create mutex */
+	{ "HB_MUTEXLOCK",1, 2, NULL },  /* Lock mutex */
+	{ "HB_MUTEXUNLOCK",1,1,NULL },  /* Unlock mutex */
+
+	/* Xbase++ Specific Functions */
+	{ "APPOBJECT",  0, 1,  NULL },  /* Application object */
+	{ "APPNAME",    0, 1,  NULL },  /* Application name */
+	{ "SETAPPFOCUS",0, 1,  NULL },  /* Set app focus */
+	{ "BEGINSEQUENCE",0,0, NULL },  /* Begin sequence */
+	{ "ENDSEQUENCE",0, 0,  NULL },  /* End sequence */
+	{ "THROW",      1, 1,  NULL },  /* Throw exception */
+	{ "THREADOBJECT",0,1,  NULL },  /* Thread object */
+	{ "THREADSLEEP",1, 1,  NULL },  /* Thread sleep */
+	{ "THREADWAIT", 1, 2,  NULL },  /* Thread wait */
+	{ "CLASSOBJECT",1, 1,  NULL },  /* Class object */
+	{ "CLASSNAME",  1, 1,  NULL },  /* Class name */
+	{ "CLASSMETHOD",2, 2,  NULL },  /* Class method */
+	{ "OBJECTFROMCODE",1,1,NULL },  /* Object from code */
+	{ "CODEBLOCKFROMCODE",1,1,NULL},/* Codeblock from code */
+	{ "ISDERIVEDCLASS",2,2,NULL },  /* Is derived class */
+	{ "XBASE",      0, 0,  NULL },  /* Xbase identifier */
+
+	/* Additional common functions across dialects */
+	{ "NETERR",     0, 1,  NULL },  /* Network error */
+	{ "LUPDATE",    0, 1,  NULL },  /* Last update date */
+	{ "READKEY",    0, 0,  NULL },  /* Read key */
+	{ "READVAR",    0, 0,  NULL },  /* Read variable */
+	{ "UPDATED",    0, 0,  NULL },  /* Updated flag */
+	{ "SECONDS",    0, 0,  NULL },  /* Seconds since midnight */
+	{ "TIME",       0, 0,  NULL },  /* Current time */
+	{ "DISKSPACE",  0, 1,  NULL },  /* Disk space */
+	{ "DOSDATE",    0, 0,  NULL },  /* DOS date */
+	{ "DOSTIME",    0, 0,  NULL },  /* DOS time */
+	{ "GETACTIVE",  0, 0,  NULL },  /* Get active window */
+	{ "SETKEY",     2, 2,  NULL },  /* Set hotkey */
+	{ "NEXTKEY",    0, 1,  NULL },  /* Next key */
+	{ "LASTKEY",    0, 1,  NULL },  /* Last key */
+	{ "KEYBOARD",   1, 1,  NULL },  /* Stuff keyboard */
+	{ "CLEAR",      0, 0,  NULL },  /* Clear gets */
+	{ "READMODAL",  0, 1,  NULL },  /* Read modal */
+	{ "READFORMAT", 0, 1,  NULL },  /* Read format */
+	{ "READKILL",   1, 1,  NULL },  /* Read kill */
+	{ "READUPDATED",1, 1,  NULL },  /* Read updated */
+	{ "VERSION",    0, 1,  NULL },  /* Version */
+	{ "OS",         0, 0,  NULL },  /* Operating system */
+	{ "SETENV",     2, 2,  NULL },  /* Set environment (Harbour) */
+	{ "RUN",        1, 1,  NULL },  /* Run external command */
+	{ "__RUN",      1, 1,  NULL },  /* Run (alternative) */
+	{ "DIRCHANGE",  1, 1,  NULL },  /* Change directory */
+	{ "DIRMAKE",    1, 1,  NULL },  /* Make directory */
+	{ "DIRREMOVE",  1, 1,  NULL },  /* Remove directory */
+	{ "ADIR",       1, 5,  NULL },  /* Directory list to array */
+	{ "DIRECTORY",  0, 1,  NULL },  /* Directory listing */
+
 	/* Terminator */
 	{ NULL,         0, 0,  NULL }
 };
