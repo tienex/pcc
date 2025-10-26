@@ -28,6 +28,9 @@
 
 
 # include "pass1.h"
+# include "x86asm.h"
+
+static x86asm_ctx_t *asm_ctx = NULL;
 
 /*
  * Print out assembler segment name.
@@ -35,21 +38,27 @@
 void
 setseg(int seg, char *name)
 {
+	x86asm_segment_t segment;
+
+	if (!asm_ctx) return;
+
 	switch (seg) {
-	case PROG: name = ".TEXT"; break;
+	case PROG: segment = SEG_TEXT; break;
 	case DATA:
-	case LDATA: name = ".DATA"; break;
-	case UDATA: break;
+	case LDATA: segment = SEG_DATA; break;
+	case UDATA: return; /* BSS handled separately */
 	case STRNG:
-	case RDATA: name = ".DATA"; break;
-	case CTORS: name = ".section\t.ctors,\"aw\",@progbits"; break;
-	case DTORS: name = ".section\t.dtors,\"aw\",@progbits"; break;
-	case NMSEG: 
-		printf("\t.section %s,\"a%c\",@progbits\n", name,
-		    cftnsp ? 'x' : 'w');
+	case RDATA: segment = SEG_DATA; break;
+	case CTORS: segment = SEG_CTORS; break;
+	case DTORS: segment = SEG_DTORS; break;
+	case NMSEG:
+		/* Custom section - use the name parameter */
+		x86asm_segment(asm_ctx, SEG_CUSTOM, name);
+		return;
+	default:
 		return;
 	}
-	printf("\t%s\n", name);
+	x86asm_segment(asm_ctx, segment, NULL);
 }
 
 /*
@@ -60,16 +69,19 @@ void
 defloc(struct symtab *sp)
 {
 	char *name;
+	char labelbuf[64];
+
+	if (!asm_ctx) return;
 
 	if ((name = sp->soname) == NULL)
 		name = exname(sp->sname);
-	if (sp->sclass == EXTDEF) {
-		printf("	.globl %s\n", name);
+
+	if (sp->slevel == 0) {
+		x86asm_label(asm_ctx, name, sp->sclass == EXTDEF);
+	} else {
+		snprintf(labelbuf, sizeof(labelbuf), LABFMT, sp->soffset);
+		x86asm_label(asm_ctx, labelbuf, 0);
 	}
-	if (sp->slevel == 0)
-		printf("%s:\n", name);
-	else
-		printf(LABFMT ":\n", sp->soffset);
 }
 
 int structrettemp;
@@ -248,13 +260,23 @@ bfcode(struct symtab **sp, int cnt)
 void
 ejobcode(int flag)
 {
-	printf("\t.asciz \"PCC: %s\"\n", VERSSTR);
+	char comment[256];
+	if (asm_ctx) {
+		snprintf(comment, sizeof(comment), "PCC: %s", VERSSTR);
+		x86asm_comment(asm_ctx, comment);
+		x86asm_destroy(asm_ctx);
+		asm_ctx = NULL;
+	}
 }
 
 void
 bjobcode(void)
 {
 	astypnames[INT] = astypnames[UNSIGNED] = "\t.long";
+
+	/* Initialize x86asm context for 16-bit mode (i86) */
+	/* Use GNU AS format by default */
+	asm_ctx = x86asm_create(ASM_FMT_GNU_AS, stdout, 16);
 }
 
 /*

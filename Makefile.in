@@ -24,7 +24,7 @@ bindir = @bindir@
 libdir = @libdir@
 libexecdir = @libexecdir@
 
-C_SUBDIRS=	common/abi include
+C_SUBDIRS=	common/abi libx86asm include
 CC_SUBDIR=	cc
 EXTRA_SUBDIRS=	pascal f77
 ALL_SUBDIRS=	$(PORTABLE_LIBS) $(C_SUBDIRS) $(CC_SUBDIR)

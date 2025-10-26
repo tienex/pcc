@@ -28,6 +28,7 @@
 
 
 # include "pass1.h"
+# include "x86asm.h"
 
 #ifdef LANG_CXX
 #define	p1listf	listf
@@ -37,56 +38,73 @@
 #define	talloc p1alloc
 #endif
 
+static x86asm_ctx_t *asm_ctx = NULL;
+
 /*
  * Print out assembler segment name.
  */
 void
 setseg(int seg, char *name)
 {
+	x86asm_segment_t segment;
+
+	if (!asm_ctx) return;
+
 	switch (seg) {
-	case PROG: name = ".text"; break;
+	case PROG: segment = SEG_TEXT; break;
 	case DATA:
-	case LDATA: name = ".data"; break;
-	case UDATA: break;
+	case LDATA: segment = SEG_DATA; break;
+	case UDATA: return; /* BSS handled separately */
 #ifdef MACHOABI
 	case PICLDATA:
-	case PICDATA: name = ".section .data.rel.rw,\"aw\""; break;
-	case PICRDATA: name = ".section .data.rel.ro,\"aw\""; break;
-	case STRNG: name = ".cstring"; break;
-	case RDATA: name = ".const_data"; break;
+	case PICDATA: segment = SEG_PIC_DATA; break;
+	case PICRDATA: segment = SEG_PIC_RODATA; break;
+	case STRNG: segment = SEG_CSTRING; break;
+	case RDATA: segment = SEG_CONST; break;
 #else
-	case PICLDATA: name = ".section .data.rel.local,\"aw\",@progbits";break;
-	case PICDATA: name = ".section .data.rel.rw,\"aw\",@progbits"; break;
-	case PICRDATA: name = ".section .data.rel.ro,\"aw\",@progbits"; break;
+	case PICLDATA: segment = SEG_PIC_LOCAL; break;
+	case PICDATA: segment = SEG_PIC_DATA; break;
+	case PICRDATA: segment = SEG_PIC_RODATA; break;
 	case STRNG:
 #ifdef AOUTABI
-	case RDATA: name = ".data"; break;
+	case RDATA: segment = SEG_DATA; break;
 #else
-	case RDATA: name = ".section .rodata"; break;
+	case RDATA: segment = SEG_RODATA; break;
 #endif
 #endif
-	case TLSDATA: name = ".section .tdata,\"awT\",@progbits"; break;
-	case TLSUDATA: name = ".section .tbss,\"awT\",@nobits"; break;
+	case TLSDATA: segment = SEG_TDATA; break;
+	case TLSUDATA: segment = SEG_TBSS; break;
 #ifdef MACHOABI
-	case CTORS: name = ".mod_init_func\n\t.align 2"; break;
-	case DTORS: name = ".mod_term_func\n\t.align 2"; break;
+	case CTORS:
+		segment = SEG_MOD_INIT_FUNC;
+		x86asm_segment(asm_ctx, segment, NULL);
+		x86asm_align(asm_ctx, 2);
+		return;
+	case DTORS:
+		segment = SEG_MOD_TERM_FUNC;
+		x86asm_segment(asm_ctx, segment, NULL);
+		x86asm_align(asm_ctx, 2);
+		return;
 #else
-	case CTORS: name = ".section\t.ctors,\"aw\",@progbits"; break;
-	case DTORS: name = ".section\t.dtors,\"aw\",@progbits"; break;
+	case CTORS: segment = SEG_CTORS; break;
+	case DTORS: segment = SEG_DTORS; break;
 #endif
-	case NMSEG: 
-		printf(PRTPREF "\t.section %s,\"a%c\",@progbits\n", name,
-		    cftnsp ? 'x' : 'w');
+	case NMSEG:
+		/* Custom section - use the name parameter */
+		x86asm_segment(asm_ctx, SEG_CUSTOM, name);
+		return;
+	default:
 		return;
 	}
-	printf(PRTPREF "\t%s\n", name);
+	x86asm_segment(asm_ctx, segment, NULL);
 }
 
 #ifdef MACHOABI
 void
 defalign(int al)
 {
-	printf(PRTPREF "\t.align %d\n", ispow2(al/ALCHAR));
+	if (asm_ctx)
+		x86asm_align(asm_ctx, ispow2(al/ALCHAR));
 }
 #endif
 
@@ -98,29 +116,40 @@ void
 defloc(struct symtab *sp)
 {
 	char *name;
+	char labelbuf[64];
+	char directive[256];
+
+	if (!asm_ctx) return;
 
 	name = getexname(sp);
-	if (sp->sclass == EXTDEF) {
-		printf(PRTPREF "	.globl %s\n", name);
-#if defined(ELFABI)
-		printf(PRTPREF "\t.type %s,@%s\n", name,
-		    ISFTN(sp->stype)? "function" : "object");
-#endif
+
+	/* Emit label */
+	if (sp->slevel == 0) {
+		x86asm_label(asm_ctx, name, sp->sclass == EXTDEF);
+	} else {
+		snprintf(labelbuf, sizeof(labelbuf), LABFMT, sp->soffset);
+		x86asm_label(asm_ctx, labelbuf, 0);
 	}
+
 #if defined(ELFABI)
+	/* Emit type directive */
+	if (sp->sclass == EXTDEF) {
+		snprintf(directive, sizeof(directive), ".type %s,@%s",
+		    name, ISFTN(sp->stype) ? "function" : "object");
+		x86asm_directive(asm_ctx, directive, NULL);
+	}
+
+	/* Emit size directive for data objects */
 	if (!ISFTN(sp->stype)) {
 		if (sp->slevel == 0)
-			printf(PRTPREF "\t.size %s,%d\n", name,
-			    (int)tsize(sp->stype, sp->sdf, sp->sap)/SZCHAR);
+			snprintf(directive, sizeof(directive), ".size %s,%d",
+			    name, (int)tsize(sp->stype, sp->sdf, sp->sap)/SZCHAR);
 		else
-			printf(PRTPREF "\t.size " LABFMT ",%d\n", sp->soffset,
-			    (int)tsize(sp->stype, sp->sdf, sp->sap)/SZCHAR);
+			snprintf(directive, sizeof(directive), ".size " LABFMT ",%d",
+			    sp->soffset, (int)tsize(sp->stype, sp->sdf, sp->sap)/SZCHAR);
+		x86asm_directive(asm_ctx, directive, NULL);
 	}
 #endif
-	if (sp->slevel == 0)
-		printf(PRTPREF "%s:\n", name);
-	else
-		printf(PRTPREF LABFMT ":\n", sp->soffset);
 }
 
 int structrettemp;
@@ -423,33 +452,47 @@ ejobcode(int flag)
 	/*
 	 * iterate over the stublist and output the PIC stubs
 `	 */
-	if (kflag) {
+	if (kflag && asm_ctx) {
 		struct stub *p;
+		char labelbuf[256];
+		char directive[512];
 
 		DLIST_FOREACH(p, &stublist, link) {
-			printf(PRTPREF "\t.section __IMPORT,__jump_table,symbol_stubs,self_modifying_code+pure_instructions,5\n");
-			printf(PRTPREF "L%s$stub:\n", p->name);
-			printf(PRTPREF "\t.indirect_symbol %s\n", p->name);
-			printf(PRTPREF "\thlt ; hlt ; hlt ; hlt ; hlt\n");
-			printf(PRTPREF "\t.subsections_via_symbols\n");
+			x86asm_directive(asm_ctx, ".section __IMPORT,__jump_table,symbol_stubs,self_modifying_code+pure_instructions,5", NULL);
+			snprintf(labelbuf, sizeof(labelbuf), "L%s$stub", p->name);
+			x86asm_label(asm_ctx, labelbuf, 0);
+			snprintf(directive, sizeof(directive), ".indirect_symbol %s", p->name);
+			x86asm_directive(asm_ctx, directive, NULL);
+			x86asm_directive(asm_ctx, "hlt ; hlt ; hlt ; hlt ; hlt", NULL);
+			x86asm_directive(asm_ctx, ".subsections_via_symbols", NULL);
 		}
 
-		printf(PRTPREF "\t.section __IMPORT,__pointers,non_lazy_symbol_pointers\n");
+		x86asm_directive(asm_ctx, ".section __IMPORT,__pointers,non_lazy_symbol_pointers", NULL);
 		DLIST_FOREACH(p, &nlplist, link) {
-			printf(PRTPREF "L%s$non_lazy_ptr:\n", p->name);
-			printf(PRTPREF "\t.indirect_symbol %s\n", p->name);
-			printf(PRTPREF "\t.long 0\n");
+			snprintf(labelbuf, sizeof(labelbuf), "L%s$non_lazy_ptr", p->name);
+			x86asm_label(asm_ctx, labelbuf, 0);
+			snprintf(directive, sizeof(directive), ".indirect_symbol %s", p->name);
+			x86asm_directive(asm_ctx, directive, NULL);
+			x86asm_directive(asm_ctx, ".long 0", NULL);
 	        }
 
 	}
 #endif
 
-	printf(PRTPREF "\t.ident \"PCC: %s\"\n", VERSSTR);
+	if (asm_ctx) {
+		char comment[256];
+		snprintf(comment, sizeof(comment), "PCC: %s", VERSSTR);
+		x86asm_comment(asm_ctx, comment);
+		x86asm_destroy(asm_ctx);
+		asm_ctx = NULL;
+	}
 }
 
 void
 bjobcode(void)
 {
+	x86asm_format_t format;
+
 #ifdef os_sunos
 	astypnames[SHORT] = astypnames[USHORT] = "\t.2byte";
 #endif
@@ -457,6 +500,9 @@ bjobcode(void)
 #if defined(MACHOABI)
 	DLIST_INIT(&stublist, link);
 	DLIST_INIT(&nlplist, link);
+	format = ASM_FMT_APPLE_AS;
+#else
+	format = ASM_FMT_GNU_AS;
 #endif
 #if defined(__GNUC__) || defined(__PCC__)
 	/* Be sure that the compiler uses full x87 */
@@ -466,6 +512,9 @@ bjobcode(void)
 	fcw |= 0x300;
 	__asm("fldcw (%0)" : : "r"(&fcw));
 #endif
+
+	/* Initialize x86asm context for 32-bit mode (i386) */
+	asm_ctx = x86asm_create(format, stdout, 32);
 }
 
 /*

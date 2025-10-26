@@ -29,6 +29,7 @@
 
 
 # include "pass1.h"
+# include "x86asm.h"
 
 #ifndef LANG_CXX
 #undef NIL
@@ -38,6 +39,8 @@
 #define	ccopy p1tcopy
 #define	tfree p1tfree
 #endif
+
+static x86asm_ctx_t *asm_ctx = NULL;
 
 static int nsse, ngpr, nrsp, rsaoff;
 static int thissse, thisgpr, thisrsp;
@@ -85,45 +88,56 @@ void varattrib(char *name, struct attr *sap);
 void
 setseg(int seg, char *name)
 {
+	x86asm_segment_t segment;
+
+	if (!asm_ctx) return;
+
 	switch (seg) {
-	case PROG: name = ".text"; break;
+	case PROG: segment = SEG_TEXT; break;
 	case DATA:
-	case LDATA: name = ".data"; break;
-	case RDATA: name = ".const"; break;
-	case STRNG: name = ".cstring"; break;
-	case UDATA: break;
-	case CTORS: name = ".mod_init_func"; break;
-	case DTORS: name = ".mod_term_func"; break;
+	case LDATA: segment = SEG_DATA; break;
+	case RDATA: segment = SEG_CONST; break;
+	case STRNG: segment = SEG_CSTRING; break;
+	case UDATA: return; /* BSS handled separately */
+	case CTORS: segment = SEG_MOD_INIT_FUNC; break;
+	case DTORS: segment = SEG_MOD_TERM_FUNC; break;
 	default:
 		cerror("unknown seg %d", seg);
+		return;
 	}
-	printf("\t%s\n", name);
+	x86asm_segment(asm_ctx, segment, NULL);
 }
 
 #else
 void
 setseg(int seg, char *name)
 {
+	x86asm_segment_t segment;
+
+	if (!asm_ctx) return;
+
 	switch (seg) {
-	case PROG: name = ".text"; break;
+	case PROG: segment = SEG_TEXT; break;
 	case DATA:
-	case LDATA: name = ".data"; break;
+	case LDATA: segment = SEG_DATA; break;
 	case STRNG:
-	case RDATA: name = ".section .rodata"; break;
-	case UDATA: break;
-	case PICLDATA:
-	case PICDATA: name = ".section .data.rel.rw,\"aw\",@progbits"; break;
-	case PICRDATA: name = ".section .data.rel.ro,\"aw\",@progbits"; break;
-	case TLSDATA: name = ".section .tdata,\"awT\",@progbits"; break;
-	case TLSUDATA: name = ".section .tbss,\"awT\",@nobits"; break;
-	case CTORS: name = ".section\t.ctors,\"aw\",@progbits"; break;
-	case DTORS: name = ".section\t.dtors,\"aw\",@progbits"; break;
-	case NMSEG: 
-		printf("\t.section %s,\"a%c\",@progbits\n", name,
-		    cftnsp ? 'x' : 'w');
+	case RDATA: segment = SEG_RODATA; break;
+	case UDATA: return; /* BSS handled separately */
+	case PICLDATA: segment = SEG_PIC_LOCAL; break;
+	case PICDATA: segment = SEG_PIC_DATA; break;
+	case PICRDATA: segment = SEG_PIC_RODATA; break;
+	case TLSDATA: segment = SEG_TDATA; break;
+	case TLSUDATA: segment = SEG_TBSS; break;
+	case CTORS: segment = SEG_CTORS; break;
+	case DTORS: segment = SEG_DTORS; break;
+	case NMSEG:
+		/* Custom section - use the name parameter */
+		x86asm_segment(asm_ctx, SEG_CUSTOM, name);
+		return;
+	default:
 		return;
 	}
-	printf("\t%s\n", name);
+	x86asm_segment(asm_ctx, segment, NULL);
 }
 #endif
 
@@ -135,25 +149,35 @@ void
 defloc(struct symtab *sp)
 {
 	char *name;
+	char labelbuf[64];
+	char directive[256];
+
+	if (!asm_ctx) return;
 
 	name = getexname(sp);
 
-	if (sp->sclass == EXTDEF) {
-		printf("\t.globl %s\n", name);
+	/* Emit label */
+	if (sp->slevel == 0) {
+		x86asm_label(asm_ctx, name, sp->sclass == EXTDEF);
+	} else {
+		snprintf(labelbuf, sizeof(labelbuf), LABFMT, sp->soffset);
+		x86asm_label(asm_ctx, labelbuf, 0);
+	}
+
 #ifndef MACHOABI
+	/* Emit type and size directives for ELF */
+	if (sp->sclass == EXTDEF) {
 		if (ISFTN(sp->stype)) {
-			printf("\t.type %s,@function\n", name);
+			snprintf(directive, sizeof(directive), ".type %s,@function", name);
 		} else {
-			printf("\t.type %s,@object\n", name);
-			printf("\t.size %s,%d\n", name,
+			snprintf(directive, sizeof(directive), ".type %s,@object", name);
+			x86asm_directive(asm_ctx, directive, NULL);
+			snprintf(directive, sizeof(directive), ".size %s,%d", name,
 			    (int)tsize(sp->stype, sp->sdf, sp->sap)/SZCHAR);
 		}
-#endif
+		x86asm_directive(asm_ctx, directive, NULL);
 	}
-	if (sp->slevel == 0)
-		printf("%s:\n", name);
-	else
-		printf(LABFMT ":\n", sp->soffset);
+#endif
 }
 
 /*
@@ -491,11 +515,16 @@ ejobcode(int flag)
 		P("ret");
 	}
 
-#ifdef MACHOABI
-	printf("\t.ident \"PCC: %s\"\n", VERSSTR);
-#else
-	printf("\t.ident \"PCC: %s\"\n\t.end\n", VERSSTR);
+	if (asm_ctx) {
+		char comment[256];
+		snprintf(comment, sizeof(comment), "PCC: %s", VERSSTR);
+		x86asm_comment(asm_ctx, comment);
+#ifndef MACHOABI
+		x86asm_directive(asm_ctx, ".end", NULL);
 #endif
+		x86asm_destroy(asm_ctx);
+		asm_ctx = NULL;
+	}
 }
 
 /*
@@ -510,15 +539,15 @@ ejobcode(int flag)
  *	void *reg_save_area;
  * } __builtin_va_list[1];
  *
- * ...actually, we allocate two of them and use the second one as 
+ * ...actually, we allocate two of them and use the second one as
  * bounce buffers for floating point structs...
  *
  * There are a number of asm routines printed out if varargs are used:
  *	long __pcc_gpnext(va)	- get a gpreg value
  *	long __pcc_fpnext(va)	- get a fpreg value
- *	void *__pcc_1regref(va)	- get reference to a onereg struct 
- *	void *__pcc_2regref(va)	- get reference to a tworeg struct 
- *	void *__pcc_memref(va,sz)	- get reference to a large struct 
+ *	void *__pcc_1regref(va)	- get reference to a onereg struct
+ *	void *__pcc_2regref(va)	- get reference to a tworeg struct
+ *	void *__pcc_memref(va,sz)	- get reference to a large struct
  */
 
 static char *gp_offset, *fp_offset, *overflow_arg_area, *reg_save_area;
@@ -532,6 +561,7 @@ bjobcode(void)
 	struct rstack *rp;
 	NODE *p, *q;
 	char *c;
+	x86asm_format_t format;
 
 #if defined(__GNUC__) || defined(__PCC__)
 	/* Be sure that the compiler uses full x87 */
@@ -545,6 +575,15 @@ bjobcode(void)
 	/* amd64 names for some asm constant printouts */
 	astypnames[INT] = astypnames[UNSIGNED] = "\t.long";
 	astypnames[LONG] = astypnames[ULONG] = "\t.quad";
+
+#ifdef MACHOABI
+	format = ASM_FMT_APPLE_AS;
+#else
+	format = ASM_FMT_GNU_AS;
+#endif
+
+	/* Initialize x86asm context for 64-bit mode (amd64) */
+	asm_ctx = x86asm_create(format, stdout, 64);
 
 	gp_offset = addname("gp_offset");
 	fp_offset = addname("fp_offset");
