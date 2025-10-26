@@ -124,7 +124,6 @@ case "$target_os" in
 	    mips*) targmach=mips ;;
 	    wasm32) targmach=wasm ;;
 	    wasm64) targmach=wasm ;;
-	    chill) targmach=chill ;;
 	esac
 	case "$target_os" in
 	    *-musl*) ADD_CPPFLAGS="$ADD_CPPFLAGS -DUSE_MUSL" ;;
@@ -1101,6 +1100,8 @@ AC_CONFIG_FILES([Makefile
 		pascal/Makefile
 		pascal/pascal/Makefile
 		pascal/pcom/Makefile
+		chill/Makefile
+		chill/chcom/Makefile
 		common/abi/Makefile
 		include/Makefile
 		libunicode/Makefile
