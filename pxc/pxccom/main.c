@@ -41,6 +41,7 @@ main(int argc, char **argv)
 
 	/* Initialize subsystems */
 	symtab_init();
+	dialect_init();
 	init_builtins();
 	semantic_init();
 	codegen_init();
@@ -124,7 +125,7 @@ parse_options(int argc, char **argv)
 	extern char *optarg;
 	extern int optind;
 
-	while ((c = getopt(argc, argv, "vdo:O")) != -1) {
+	while ((c = getopt(argc, argv, "vdo:OD:")) != -1) {
 		switch (c) {
 		case 'v':
 			opt_verbose = 1;
@@ -137,6 +138,36 @@ parse_options(int argc, char **argv)
 			break;
 		case 'O':
 			opt_optimize = 1;
+			break;
+		case 'D':
+			/* Dialect selection */
+			if (strcasecmp(optarg, "dbase2") == 0)
+				dialect_set(DIALECT_DBASE2);
+			else if (strcasecmp(optarg, "dbase3") == 0)
+				dialect_set(DIALECT_DBASE3);
+			else if (strcasecmp(optarg, "dbase4") == 0)
+				dialect_set(DIALECT_DBASE4);
+			else if (strcasecmp(optarg, "clipper") == 0)
+				dialect_set(DIALECT_CLIPPER);
+			else if (strcasecmp(optarg, "foxpro") == 0)
+				dialect_set(DIALECT_FOXPRO);
+			else if (strcasecmp(optarg, "vfp") == 0 ||
+			         strcasecmp(optarg, "visualfoxpro") == 0)
+				dialect_set(DIALECT_VFP);
+			else if (strcasecmp(optarg, "harbour") == 0)
+				dialect_set(DIALECT_HARBOUR);
+			else if (strcasecmp(optarg, "xharbour") == 0)
+				dialect_set(DIALECT_XHARBOUR);
+			else if (strcasecmp(optarg, "xbase++") == 0 ||
+			         strcasecmp(optarg, "xbasepp") == 0)
+				dialect_set(DIALECT_XBASEPP);
+			else if (strcasecmp(optarg, "auto") == 0)
+				dialect_set(DIALECT_AUTO);
+			else {
+				fprintf(stderr, "Unknown dialect: %s\n", optarg);
+				usage();
+				exit(1);
+			}
 			break;
 		case '?':
 		default:
@@ -154,10 +185,22 @@ usage(void)
 {
 	fprintf(stderr, "Usage: pxccom [options] [file ...]\n");
 	fprintf(stderr, "Options:\n");
-	fprintf(stderr, "  -v          Verbose output\n");
-	fprintf(stderr, "  -d          Debug mode\n");
-	fprintf(stderr, "  -o file     Output file\n");
-	fprintf(stderr, "  -O          Enable optimizations\n");
+	fprintf(stderr, "  -v             Verbose output\n");
+	fprintf(stderr, "  -d             Debug mode\n");
+	fprintf(stderr, "  -o file        Output file\n");
+	fprintf(stderr, "  -O             Enable optimizations\n");
+	fprintf(stderr, "  -D dialect     Set Xbase dialect\n");
+	fprintf(stderr, "\nSupported dialects:\n");
+	fprintf(stderr, "  dbase2         dBASE II (1981)\n");
+	fprintf(stderr, "  dbase3         dBASE III (1984)\n");
+	fprintf(stderr, "  dbase4         dBASE IV (1988)\n");
+	fprintf(stderr, "  clipper        CA-Clipper 5.x (1987-1997)\n");
+	fprintf(stderr, "  foxpro         FoxPro 2.x (1991)\n");
+	fprintf(stderr, "  vfp            Visual FoxPro (1995-2007)\n");
+	fprintf(stderr, "  harbour        Harbour (1999-present)\n");
+	fprintf(stderr, "  xharbour       xHarbour (2001-present)\n");
+	fprintf(stderr, "  xbasepp        Xbase++ (1997-present) [default]\n");
+	fprintf(stderr, "  auto           Auto-detect from source\n");
 }
 
 /*
