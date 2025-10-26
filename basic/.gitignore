@@ -1,0 +1,10 @@
+# Build artifacts
+basic/basic
+pbc/pbc
+*.o
+
+# Generated files
+pbc/scan.c
+pbc/pgram.c
+pbc/y.tab.h
+pbc/y.tab.c
