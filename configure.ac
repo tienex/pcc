@@ -1112,6 +1112,7 @@ AC_CONFIG_FILES([Makefile
 		libdecimal/Makefile
 		libmetaware/Makefile
 		libblocks/Makefile
+		libalgol60/Makefile
 ])
 AC_OUTPUT
 

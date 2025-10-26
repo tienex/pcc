@@ -1,0 +1,57 @@
+#	$Id$
+#
+# Makefile.in for libalgol60 - ALGOL 60+ runtime library
+#
+VPATH=@srcdir@
+srcdir=@srcdir@
+top_srcdir=@top_srcdir@
+top_builddir=@top_builddir@
+CC = @CC@
+AR = ar
+RANLIB = @RANLIB@
+CFLAGS = @CFLAGS@ @ADD_CFLAGS@
+CPPFLAGS = @CPPFLAGS@ @ADD_CPPFLAGS@ -I$(srcdir) -I$(top_builddir)
+INSTALL = @INSTALL@
+INSTALL_DATA = @INSTALL_DATA@
+
+prefix = @prefix@
+exec_prefix = @exec_prefix@
+libdir = @libdir@
+includedir = @includedir@
+
+OBJS=	runtime.o io.o math.o string.o array.o
+
+LIB=libalgol60.a
+
+all: $(LIB)
+
+$(LIB): $(OBJS)
+	$(AR) rv $@ $(OBJS)
+	$(RANLIB) $@
+
+runtime.o: $(srcdir)/runtime.c $(srcdir)/algol60.h
+	$(CC) $(CFLAGS) $(CPPFLAGS) -c $(srcdir)/runtime.c
+
+io.o: $(srcdir)/io.c $(srcdir)/algol60.h
+	$(CC) $(CFLAGS) $(CPPFLAGS) -c $(srcdir)/io.c
+
+math.o: $(srcdir)/math.c $(srcdir)/algol60.h
+	$(CC) $(CFLAGS) $(CPPFLAGS) -c $(srcdir)/math.c
+
+string.o: $(srcdir)/string.c $(srcdir)/algol60.h
+	$(CC) $(CFLAGS) $(CPPFLAGS) -c $(srcdir)/string.c
+
+array.o: $(srcdir)/array.c $(srcdir)/algol60.h
+	$(CC) $(CFLAGS) $(CPPFLAGS) -c $(srcdir)/array.c
+
+install: $(LIB)
+	test -z "$(DESTDIR)$(libdir)" || mkdir -p "$(DESTDIR)$(libdir)"
+	test -z "$(DESTDIR)$(includedir)" || mkdir -p "$(DESTDIR)$(includedir)"
+	$(INSTALL_DATA) $(LIB) $(DESTDIR)$(libdir)
+	$(INSTALL_DATA) $(srcdir)/algol60.h $(DESTDIR)$(includedir)
+
+clean:
+	rm -f $(OBJS) $(LIB)
+
+distclean: clean
+	rm -f Makefile
