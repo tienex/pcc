@@ -2,7 +2,7 @@
 
 ## Overview
 
-The Portable C Compiler (PCC) now includes comprehensive support for modern C standards (C11, C23) and IEEE 754-2008 decimal floating-point arithmetic. This document provides a complete guide to all enhanced features.
+The Portable C Compiler (PCC) now includes comprehensive support for modern C standards (C11, C23), IEEE 754-2008 decimal floating-point arithmetic, **and MetaWare High C extensions from 1989**. This document provides a complete guide to all enhanced features.
 
 ---
 
@@ -11,9 +11,10 @@ The Portable C Compiler (PCC) now includes comprehensive support for modern C st
 1. [C11 Support](#c11-support)
 2. [C23 Support](#c23-support)
 3. [IEEE 754-2008 Decimal Floating Point](#ieee-754-2008-decimal-floating-point)
-4. [Future Language Extensions](#future-language-extensions)
-5. [Quick Start Guide](#quick-start-guide)
-6. [FAQ](#faq)
+4. [MetaWare High C Extensions](#metaware-high-c-extensions)
+5. [Future Language Extensions](#future-language-extensions)
+6. [Quick Start Guide](#quick-start-guide)
+7. [FAQ](#faq)
 
 ---
 
@@ -247,9 +248,190 @@ int main(void) {
 
 ---
 
+## MetaWare High C Extensions
+
+PCC now includes **libmetaware**, a runtime library providing MetaWare High C compiler extensions from 1989 - features that were **decades ahead of their time**!
+
+### What are MetaWare Extensions?
+
+MetaWare High C was a pioneering compiler that introduced advanced features in 1989:
+- **Nested functions** (25 years before GCC extension became common)
+- **Generator coroutines** (12 years before Python 2.2, 31 before C++20!)
+- **Function values/closures** (22 years before C++11 lambdas)
+- **Non-local goto** with stack unwinding (early exception handling)
+- **Numeric literal separators** (25 years before C++14)
+
+### Features Included
+
+| Feature | Year | Modern Equivalent | PCC Status |
+|---------|------|-------------------|------------|
+| Nested Functions | 1989 | GCC extension | ✅ Runtime |
+| Generator Coroutines | 1989 | Python (2001), C++20 (2020) | ✅ Runtime |
+| Function Values | 1989 | C++11 lambdas (2011) | ✅ Runtime |
+| Non-Local Goto | 1989 | C++ exceptions | ✅ Runtime |
+| Numeric Separators | 1989 | C++14 (2014) | 📋 Documented |
+
+### Example: Generator Coroutines (1989!)
+
+```c
+#include <metaware.h>
+#include <stdio.h>
+
+/* Define a Fibonacci generator */
+MW_GENERATOR(fibonacci, int, int) {
+    int count = *(int *)__args;
+    int a = 0, b = 1;
+
+    for (int i = 0; i < count; i++) {
+        MW_YIELD(__gen, a);  /* Yield value - like Python! */
+
+        int temp = a;
+        a = b;
+        b = temp + b;
+    }
+}
+
+int main(void) {
+    /* Create and iterate over generator */
+    mw_generator_t *gen = fibonacci(10);
+
+    int num;
+    MW_FOR_EACH(num, gen) {
+        printf("%d ", num);  /* Prints: 0 1 1 2 3 5 8 13 21 34 */
+    }
+
+    mw_free_generator(gen);
+    return 0;
+}
+```
+
+Compile and run:
+```bash
+pcc fibonacci.c -lmetaware -o fibonacci
+./fibonacci
+```
+
+### Example: Nested Functions with Closures
+
+```c
+#include <metaware.h>
+#include <stdio.h>
+
+/* Context for multiplier closure */
+typedef struct {
+    int factor;
+} multiplier_ctx_t;
+
+/* Nested function implementation */
+void multiply_impl(void *ctx, void *args, void *result) {
+    multiplier_ctx_t *context = (multiplier_ctx_t *)ctx;
+    int x = *(int *)args;
+    *(int *)result = x * context->factor;
+}
+
+/* Create a multiplier function */
+mw_function_t *make_multiplier(int factor) {
+    multiplier_ctx_t ctx = { factor };
+    return mw_create_function(multiply_impl, &ctx, sizeof(ctx));
+}
+
+int main(void) {
+    /* Create closures with different factors */
+    mw_function_t *times_5 = make_multiplier(5);
+    mw_function_t *times_10 = make_multiplier(10);
+
+    int arg = 7;
+    int result;
+
+    mw_call_function(times_5, &arg, &result);
+    printf("5 × 7 = %d\n", result);  /* 35 */
+
+    mw_call_function(times_10, &arg, &result);
+    printf("10 × 7 = %d\n", result);  /* 70 */
+
+    mw_free_function(times_5);
+    mw_free_function(times_10);
+    return 0;
+}
+```
+
+### Example: Non-Local Goto with Cleanup
+
+```c
+#include <metaware.h>
+#include <stdio.h>
+
+void cleanup_handler(void *data) {
+    printf("Cleaning up resources...\n");
+    /* Cleanup code here */
+}
+
+int process_data(void) {
+    MW_LABEL(error_handler);
+
+    /* Register cleanup */
+    mw_set_label_cleanup(&error_handler, cleanup_handler, NULL);
+
+    /* Simulate nested function that encounters error */
+    if (/* error condition */ 1) {
+        printf("Error detected! Jumping to handler...\n");
+        mw_goto_label(&error_handler, 1);
+    }
+
+    printf("This won't execute\n");
+    return 0;
+
+__mw_label_error_handler:
+    printf("Error handled!\n");
+    return -1;
+}
+
+int main(void) {
+    return process_data();
+}
+```
+
+Output:
+```
+Error detected! Jumping to handler...
+Cleaning up resources...
+Error handled!
+```
+
+### All MetaWare Features
+
+**1. Nested Functions**
+- Pascal-style nested functions
+- Access parent scope variables
+- Trampoline-based implementation
+
+**2. Generator Coroutines**
+- Python-style yield
+- Recursive generators
+- State preservation across yields
+
+**3. Function Values (Closures)**
+- First-class function objects
+- Context capture
+- Type-safe invocation
+
+**4. Non-Local Goto**
+- Multi-level jumps
+- Automatic stack unwinding
+- Cleanup handlers
+
+**5. Numeric Literal Separators** (compiler feature)
+- `1_000_000` instead of `1000000`
+- Requires parser modifications
+- Fully documented for implementation
+
+**Documentation:** See [METAWARE_EXTENSIONS.md](METAWARE_EXTENSIONS.md) for complete documentation with syntax, examples, and implementation details.
+
+---
+
 ## Future Language Extensions
 
-Two advanced language extensions have been researched and documented for potential future implementation:
+Two additional advanced language extensions have been researched and documented for potential future implementation:
 
 ### Apple Blocks (Closures for C)
 
@@ -478,7 +660,9 @@ All features working correctly!
 | Feature | Origin | Complexity | Timeline |
 |---------|--------|------------|----------|
 | Blocks (`^{ }`) | Apple/WG14 N1451 | High | 6-12 months |
-| Generators (`yield`) | MetaWare High C | Very High | 12-18 months |
+| MetaWare (full syntax) | MetaWare High C | Very High | 6-9 months |
+
+**Note:** MetaWare generator coroutines and nested functions have **runtime support** via libmetaware. Full compiler syntax support would eliminate API overhead and provide native `yield`, `->`, and `for-<-` syntax.
 
 ---
 
