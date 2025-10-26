@@ -1100,6 +1100,9 @@ AC_CONFIG_FILES([Makefile
 		pascal/Makefile
 		pascal/pascal/Makefile
 		pascal/pcom/Makefile
+		bliss/Makefile
+		bliss/bliss/Makefile
+		bliss/bcom/Makefile
 		common/abi/Makefile
 		include/Makefile
 		libunicode/Makefile
@@ -1109,6 +1112,7 @@ AC_CONFIG_FILES([Makefile
 		libdecimal/Makefile
 		libmetaware/Makefile
 		libblocks/Makefile
+		libbliss/Makefile
 ])
 AC_OUTPUT
 

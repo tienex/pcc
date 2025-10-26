@@ -1,0 +1,142 @@
+!
+! Control flow examples in BLISS
+!
+! Demonstrates:
+! - CASE expressions
+! - SELECTONE expressions
+! - LOOP constructs
+! - LEAVE statements
+!
+
+MODULE control_flow =
+BEGIN
+
+!
+! Simple CASE expression
+!
+GLOBAL ROUTINE day_of_week(n) =
+BEGIN
+    CASE .n FROM 0 TO 6 OF
+    SET
+        [0]: 'Sunday';
+        [1]: 'Monday';
+        [2]: 'Tuesday';
+        [3]: 'Wednesday';
+        [4]: 'Thursday';
+        [5]: 'Friday';
+        [6]: 'Saturday';
+        OUTRANGE: 'Invalid'
+    TES
+END;
+
+!
+! SELECTONE expression (like switch/case)
+!
+GLOBAL ROUTINE classify_value(n) =
+BEGIN
+    SELECTONE .n OF
+    SET
+        [0]: 'zero';
+        [1, 2, 3, 4, 5]: 'small';
+        [10, 20, 30]: 'round';
+        OTHERWISE: 'other'
+    TES
+END;
+
+!
+! Find first element in vector matching predicate
+!
+GLOBAL ROUTINE find_first(vec, size, target) =
+BEGIN
+    LOCAL i;
+    LOCAL result;
+
+    result = -1;  ! Not found
+
+    INCR i FROM 0 TO .size - 1 DO
+    BEGIN
+        IF .vec[.i] EQL .target
+        THEN
+        BEGIN
+            result = .i;
+            EXITLOOP  ! Break out of loop
+        END
+    END;
+
+    .result
+END;
+
+!
+! Count occurrences of value in vector
+!
+GLOBAL ROUTINE count_occurrences(vec, size, target) =
+BEGIN
+    LOCAL i;
+    LOCAL count;
+
+    count = 0;
+
+    INCR i FROM 0 TO .size - 1 DO
+    BEGIN
+        IF .vec[.i] EQL .target
+        THEN
+            count = .count + 1
+    END;
+
+    .count
+END;
+
+!
+! Simple DO-WHILE loop
+!
+GLOBAL ROUTINE power_of_two(n) =
+BEGIN
+    LOCAL result;
+    LOCAL i;
+
+    result = 1;
+    i = 0;
+
+    DO
+    BEGIN
+        result = .result * 2;
+        i = .i + 1
+    END
+    WHILE .i LSS .n;
+
+    .result
+END;
+
+!
+! Main routine
+!
+GLOBAL ROUTINE main =
+BEGIN
+    LOCAL test_data : BLOCKVECTOR[10];
+    LOCAL i;
+    LOCAL result;
+
+    ! Initialize test data
+    INCR i FROM 0 TO 9 DO
+        test_data[.i] = .i * 2;
+
+    ! Test case expression
+    result = day_of_week(3);  ! Should be Wednesday
+
+    ! Test selectone
+    result = classify_value(2);  ! Should be 'small'
+
+    ! Test find_first
+    result = find_first(test_data, 10, 8);  ! Should be 4
+
+    ! Test count
+    result = count_occurrences(test_data, 10, 10);  ! Should be 1
+
+    ! Test power of two
+    result = power_of_two(8);  ! Should be 256
+
+    .result
+END;
+
+END
+ELUDOM
