@@ -163,6 +163,13 @@
 %token	ARC_BRIDGE_RETAINED
 %token	ARC_BRIDGE_TRANSFER
 
+/* Objective-C literal tokens */
+%token	OBJC_BOXED        /* @(expression) */
+%token	OBJC_ARRAY_START  /* @[ */
+%token	OBJC_DICT_START   /* @{ */
+%token	OBJC_YES          /* @YES */
+%token	OBJC_NO           /* @NO */
+
 /*
  * Precedence
  */
@@ -1339,6 +1346,13 @@ term:		   term C_INCOP {  $$ = biop($2, $1, bcon(1)); }
 		|  C_FCON { $$ = bdty(FCON, $1); }
 		|  svstr { $$ = bdty(STRING, $1, styp()); }
 		|  OBJC_STRING { $$ = bdty(STRING, $1, styp()); }
+		|  OBJC_BOXED e ')' { $$ = bcon(0); /* TODO: implement @(expr) */ }
+		|  OBJC_ARRAY_START objc_array_elements ']' { $$ = bcon(0); /* TODO: implement @[...] */ }
+		|  OBJC_ARRAY_START ']' { $$ = bcon(0); /* TODO: implement @[] */ }
+		|  OBJC_DICT_START objc_dict_elements '}' { $$ = bcon(0); /* TODO: implement @{...} */ }
+		|  OBJC_DICT_START '}' { $$ = bcon(0); /* TODO: implement @{} */ }
+		|  OBJC_AT OBJC_YES { $$ = bcon(1); /* TODO: create NSNumber */ }
+		|  OBJC_AT OBJC_NO { $$ = bcon(0); /* TODO: create NSNumber */ }
 		|  '[' objc_receiver objc_message_args ']' { $$ = bcon(0); /* TODO: implement message send */ }
 		|  OBJC_AT OBJC_SELECTOR '(' objc_selector ')' { $$ = bcon(0); /* TODO: implement @selector */ }
 		|  OBJC_AT OBJC_ENCODE '(' cast_type ')' { $$ = bcon(0); /* TODO: implement @encode */ }
@@ -1612,6 +1626,21 @@ objc_throw_statement:
 
 objc_synchronized_statement:
 		   OBJC_AT OBJC_SYNCHRONIZED '(' e ')' compoundstmt
+		;
+
+/* Objective-C array and dictionary literals */
+objc_array_elements:
+		   e
+		|  objc_array_elements ',' e
+		;
+
+objc_dict_elements:
+		   objc_dict_element
+		|  objc_dict_elements ',' objc_dict_element
+		;
+
+objc_dict_element:
+		   e ':' e
 		;
 
 %%

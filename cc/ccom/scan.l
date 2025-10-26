@@ -152,6 +152,17 @@ extern void yyset_lineno (int);
 0[xX]{H}+{P}{FS}?	{ yylval.flt = fhexcon(yytext); return(C_FCON); }
 
 @\"(\\.|[^\\"])*\"	{ yylval.strp = yytext; return OBJC_STRING; }
+@0[xX]{H}+{IS}?		{ yylval.nodep = cvtdig(16); return(C_ICON); }
+@0{D}+{IS}?		{ yylval.nodep = cvtdig(8); return(C_ICON); }
+@0[bB]{B}+{IS}?		{ yylval.nodep = cvtdig(2); return(C_ICON); }
+@{D}+{IS}?		{ yylval.nodep = cvtdig(10); return(C_ICON); }
+@{D}+{E}{FS}?		{ yylval.flt = floatcon(yytext + 1); return(C_FCON); }
+@{D}*"."{D}+({E})?{FS}?	{ yylval.flt = floatcon(yytext + 1); return(C_FCON); }
+@{D}+"."{D}*({E})?{FS}?	{ yylval.flt = floatcon(yytext + 1); return(C_FCON); }
+@'(\\.|[^\\'])*'	{ yylval.nodep = charcon(); return(C_ICON); }
+@"("			{ return OBJC_BOXED; }
+@"["			{ return OBJC_ARRAY_START; }
+@"{"			{ return OBJC_DICT_START; }
 {US}?\"(\\.|[^\\"])*\"	{ yylval.strp = yytext; return C_STRING; }
 
 "..."			{ return(C_ELLIPSIS); }
@@ -388,6 +399,9 @@ struct objc_keywords {
 	{ "finally", OBJC_FINALLY },
 	{ "throw", OBJC_THROW },
 	{ "synchronized", OBJC_SYNCHRONIZED },
+	/* Boolean literals */
+	{ "YES", OBJC_YES },
+	{ "NO", OBJC_NO },
 	/* ARC bridging casts */
 	{ "__bridge", ARC_BRIDGE },
 	{ "__bridge_retained", ARC_BRIDGE_RETAINED },
