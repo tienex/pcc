@@ -29,21 +29,70 @@
  */
 
 /*
- * Convert (multi-)character constant to integer.
- * Assume: If only one value; store at left side (char size), otherwise 
- * treat it as an integer.
+ * PDP-10 Configuration Options:
+ *
+ * Type Size Mode (compile-time):
+ *   PDP10_POW2     - Use power-of-2 types (8/16/32/64 bit) for portability
+ *   (default)      - Use native PDP-10 types (9/18/36/72 bit)
+ *
+ * Assembly Syntax and ABI (runtime-selectable):
+ *   See pdp10_asmfmt and pdp10_abi global variables
  */
+
+/* Assembly syntax formats */
+#define PDP10_ASM_GNU    0  /* GNU assembler syntax (default) */
+#define PDP10_ASM_MIDAS  1  /* MIDAS assembler syntax (ITS/MIT) */
+
+/* ABI/Object formats */
+#define PDP10_ABI_ELF    0  /* ELF object format (Linux/BSD) */
+#define PDP10_ABI_MACHO  1  /* Mach-O object format (Darwin/macOS) */
+#define PDP10_ABI_PECOFF 2  /* PE/COFF object format (Windows) */
+#define PDP10_ABI_NONE   3  /* Generic/MIDAS format */
+
+#ifdef PDP10_POW2
+/*
+ * Power-of-2 mode: Standard 8/16/32/64 bit types for portable code
+ * NOTE: These are COMPILE-TIME settings. The -mpow2 runtime flag provides
+ * experimental runtime mode switching but has significant limitations:
+ * - Type sizes here (SZCHAR, SZINT, etc.) remain fixed at compile time
+ * - makecc() macro cannot be changed at runtime
+ * - Struct layouts use compile-time sizes
+ * - Only code generation attempts to respect runtime mode
+ */
+#define makecc(val,i)	lastcon = (lastcon<<8)|((val<<24)>>24)
+#define ARGINIT		32	/* # bits below fp where arguments start */
+#define AUTOINIT	32	/* # bits above fp where automatics start */
+#define SZCHAR		8
+#define SZBOOL		8
+#define SZINT		32
+#define SZFLOAT		32
+#define SZDOUBLE	64
+#define SZLDOUBLE	64
+#define SZLONG		64
+#define SZSHORT		16
+#define SZPOINT(x)	64
+#define SZLONGLONG	64
+#define ALCHAR		8
+#define ALBOOL		8
+#define ALINT		32
+#define ALFLOAT		32
+#define ALDOUBLE	64
+#define ALLDOUBLE	64
+#define ALLONG		64
+#define ALLONGLONG	64
+#define ALSHORT		16
+#define ALPOINT		64
+#define ALSTRUCT	32
+#define ALSTACK		64
+#undef WORD_ADDRESSED
+#else
+/* Native PDP-10 mode: Traditional 9/18/36/72 bit types */
 #define makecc(val,i) {			\
 	if (i == 0) { lastcon = val;	\
 	} else if (i == 1) { lastcon = (lastcon << 9) | val; lastcon <<= 18; \
 	} else { lastcon |= (val << (27 - (i * 9))); } }
-
 #define ARGINIT		36	/* # bits below fp where arguments start */
 #define AUTOINIT	36	/* # bits above fp where automatics start */
-
-/*
- * Storage space requirements
- */
 #define SZCHAR		9
 #define SZBOOL		36
 #define SZINT		36
@@ -54,10 +103,6 @@
 #define SZSHORT		18
 #define SZPOINT(x)	36
 #define SZLONGLONG	72
-
-/*
- * Alignment constraints
- */
 #define ALCHAR		9
 #define ALBOOL		36
 #define ALINT		36
@@ -69,11 +114,34 @@
 #define ALSHORT		18
 #define ALPOINT		36
 #define ALSTRUCT	36
-#define ALSTACK		36 
+#define ALSTACK		36
+#define	WORD_ADDRESSED
+#endif /* PDP10_POW2 */ 
 
 /*
- * Max values.
+ * Min/Max values.
  */
+#ifdef PDP10_POW2
+/* Power-of-2 mode values */
+#define	MIN_CHAR	-128
+#define	MAX_CHAR	127
+#define	MAX_UCHAR	255
+#define	MIN_SHORT	-32768
+#define	MAX_SHORT	32767
+#define	MAX_USHORT	65535
+#define	MIN_INT		(-0x7fffffff-1)
+#define	MAX_INT		0x7fffffff
+#define	MAX_UNSIGNED	0xffffffffU
+#define	MIN_LONG	0x8000000000000000LL
+#define	MAX_LONG	0x7fffffffffffffffLL
+#define	MAX_ULONG	0xffffffffffffffffULL
+#define	MIN_LONGLONG	0x8000000000000000LL
+#define	MAX_LONGLONG	0x7fffffffffffffffLL
+#define	MAX_ULONGLONG	0xffffffffffffffffULL
+#undef	CHAR_UNSIGNED
+#define	BOOL_TYPE	UCHAR
+#else
+/* Native PDP-10 mode values */
 #define	MIN_CHAR	-256
 #define	MAX_CHAR	255
 #define	MAX_UCHAR	511
@@ -86,15 +154,15 @@
 #define	MIN_LONG	(-0377777777777LL-1)
 #define	MAX_LONG	0377777777777LL
 #define	MAX_ULONG	0777777777777ULL
-#define	MIN_LONGLONG	(000777777777777777777777LL-1)	/* XXX cross */
-#define	MAX_LONGLONG	000777777777777777777777LL	/* XXX cross */
-#define	MAX_ULONGLONG	001777777777777777777777ULL	/* XXX cross */
-
-/* Default char is unsigned */
-#define TARGET_STDARGS
+#define	MIN_LONGLONG	(000777777777777777777777LL-1)
+#define	MAX_LONGLONG	000777777777777777777777LL
+#define	MAX_ULONGLONG	001777777777777777777777ULL
 #define	CHAR_UNSIGNED
 #define	BOOL_TYPE	INT
-#define	WORD_ADDRESSED
+#endif
+
+/* Common defines */
+#define TARGET_STDARGS
 
 /*
  * Use large-enough types.
@@ -113,6 +181,122 @@ typedef long long OFFSZ;
 #undef	FIELDOPS		/* no bit-field instructions */
 #define TARGET_ENDIAN TARGET_BE
 
+/*
+ * Floating-point format definitions for softfloat library.
+ *
+ * Native PDP-10 mode: PDP-10 proprietary 36/72-bit format
+ *   Single precision (36-bit): sign(1) + exponent(8, excess-128) + fraction(27)
+ *   Double precision (72-bit): sign(1) + exponent(8, excess-1024) + fraction(62)
+ *
+ * Power-of-2 mode: VAX F/D floating-point format
+ *   F-floating (32-bit): Compatible with 32-bit float
+ *   D-floating (64-bit): Compatible with 64-bit double
+ *
+ * VAX format is preferred over IEEE 754 for POW2 mode because:
+ * - Similar architecture philosophy to PDP-10
+ * - Better match for cross-compilation scenarios
+ * - Already implemented in PCC softfloat
+ */
+#ifdef PDP10_POW2
+#define FDFLOAT		/* Use VAX F/D floating-point format for POW2 mode */
+#else
+#define PDP10FLOAT	/* Use native PDP-10 floating-point format */
+#endif
+
+/*
+ * Variadic argument support
+ * PDP-10 always passes variadic arguments on the stack, making implementation simple.
+ */
+#define TARGET_VALIST
+#define TARGET_STDARGS
+#define TARGET_BUILTINS							\
+	{ "__builtin_stdarg_start", pdp10_builtin_stdarg_start,	\
+						0, 2, 0, VOID },	\
+	{ "__builtin_va_start", pdp10_builtin_stdarg_start,		\
+						0, 2, 0, VOID },	\
+	{ "__builtin_va_arg", pdp10_builtin_va_arg, BTNORVAL|BTNOPROTO, \
+							2, 0, 0 },	\
+	{ "__builtin_va_end", pdp10_builtin_va_end, 0, 1, 0, VOID },	\
+	{ "__builtin_va_copy", pdp10_builtin_va_copy, 0, 2, 0, VOID },
+
+#ifdef LANG_CXX
+#define P1ND struct node
+#else
+#define P1ND struct p1node
+#endif
+struct node;
+struct bitable;
+P1ND *pdp10_builtin_stdarg_start(const struct bitable *, P1ND *a);
+P1ND *pdp10_builtin_va_arg(const struct bitable *, P1ND *a);
+P1ND *pdp10_builtin_va_end(const struct bitable *, P1ND *a);
+P1ND *pdp10_builtin_va_copy(const struct bitable *, P1ND *a);
+/* MI builtins that each architecture must implement */
+P1ND *builtin_return_address(const struct bitable *, P1ND *a);
+P1ND *builtin_frame_address(const struct bitable *, P1ND *a);
+P1ND *builtin_cfa(const struct bitable *, P1ND *a);
+#undef P1ND
+
+/*
+ * Extended assembler support.
+ */
+int xasmconstregs(char *);
+#define XASMCONSTREGS(x)	xasmconstregs(x)
+
+/*
+ * Runtime configuration globals for assembly format, ABI, and type sizes.
+ * Can be set via mflags() or other configuration mechanisms.
+ *
+ * EXPERIMENTAL: pdp10_pow2 mode
+ * When enabled, attempts to use power-of-2 type sizes (8/16/32/64 bit)
+ * instead of native PDP-10 sizes (9/18/36/72 bit) for code generation.
+ *
+ * WHAT WORKS:
+ * - Register allocation now uses runtime pdp10_szty()
+ * - Argument register assignment uses runtime sizes
+ * - Register class selection (PCLASS/RETREG) uses runtime sizes
+ *
+ * CRITICAL LIMITATIONS:
+ * - Struct layouts use compile-time type sizes (INCORRECT in POW2 mode!)
+ * - Floating-point format is COMPILE-TIME ONLY
+ *   * If compiler built with -DPDP10_POW2: uses FDFLOAT (VAX, correct)
+ *   * If compiler built without: uses PDP10FLOAT (36/72-bit, WRONG!)
+ *   The -mpow2 runtime flag cannot change FP format!
+ * - Array indexing uses compile-time element sizes
+ * - Multi-character constants use compile-time byte size
+ * - Frontend type calculations use compile-time sizes
+ *
+ * RECOMMENDATION: Recompile PCC with -DPDP10_POW2 for correct POW2 support.
+ */
+extern int pdp10_asmfmt;  /* Assembly syntax: PDP10_ASM_* */
+extern int pdp10_abi;     /* ABI/Object format: PDP10_ABI_* */
+extern int pdp10_pow2;    /* EXPERIMENTAL: Use power-of-2 type sizes */
+
+/* Runtime type size helpers (respect pdp10_pow2 flag) */
+int pdp10_szchar(void);
+int pdp10_szshort(void);
+int pdp10_szint(void);
+int pdp10_szlong(void);
+int pdp10_szfloat(void);
+int pdp10_szdouble(void);
+
+/*
+ * Runtime pointer size function.
+ * Defining this function enables runtime pointer size in core PCC (pftn.c).
+ */
+int pdp10_szpointer(void);
+
+int pdp10_is_word_addressed(void);
+int pdp10_byteoff(OFFSZ offset);
+int pdp10_wdal(OFFSZ offset);
+int pdp10_szty(TWORD t);
+
+/* Runtime stack frame initialization */
+int pdp10_autoinit(void);
+int pdp10_arginit(void);
+
+/* Runtime type system initialization */
+void pdp10_init_runtime_types(void);
+
 /* Definitions mostly used in pass2 */
 
 #define BYTEOFF(x)	((x)&03)
@@ -123,6 +307,10 @@ typedef long long OFFSZ;
 #define STOSTARG(p)
 #define genfcall(a,b)	gencall(a,b)
 
+/*
+ * WARNING: This macro uses compile-time type sizes.
+ * For runtime POW2-aware code, use pdp10_szty() instead.
+ */
 #define	szty(t)	(((t) == DOUBLE || (t) == FLOAT || \
 	(t) == LONGLONG || (t) == ULONGLONG) ? 2 : 1)
 
@@ -232,8 +420,8 @@ typedef long long OFFSZ;
         { R14, R15, XR13, -1 },
 
 /* Return a register class based on the type of the node */
-#define PCLASS(p) (szty(p->n_type) == 2 ? SBREG : SAREG)
-#define RETREG(x) (szty(x) == 2 ? XR1 : R1)
+#define PCLASS(p) (pdp10_szty((p)->n_type) == 2 ? SBREG : SAREG)
+#define RETREG(x) (pdp10_szty(x) == 2 ? XR1 : R1)
 #define DECRA(x,y)      (((x) >> (y*6)) & 63)   /* decode encoded regs */
 #define ENCRD(x)        (x)             /* Encode dest reg in n_reg */
 #define ENCRA1(x)       ((x) << 6)      /* A1 */

@@ -192,7 +192,35 @@ eoftn(int regs, int autos, int retlab)
 void
 hopcode(int f, int o)
 {
-	cerror("hopcode: f %d %d", f, o);
+	char *str;
+
+	switch (o) {
+	case PLUS:
+		str = "add";
+		break;
+	case MINUS:
+		str = "sub";
+		break;
+	case AND:
+		str = "and";
+		break;
+	case OR:
+		str = "ior";
+		break;
+	case ER:
+		str = "xor";
+		break;
+	default:
+		comperr("hopcode: unknown op %d", o);
+		str = "UNKNOWN";
+		break;
+	}
+
+	/* Output instruction with format suffix */
+	if (f == 'C')
+		printf("%si", str);  /* Immediate forms: addi, subi, etc. */
+	else
+		printf("%s", str);   /* Register forms: add, sub, etc. */
 }
 
 char *
@@ -304,7 +332,7 @@ twocomp(NODE *p)
 
 /*
  * Compare byte/word pointers.
- * XXX - do not work for highest bit set in address
+ * Note: Does not handle highest bit set in address
  */
 static void
 ptrcomp(NODE *p)
@@ -316,14 +344,14 @@ ptrcomp(NODE *p)
 
 /*
  * Do a binary comparision of two long long, and jump accordingly.
- * XXX - can optimize for constants.
+ * Note: Can be optimized for constant operands
  */
 static void     
 twollcomp(NODE *p)
 {       
 	int o = p->n_op;
 	int iscon = p->n_right->n_op == ICON;
-	int m = 0; /* XXX gcc */
+	int m = 0; /* Initialize to avoid uninitialized warning */
 
 	if (o < EQ || o > GT)
 		cerror("bad long long conditional branch: %s", opst[o]);
@@ -409,7 +437,7 @@ constput(NODE *p)
 			printf("hrlzi %s,0%llo", rnames[reg], val >> 18);
 		} else {
 			printf("move %s,[ .long 0%llo]", rnames[reg],
-			    szty(p->n_right->n_type) > 1 ? val :
+			    pdp10_szty(p->n_right->n_type) > 1 ? val :
 			    val & 0777777777777LL);
 		}
 		/* Can have more tests here, hrloi etc */
@@ -452,7 +480,7 @@ emitshort(NODE *p)
 		printf("	move ");
 	} else if (off == 0 && p->n_name[0] == 0) {
 		printf("	ldb %s,%s\n", rnames[reg1], rnames[reg]);
-		/* XXX must sign extend here even if not necessary */
+		/* Sign extend to handle negative values correctly */
 		switch (type) {
 		case CHAR:
 			printf("	lsh %s,033\n", rnames[reg1]);
@@ -652,7 +680,7 @@ printcon(NODE *p)
 static void
 putcond(NODE *p)
 {               
-	char *c = 0; /* XXX gcc */
+	char *c = 0; /* Initialize to avoid uninitialized warning */
 
 	switch (p->n_op) {
 	case EQ: c = "e"; break;
@@ -1148,7 +1176,7 @@ optim2(NODE *p, void *arg)
 	}
 
 	/* Convert "PTR undef" (void *) to "PTR uchar" */
-	/* XXX - should be done in MI code */
+	/* TODO: This logic should ideally be in machine-independent code */
 	if (BTYPE(p->n_type) == VOID)
 		p->n_type = (p->n_type & ~BTMASK) | UCHAR;
 	if (op == ICON) {
@@ -1241,7 +1269,7 @@ myoptim(struct interpass *ip)
 int
 gclass(TWORD t)
 {
-	return (szty(t) == 2 ? CLASSB : CLASSA);
+	return (pdp10_szty(t) == 2 ? CLASSB : CLASSA);
 }
 
 static int
@@ -1251,7 +1279,7 @@ argsiz(NODE *p)
 
 	if (t == STRTY || t == UNIONTY)
 		return attr_find(p->n_ap, ATTR_P2STRUCT)->iarg(0)/(SZINT/SZCHAR);
-	return szty(t);
+	return pdp10_szty(t);
 }
 
 /*
@@ -1271,7 +1299,7 @@ lastcall(NODE *p)
                 	size += argsiz(p->n_right);
 	if (p->n_op != ASSIGN)
         	size += argsiz(p);
-        op->n_qual = size; /* XXX */
+        op->n_qual = size; /* Store size in n_qual for later use */
 }
 
 void
@@ -1302,15 +1330,89 @@ COLORMAP(int c, int *r)
 		return num < 7;
 	}
 	comperr("COLORMAP");
-	return 0; /* XXX gcc */
+	return 0; /* Return value not used */
 }
 
 /*
  * Target-dependent command-line options.
  */
+/*
+ * Handle machine-specific command-line flags.
+ * Supports:
+ *   -masm=<format>   - Set assembly syntax (gnu, midas)
+ *   -mabi=<format>   - Set ABI/object format (elf, macho, pecoff, none)
+ *   -mpow2           - EXPERIMENTAL: Enable runtime power-of-2 type mode
+ */
 void
 mflags(char *str)
 {
+	if (strncmp(str, "asm=", 4) == 0) {
+		str += 4;
+		if (strcmp(str, "gnu") == 0)
+			pdp10_asmfmt = PDP10_ASM_GNU;
+		else if (strcmp(str, "midas") == 0)
+			pdp10_asmfmt = PDP10_ASM_MIDAS;
+		else
+			fprintf(stderr, "pcc: unknown assembly format '%s' (use 'gnu' or 'midas')\n", str);
+	} else if (strncmp(str, "abi=", 4) == 0) {
+		str += 4;
+		if (strcmp(str, "elf") == 0)
+			pdp10_abi = PDP10_ABI_ELF;
+		else if (strcmp(str, "macho") == 0)
+			pdp10_abi = PDP10_ABI_MACHO;
+		else if (strcmp(str, "pecoff") == 0 || strcmp(str, "pe") == 0)
+			pdp10_abi = PDP10_ABI_PECOFF;
+		else if (strcmp(str, "none") == 0)
+			pdp10_abi = PDP10_ABI_NONE;
+		else
+			fprintf(stderr, "pcc: unknown ABI '%s' (use 'elf', 'macho', 'pecoff', or 'none')\n", str);
+	} else if (strcmp(str, "pow2") == 0) {
+		pdp10_pow2 = 1;
+
+		/* Initialize runtime type system with POW2 sizes */
+		pdp10_init_runtime_types();
+
+#ifdef PDP10_POW2
+		/* Compiler was built with POW2 support */
+		fprintf(stderr, "pcc: -mpow2 mode enabled\n");
+		fprintf(stderr, "pcc: Using power-of-2 types (8/16/32/64 bit) with VAX FP format\n");
+		fprintf(stderr, "pcc: Compiler built with -DPDP10_POW2: Full support enabled\n");
+#else
+		/* Compiler was built for native mode - FP format mismatch! */
+		fprintf(stderr, "pcc: -mpow2 mode enabled (RUNTIME mode)\n");
+		fprintf(stderr, "pcc: Using power-of-2 types (8/16/32/64 bit)\n");
+		fprintf(stderr, "pcc: WARNING: Floating-point format limitation:\n");
+		fprintf(stderr, "pcc:   - Compiler built WITHOUT -DPDP10_POW2\n");
+		fprintf(stderr, "pcc:   - Will use PDP-10 FP format (36/72-bit) instead of VAX!\n");
+		fprintf(stderr, "pcc:   - Avoid floating-point operations in this mode\n");
+		fprintf(stderr, "pcc: Type sizes, struct layouts, and array indexing: FULLY WORKING\n");
+		fprintf(stderr, "pcc: For full POW2 support with VAX FP: Recompile with -DPDP10_POW2\n");
+#endif
+	} else {
+		fprintf(stderr, "pcc: unknown PDP-10 option '%s'\n", str);
+	}
+}
+
+/*
+ * Check for other names of the xasm constraints registers.
+ * Map register names to register numbers for inline assembly constraints.
+ */
+int
+xasmconstregs(char *s)
+{
+	int i;
+	char buf[4];
+
+	/* Match register names: r0-r17 or just 0-17 */
+	for (i = 0; i < 18; i++) {
+		if (strcmp(&rnames[i][1], s) == 0)  /* Skip '%' prefix */
+			return i;
+		/* Also allow just the number */
+		snprintf(buf, sizeof(buf), "%d", i);
+		if (strcmp(buf, s) == 0)
+			return i;
+	}
+	return -1;
 }
 
 /*

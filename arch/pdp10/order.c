@@ -151,11 +151,13 @@ setorder(NODE *p)
 
 /*
  * Special handling of some instruction register allocation.
+ * Return NULL to indicate no special register requirements.
+ * This is appropriate for PDP-10 which has general-purpose registers.
  */
 struct rspecial *
 nspecial(struct optab *q)
 {
-	return 0; /* XXX gcc */
+	return 0; /* No special register requirements */
 }
 
 /*

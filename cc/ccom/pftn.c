@@ -594,11 +594,19 @@ ftnend(void)
 			p->n_op = ICON;
 			if (gc) {
 				locctr(CTORS, NULL);
+#ifdef pdp10_szpointer
+				inval(0, pdp10_szpointer(), p);
+#else
 				inval(0, SZPOINT(0), p);
+#endif
 			}
 			if (gd) {
 				locctr(DTORS, NULL);
+#ifdef pdp10_szpointer
+				inval(0, pdp10_szpointer(), p);
+#else
 				inval(0, SZPOINT(0), p);
+#endif
 			}
 			tfree(p);
 		}
@@ -607,7 +615,11 @@ ftnend(void)
 	savbc = NULL;
 	lparam = NULL;
 	cftnsp = NULL;
+#ifdef pdp10_autoinit
+	maxautooff = autooff = pdp10_autoinit();
+#else
 	maxautooff = autooff = AUTOINIT;
+#endif
 	reached = 1;
 
 	if (isinlining)
@@ -693,14 +705,23 @@ dclargs(void)
 
 	if (oldstyle && nparams) {
 		/* Must recalculate offset for oldstyle args here */
+#ifdef pdp10_arginit
+		argoff = pdp10_arginit();
+#else
 		argoff = ARGINIT;
+#endif
 		for (i = 0; i < nparams; i++) {
 			parr[i]->soffset = NOOFFSET;
 			oalloc(parr[i], &argoff);
 		}
 	}
 
-done:	autooff = AUTOINIT;
+done:
+#ifdef pdp10_autoinit
+	autooff = pdp10_autoinit();
+#else
+	autooff = AUTOINIT;
+#endif
 
 	plabel(prolab); /* after prolog, used in optimization */
 	retlab = getlab();
@@ -1243,7 +1264,12 @@ tsize(TWORD ty, union dimfun *d, struct attr *apl)
 			uerror( "cannot take size of function");
 #endif
 		case PTR:
+#ifdef pdp10_szpointer
+			/* Runtime pointer size for targets that support it */
+			return( pdp10_szpointer() * mult );
+#else
 			return( SZPOINT(ty) * mult );
+#endif
 		case ARY:
 			if (d->ddim == NOOFFSET)
 				return 0;
