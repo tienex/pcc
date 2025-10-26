@@ -350,30 +350,30 @@ debugsym_get_type_enhanced_base(struct symtab *s, TWORD t)
 		break;
 
 	case CHAR:
-		enc = (t & TUNSIGNED) ? DBGTYPE_UINT8 : DBGTYPE_CHAR;
+		enc = ISUNSIGNED(t) ? DBGTYPE_UINT8 : DBGTYPE_CHAR;
 		size = SZCHAR / SZCHAR;
 		break;
 
 	case SHORT:
-		enc = (t & TUNSIGNED) ? DBGTYPE_UINT16 : DBGTYPE_INT16;
+		enc = ISUNSIGNED(t) ? DBGTYPE_UINT16 : DBGTYPE_INT16;
 		size = SZSHORT / SZCHAR;
 		break;
 
 	case INT:
-		enc = (t & TUNSIGNED) ? DBGTYPE_UINT32 : DBGTYPE_INT32;
+		enc = ISUNSIGNED(t) ? DBGTYPE_UINT32 : DBGTYPE_INT32;
 		size = SZINT / SZCHAR;
 		break;
 
 	case LONG:
 		if (SZLONG == SZLONGLONG)
-			enc = (t & TUNSIGNED) ? DBGTYPE_UINT64 : DBGTYPE_INT64;
+			enc = ISUNSIGNED(t) ? DBGTYPE_UINT64 : DBGTYPE_INT64;
 		else
-			enc = (t & TUNSIGNED) ? DBGTYPE_UINT32 : DBGTYPE_INT32;
+			enc = ISUNSIGNED(t) ? DBGTYPE_UINT32 : DBGTYPE_INT32;
 		size = SZLONG / SZCHAR;
 		break;
 
 	case LONGLONG:
-		enc = (t & TUNSIGNED) ? DBGTYPE_UINT64 : DBGTYPE_INT64;
+		enc = ISUNSIGNED(t) ? DBGTYPE_UINT64 : DBGTYPE_INT64;
 		size = SZLONGLONG / SZCHAR;
 		break;
 
@@ -396,12 +396,12 @@ debugsym_get_type_enhanced_base(struct symtab *s, TWORD t)
 		/* Struct type - would need to extract members */
 		return debugsym_composite_type(DBGTYPE_STRUCT,
 		    s->sname ? s->sname : "(anonymous)", NULL, 0,
-		    s->sap ? s->sap->asize / SZCHAR : 0);
+		    tsize(s->stype, s->sdf, s->sap) / SZCHAR);
 
 	case UNIONTY:
 		return debugsym_composite_type(DBGTYPE_UNION,
 		    s->sname ? s->sname : "(anonymous)", NULL, 0,
-		    s->sap ? s->sap->asize / SZCHAR : 0);
+		    tsize(s->stype, s->sdf, s->sap) / SZCHAR);
 
 	case ENUMTY:
 		return debugsym_enum_type(s->sname ? s->sname : "(anonymous)", NULL, 0);
