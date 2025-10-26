@@ -299,6 +299,37 @@ static NODE *codegen_stmt(ASTNode *stmt) {
             return node;
         }
 
+        case AST_PRINT: {
+            /* Python 2 print statement - convert to print() function call */
+            NODE *func = make_name("print");
+
+            /* Build argument list */
+            NODE *args = NULL;
+            for (int i = stmt->data.print_stmt.value_count - 1; i >= 0; i--) {
+                NODE *arg = codegen_expr(stmt->data.print_stmt.values[i]);
+                if (args == NULL) {
+                    args = arg;
+                } else {
+                    args = make_binop(CM, arg, args, LONGLONG);
+                }
+            }
+
+            /* Create CALL node */
+            NODE *call_node = xmalloc(sizeof(NODE));
+            memset(call_node, 0, sizeof(NODE));
+            call_node->n_op = CALL;
+            call_node->n_type = LONGLONG;
+            call_node->n_left = func;
+            call_node->n_right = args;
+            return call_node;
+        }
+
+        case AST_EXEC: {
+            /* Python 2 exec statement - not fully implemented */
+            error("exec statement not yet supported");
+            return NULL;
+        }
+
         case AST_FUNCTION_DEF: {
             /* Function definitions are handled separately */
             return NULL;

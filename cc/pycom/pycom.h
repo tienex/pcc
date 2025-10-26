@@ -60,6 +60,9 @@ typedef enum {
     TOK_NONLOCAL,
     TOK_DEL,
     TOK_IS,
+    TOK_PRINT,          /* Python 2 print statement */
+    TOK_EXEC,           /* Python 2 exec statement */
+    TOK_XRANGE,         /* Python 2 xrange */
 
     /* Operators */
     TOK_PLUS,           /* + */
@@ -113,6 +116,12 @@ typedef struct Token {
     } literal;
 } Token;
 
+/* Python version */
+typedef enum {
+    PYTHON_VERSION_2 = 2,
+    PYTHON_VERSION_3 = 3
+} PythonVersion;
+
 /* Lexer state */
 typedef struct Lexer {
     const char *source;
@@ -125,6 +134,7 @@ typedef struct Lexer {
     Token current;
     Token lookahead;
     int pending_dedents;
+    PythonVersion version;
 } Lexer;
 
 /* AST Node types */
@@ -141,6 +151,8 @@ typedef enum {
     AST_PASS,
     AST_BREAK,
     AST_CONTINUE,
+    AST_PRINT,          /* Python 2 print statement */
+    AST_EXEC,           /* Python 2 exec statement */
 
     /* Expressions */
     AST_BINOP,
@@ -252,6 +264,16 @@ typedef struct ASTNode {
             struct ASTNode *object;
             char *attr;
         } attribute;
+
+        struct {
+            struct ASTNode **values;
+            int value_count;
+            int newline;  /* 1 for newline, 0 for no newline */
+        } print_stmt;
+
+        struct {
+            struct ASTNode *code;
+        } exec_stmt;
     } data;
 } ASTNode;
 
@@ -279,12 +301,13 @@ typedef struct Parser {
     SymbolTable *symtab;
     int label_count;
     int temp_count;
+    PythonVersion version;
 } Parser;
 
 /* Function declarations */
 
 /* Lexer functions */
-Lexer *lexer_new(const char *source);
+Lexer *lexer_new(const char *source, PythonVersion version);
 void lexer_free(Lexer *lexer);
 Token lexer_next_token(Lexer *lexer);
 Token lexer_peek_token(Lexer *lexer);
@@ -321,5 +344,6 @@ char *xstrdup(const char *str);
 extern FILE *output_file;
 extern int error_count;
 extern int line_number;
+extern PythonVersion python_version;
 
 #endif /* PYCOM_H */

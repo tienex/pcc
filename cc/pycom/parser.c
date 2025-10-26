@@ -19,6 +19,7 @@ Parser *parser_new(Lexer *lexer) {
     parser->symtab = symtab_new(NULL);
     parser->label_count = 0;
     parser->temp_count = 0;
+    parser->version = lexer->version;
     return parser;
 }
 
@@ -125,6 +126,17 @@ void ast_free(ASTNode *node) {
                 ast_free(node->data.while_stmt.body[i]);
             }
             free(node->data.while_stmt.body);
+            break;
+
+        case AST_PRINT:
+            for (int i = 0; i < node->data.print_stmt.value_count; i++) {
+                ast_free(node->data.print_stmt.values[i]);
+            }
+            free(node->data.print_stmt.values);
+            break;
+
+        case AST_EXEC:
+            ast_free(node->data.exec_stmt.code);
             break;
 
         default:
@@ -546,6 +558,39 @@ static ASTNode *parse_return_stmt(Parser *parser) {
     return node;
 }
 
+/* Parse Python 2 print statement */
+static ASTNode *parse_print_stmt(Parser *parser) {
+    ASTNode *node = ast_new(AST_PRINT);
+
+    parser_expect(parser, TOK_PRINT);
+
+    /* Parse values to print */
+    int capacity = 4;
+    int value_count = 0;
+    ASTNode **values = xmalloc(sizeof(ASTNode*) * capacity);
+
+    while (!parser_match(parser, TOK_NEWLINE) && !parser_match(parser, TOK_EOF)) {
+        if (value_count >= capacity) {
+            capacity *= 2;
+            values = xrealloc(values, sizeof(ASTNode*) * capacity);
+        }
+
+        values[value_count++] = parse_expr(parser);
+
+        if (parser_match(parser, TOK_COMMA)) {
+            parser_advance(parser);
+        } else {
+            break;
+        }
+    }
+
+    node->data.print_stmt.values = values;
+    node->data.print_stmt.value_count = value_count;
+    node->data.print_stmt.newline = 1;  /* Default: print with newline */
+
+    return node;
+}
+
 /* Parse statement */
 static ASTNode *parse_stmt(Parser *parser) {
     parser_skip_newlines(parser);
@@ -564,6 +609,11 @@ static ASTNode *parse_stmt(Parser *parser) {
 
     if (parser_match(parser, TOK_RETURN)) {
         return parse_return_stmt(parser);
+    }
+
+    /* Python 2 print statement */
+    if (parser_match(parser, TOK_PRINT) && parser->version == PYTHON_VERSION_2) {
+        return parse_print_stmt(parser);
     }
 
     if (parser_match(parser, TOK_PASS)) {

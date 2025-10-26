@@ -7,7 +7,7 @@
 #include <string.h>
 #include <stdlib.h>
 
-/* Keyword table */
+/* Keyword table - common keywords */
 static struct {
     const char *name;
     TokenType type;
@@ -48,7 +48,18 @@ static struct {
     {NULL, 0}
 };
 
-Lexer *lexer_new(const char *source) {
+/* Python 2 specific keywords */
+static struct {
+    const char *name;
+    TokenType type;
+} python2_keywords[] = {
+    {"print", TOK_PRINT},
+    {"exec", TOK_EXEC},
+    {"xrange", TOK_XRANGE},
+    {NULL, 0}
+};
+
+Lexer *lexer_new(const char *source, PythonVersion version) {
     Lexer *lexer = xmalloc(sizeof(Lexer));
     lexer->source = source;
     lexer->pos = 0;
@@ -59,6 +70,7 @@ Lexer *lexer_new(const char *source) {
     lexer->indent_count = 1;
     lexer->indent_capacity = 32;
     lexer->pending_dedents = 0;
+    lexer->version = version;
 
     /* Initialize lookahead */
     lexer->current.type = TOK_EOF;
@@ -126,12 +138,23 @@ static Token make_token(TokenType type, const char *value, int line, int column)
     return token;
 }
 
-static TokenType lookup_keyword(const char *name) {
+static TokenType lookup_keyword(Lexer *lexer, const char *name) {
+    /* Check common keywords */
     for (int i = 0; keywords[i].name != NULL; i++) {
         if (strcmp(keywords[i].name, name) == 0) {
             return keywords[i].type;
         }
     }
+
+    /* Check Python 2 specific keywords */
+    if (lexer->version == PYTHON_VERSION_2) {
+        for (int i = 0; python2_keywords[i].name != NULL; i++) {
+            if (strcmp(python2_keywords[i].name, name) == 0) {
+                return python2_keywords[i].type;
+            }
+        }
+    }
+
     return TOK_IDENTIFIER;
 }
 
@@ -149,7 +172,7 @@ static Token lexer_read_identifier(Lexer *lexer) {
     strncpy(value, &lexer->source[start], length);
     value[length] = '\0';
 
-    TokenType type = lookup_keyword(value);
+    TokenType type = lookup_keyword(lexer, value);
     Token token = make_token(type, value, start_line, start_column);
     free(value);
 

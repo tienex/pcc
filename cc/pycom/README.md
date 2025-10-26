@@ -4,6 +4,24 @@
 
 This is a Python frontend compiler integrated into the Portable C Compiler (PCC) infrastructure. It compiles Python source code into PCC's intermediate representation (IR), which can then be compiled to machine code using PCC's existing backends for multiple architectures.
 
+## Python 2 and Python 3 Support
+
+The compiler supports both **Python 2** and **Python 3** syntax through command-line flags:
+
+- **Python 3 Mode** (default): `./pycom file.py` or `./pycom -3 file.py`
+- **Python 2 Mode**: `./pycom -2 file.py`
+
+### Key Differences Handled
+
+| Feature | Python 2 | Python 3 |
+|---------|----------|----------|
+| **Print** | `print "hello"` (statement) | `print("hello")` (function) |
+| **Division** | `/` → integer division | `/` → true division (float) |
+| **Keywords** | `print`, `exec`, `xrange` | `print()`, `exec()` functions |
+| **Integers** | `int` and `long` types | Single `int` type |
+
+See `examples/VERSION_COMPARISON.md` for detailed examples and `examples/python2/` and `examples/python3/` directories for version-specific code samples.
+
 ## Features
 
 ### Supported Python Features
@@ -54,21 +72,31 @@ Assembly (.s)
 
 ```
 cc/pycom/
-├── README.md           # This file
-├── Makefile           # Build system
-├── pycom.h            # Main header file with data structures
-├── main.c             # Driver program
-├── lexer.c            # Lexical analyzer (tokenizer)
-├── parser.c           # Syntax analyzer (AST builder)
-├── symtab.c           # Symbol table management
-├── codegen.c          # IR code generation
-├── util.c             # Utility functions
-└── examples/          # Example Python programs
-    ├── hello.py
-    ├── factorial.py
-    ├── fibonacci.py
-    ├── loops.py
-    └── arithmetic.py
+├── README.md                   # This file
+├── DEVELOPER_GUIDE.md          # Developer documentation
+├── Makefile.in                 # Build system template
+├── pycom.h                     # Main header file with data structures
+├── main.c                      # Driver program
+├── lexer.c                     # Lexical analyzer (tokenizer)
+├── parser.c                    # Syntax analyzer (AST builder)
+├── symtab.c                    # Symbol table management
+├── codegen.c                   # IR code generation
+├── util.c                      # Utility functions
+└── examples/                   # Example Python programs
+    ├── hello.py                # Generic hello world
+    ├── factorial.py            # Recursive factorial
+    ├── fibonacci.py            # Recursive Fibonacci
+    ├── loops.py                # Loop examples
+    ├── arithmetic.py           # Arithmetic operations
+    ├── VERSION_COMPARISON.md   # Python 2 vs 3 comparison
+    ├── python2/                # Python 2 specific examples
+    │   ├── hello.py
+    │   ├── factorial.py
+    │   └── arithmetic.py
+    └── python3/                # Python 3 specific examples
+        ├── hello.py
+        ├── factorial.py
+        └── arithmetic.py
 ```
 
 ## Building
@@ -110,6 +138,8 @@ This compiles `input.py` and outputs to stdout.
 ./pycom [options] <input.py>
 
 Options:
+  -2           Python 2 mode
+  -3           Python 3 mode (default)
   -o <file>    Write output to <file>
   -v           Verbose mode (shows AST and compilation stages)
   -h           Show help message
@@ -118,8 +148,17 @@ Options:
 ### Examples
 
 ```bash
+# Compile Python 3 code (default)
+./pycom examples/python3/hello.py
+./pycom -3 examples/python3/factorial.py
+
+# Compile Python 2 code
+./pycom -2 examples/python2/hello.py
+./pycom -2 examples/python2/factorial.py
+
 # Compile with verbose output
 ./pycom -v examples/hello.py
+./pycom -2 -v examples/python2/hello.py
 
 # Compile and save to file
 ./pycom -o output.s examples/factorial.py
@@ -199,6 +238,8 @@ AST_IF              // If/else statement
 AST_WHILE           // While loop
 AST_ASSIGN          // Assignment
 AST_EXPR_STMT       // Expression statement
+AST_PRINT           // Print statement (Python 2)
+AST_EXEC            // Exec statement (Python 2)
 AST_BINOP           // Binary operation
 AST_UNOP            // Unary operation
 AST_COMPARE         // Comparison

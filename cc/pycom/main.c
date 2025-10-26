@@ -11,10 +11,15 @@
 /* Global output file */
 FILE *output_file = NULL;
 
+/* Global Python version */
+PythonVersion python_version = PYTHON_VERSION_3;
+
 /* Usage information */
 static void usage(const char *progname) {
     fprintf(stderr, "Usage: %s [options] <input.py>\n", progname);
     fprintf(stderr, "Options:\n");
+    fprintf(stderr, "  -2           Python 2 mode\n");
+    fprintf(stderr, "  -3           Python 3 mode (default)\n");
     fprintf(stderr, "  -o <file>    Write output to <file>\n");
     fprintf(stderr, "  -v           Verbose mode\n");
     fprintf(stderr, "  -h           Show this help\n");
@@ -166,6 +171,18 @@ static void print_ast(ASTNode *node, int indent) {
             print_ast(node->data.return_stmt.expr, indent + 1);
             break;
 
+        case AST_PRINT:
+            printf("Print (Python 2):\n");
+            for (int i = 0; i < node->data.print_stmt.value_count; i++) {
+                print_ast(node->data.print_stmt.values[i], indent + 1);
+            }
+            break;
+
+        case AST_EXEC:
+            printf("Exec (Python 2):\n");
+            print_ast(node->data.exec_stmt.code, indent + 1);
+            break;
+
         default:
             printf("Unknown node type: %d\n", node->type);
             break;
@@ -177,11 +194,18 @@ int main(int argc, char **argv) {
     const char *input_file = NULL;
     const char *output_filename = NULL;
     int verbose = 0;
+    python_version = PYTHON_VERSION_3;  /* Default to Python 3 */
 
     /* Parse command-line arguments */
     int opt;
-    while ((opt = getopt(argc, argv, "o:vh")) != -1) {
+    while ((opt = getopt(argc, argv, "23o:vh")) != -1) {
         switch (opt) {
+            case '2':
+                python_version = PYTHON_VERSION_2;
+                break;
+            case '3':
+                python_version = PYTHON_VERSION_3;
+                break;
             case 'o':
                 output_filename = optarg;
                 break;
@@ -214,6 +238,7 @@ int main(int argc, char **argv) {
 
     if (verbose) {
         printf("Compiling: %s\n", input_file);
+        printf("Python version: %d\n", python_version);
     }
 
     /* Read input file */
@@ -226,7 +251,7 @@ int main(int argc, char **argv) {
     if (verbose) {
         printf("Lexing...\n");
     }
-    Lexer *lexer = lexer_new(source);
+    Lexer *lexer = lexer_new(source, python_version);
 
     /* Parsing */
     if (verbose) {
