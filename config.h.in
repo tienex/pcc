@@ -60,6 +60,12 @@
 /* Define to 1 if you have the `snprintf' function. */
 #undef HAVE_SNPRINTF
 
+/* Define to 1 if you have the <stdbit.h> header file. */
+#undef HAVE_STDBIT_H
+
+/* Define to 1 if you have the <stdckdint.h> header file. */
+#undef HAVE_STDCKDINT_H
+
 /* Define to 1 if you have the <stdint.h> header file. */
 #undef HAVE_STDINT_H
 
@@ -128,6 +134,12 @@
 
 /* Define target Multi-Arch path */
 #undef MULTIARCH_PATH
+
+/* Define if portable libckdint should be linked */
+#undef NEED_LIBCKDINT
+
+/* Define if portable libstdbit should be linked */
+#undef NEED_LIBSTDBIT
 
 /* Define if portable libthread should be linked */
 #undef NEED_LIBTHREAD

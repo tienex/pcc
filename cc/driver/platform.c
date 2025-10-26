@@ -318,9 +318,9 @@ init_platform_specific(const char *os_name, const char *arch_name)
 	assembler = ASSEMBLER;
 	linker = LINKER;
 
-	/* Add portable C11 libraries if needed */
-#if defined(NEED_LIBUNICODE) || defined(NEED_LIBTHREAD)
-	/* Add library directory for portable C11 libraries */
+	/* Add portable C11/C23 libraries if needed */
+#if defined(NEED_LIBUNICODE) || defined(NEED_LIBTHREAD) || defined(NEED_LIBSTDBIT) || defined(NEED_LIBCKDINT)
+	/* Add library directory for portable C11/C23 libraries */
 #ifdef LIBDIR
 	/* Use configured alternate library directory */
 	strlist_append(&early_linker_flags, "-L" LIBDIR);
@@ -334,5 +334,11 @@ init_platform_specific(const char *os_name, const char *arch_name)
 	strlist_append(&stdlib_flags, "-lthread");
 	/* libthread wraps pthread on POSIX, so link pthread too */
 	strlist_append(&stdlib_flags, "-lpthread");
+#endif
+#ifdef NEED_LIBSTDBIT
+	strlist_append(&stdlib_flags, "-lstdbit");
+#endif
+#ifdef NEED_LIBCKDINT
+	strlist_append(&stdlib_flags, "-lckdint");
 #endif
 }

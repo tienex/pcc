@@ -728,6 +728,27 @@ CFLAGS="$save_CFLAGS"
 AC_MSG_RESULT([$have_c11])
 AC_SUBST(C11_CFLAGS)
 
+# Check for C23 standard support
+AC_MSG_CHECKING([for C23 support])
+save_CFLAGS="$CFLAGS"
+CFLAGS="$CFLAGS -std=c2x"
+AC_COMPILE_IFELSE([
+    AC_LANG_PROGRAM([[
+        #if __STDC_VERSION__ < 202000L
+        #error C23 not supported
+        #endif
+    ]], [[]])
+  ], [
+    have_c23=yes
+    C23_CFLAGS="-std=c2x"
+  ], [
+    have_c23=no
+    C23_CFLAGS=""
+])
+CFLAGS="$save_CFLAGS"
+AC_MSG_RESULT([$have_c23])
+AC_SUBST(C23_CFLAGS)
+
 # Checks for header files.
 # AC_CHECK_HEADERS([fcntl.h stdlib.h string.h unistd.h])
 AC_CHECK_HEADERS([string.h malloc.h libgen.h])
@@ -738,6 +759,12 @@ AC_CHECK_HEADERS([uchar.h], [have_uchar=yes], [have_uchar=no])
 
 # Check for C11 threads support (threads.h)
 AC_CHECK_HEADERS([threads.h], [have_threads=yes], [have_threads=no])
+
+# Check for C23 bit utilities (stdbit.h)
+AC_CHECK_HEADERS([stdbit.h], [have_stdbit=yes], [have_stdbit=no])
+
+# Check for C23 checked integer arithmetic (stdckdint.h)
+AC_CHECK_HEADERS([stdckdint.h], [have_stdckdint=yes], [have_stdckdint=no])
 
 # Check for POSIX threads if C11 threads not available
 PTHREAD_LIBS=""
@@ -754,6 +781,8 @@ AC_SUBST(PTHREAD_LIBS)
 # Determine which libraries to build
 BUILD_LIBUNICODE=no
 BUILD_LIBTHREAD=no
+BUILD_LIBSTDBIT=no
+BUILD_LIBCKDINT=no
 PORTABLE_LIBS=""
 
 if test "$have_uchar" = "no"; then
@@ -770,8 +799,24 @@ if test "$have_threads" = "no"; then
     AC_MSG_NOTICE([Will build portable libthread (C11 threading support)])
 fi
 
+if test "$have_stdbit" = "no"; then
+    BUILD_LIBSTDBIT=yes
+    PORTABLE_LIBS="$PORTABLE_LIBS libstdbit"
+    AC_DEFINE(NEED_LIBSTDBIT, 1, [Define if portable libstdbit should be linked])
+    AC_MSG_NOTICE([Will build portable libstdbit (C23 bit utilities)])
+fi
+
+if test "$have_stdckdint" = "no"; then
+    BUILD_LIBCKDINT=yes
+    PORTABLE_LIBS="$PORTABLE_LIBS libckdint"
+    AC_DEFINE(NEED_LIBCKDINT, 1, [Define if portable libckdint should be linked])
+    AC_MSG_NOTICE([Will build portable libckdint (C23 checked arithmetic)])
+fi
+
 AC_SUBST(BUILD_LIBUNICODE)
 AC_SUBST(BUILD_LIBTHREAD)
+AC_SUBST(BUILD_LIBSTDBIT)
+AC_SUBST(BUILD_LIBCKDINT)
 AC_SUBST(PORTABLE_LIBS)
 
 # Checks for library functions.
@@ -1034,8 +1079,11 @@ echo "Has GCC compatibility ............ $gcccompat"
 echo "Has PCC debugging ................ $pccdebug"
 echo "Type of wchar_t is ............... ${wchar_type} (${wchar_size} chars)"
 echo "C11 support ...................... ${have_c11:-no}"
+echo "C23 support ...................... ${have_c23:-no}"
 echo "Build portable Unicode library ... ${BUILD_LIBUNICODE}"
 echo "Build portable Threading library . ${BUILD_LIBTHREAD}"
+echo "Build portable Bit utils library . ${BUILD_LIBSTDBIT}"
+echo "Build portable Checked int library ${BUILD_LIBCKDINT}"
 echo
 echo "Configure finished.  Do 'make && make install' to compile and install.
 "

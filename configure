@@ -663,11 +663,13 @@ targosver
 targos
 ALLOCA
 PORTABLE_LIBS
+BUILD_LIBCKDINT
+BUILD_LIBSTDBIT
 BUILD_LIBTHREAD
 BUILD_LIBUNICODE
 PTHREAD_LIBS
+C23_CFLAGS
 C11_CFLAGS
-RANLIB
 LEXLIB
 LEX_OUTPUT_ROOT
 LEX
@@ -5691,6 +5693,46 @@ CFLAGS="$save_CFLAGS"
 printf "%s\n" "$have_c11" >&6; }
 
 
+# Check for C23 standard support
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for C23 support" >&5
+printf %s "checking for C23 support... " >&6; }
+save_CFLAGS="$CFLAGS"
+CFLAGS="$CFLAGS -std=c2x"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+
+        #if __STDC_VERSION__ < 202000L
+        #error C23 not supported
+        #endif
+
+int
+main (void)
+{
+
+  ;
+  return 0;
+}
+
+_ACEOF
+if ac_fn_c_try_compile "$LINENO"
+then :
+
+    have_c23=yes
+    C23_CFLAGS="-std=c2x"
+
+else $as_nop
+
+    have_c23=no
+    C23_CFLAGS=""
+
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.beam conftest.$ac_ext
+CFLAGS="$save_CFLAGS"
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $have_c23" >&5
+printf "%s\n" "$have_c23" >&6; }
+
+
 # Checks for header files.
 # AC_CHECK_HEADERS([fcntl.h stdlib.h string.h unistd.h])
 ac_fn_c_check_header_compile "$LINENO" "string.h" "ac_cv_header_string_h" "$ac_includes_default"
@@ -5784,6 +5826,34 @@ fi
 
 done
 
+# Check for C23 bit utilities (stdbit.h)
+       for ac_header in stdbit.h
+do :
+  ac_fn_c_check_header_compile "$LINENO" "stdbit.h" "ac_cv_header_stdbit_h" "$ac_includes_default"
+if test "x$ac_cv_header_stdbit_h" = xyes
+then :
+  printf "%s\n" "#define HAVE_STDBIT_H 1" >>confdefs.h
+ have_stdbit=yes
+else $as_nop
+  have_stdbit=no
+fi
+
+done
+
+# Check for C23 checked integer arithmetic (stdckdint.h)
+       for ac_header in stdckdint.h
+do :
+  ac_fn_c_check_header_compile "$LINENO" "stdckdint.h" "ac_cv_header_stdckdint_h" "$ac_includes_default"
+if test "x$ac_cv_header_stdckdint_h" = xyes
+then :
+  printf "%s\n" "#define HAVE_STDCKDINT_H 1" >>confdefs.h
+ have_stdckdint=yes
+else $as_nop
+  have_stdckdint=no
+fi
+
+done
+
 # Check for POSIX threads if C11 threads not available
 PTHREAD_LIBS=""
 if test "$have_threads" = "no"; then
@@ -5859,6 +5929,8 @@ fi
 # Determine which libraries to build
 BUILD_LIBUNICODE=no
 BUILD_LIBTHREAD=no
+BUILD_LIBSTDBIT=no
+BUILD_LIBCKDINT=no
 PORTABLE_LIBS=""
 
 if test "$have_uchar" = "no"; then
@@ -5880,6 +5952,28 @@ printf "%s\n" "#define NEED_LIBTHREAD 1" >>confdefs.h
     { printf "%s\n" "$as_me:${as_lineno-$LINENO}: Will build portable libthread (C11 threading support)" >&5
 printf "%s\n" "$as_me: Will build portable libthread (C11 threading support)" >&6;}
 fi
+
+if test "$have_stdbit" = "no"; then
+    BUILD_LIBSTDBIT=yes
+    PORTABLE_LIBS="$PORTABLE_LIBS libstdbit"
+
+printf "%s\n" "#define NEED_LIBSTDBIT 1" >>confdefs.h
+
+    { printf "%s\n" "$as_me:${as_lineno-$LINENO}: Will build portable libstdbit (C23 bit utilities)" >&5
+printf "%s\n" "$as_me: Will build portable libstdbit (C23 bit utilities)" >&6;}
+fi
+
+if test "$have_stdckdint" = "no"; then
+    BUILD_LIBCKDINT=yes
+    PORTABLE_LIBS="$PORTABLE_LIBS libckdint"
+
+printf "%s\n" "#define NEED_LIBCKDINT 1" >>confdefs.h
+
+    { printf "%s\n" "$as_me:${as_lineno-$LINENO}: Will build portable libckdint (C23 checked arithmetic)" >&5
+printf "%s\n" "$as_me: Will build portable libckdint (C23 checked arithmetic)" >&6;}
+fi
+
+
 
 
 
@@ -7641,8 +7735,11 @@ echo "Has GCC compatibility ............ $gcccompat"
 echo "Has PCC debugging ................ $pccdebug"
 echo "Type of wchar_t is ............... ${wchar_type} (${wchar_size} chars)"
 echo "C11 support ...................... ${have_c11:-no}"
+echo "C23 support ...................... ${have_c23:-no}"
 echo "Build portable Unicode library ... ${BUILD_LIBUNICODE}"
 echo "Build portable Threading library . ${BUILD_LIBTHREAD}"
+echo "Build portable Bit utils library . ${BUILD_LIBSTDBIT}"
+echo "Build portable Checked int library ${BUILD_LIBCKDINT}"
 echo
 echo "Configure finished.  Do 'make && make install' to compile and install.
 "
