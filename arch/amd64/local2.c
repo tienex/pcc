@@ -44,6 +44,7 @@ static TWORD ftype;
 char *rbyte[], *rshort[], *rlong[];
 static int needframe;
 int mcmodel = MCSMALL;
+int apx_enabled = 0;
 
 /*
  * Print out the prolog assembler.
@@ -1059,6 +1060,8 @@ mflags(char *str)
 		mcmodel = MCMEDIUM;
 	else if (S("cmodel=large"))
 		mcmodel = MCLARGE;
+	else if (S("apx"))
+		apx_enabled = 1;
 	else
 		comperr("bad -m arg");
 }

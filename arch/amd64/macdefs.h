@@ -301,6 +301,7 @@ P1ND *amd64_builtin_va_copy(const struct bitable *, P1ND *a);
 #define	MCLARGE		01000
 #define	MCALL		(MCSMALL|MCMEDIUM|MCLARGE)
 extern int mcmodel;
+extern int apx_enabled;
 
 /* floating point definitions */
 #define USE_IEEEFP_32
