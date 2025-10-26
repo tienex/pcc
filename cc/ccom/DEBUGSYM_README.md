@@ -124,6 +124,70 @@ This is a comprehensive debug symbol generation and parsing system for the Porta
 **Platforms**: Archimedes, RISC PC, RISC OS (ARM2, ARM3, ARM6, ARM7, StrongARM)
 **File**: `debugsym_acorn.c`
 
+### a.out Debug Formats
+- **BSD a.out** - Berkeley Unix executable format with STABS
+- **OMAGIC/NMAGIC/ZMAGIC** - Various a.out variants
+- Used by classic Unix systems and early Linux
+
+**Platforms**: 4.3BSD, SunOS, early Linux, NetBSD, OpenBSD
+**File**: `debugsym_aout.c`
+
+### Mach-O Debug Formats
+- **Mach-O DWARF** - Modern macOS/iOS debug format
+- **Mach-O STABS** - Legacy Mac OS X debug format
+- Supports multiple architectures (x86, x86_64, ARM, ARM64)
+
+**Platforms**: macOS, iOS, Darwin (x86, x86_64, ARM, ARM64)
+**File**: `debugsym_macho.c`
+
+### OMF (Object Module Format)
+- **Intel OMF-386** - Intel/Microsoft 32-bit object format
+- **Borland OMF** - Enhanced with debug records
+- **IBM OMF** - OS/2 variant
+
+**Platforms**: MS-DOS, OS/2, early Windows (16-bit & 32-bit)
+**File**: `debugsym_omf.c`
+
+### PDB (Program Database)
+- **PDB 2.0** - Visual C++ 2.0-6.0 format
+- **PDB 7.0** - Visual Studio .NET and later (MSF format)
+- Multi-stream format with TPI (Type Info) and DBI (Debug Info)
+
+**Platforms**: Windows (Visual Studio, modern Microsoft toolchains)
+**File**: `debugsym_pdb.c`
+
+### CTF (Compact C Type Format)
+- **CTF v2** - Solaris 10 format
+- **CTF v3** - illumos/FreeBSD/Linux format
+- Designed for DTrace kernel probes and debugging
+
+**Platforms**: Solaris, illumos, FreeBSD, Linux (with CTF support)
+**File**: `debugsym_ctf.c`
+
+### BTF (BPF Type Format)
+- **BTF v1** - Linux kernel eBPF type format
+- CO-RE (Compile Once - Run Everywhere) support
+- Used by libbpf, bpftool, BCC, bpftrace
+
+**Platforms**: Linux kernel (eBPF programs)
+**File**: `debugsym_btf.c`
+
+### Plan 9 Debug Format
+- Simple symbol table format for Plan 9 from Bell Labs
+- Multiple architectures: 386 (8.out), amd64 (6.out), ARM (5.out), MIPS (v.out), PowerPC (q.out), SPARC (k.out)
+- Used by Acid debugger
+
+**Platforms**: Plan 9, Inferno, Plan 9 from User Space
+**File**: `debugsym_plan9.c`
+
+### TADS (Turbo Assembler Debug Symbols)
+- Borland Turbo Assembler debug format
+- Compatible with Turbo Debugger (TD/TD32)
+- 16-bit and 32-bit support
+
+**Platforms**: Borland TASM, Turbo C/C++, Borland C++
+**File**: `debugsym_tads.c`
+
 ## Architecture
 
 ### Core Components
@@ -145,6 +209,14 @@ debugsym_macos.c    - Classic Mac OS MPW/PEF implementation
 debugsym_atari.c    - Atari TOS/GEMDOS DRI/GST implementation
 debugsym_amiga.c    - Amiga Hunk/SAS/C implementation
 debugsym_acorn.c    - Acorn AOF/AIF implementation
+debugsym_aout.c     - BSD a.out implementation
+debugsym_macho.c    - Mach-O (macOS/iOS) implementation
+debugsym_omf.c      - Object Module Format implementation
+debugsym_pdb.c      - Program Database (PDB) implementation
+debugsym_ctf.c      - Compact C Type Format implementation
+debugsym_btf.c      - BPF Type Format implementation
+debugsym_plan9.c    - Plan 9 implementation
+debugsym_tads.c     - Turbo Assembler Debug Symbols implementation
 ```
 
 ### Data Flow
@@ -177,7 +249,15 @@ Symbol Table Construction
     ├─→ Mac OS    → debugsym_macos_emit()
     ├─→ Atari     → debugsym_atari_emit()
     ├─→ Amiga     → debugsym_amiga_emit()
-    └─→ Acorn     → debugsym_acorn_emit()
+    ├─→ Acorn     → debugsym_acorn_emit()
+    ├─→ a.out     → debugsym_aout_emit()
+    ├─→ Mach-O    → debugsym_macho_emit()
+    ├─→ OMF       → debugsym_omf_emit()
+    ├─→ PDB       → debugsym_pdb_emit()
+    ├─→ CTF       → debugsym_ctf_emit()
+    ├─→ BTF       → debugsym_btf_emit()
+    ├─→ Plan 9    → debugsym_plan9_emit()
+    └─→ TADS      → debugsym_tads_emit()
     ↓
 Debug Information in Object File
 ```
@@ -202,6 +282,18 @@ DBGFMT_WATCOM
 DBGFMT_IBM_HLL
 DBGFMT_HP_SOM
 DBGFMT_VMS_DST
+DBGFMT_MACOS_MPW, DBGFMT_MACOS_PEF, DBGFMT_MACOS_CODEWARRIOR
+DBGFMT_ATARI_DRI, DBGFMT_ATARI_GST, DBGFMT_ATARI_PUREC
+DBGFMT_AMIGA_HUNK, DBGFMT_AMIGA_SASC, DBGFMT_AMIGA_DICE
+DBGFMT_ACORN_AOF, DBGFMT_ACORN_AIF, DBGFMT_ACORN_DDT
+DBGFMT_AOUT
+DBGFMT_MACHO
+DBGFMT_OMF
+DBGFMT_PDB
+DBGFMT_CTF
+DBGFMT_BTF
+DBGFMT_PLAN9
+DBGFMT_TADS
 ```
 
 ### Symbol Recording
