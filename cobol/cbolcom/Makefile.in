@@ -1,0 +1,143 @@
+#	$Id$
+#
+# Makefile.in for COBOL compiler backend
+
+srcdir=@srcdir@
+top_srcdir=@top_srcdir@
+top_builddir=@top_builddir@
+VPATH=@srcdir@
+prefix=@prefix@
+exec_prefix=@exec_prefix@
+libexecdir=@libexecdir@
+CC=@CC@
+EXEEXT=@EXEEXT@
+CFLAGS=@CFLAGS@ @ADD_CFLAGS@
+CPPFLAGS=@CPPFLAGS@ @ADD_CPPFLAGS@ \
+	-DLIBEXECDIR=\"$(libexecdir)\" \
+	-Dmach_$(TARGMACH) -Dos_$(TARGOS) \
+	-I$(srcdir) -I$(top_builddir) \
+	-I$(top_srcdir)/common \
+	-I$(MIPDIR) -I$(MDIR) -I$(OSDIR)
+LIBS=@LIBS@
+LDFLAGS=@LDFLAGS@
+LEX=@LEX@
+YACC=@YACC@
+YFLAGS=-d -t
+INSTALL=@INSTALL@
+INSTALL_PROGRAM=@INSTALL_PROGRAM@
+
+MIPDIR=$(top_srcdir)/mip
+MDIR=$(top_srcdir)/arch/$(TARGMACH)
+OSDIR=$(top_srcdir)/os/$(TARGOS)
+COMMONDIR=$(top_srcdir)/common
+
+DEST=cbolcom$(EXEEXT)
+
+COBLOBJS=main.o scan.o gram.o symtab.o types.o error.o codegen.o dialect.o \
+	 builtins.o expr.o util.o compat.o
+
+MIPOBJS=common.o match.o optim2.o reader.o regs.o trees.o inline.o cgram_s.o
+ARCHOBJS=code.o local.o local2.o order.o table.o
+OSOBJS=ccconfig.o
+
+OBJS=$(COBLOBJS) $(MIPOBJS) $(ARCHOBJS) $(OSOBJS)
+
+all: $(DEST)
+
+$(DEST): $(OBJS)
+	$(CC) $(CFLAGS) $(LDFLAGS) $(OBJS) -o $@ $(LIBS)
+
+gram.c gram.h: $(srcdir)/cbolgrammar.y
+	$(YACC) $(YFLAGS) -o gram.c $(srcdir)/cbolgrammar.y
+
+scan.o: scan.c gram.h
+
+scan.c: $(srcdir)/scan.l
+	$(LEX) -t $(srcdir)/scan.l > scan.c
+
+# COBOL-specific objects
+main.o: $(srcdir)/main.c pass1.h
+	$(CC) $(DEFS) $(CPPFLAGS) $(CFLAGS) -c $(srcdir)/main.c
+
+symtab.o: $(srcdir)/symtab.c pass1.h
+	$(CC) $(DEFS) $(CPPFLAGS) $(CFLAGS) -c $(srcdir)/symtab.c
+
+types.o: $(srcdir)/types.c pass1.h
+	$(CC) $(DEFS) $(CPPFLAGS) $(CFLAGS) -c $(srcdir)/types.c
+
+error.o: $(srcdir)/error.c pass1.h
+	$(CC) $(DEFS) $(CPPFLAGS) $(CFLAGS) -c $(srcdir)/error.c
+
+codegen.o: $(srcdir)/codegen.c pass1.h
+	$(CC) $(DEFS) $(CPPFLAGS) $(CFLAGS) -c $(srcdir)/codegen.c
+
+dialect.o: $(srcdir)/dialect.c pass1.h
+	$(CC) $(DEFS) $(CPPFLAGS) $(CFLAGS) -c $(srcdir)/dialect.c
+
+builtins.o: $(srcdir)/builtins.c pass1.h
+	$(CC) $(DEFS) $(CPPFLAGS) $(CFLAGS) -c $(srcdir)/builtins.c
+
+expr.o: $(srcdir)/expr.c pass1.h
+	$(CC) $(DEFS) $(CPPFLAGS) $(CFLAGS) -c $(srcdir)/expr.c
+
+util.o: $(srcdir)/util.c pass1.h
+	$(CC) $(DEFS) $(CPPFLAGS) $(CFLAGS) -c $(srcdir)/util.c
+
+# MIP objects
+common.o: $(MIPDIR)/common.c
+	$(CC) $(DEFS) $(CPPFLAGS) $(CFLAGS) -c $(MIPDIR)/common.c
+
+match.o: $(MIPDIR)/match.c
+	$(CC) $(DEFS) $(CPPFLAGS) $(CFLAGS) -c $(MIPDIR)/match.c
+
+optim2.o: $(MIPDIR)/optim2.c
+	$(CC) $(DEFS) $(CPPFLAGS) $(CFLAGS) -c $(MIPDIR)/optim2.c
+
+reader.o: $(MIPDIR)/reader.c
+	$(CC) $(DEFS) $(CPPFLAGS) $(CFLAGS) -c $(MIPDIR)/reader.c
+
+regs.o: $(MIPDIR)/regs.c
+	$(CC) $(DEFS) $(CPPFLAGS) $(CFLAGS) -c $(MIPDIR)/regs.c
+
+trees.o: $(MIPDIR)/trees.c
+	$(CC) $(DEFS) $(CPPFLAGS) $(CFLAGS) -c $(MIPDIR)/trees.c
+
+inline.o: $(MIPDIR)/inline.c
+	$(CC) $(DEFS) $(CPPFLAGS) $(CFLAGS) -c $(MIPDIR)/inline.c
+
+cgram_s.o: $(MIPDIR)/cgram.c
+	$(CC) $(DEFS) $(CPPFLAGS) $(CFLAGS) -DCPASS2 -c $(MIPDIR)/cgram.c -o $@
+
+# Architecture objects
+code.o: $(MDIR)/code.c
+	$(CC) $(DEFS) $(CPPFLAGS) $(CFLAGS) -c $(MDIR)/code.c
+
+local.o: $(MDIR)/local.c
+	$(CC) $(DEFS) $(CPPFLAGS) $(CFLAGS) -c $(MDIR)/local.c
+
+local2.o: $(MDIR)/local2.c
+	$(CC) $(DEFS) $(CPPFLAGS) $(CFLAGS) -c $(MDIR)/local2.c
+
+order.o: $(MDIR)/order.c
+	$(CC) $(DEFS) $(CPPFLAGS) $(CFLAGS) -c $(MDIR)/order.c
+
+table.o: $(MDIR)/table.c
+	$(CC) $(DEFS) $(CPPFLAGS) $(CFLAGS) -c $(MDIR)/table.c
+
+# OS objects
+ccconfig.o: $(OSDIR)/ccconfig.c
+	$(CC) $(DEFS) $(CPPFLAGS) $(CFLAGS) -c $(OSDIR)/ccconfig.c
+
+# Common objects
+compat.o: $(COMMONDIR)/compat.c
+	$(CC) $(DEFS) $(CPPFLAGS) $(CFLAGS) -c $(COMMONDIR)/compat.c
+
+install:
+	test -z "$(DESTDIR)$(libexecdir)" || mkdir -p "$(DESTDIR)$(libexecdir)"
+	$(INSTALL_PROGRAM) $(DEST) $(DESTDIR)$(libexecdir)
+
+clean:
+	/bin/rm -f $(OBJS) $(DEST) scan.c gram.c gram.h
+
+distclean: clean
+	/bin/rm -f Makefile
