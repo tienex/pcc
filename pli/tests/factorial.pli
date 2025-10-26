@@ -1,0 +1,23 @@
+/* Factorial calculator in PL/I */
+
+FACTORIAL_DEMO: PROCEDURE OPTIONS(MAIN);
+    DECLARE N FIXED BINARY(31);
+    DECLARE RESULT FIXED BINARY(31);
+
+    /* Calculate factorial of 5 */
+    N = 5;
+    RESULT = FACTORIAL(N);
+
+    PUT SKIP LIST('Factorial of ', N, ' is ', RESULT);
+
+    /* Recursive factorial function */
+    FACTORIAL: PROCEDURE(X) RECURSIVE RETURNS(FIXED BINARY(31));
+        DECLARE X FIXED BINARY(31);
+
+        IF X <= 1 THEN
+            RETURN(1);
+        ELSE
+            RETURN(X * FACTORIAL(X - 1));
+    END FACTORIAL;
+
+END FACTORIAL_DEMO;
