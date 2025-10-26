@@ -1,0 +1,262 @@
+/*
+ * x86asm.c - Universal x86 Assembly Emitter Library - Core Implementation
+ *
+ * Copyright (c) 2025
+ * BSD Licensed - See COPYING
+ */
+
+#include "x86asm.h"
+#include "x86asm_internal.h"
+#include <stdlib.h>
+#include <string.h>
+
+/* Forward declarations for format-specific ops */
+extern const x86asm_ops_t x86asm_ops_gnu_as;
+extern const x86asm_ops_t x86asm_ops_apple_as;
+extern const x86asm_ops_t x86asm_ops_masm;
+extern const x86asm_ops_t x86asm_ops_ml;
+extern const x86asm_ops_t x86asm_ops_tasm;
+extern const x86asm_ops_t x86asm_ops_wasm;
+extern const x86asm_ops_t x86asm_ops_owasm;
+extern const x86asm_ops_t x86asm_ops_nasm;
+extern const x86asm_ops_t x86asm_ops_yasm;
+
+/*
+ * Create a new emitter context
+ */
+x86asm_ctx_t *
+x86asm_create(x86asm_format_t format, FILE *output, int bits)
+{
+    x86asm_ctx_t *ctx;
+
+    if (!output || (bits != 16 && bits != 32 && bits != 64))
+        return NULL;
+
+    ctx = calloc(1, sizeof(x86asm_ctx_t));
+    if (!ctx)
+        return NULL;
+
+    ctx->format = format;
+    ctx->output = output;
+    ctx->bits = bits;
+    ctx->indent = 1;
+    ctx->flags = 0;
+
+    /* Select appropriate operations table */
+    switch (format) {
+    case ASM_FMT_GNU_AS:
+        ctx->ops = &x86asm_ops_gnu_as;
+        break;
+    case ASM_FMT_APPLE_AS:
+        ctx->ops = &x86asm_ops_apple_as;
+        break;
+    case ASM_FMT_MASM:
+        ctx->ops = &x86asm_ops_masm;
+        break;
+    case ASM_FMT_ML:
+        ctx->ops = &x86asm_ops_ml;
+        break;
+    case ASM_FMT_TASM:
+        ctx->ops = &x86asm_ops_tasm;
+        break;
+    case ASM_FMT_WASM:
+        ctx->ops = &x86asm_ops_wasm;
+        break;
+    case ASM_FMT_OWASM:
+        ctx->ops = &x86asm_ops_owasm;
+        break;
+    case ASM_FMT_NASM:
+        ctx->ops = &x86asm_ops_nasm;
+        break;
+    case ASM_FMT_YASM:
+        ctx->ops = &x86asm_ops_yasm;
+        break;
+    default:
+        free(ctx);
+        return NULL;
+    }
+
+    return ctx;
+}
+
+/*
+ * Destroy emitter context
+ */
+void
+x86asm_destroy(x86asm_ctx_t *ctx)
+{
+    if (ctx) {
+        free(ctx->user_data);
+        free(ctx);
+    }
+}
+
+/*
+ * Set format-specific flags
+ */
+void
+x86asm_set_flags(x86asm_ctx_t *ctx, int flags)
+{
+    if (ctx)
+        ctx->flags = flags;
+}
+
+/*
+ * Emit an instruction
+ */
+void
+x86asm_insn(x86asm_ctx_t *ctx, const char *mnemonic,
+            x86asm_operand_t *ops, int nops, x86asm_prefix_t prefix)
+{
+    if (ctx && ctx->ops && ctx->ops->emit_insn)
+        ctx->ops->emit_insn(ctx, mnemonic, ops, nops, prefix);
+}
+
+/*
+ * Emit a label
+ */
+void
+x86asm_label(x86asm_ctx_t *ctx, const char *name, int global)
+{
+    if (ctx && ctx->ops && ctx->ops->emit_label)
+        ctx->ops->emit_label(ctx, name, global);
+}
+
+/*
+ * Emit a segment/section directive
+ */
+void
+x86asm_segment(x86asm_ctx_t *ctx, x86asm_segment_t seg, const char *name)
+{
+    if (ctx && ctx->ops && ctx->ops->emit_segment)
+        ctx->ops->emit_segment(ctx, seg, name);
+}
+
+/*
+ * Emit data
+ */
+void
+x86asm_data(x86asm_ctx_t *ctx, x86asm_datasize_t size,
+            const void *data, size_t count)
+{
+    if (ctx && ctx->ops && ctx->ops->emit_data)
+        ctx->ops->emit_data(ctx, size, data, count);
+}
+
+/*
+ * Emit a comment
+ */
+void
+x86asm_comment(x86asm_ctx_t *ctx, const char *text)
+{
+    if (ctx && ctx->ops && ctx->ops->emit_comment)
+        ctx->ops->emit_comment(ctx, text);
+}
+
+/*
+ * Emit an alignment directive
+ */
+void
+x86asm_align(x86asm_ctx_t *ctx, int alignment)
+{
+    if (ctx && ctx->ops && ctx->ops->emit_align)
+        ctx->ops->emit_align(ctx, alignment);
+}
+
+/*
+ * Emit a raw directive
+ */
+void
+x86asm_directive(x86asm_ctx_t *ctx, const char *name, const char *value)
+{
+    if (ctx && ctx->ops && ctx->ops->emit_directive)
+        ctx->ops->emit_directive(ctx, name, value);
+}
+
+/*
+ * Helper: Create register operand
+ */
+x86asm_operand_t
+x86asm_op_reg(x86asm_reg_t reg, int size)
+{
+    x86asm_operand_t op = {0};
+    op.type = OP_REG;
+    op.size = size;
+    op.u.reg = reg;
+    return op;
+}
+
+/*
+ * Helper: Create immediate operand
+ */
+x86asm_operand_t
+x86asm_op_imm(int64_t value, int size)
+{
+    x86asm_operand_t op = {0};
+    op.type = OP_IMM;
+    op.size = size;
+    op.u.imm = value;
+    return op;
+}
+
+/*
+ * Helper: Create memory operand
+ */
+x86asm_operand_t
+x86asm_op_mem(x86asm_reg_t base, x86asm_reg_t index,
+              int scale, int64_t disp, int size)
+{
+    x86asm_operand_t op = {0};
+    op.type = OP_MEM;
+    op.size = size;
+    op.u.mem.base = base;
+    op.u.mem.index = index;
+    op.u.mem.scale = scale;
+    op.u.mem.disp = disp;
+    op.u.mem.symbol = NULL;
+    op.u.mem.segment = REG_NONE;
+    return op;
+}
+
+/*
+ * Helper: Create memory operand with symbol
+ */
+x86asm_operand_t
+x86asm_op_mem_symbol(const char *symbol, int64_t disp, int size)
+{
+    x86asm_operand_t op = {0};
+    op.type = OP_MEM;
+    op.size = size;
+    op.u.mem.base = REG_NONE;
+    op.u.mem.index = REG_NONE;
+    op.u.mem.scale = 0;
+    op.u.mem.disp = disp;
+    op.u.mem.symbol = symbol;
+    op.u.mem.segment = REG_NONE;
+    return op;
+}
+
+/*
+ * Helper: Create label operand
+ */
+x86asm_operand_t
+x86asm_op_label(const char *label)
+{
+    x86asm_operand_t op = {0};
+    op.type = OP_LABEL;
+    op.size = 0;
+    op.u.label = label;
+    return op;
+}
+
+/*
+ * Get register name (delegates to format-specific implementation)
+ */
+const char *
+x86asm_reg_name(x86asm_ctx_t *ctx, x86asm_reg_t reg)
+{
+    if (!ctx)
+        return NULL;
+
+    return x86asm_reg_name_internal(ctx->format, reg, ctx->bits);
+}
