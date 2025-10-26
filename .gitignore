@@ -4,6 +4,7 @@
 *.so
 *.so.*
 *.dylib
+*.dll
 *.exe
 
 # Generated files from bison/yacc
@@ -16,26 +17,36 @@ y.tab.h
 lex.yy.c
 
 # Autoconf/configure generated files
+config.h
 config.log
 config.status
 autom4te.cache/
 /Makefile
 configure
+configure~
 
 # Exception: Don't ignore source Makefiles in subdirectories
 !*/Makefile
+!Makefile.in
+!*/Makefile.in
 !libseh/Makefile
 
 # Editor and IDE files
 *~
+*.bak
 *.swp
 *.swo
 .*.swp
 .DS_Store
 .vscode/
 .idea/
+*.sublime-*
 
 # Compiler outputs
 *.out
 a.out
 core
+
+# Test outputs
+*.test
+test-results/
