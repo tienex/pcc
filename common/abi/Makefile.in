@@ -25,7 +25,8 @@ OBJS=	abi.o \
 	dlang.o swift.o rust.o go.o zig.o crystal.o \
 	java.o clr.o dart.o kotlin.o \
 	freepascal.o gnu_pascal.o gnat.o ecere.o \
-	demangle_itanium.o demangle_msvc.o
+	demangle_itanium.o demangle_msvc.o \
+	template_renamer.o universal_demangle.o
 
 LIB=libpccabi.a
 
@@ -69,6 +70,8 @@ install: $(LIB)
 	$(INSTALL_DATA) $(LIB) $(DESTDIR)$(libdir)
 	$(INSTALL_DATA) $(srcdir)/abi.h $(DESTDIR)$(includedir)
 	$(INSTALL_DATA) $(srcdir)/demangle.h $(DESTDIR)$(includedir)
+	$(INSTALL_DATA) $(srcdir)/template_renamer.h $(DESTDIR)$(includedir)
+	$(INSTALL_DATA) $(srcdir)/universal_demangle.h $(DESTDIR)$(includedir)
 
 clean:
 	rm -f $(OBJS) $(LIB)
