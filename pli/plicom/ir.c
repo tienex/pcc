@@ -148,7 +148,7 @@ NODE *ir_return(NODE *expr) {
 
 /* Emit a label */
 void ir_label(int label) {
-	send_passt(IP_DEFLABEL, label);
+	send_passt(IP_DEFLAB, label);
 }
 
 /* Start function prologue */
