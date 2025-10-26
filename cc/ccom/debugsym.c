@@ -177,6 +177,26 @@ debugsym_init(debug_format_t format)
 		debugsym_omf_init();
 		break;
 
+	case DBGFMT_PDB:
+		debugsym_pdb_init();
+		break;
+
+	case DBGFMT_CTF:
+		debugsym_ctf_init();
+		break;
+
+	case DBGFMT_BTF:
+		debugsym_btf_init();
+		break;
+
+	case DBGFMT_PLAN9:
+		debugsym_plan9_init();
+		break;
+
+	case DBGFMT_TADS:
+		debugsym_tads_init();
+		break;
+
 	default:
 		break;
 	}
@@ -283,6 +303,26 @@ debugsym_finish(void)
 
 	case DBGFMT_OMF:
 		debugsym_omf_finish();
+		break;
+
+	case DBGFMT_PDB:
+		debugsym_pdb_finish();
+		break;
+
+	case DBGFMT_CTF:
+		debugsym_ctf_finish();
+		break;
+
+	case DBGFMT_BTF:
+		debugsym_btf_finish();
+		break;
+
+	case DBGFMT_PLAN9:
+		debugsym_plan9_finish();
+		break;
+
+	case DBGFMT_TADS:
+		debugsym_tads_finish();
 		break;
 
 	default:
@@ -941,6 +981,26 @@ debugsym_emit_symbol(debug_symbol_t *sym)
 		debugsym_omf_emit(sym);
 		break;
 
+	case DBGFMT_PDB:
+		debugsym_pdb_emit(sym);
+		break;
+
+	case DBGFMT_CTF:
+		debugsym_ctf_emit(sym);
+		break;
+
+	case DBGFMT_BTF:
+		debugsym_btf_emit(sym);
+		break;
+
+	case DBGFMT_PLAN9:
+		debugsym_plan9_emit(sym);
+		break;
+
+	case DBGFMT_TADS:
+		debugsym_tads_emit(sym);
+		break;
+
 	default:
 		break;
 	}
@@ -988,7 +1048,8 @@ debugsym_format_name(debug_format_t format)
 		"Atari DRI", "Atari GST",
 		"Amiga Hunk", "Amiga SAS/C",
 		"Acorn AOF", "Acorn AIF",
-		"a.out", "Mach-O", "OMF"
+		"a.out", "Mach-O", "OMF",
+		"PDB", "CTF", "BTF", "Plan 9", "TADS"
 	};
 
 	if (format < 0 || format >= DBGFMT_MAX)

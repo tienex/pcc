@@ -59,7 +59,8 @@ OBJS=	builtins.o cgram.o code.o common.o compat.o dwarf.o external.o	\
 	debugsym_stabs.o debugsym_dbx.o debugsym_borland.o debugsym_watcom.o \
 	debugsym_hll.o debugsym_hpsom.o debugsym_vms.o			\
 	debugsym_macos.o debugsym_atari.o debugsym_amiga.o debugsym_acorn.o \
-	debugsym_aout.o debugsym_macho.o debugsym_omf.o
+	debugsym_aout.o debugsym_macho.o debugsym_omf.o			\
+	debugsym_pdb.o debugsym_ctf.o debugsym_btf.o debugsym_plan9.o debugsym_tads.o
 
 OBJS0=  builtins.o cgram.o code.o common.o compat.o dwarf.o external.o	\
 	gcc_compat.o init.o inline.o local.o main.o             	\
@@ -70,7 +71,8 @@ OBJS0=  builtins.o cgram.o code.o common.o compat.o dwarf.o external.o	\
 	debugsym_stabs.o debugsym_dbx.o debugsym_borland.o debugsym_watcom.o \
 	debugsym_hll.o debugsym_hpsom.o debugsym_vms.o			\
 	debugsym_macos.o debugsym_atari.o debugsym_amiga.o debugsym_acorn.o \
-	debugsym_aout.o debugsym_macho.o debugsym_omf.o
+	debugsym_aout.o debugsym_macho.o debugsym_omf.o			\
+	debugsym_pdb.o debugsym_ctf.o debugsym_btf.o debugsym_plan9.o debugsym_tads.o
 
 OBJS1=  common2.o compat.o external.o           			\
 	local2.o main2.o                				\
@@ -269,6 +271,21 @@ debugsym_macho.o: $(srcdir)/debugsym_macho.c
 
 debugsym_omf.o: $(srcdir)/debugsym_omf.c
 	$(CC) $(CF0) $(CFLAGS) $(CPPFLAGS) -c -o $@ $(srcdir)/debugsym_omf.c
+
+debugsym_pdb.o: $(srcdir)/debugsym_pdb.c
+	$(CC) $(CF0) $(CFLAGS) $(CPPFLAGS) -c -o $@ $(srcdir)/debugsym_pdb.c
+
+debugsym_ctf.o: $(srcdir)/debugsym_ctf.c
+	$(CC) $(CF0) $(CFLAGS) $(CPPFLAGS) -c -o $@ $(srcdir)/debugsym_ctf.c
+
+debugsym_btf.o: $(srcdir)/debugsym_btf.c
+	$(CC) $(CF0) $(CFLAGS) $(CPPFLAGS) -c -o $@ $(srcdir)/debugsym_btf.c
+
+debugsym_plan9.o: $(srcdir)/debugsym_plan9.c
+	$(CC) $(CF0) $(CFLAGS) $(CPPFLAGS) -c -o $@ $(srcdir)/debugsym_plan9.c
+
+debugsym_tads.o: $(srcdir)/debugsym_tads.c
+	$(CC) $(CF0) $(CFLAGS) $(CPPFLAGS) -c -o $@ $(srcdir)/debugsym_tads.c
 
 #
 # round 3: build $(DEST)
