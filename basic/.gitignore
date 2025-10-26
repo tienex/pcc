@@ -1,6 +1,7 @@
 # Build artifacts
 basic/basic
 pbc/pbc
+libbasic/libbasic.a
 *.o
 
 # Generated files

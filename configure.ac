@@ -1277,7 +1277,6 @@ fi
 
 AC_CONFIG_FILES([$CONFIG_MAKEFILES])
 AC_OUTPUT
-AC_OUTPUT
 
 eval "exec_prefix=$exec_prefix"
 eval "bindir=$bindir"
