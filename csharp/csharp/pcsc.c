@@ -1,5 +1,5 @@
 /*
- * C# Compiler Driver
+ * PCSC - Portable C# Compiler Driver
  * Wrapper that invokes cscom and handles compilation pipeline
  */
 

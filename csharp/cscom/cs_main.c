@@ -1,6 +1,7 @@
 /*
- * C# 3.0 Compiler Main Driver
+ * PCSC (Portable C# Compiler) Main Driver
  * Architecture and Endian Neutral
+ * Supports C# 1.0 through C# 12.0
  */
 
 #include <stdio.h>
@@ -42,7 +43,7 @@ static struct {
 };
 
 static void print_version(void) {
-	printf("C# Compiler (PCC Edition) version 2.0\n");
+	printf("PCSC - Portable C# Compiler version 2.0\n");
 	printf("Supports C# 1.0 through C# 12.0\n");
 	printf("Architecture-neutral and endian-neutral compiler\n");
 	printf("With shared ARC support\n");
@@ -77,7 +78,7 @@ static void print_usage(const char *progname) {
 	printf("\nExamples:\n");
 	printf("  %s -langversion:2.0 program.cs     # Compile as C# 2.0\n", progname);
 	printf("  %s -langversion:7.3 --features     # Show C# 7.3 features\n", progname);
-	printf("  %s -o app.csm app.cs                # Compile with latest C#\n", progname);
+	printf("  %s -o app.csm app.cs               # Compile with latest C#\n", progname);
 }
 
 static enum cs_arch parse_arch(const char *arch_str) {
