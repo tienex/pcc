@@ -706,10 +706,66 @@ if test $libvmf != yes ; then
 fi
 fi
 
+# Check for C11 standard support
+AC_MSG_CHECKING([for C11 support])
+save_CFLAGS="$CFLAGS"
+CFLAGS="$CFLAGS -std=c11"
+AC_COMPILE_IFELSE([
+    AC_LANG_PROGRAM([[
+        #if __STDC_VERSION__ < 201112L
+        #error C11 not supported
+        #endif
+    ]], [[]])
+  ], [
+    have_c11=yes
+    C11_CFLAGS="-std=c11"
+  ], [
+    have_c11=no
+    C11_CFLAGS=""
+])
+CFLAGS="$save_CFLAGS"
+AC_MSG_RESULT([$have_c11])
+AC_SUBST(C11_CFLAGS)
+
 # Checks for header files.
 # AC_CHECK_HEADERS([fcntl.h stdlib.h string.h unistd.h])
 AC_CHECK_HEADERS([string.h malloc.h libgen.h])
 AC_HEADER_SYS_WAIT
+
+# Check for C11 Unicode support (uchar.h)
+AC_CHECK_HEADERS([uchar.h], [have_uchar=yes], [have_uchar=no])
+
+# Check for C11 threads support (threads.h)
+AC_CHECK_HEADERS([threads.h], [have_threads=yes], [have_threads=no])
+
+# Check for POSIX threads if C11 threads not available
+PTHREAD_LIBS=""
+if test "$have_threads" = "no"; then
+    AC_SEARCH_LIBS([pthread_create], [pthread], [
+        if test "$ac_cv_search_pthread_create" != "none required"; then
+            PTHREAD_LIBS="$ac_cv_search_pthread_create"
+        fi
+        have_pthreads=yes
+    ], [have_pthreads=no])
+fi
+AC_SUBST(PTHREAD_LIBS)
+
+# Determine which libraries to build
+BUILD_LIBUNICODE=no
+BUILD_LIBTHREAD=no
+
+if test "$have_uchar" = "no"; then
+    BUILD_LIBUNICODE=yes
+    AC_MSG_NOTICE([Will build portable libunicode (C11 Unicode support)])
+fi
+
+if test "$have_threads" = "no"; then
+    BUILD_LIBTHREAD=yes
+    AC_MSG_NOTICE([Will build portable libthread (C11 threading support)])
+fi
+
+AC_SUBST(BUILD_LIBUNICODE)
+AC_SUBST(BUILD_LIBTHREAD)
 
 # Checks for library functions.
 ##  AC_FUNC_STRTOD
@@ -938,6 +994,13 @@ AC_CONFIG_FILES([Makefile
 		pascal/pcom/Makefile
 		common/abi/Makefile
 		include/Makefile
+		libunicode/Makefile
+		libthread/Makefile
+		libstdbit/Makefile
+		libckdint/Makefile
+		libdecimal/Makefile
+		libmetaware/Makefile
+		libblocks/Makefile
 ])
 AC_OUTPUT
 
@@ -963,6 +1026,9 @@ echo "Has native floating point ........ $nativefp"
 echo "Has GCC compatibility ............ $gcccompat"
 echo "Has PCC debugging ................ $pccdebug"
 echo "Type of wchar_t is ............... ${wchar_type} (${wchar_size} chars)"
+echo "C11 support ...................... ${have_c11:-no}"
+echo "Build portable Unicode library ... ${BUILD_LIBUNICODE}"
+echo "Build portable Threading library . ${BUILD_LIBTHREAD}"
 echo
 echo "Configure finished.  Do 'make && make install' to compile and install.
 "
