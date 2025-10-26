@@ -96,4 +96,11 @@ ocaml/ocom/*.o
 # OCaml runtime library
 libocaml/libocaml.a
 libocaml/*.o
+
+# Generic GC library
+libgc/libgc.a
+libgc/*.o
+
+# Test binaries
+test_gc
 test_ocaml_runtime

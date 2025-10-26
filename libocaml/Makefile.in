@@ -10,7 +10,7 @@ CC = @CC@
 AR = ar
 RANLIB = @RANLIB@
 CFLAGS = @CFLAGS@ @ADD_CFLAGS@
-CPPFLAGS = @CPPFLAGS@ @ADD_CPPFLAGS@ -I$(srcdir) -I$(top_builddir)
+CPPFLAGS = @CPPFLAGS@ @ADD_CPPFLAGS@ -I$(srcdir) -I$(top_builddir) -I$(top_srcdir)/libgc
 INSTALL = @INSTALL@
 INSTALL_DATA = @INSTALL_DATA@
 
