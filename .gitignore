@@ -103,4 +103,6 @@ libgc/*.o
 
 # Test binaries
 test_gc
+test_gc_enhanced
+test_simple
 test_ocaml_runtime
