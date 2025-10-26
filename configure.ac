@@ -718,6 +718,7 @@ AC_CONFIG_FILES([Makefile
 		pascal/Makefile
 		pascal/pascal/Makefile
 		pascal/pcom/Makefile
+		common/abi/Makefile
 ])
 AC_OUTPUT
 

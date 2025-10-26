@@ -5,7 +5,7 @@
 
 @SET_MAKE@
 
-ALL_SUBDIRS=	cc pascal
+ALL_SUBDIRS=	common/abi cc pascal
 DIST_SUBDIRS=	$(ALL_SUBDIRS) f77
 
 all install clean:
