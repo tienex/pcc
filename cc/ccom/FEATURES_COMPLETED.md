@@ -86,6 +86,20 @@ The universal debug symbol parser/generator for PCC is now **feature-complete** 
     - Type codes
     - WDBI signature
 
+12. **debugsym_hll.c** - IBM HLL (400+ lines)
+    - IBM High Level Language debug format
+    - Record types (HLL_*)
+    - Type codes and storage classes
+    - VisualAge C++, XL C/C++ support
+    - OS/2, AIX, mainframe compatibility
+
+13. **debugsym_hpsom.c** - HP SOM (400+ lines)
+    - HP System Object Model debug format
+    - DNTT (Debug Name and Type Table)
+    - Source Line Table (SLT)
+    - Value Table (VT)
+    - PA-RISC and Itanium support
+
 ### ✅ Testing and Validation (2 files, 800+ lines)
 
 12. **test_debugsym.c** - Comprehensive test suite
@@ -151,12 +165,14 @@ The universal debug symbol parser/generator for PCC is now **feature-complete** 
 | DBX | - | System V Unix | ✅ Complete |
 | Borland | TD32, TDS | Borland toolchains | ✅ Complete |
 | Watcom | WDI | Watcom C/C++ | ✅ Complete |
+| IBM HLL | - | IBM compilers (AIX, OS/2, OS/400) | ✅ Complete |
+| HP SOM | - | HP-UX (PA-RISC, Itanium) | ✅ Complete |
 
 ## Statistics
 
-- **Total files**: 16 (13 implementation + 2 tests + 1 example)
-- **Total lines of code**: ~5,000+
-- **Debug formats supported**: 9 format families, 15+ specific versions
+- **Total files**: 18 (15 implementation + 2 tests + 1 example)
+- **Total lines of code**: ~5,800+
+- **Debug formats supported**: 11 format families, 17+ specific versions
 - **API functions**: 80+
 - **Test cases**: 13 comprehensive tests
 - **Type system features**: 25+ type encodings

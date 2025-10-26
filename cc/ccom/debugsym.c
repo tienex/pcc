@@ -133,6 +133,14 @@ debugsym_init(debug_format_t format)
 		debugsym_watcom_init();
 		break;
 
+	case DBGFMT_IBM_HLL:
+		debugsym_hll_init();
+		break;
+
+	case DBGFMT_HP_SOM:
+		debugsym_hpsom_init();
+		break;
+
 	default:
 		break;
 	}
@@ -195,6 +203,14 @@ debugsym_finish(void)
 
 	case DBGFMT_WATCOM:
 		debugsym_watcom_finish();
+		break;
+
+	case DBGFMT_IBM_HLL:
+		debugsym_hll_finish();
+		break;
+
+	case DBGFMT_HP_SOM:
+		debugsym_hpsom_finish();
 		break;
 
 	default:
@@ -809,6 +825,14 @@ debugsym_emit_symbol(debug_symbol_t *sym)
 		debugsym_watcom_emit(sym);
 		break;
 
+	case DBGFMT_IBM_HLL:
+		debugsym_hll_emit(sym);
+		break;
+
+	case DBGFMT_HP_SOM:
+		debugsym_hpsom_emit(sym);
+		break;
+
 	default:
 		break;
 	}
@@ -850,7 +874,8 @@ debugsym_format_name(debug_format_t format)
 		"CodeView4", "CodeView5", "CodeView6", "CodeView7", "CodeView8",
 		"COFF", "ECOFF", "XCOFF", "PECOFF",
 		"STABS", "DBX",
-		"Borland TD32", "Borland TDS", "Watcom"
+		"Borland TD32", "Borland TDS", "Watcom",
+		"IBM HLL", "HP SOM"
 	};
 
 	if (format < 0 || format >= DBGFMT_MAX)

@@ -63,6 +63,22 @@ This is a comprehensive debug symbol generation and parsing system for the Porta
 **Platforms**: Watcom toolchain, DOS, OS/2, Windows
 **File**: `debugsym_watcom.c`
 
+### IBM HLL (High Level Language)
+- IBM compiler debug format
+- Used by VisualAge C++, XL C/C++
+- OS/2, AIX, and mainframe systems
+
+**Platforms**: IBM compilers (VisualAge, XL C/C++), OS/2, AIX, OS/400
+**File**: `debugsym_hll.c`
+
+### HP SOM (System Object Model)
+- HP-UX debug format
+- DNTT (Debug Name and Type Table)
+- Source Line Table (SLT)
+
+**Platforms**: HP-UX (PA-RISC, Itanium)
+**File**: `debugsym_hpsom.c`
+
 ## Architecture
 
 ### Core Components
@@ -77,6 +93,8 @@ debugsym_stabs.c    - STABS implementation
 debugsym_dbx.c      - DBX implementation
 debugsym_borland.c  - Borland TD32/TDS implementation
 debugsym_watcom.c   - Watcom WDI implementation
+debugsym_hll.c      - IBM HLL implementation
+debugsym_hpsom.c    - HP SOM implementation
 ```
 
 ### Data Flow
@@ -102,7 +120,9 @@ Symbol Table Construction
     ├─→ STABS     → debugsym_stabs_emit()
     ├─→ DBX       → debugsym_dbx_emit()
     ├─→ Borland   → debugsym_borland_emit()
-    └─→ Watcom    → debugsym_watcom_emit()
+    ├─→ Watcom    → debugsym_watcom_emit()
+    ├─→ IBM HLL   → debugsym_hll_emit()
+    └─→ HP SOM    → debugsym_hpsom_emit()
     ↓
 Debug Information in Object File
 ```
@@ -124,6 +144,8 @@ DBGFMT_COFF, DBGFMT_ECOFF, DBGFMT_XCOFF, DBGFMT_PECOFF
 DBGFMT_STABS, DBGFMT_DBX
 DBGFMT_BORLAND_TD32, DBGFMT_BORLAND_TDS
 DBGFMT_WATCOM
+DBGFMT_IBM_HLL
+DBGFMT_HP_SOM
 ```
 
 ### Symbol Recording
