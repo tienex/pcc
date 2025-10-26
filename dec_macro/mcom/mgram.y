@@ -69,11 +69,11 @@ line:
 	  NEWLINE
 	| statement NEWLINE
 	| LABEL statement NEWLINE {
-		emit_label($1);
+		emit_label_ir($1);
 		free($1);
 	}
 	| LABEL NEWLINE {
-		emit_label($1);
+		emit_label_ir($1);
 		free($1);
 	}
 	| error NEWLINE {
@@ -91,25 +91,25 @@ statement:
 
 directive:
 	  DIR_TITLE STRING_LITERAL {
-		emit_directive(DIR_TITLE, $2);
+		emit_directive_ir(DIR_TITLE, $2);
 		free($2);
 	}
 	| DIR_IDENT STRING_LITERAL {
-		emit_directive(DIR_IDENT, $2);
+		emit_directive_ir(DIR_IDENT, $2);
 		free($2);
 	}
 	| DIR_PSECT IDENTIFIER {
-		emit_directive(DIR_PSECT, $2);
+		emit_directive_ir(DIR_PSECT, $2);
 		free($2);
 	}
 	| DIR_ENTRY IDENTIFIER {
 		SYMTAB *sym = install($2, SYM_LABEL);
 		sym->sflags |= SF_ENTRY;
-		emit_directive(DIR_ENTRY, $2);
+		emit_directive_ir(DIR_ENTRY, $2);
 		free($2);
 	}
 	| DIR_END {
-		emit_directive(DIR_END);
+		emit_directive_ir(DIR_END);
 	}
 	| DIR_GLOBL symbol_list {
 		/* Symbols marked global in symbol_list production */
@@ -127,11 +127,11 @@ directive:
 		/* Data emitted in data_list production */
 	}
 	| DIR_ASCII STRING_LITERAL {
-		emit_string($2, 0);
+		emit_string_ir($2, 0);
 		free($2);
 	}
 	| DIR_ASCIZ STRING_LITERAL {
-		emit_string($2, 1);
+		emit_string_ir($2, 1);
 		free($2);
 	}
 	| DIR_BLKB expression {
@@ -144,10 +144,10 @@ directive:
 		location_counter += $2 * 4;
 	}
 	| DIR_ALIGN expression {
-		emit_directive(DIR_ALIGN, $2);
+		emit_directive_ir(DIR_ALIGN, $2);
 	}
 	| DIR_EVEN {
-		emit_directive(DIR_EVEN);
+		emit_directive_ir(DIR_EVEN);
 	}
 	| DIR_MACRO IDENTIFIER {
 		/* Start macro definition */
@@ -185,10 +185,10 @@ symbol_list:
 
 data_list:
 	  expression {
-		emit_data(1, $1);  /* Emit byte by default */
+		emit_data_ir(1, $1);  /* Emit byte by default */
 	}
 	| data_list ',' expression {
-		emit_data(1, $3);
+		emit_data_ir(1, $3);
 	}
 	;
 
@@ -200,7 +200,7 @@ instruction:
 		current_inst.mnemonic = $1;
 		current_inst.noperands = 0;
 		current_inst.lineno = lineno;
-		emit_instruction(&current_inst);
+		emit_instruction_ir(&current_inst);
 		free($1);
 	}
 	| IDENTIFIER operand {
@@ -209,7 +209,7 @@ instruction:
 		current_inst.operands[0] = $2;
 		current_inst.noperands = 1;
 		current_inst.lineno = lineno;
-		emit_instruction(&current_inst);
+		emit_instruction_ir(&current_inst);
 		free($1);
 	}
 	| IDENTIFIER operand ',' operand {
@@ -219,7 +219,7 @@ instruction:
 		current_inst.operands[1] = $4;
 		current_inst.noperands = 2;
 		current_inst.lineno = lineno;
-		emit_instruction(&current_inst);
+		emit_instruction_ir(&current_inst);
 		free($1);
 	}
 	| IDENTIFIER operand ',' operand ',' operand {
@@ -230,7 +230,7 @@ instruction:
 		current_inst.operands[2] = $6;
 		current_inst.noperands = 3;
 		current_inst.lineno = lineno;
-		emit_instruction(&current_inst);
+		emit_instruction_ir(&current_inst);
 		free($1);
 	}
 	;

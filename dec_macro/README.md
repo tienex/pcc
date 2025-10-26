@@ -2,13 +2,24 @@
 
 ## Overview
 
-This directory contains a complete frontend compiler for **DEC MACRO** assembly language, integrated with the Portable C Compiler (PCC) framework.
+This directory contains a complete frontend compiler for **DEC MACRO** assembly language, **properly integrated with the Portable C Compiler (PCC) framework using PCC's Intermediate Representation (IR) system**.
 
 DEC MACRO (also known as MACRO-11, MACRO-32, etc.) is the assembly language used on Digital Equipment Corporation (DEC) systems, including:
 
 - **PDP-10** (36-bit architecture)
 - **PDP-11** (16-bit architecture)
 - **VAX** (32-bit architecture)
+
+## PCC IR Integration
+
+This frontend properly uses PCC's interpass mechanism:
+
+- **`send_passt(IP_ASM, ...)`** - Sends assembly instructions to the backend
+- **`send_passt(IP_DEFLAB, ...)`** - Defines labels
+- **`bjobcode()` / `ejobcode()`** - Marks compilation unit boundaries
+- **NODE structures** - Helper functions to build PCC IR nodes (for future high-level integration)
+
+All assembly code flows through PCC's IR system, making it a true PCC frontend rather than a standalone assembler.
 
 ## Features
 
