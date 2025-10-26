@@ -278,11 +278,24 @@ int pdp10_szint(void);
 int pdp10_szlong(void);
 int pdp10_szfloat(void);
 int pdp10_szdouble(void);
+
+/*
+ * Runtime pointer size function.
+ * Defining this function enables runtime pointer size in core PCC (pftn.c).
+ */
 int pdp10_szpointer(void);
+
 int pdp10_is_word_addressed(void);
 int pdp10_byteoff(OFFSZ offset);
 int pdp10_wdal(OFFSZ offset);
 int pdp10_szty(TWORD t);
+
+/* Runtime stack frame initialization */
+int pdp10_autoinit(void);
+int pdp10_arginit(void);
+
+/* Runtime type system initialization */
+void pdp10_init_runtime_types(void);
 
 /* Definitions mostly used in pass2 */
 

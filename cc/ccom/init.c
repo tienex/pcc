@@ -592,7 +592,11 @@ findoff(void)
 			while (ISARY(t))
 				t = DECREF(t);
 			if (ISPTR(t)) {
+#ifdef pdp10_szpointer
+				o = pdp10_szpointer(); /* Runtime pointer size */
+#else
 				o = SZPOINT(t); /* XXX use tsize() */
+#endif
 			} else {
 				o = tsize(t, is->in_sym->sdf, is->in_sym->sap);
 			}

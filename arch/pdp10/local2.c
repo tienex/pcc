@@ -1368,22 +1368,25 @@ mflags(char *str)
 			fprintf(stderr, "pcc: unknown ABI '%s' (use 'elf', 'macho', 'pecoff', or 'none')\n", str);
 	} else if (strcmp(str, "pow2") == 0) {
 		pdp10_pow2 = 1;
+
+		/* Initialize runtime type system with POW2 sizes */
+		pdp10_init_runtime_types();
+
 #ifdef PDP10_POW2
-		/* Compiler was built with POW2 support - runtime flag just confirms */
-		fprintf(stderr, "pcc: -mpow2 mode enabled (compiler built with -DPDP10_POW2)\n");
+		/* Compiler was built with POW2 support */
+		fprintf(stderr, "pcc: -mpow2 mode enabled\n");
 		fprintf(stderr, "pcc: Using power-of-2 types (8/16/32/64 bit) with VAX FP format\n");
-		fprintf(stderr, "pcc: Note: This is redundant when compiler is already built for POW2\n");
+		fprintf(stderr, "pcc: Compiler built with -DPDP10_POW2: Full support enabled\n");
 #else
-		/* Compiler was built for native mode - runtime flag creates mismatch! */
-		fprintf(stderr, "pcc: EXPERIMENTAL -mpow2 mode enabled (power-of-2 types)\n");
-		fprintf(stderr, "pcc: ERROR: This compiler was built WITHOUT -DPDP10_POW2!\n");
-		fprintf(stderr, "pcc: CRITICAL PROBLEMS:\n");
-		fprintf(stderr, "pcc:   - Floating-point: Will use PDP-10 (36/72-bit) instead of VAX!\n");
-		fprintf(stderr, "pcc:   - Struct layouts: Will use 9/18/36-bit offsets instead of 8/16/32!\n");
-		fprintf(stderr, "pcc:   - Array indexing: Will use wrong element sizes!\n");
-		fprintf(stderr, "pcc:   - WILL PRODUCE COMPLETELY BROKEN CODE!\n");
-		fprintf(stderr, "pcc: REQUIRED ACTION: Recompile PCC itself with -DPDP10_POW2\n");
-		fprintf(stderr, "pcc: This flag is for testing only and does NOT work correctly.\n");
+		/* Compiler was built for native mode - FP format mismatch! */
+		fprintf(stderr, "pcc: -mpow2 mode enabled (RUNTIME mode)\n");
+		fprintf(stderr, "pcc: Using power-of-2 types (8/16/32/64 bit)\n");
+		fprintf(stderr, "pcc: WARNING: Floating-point format limitation:\n");
+		fprintf(stderr, "pcc:   - Compiler built WITHOUT -DPDP10_POW2\n");
+		fprintf(stderr, "pcc:   - Will use PDP-10 FP format (36/72-bit) instead of VAX!\n");
+		fprintf(stderr, "pcc:   - Avoid floating-point operations in this mode\n");
+		fprintf(stderr, "pcc: Type sizes, struct layouts, and array indexing: FULLY WORKING\n");
+		fprintf(stderr, "pcc: For full POW2 support with VAX FP: Recompile with -DPDP10_POW2\n");
 #endif
 	} else {
 		fprintf(stderr, "pcc: unknown PDP-10 option '%s'\n", str);

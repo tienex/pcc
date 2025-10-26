@@ -721,7 +721,11 @@ emit(struct interpass *ip)
 		break;
 	case IP_EPILOG:
 		eoftn((struct interpass_prolog *)ip);
+#ifdef pdp10_autoinit
+		p2maxautooff = p2autooff = pdp10_autoinit()/pdp10_szchar();
+#else
 		p2maxautooff = p2autooff = AUTOINIT/SZCHAR;
+#endif
 		break;
 	case IP_DEFLAB:
 		deflab(ip->ip_lbl);

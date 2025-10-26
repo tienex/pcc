@@ -1325,8 +1325,13 @@ bpsize(P1ND *p)
 	if (isdyn(&s)) {
 		q = bcon(1);
 		for (t = s.stype; t > BTMASK; t = DECREF(t)) {
-			if (ISPTR(t))
+			if (ISPTR(t)) {
+#ifdef pdp10_szpointer
+				return buildtree(MUL, q, bcon(pdp10_szpointer()));
+#else
 				return buildtree(MUL, q, bcon(SZPOINT(t)));
+#endif
+			}
 			if (ISARY(t)) {
 				if (s.sdf->ddim < 0)
 					r = tempnode(-s.sdf->ddim, INT, 0, 0);

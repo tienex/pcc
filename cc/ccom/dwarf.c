@@ -43,7 +43,11 @@
 #define	DVERSION	3	/* dwarf version */
 #define	DLABEL		".LD%d"
 
+#ifdef pdp10_szpointer
+#define	DW64	(pdp10_szpointer()/pdp10_szchar() == 8)
+#else
 #define	DW64	(SZPOINT(VOID)/SZCHAR == 8)
+#endif
 
 static int dwseg = -1;
 enum { DINFO, DABBREV, DSTR };
@@ -202,7 +206,11 @@ dwarf_init(char *iname)
 	info412l(debug_info_sz_lbl); debug_info_sz = 0;
 	info2w(DVERSION);
 	info412l(debug_abbrev_beg_lbl);
+#ifdef pdp10_szpointer
+	info1b(pdp10_szpointer()/pdp10_szchar());
+#else
 	info1b(SZPOINT(VOID)/SZCHAR);
+#endif
 
 	/* Define abbrev table */
 	dwslab(DABBREV, debug_abbrev_beg_lbl);
