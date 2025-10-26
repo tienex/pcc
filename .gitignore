@@ -1,5 +1,6 @@
 # Build artifacts
 *.o
+*.lo
 *.a
 *.so
 *.so.*
@@ -12,9 +13,22 @@
 *.tab.h
 y.tab.c
 y.tab.h
+cgram.c
+cgram.h
 
 # Generated files from flex/lex
 lex.yy.c
+
+# Generated source files
+external.c
+external.h
+
+# Compiled binaries
+cc/cc/cc
+cc/ccom/mkext
+cc/cxxcom/mkext
+f77/fcom/mkext
+pascal/pcom/mkext
 
 # Autoconf/configure generated files
 config.h
