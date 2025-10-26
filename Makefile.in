@@ -5,7 +5,7 @@
 
 @SET_MAKE@
 
-C_SUBDIRS=	common/abi
+C_SUBDIRS=	common/abi include
 CC_SUBDIR=	cc
 EXTRA_SUBDIRS=	pascal f77
 ALL_SUBDIRS=	$(C_SUBDIRS) $(CC_SUBDIR)

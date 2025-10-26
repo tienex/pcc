@@ -908,6 +908,7 @@ AC_CONFIG_FILES([Makefile
 		pascal/pascal/Makefile
 		pascal/pcom/Makefile
 		common/abi/Makefile
+		include/Makefile
 ])
 AC_OUTPUT
 

@@ -3182,7 +3182,7 @@ case "$host_os" in
         hostos=freebsd
 	;;
     linux*)
-	ADD_CPPFLAGS="$ADD_CPPFLAGS -D_BSD_SOURCE"
+	ADD_CPPFLAGS="$ADD_CPPFLAGS -D_DEFAULT_SOURCE"
         hostos=linux
 	;;
     litebsd*)
@@ -6008,7 +6008,7 @@ esac
 
 
 
-ac_config_files="$ac_config_files Makefile cc/Makefile cc/cc/Makefile cc/cpp/Makefile cc/ccom/Makefile cc/cxxcom/Makefile cc/driver/Makefile f77/Makefile f77/f77/Makefile f77/fcom/Makefile pascal/Makefile pascal/pascal/Makefile pascal/pcom/Makefile common/abi/Makefile"
+ac_config_files="$ac_config_files Makefile cc/Makefile cc/cc/Makefile cc/cpp/Makefile cc/ccom/Makefile cc/cxxcom/Makefile cc/driver/Makefile f77/Makefile f77/f77/Makefile f77/fcom/Makefile pascal/Makefile pascal/pascal/Makefile pascal/pcom/Makefile common/abi/Makefile include/Makefile"
 
 cat >confcache <<\_ACEOF
 # This file is a shell script that caches the results of configure
@@ -6712,6 +6712,7 @@ do
     "pascal/pascal/Makefile") CONFIG_FILES="$CONFIG_FILES pascal/pascal/Makefile" ;;
     "pascal/pcom/Makefile") CONFIG_FILES="$CONFIG_FILES pascal/pcom/Makefile" ;;
     "common/abi/Makefile") CONFIG_FILES="$CONFIG_FILES common/abi/Makefile" ;;
+    "include/Makefile") CONFIG_FILES="$CONFIG_FILES include/Makefile" ;;
 
   *) as_fn_error $? "invalid argument: \`$ac_config_target'" "$LINENO" 5;;
   esac
