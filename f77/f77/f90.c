@@ -33,7 +33,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-char xxxvers[] = "FORTRAN 77 DRIVER, VERSION 1.11,   28 JULY 1978\n";
+char xxxvers[] = "FORTRAN 90 DRIVER, VERSION 2.0 (with F66/F77 compatibility)\n";
 
 #include <sys/wait.h>
 
@@ -108,6 +108,7 @@ static flag debugflag	= NO;
 static flag verbose	= NO;
 static flag fortonly	= NO;
 static flag macroflag	= NO;
+static int f_std	= 90;	/* Fortran standard: 66, 77, or 90 */
 
 static char *setdoto(char *), *lastchar(char *), *lastfield(char *);
 static void intrupt(int);
@@ -173,6 +174,24 @@ main(int argc, char **argv)
 					macroname = s+1; goto endfor;
 				default:
 					fatal1("bad option -T%c", *s);
+				}
+				break;
+
+			case 's': /* -std=f66, -std=f77, -std=f90 */
+				if (strncmp(s, "std=", 4) == 0) {
+					if (strcmp(s+4, "f66") == 0 || strcmp(s+4, "fortran66") == 0) {
+						f_std = 66;
+						addarg(ffary, &ffmax, "-std=f66");
+					} else if (strcmp(s+4, "f77") == 0 || strcmp(s+4, "fortran77") == 0) {
+						f_std = 77;
+						addarg(ffary, &ffmax, "-std=f77");
+					} else if (strcmp(s+4, "f90") == 0 || strcmp(s+4, "fortran90") == 0) {
+						f_std = 90;
+						addarg(ffary, &ffmax, "-std=f90");
+					} else {
+						fatal1("unknown standard '%s'", s+4);
+					}
+					goto endfor;
 				}
 				break;
 
