@@ -8,7 +8,9 @@
 #ifndef PASS1_H
 #define PASS1_H
 
-#include "../../mip/manifest.h"
+/* Remove dependency on PCC mip headers for now */
+/* #include "../../mip/manifest.h" */
+#include <stdint.h>
 #include "error.h"
 #include "dialect.h"
 
@@ -146,31 +148,32 @@ typedef struct enum_list {
 } ENUM_LIST;
 
 /* AST node types (for expression trees) */
-#define NAME       1    /* Identifier reference */
-#define ICON       2    /* Integer constant */
-#define FCON       3    /* Number constant (BCD) */
-#define SCON       4    /* String constant */
-#define LCON       5    /* Logical constant (True/False) */
-#define DCON       6    /* Date constant */
-#define PLUS       10   /* + */
-#define MINUS      11   /* - */
-#define MUL        12   /* * */
-#define DIV        13   /* / */
-#define MOD        14   /* mod */
-#define AND        15   /* and */
-#define OR         16   /* or */
-#define NOT        17   /* not */
-#define EQ         18   /* = */
-#define NE         19   /* <> */
-#define LT         20   /* < */
-#define LE         21   /* <= */
-#define GT         22   /* > */
-#define GE         23   /* >= */
-#define ASSIGN     24   /* = (assignment) */
-#define CALL       25   /* Procedure/method call */
-#define SUBSCRIPT  26   /* Array subscript */
-#define FIELD      27   /* Object field/method access */
-#define DEREF      28   /* Pointer dereference */
+/* Note: These must not conflict with parser token values */
+#define AST_NAME       1001    /* Identifier reference */
+#define AST_ICON       1002    /* Integer constant */
+#define AST_FCON       1003    /* Number constant (BCD) */
+#define AST_SCON       1004    /* String constant */
+#define AST_LCON       1005    /* Logical constant (True/False) */
+#define AST_DCON       1006    /* Date constant */
+#define AST_PLUS       1010   /* + */
+#define AST_MINUS      1011   /* - */
+#define AST_MUL        1012   /* * */
+#define AST_DIV        1013   /* / */
+#define AST_MOD        1014   /* mod */
+#define AST_AND        1015   /* and */
+#define AST_OR         1016   /* or */
+#define AST_NOT        1017   /* not */
+#define AST_EQ         1018   /* = */
+#define AST_NE         1019   /* <> */
+#define AST_LT         1020   /* < */
+#define AST_LE         1021   /* <= */
+#define AST_GT         1022   /* > */
+#define AST_GE         1023   /* >= */
+#define AST_ASSIGN     1024   /* = (assignment) */
+#define AST_CALL       1025   /* Procedure/method call */
+#define AST_SUBSCRIPT  1026   /* Array subscript */
+#define AST_FIELD      1027   /* Object field/method access */
+#define AST_DEREF      1028   /* Pointer dereference */
 
 /* Statement node types */
 #define STMT_IF        100  /* if statement */

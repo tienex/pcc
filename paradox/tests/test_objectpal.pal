@@ -1,0 +1,112 @@
+// ObjectPAL features test
+// Tests object-oriented features
+
+// Object with methods
+method buttonClick()
+var
+  name : String
+  age : LongInt
+begin
+  name = "John Doe"
+  age = 30
+
+  // Method call with self
+  self.updateDisplay(name, age)
+end
+endmethod
+
+// Private method
+private method updateDisplay(name : String, age : LongInt)
+var
+  message : String
+begin
+  message = "Name: " + name + ", Age: " + strval(age)
+  msginfo("User Info", message)
+end
+endmethod
+
+// Method with return value
+method calculateTotal(price : Currency, quantity : Number) : Currency
+var
+  total : Currency
+  discount : Currency
+begin
+  total = price * quantity
+
+  // Apply discount for large orders
+  if total > 1000 then
+    discount = total * 0.1
+    total = total - discount
+  endif
+
+  return total
+end
+endmethod
+
+// Foreach loop (ObjectPAL)
+method processArray()
+var
+  numbers : Array[10] of LongInt
+  i : LongInt
+  sum : LongInt
+begin
+  // Initialize array
+  for i = 1 to 10
+    numbers[i] = i * i
+  endfor
+
+  // Process with foreach
+  sum = 0
+  foreach i in numbers
+    sum = sum + i
+  endforeach
+
+  msginfo("Sum", strval(sum))
+end
+endmethod
+
+// Break and continue
+method testBreakContinue()
+var
+  i : LongInt
+begin
+  for i = 1 to 100
+    if i = 50 then
+      break  // Exit loop
+    endif
+
+    if i mod 2 = 0 then
+      continue  // Skip even numbers
+    endif
+
+    // Process odd numbers
+  endfor
+end
+endmethod
+
+// Event handler example
+method formOpen()
+begin
+  msginfo("Form", "Form is opening")
+  self.initialize()
+end
+endmethod
+
+method formClose()
+begin
+  msginfo("Form", "Form is closing")
+  self.cleanup()
+end
+endmethod
+
+method initialize()
+begin
+  // Initialization code
+end
+endmethod
+
+method cleanup()
+begin
+  // Cleanup code
+end
+endmethod
