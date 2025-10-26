@@ -852,3 +852,55 @@ cxxstructref(NODE *p, int f, char *n)
 	}
 	return structref(p, f, n);
 }
+
+/*
+ * Check if function name fname is a constructor for classsym.
+ * Constructor: function name == class name
+ */
+int
+cxxisctor(char *fname, struct symtab *classsym)
+{
+	if (classsym == NULL || fname == NULL)
+		return 0;
+	return (strcmp(fname, classsym->sname) == 0);
+}
+
+/*
+ * Check if function name fname is a destructor for classsym.
+ * Destructor: function name == ~ClassName
+ */
+int
+cxxisdtor(char *fname, struct symtab *classsym)
+{
+	if (classsym == NULL || fname == NULL)
+		return 0;
+	if (fname[0] != '~')
+		return 0;
+	return (strcmp(fname + 1, classsym->sname) == 0);
+}
+
+/*
+ * Mark function sp as a constructor.
+ */
+void
+cxxmarkctor(struct symtab *sp)
+{
+	if (sp == NULL)
+		return;
+	sp->sflags |= SCTOR;
+	if (cppdebug)
+		printf("Marked %s as constructor\n", sp->sname);
+}
+
+/*
+ * Mark function sp as a destructor.
+ */
+void
+cxxmarkdtor(struct symtab *sp)
+{
+	if (sp == NULL)
+		return;
+	sp->sflags |= SDTOR;
+	if (cppdebug)
+		printf("Marked %s as destructor\n", sp->sname);
+}

@@ -589,6 +589,13 @@ dclargs(void)
 		p = cxxstrvar(cftnsp->sdown);
 		ssave(p);
 		nparams++;
+
+		/* Check if this is a constructor or destructor */
+		if (cxxisctor(cftnsp->sname, cftnsp->sdown)) {
+			cxxmarkctor(cftnsp);
+		} else if (cxxisdtor(cftnsp->sname, cftnsp->sdown)) {
+			cxxmarkdtor(cftnsp);
+		}
 	}
 	/*
 	 * Generate a list for bfcode().
