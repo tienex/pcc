@@ -1,0 +1,16 @@
+; Simple Hello World in Paradox PAL
+; This is a basic PAL script
+
+proc sayHello()
+var
+  message : String
+begin
+  message = "Hello, World!"
+  msginfo("Greeting", message)
+end
+endproc
+
+; Main program
+begin
+  sayHello()
+end

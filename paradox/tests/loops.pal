@@ -1,0 +1,33 @@
+// PAL Loop Examples
+
+proc demonstrateLoops()
+var
+  i : LongInt
+  sum : LongInt
+  arr : Array[10] of Number
+begin
+  // For loop example
+  sum = 0
+  for i = 1 to 10
+    sum = sum + i
+  endfor
+
+  msginfo("Sum", "Sum of 1 to 10 is " + strval(sum))
+
+  // While loop example
+  i = 1
+  while i <= 5 do
+    arr[i] = i * i
+    i = i + 1
+  endwhile
+
+  // Foreach loop (ObjectPAL only)
+  foreach i in arr
+    msginfo("Array Element", strval(i))
+  endforeach
+end
+endproc
+
+begin
+  demonstrateLoops()
+end

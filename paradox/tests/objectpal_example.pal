@@ -1,0 +1,75 @@
+// ObjectPAL Example - Form event handler
+// Demonstrates ObjectPAL features like methods, objects, and events
+
+method buttonClick()
+var
+  customerName : String
+  orderTotal : Currency
+  orderDate : DateTime
+begin
+  // Get values from form fields
+  customerName = self.getvalue("CustomerName")
+  orderTotal = self.getvalue("OrderTotal")
+  orderDate = now()
+
+  // Validate input
+  if strlen(customerName) = 0 then
+    msgerror("Error", "Please enter a customer name")
+    return
+  endif
+
+  if orderTotal <= 0 then
+    msgerror("Error", "Order total must be greater than zero")
+    return
+  endif
+
+  // Process the order
+  try
+    processOrder(customerName, orderTotal, orderDate)
+    msginfo("Success", "Order processed successfully!")
+  except
+    msgerror("Error", "Failed to process order")
+  end
+end
+endmethod
+
+method processOrder(name : String, total : Currency, orderDate : DateTime)
+var
+  tc : String
+  orderID : LongInt
+begin
+  // Open orders table
+  tc = "Orders.db"
+
+  // Insert new order record
+  scan tc :
+    orderID = self.getvalue("OrderID")
+    self.setvalue("CustomerName", name)
+    self.setvalue("OrderTotal", total)
+    self.setvalue("OrderDate", orderDate)
+    post
+  endscan
+
+  return orderID
+end
+endmethod
+
+method calculateDiscount(total : Currency) : Currency
+var
+  discount : Currency
+begin
+  // Calculate discount based on order total
+  switch total
+    case 100 :
+      discount = total * 0.05  // 5% discount
+    case 500 :
+      discount = total * 0.10  // 10% discount
+    case 1000 :
+      discount = total * 0.15  // 15% discount
+    default :
+      discount = 0
+  endswitch
+
+  return discount
+end
+endmethod

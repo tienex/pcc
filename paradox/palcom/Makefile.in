@@ -1,0 +1,82 @@
+#	$Id$
+#
+# Makefile.in for Paradox PAL/ObjectPAL compiler (palcom)
+#
+VPATH=@srcdir@
+srcdir=@srcdir@
+top_srcdir=@top_srcdir@
+top_builddir=@top_builddir@
+prefix = @prefix@
+exec_prefix = @exec_prefix@
+bindir = @bindir@
+libexecdir = @libexecdir@
+datarootdir = @datarootdir@
+mandir = @mandir@
+CC = @CC@
+EXEEXT = @EXEEXT@
+TARGOS = @targos@
+TARGMACH = @targmach@
+YACC = @YACC@
+LEX = @LEX@
+CFLAGS = @CFLAGS@ @ADD_CFLAGS@
+CPPFLAGS = @CPPFLAGS@ @ADD_CPPFLAGS@ \
+	-I$(srcdir) -I$(top_builddir) \
+	-I$(top_srcdir)/mip -I$(top_srcdir)/common \
+	-DLIBEXECDIR=\"$(libexecdir)\" \
+	-Dmach_$(TARGMACH) -Dos_$(TARGOS)
+LIBS = @LIBS@
+LDFLAGS = @LDFLAGS@
+INSTALL = @INSTALL@
+INSTALL_PROGRAM = @INSTALL_PROGRAM@
+INSTALL_DATA = @INSTALL_DATA@
+
+OBJS=	main.o error.o dialect.o symtab.o types.o builtins.o \
+	scan.o palgram.o
+
+DEST=palcom$(EXEEXT)
+
+all: $(DEST)
+
+$(DEST): $(OBJS)
+	$(CC) $(LDFLAGS) $(OBJS) -o $@ $(LIBS)
+
+scan.c: $(srcdir)/scan.l
+	$(LEX) -t $(srcdir)/scan.l > scan.c
+
+palgram.c y.tab.h: $(srcdir)/palgram.y
+	$(YACC) -d $(srcdir)/palgram.y
+	mv y.tab.c palgram.c
+
+scan.o: scan.c y.tab.h pass1.h error.h dialect.h
+	$(CC) $(DEFS) $(CPPFLAGS) $(CFLAGS) -c scan.c
+
+palgram.o: palgram.c pass1.h error.h dialect.h
+	$(CC) $(DEFS) $(CPPFLAGS) $(CFLAGS) -c palgram.c
+
+main.o: $(srcdir)/main.c pass1.h error.h dialect.h
+	$(CC) $(DEFS) $(CPPFLAGS) $(CFLAGS) -c $(srcdir)/main.c
+
+error.o: $(srcdir)/error.c error.h
+	$(CC) $(DEFS) $(CPPFLAGS) $(CFLAGS) -c $(srcdir)/error.c
+
+dialect.o: $(srcdir)/dialect.c dialect.h
+	$(CC) $(DEFS) $(CPPFLAGS) $(CFLAGS) -c $(srcdir)/dialect.c
+
+symtab.o: $(srcdir)/symtab.c pass1.h error.h dialect.h
+	$(CC) $(DEFS) $(CPPFLAGS) $(CFLAGS) -c $(srcdir)/symtab.c
+
+types.o: $(srcdir)/types.c pass1.h error.h dialect.h
+	$(CC) $(DEFS) $(CPPFLAGS) $(CFLAGS) -c $(srcdir)/types.c
+
+builtins.o: $(srcdir)/builtins.c pass1.h error.h dialect.h
+	$(CC) $(DEFS) $(CPPFLAGS) $(CFLAGS) -c $(srcdir)/builtins.c
+
+install: all
+	test -z "$(DESTDIR)$(libexecdir)" || mkdir -p "$(DESTDIR)$(libexecdir)"
+	$(INSTALL_PROGRAM) $(DEST) $(DESTDIR)$(libexecdir)
+
+clean:
+	rm -f $(OBJS) $(DEST) scan.c palgram.c y.tab.h y.tab.c
+
+distclean: clean
+	rm -f Makefile
