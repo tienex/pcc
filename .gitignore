@@ -92,3 +92,8 @@ ocaml/ocom/ogram.c
 ocaml/ocom/scan.c
 ocaml/ocom/y.tab.h
 ocaml/ocom/*.o
+
+# OCaml runtime library
+libocaml/libocaml.a
+libocaml/*.o
+test_ocaml_runtime

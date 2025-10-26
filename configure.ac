@@ -1315,7 +1315,8 @@ if test "$enable_ocaml" = "yes"; then
 	CONFIG_MAKEFILES="$CONFIG_MAKEFILES
 		ocaml/Makefile
 		ocaml/ocaml/Makefile
-		ocaml/ocom/Makefile"
+		ocaml/ocom/Makefile
+		libocaml/Makefile"
 fi
 
 AC_CONFIG_FILES([$CONFIG_MAKEFILES])

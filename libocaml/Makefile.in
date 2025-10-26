@@ -1,0 +1,54 @@
+#	$Id$
+#
+# Makefile.in for libocaml - OCaml runtime library
+#
+VPATH=@srcdir@
+srcdir=@srcdir@
+top_srcdir=@top_srcdir@
+top_builddir=@top_builddir@
+CC = @CC@
+AR = ar
+RANLIB = @RANLIB@
+CFLAGS = @CFLAGS@ @ADD_CFLAGS@
+CPPFLAGS = @CPPFLAGS@ @ADD_CPPFLAGS@ -I$(srcdir) -I$(top_builddir)
+INSTALL = @INSTALL@
+INSTALL_DATA = @INSTALL_DATA@
+
+prefix = @prefix@
+exec_prefix = @exec_prefix@
+libdir = @libdir@
+includedir = @includedir@
+
+OBJS=	memory.o data_structures.o io.o exception.o
+
+LIB=libocaml.a
+
+all: $(LIB)
+
+$(LIB): $(OBJS)
+	$(AR) rv $@ $(OBJS)
+	$(RANLIB) $@
+
+memory.o: $(srcdir)/memory.c $(srcdir)/ocaml_runtime.h
+	$(CC) $(CFLAGS) $(CPPFLAGS) -c $(srcdir)/memory.c
+
+data_structures.o: $(srcdir)/data_structures.c $(srcdir)/ocaml_runtime.h
+	$(CC) $(CFLAGS) $(CPPFLAGS) -c $(srcdir)/data_structures.c
+
+io.o: $(srcdir)/io.c $(srcdir)/ocaml_runtime.h
+	$(CC) $(CFLAGS) $(CPPFLAGS) -c $(srcdir)/io.c
+
+exception.o: $(srcdir)/exception.c $(srcdir)/ocaml_runtime.h
+	$(CC) $(CFLAGS) $(CPPFLAGS) -c $(srcdir)/exception.c
+
+install: $(LIB)
+	test -z "$(DESTDIR)$(libdir)" || mkdir -p "$(DESTDIR)$(libdir)"
+	test -z "$(DESTDIR)$(includedir)" || mkdir -p "$(DESTDIR)$(includedir)"
+	$(INSTALL_DATA) $(LIB) $(DESTDIR)$(libdir)
+	$(INSTALL_DATA) $(srcdir)/ocaml_runtime.h $(DESTDIR)$(includedir)
+
+clean:
+	rm -f $(OBJS) $(LIB)
+
+distclean: clean
+	rm -f Makefile
