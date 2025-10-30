@@ -24,6 +24,11 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/* Needed for REG_* register name macros on Linux */
+#ifndef _GNU_SOURCE
+#define _GNU_SOURCE
+#endif
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -203,14 +208,40 @@ _seh_get_ip(void *context)
 	if (ctx == NULL)
 		return NULL;
 
-#if defined(__x86_64__)
-	return (void *)ctx->uc.uc_mcontext.gregs[REG_RIP];
-#elif defined(__i386__)
-	return (void *)ctx->uc.uc_mcontext.gregs[REG_EIP];
-#elif defined(__arm__)
-	return (void *)ctx->uc.uc_mcontext.arm_pc;
-#elif defined(__aarch64__)
-	return (void *)ctx->uc.uc_mcontext.pc;
+#ifdef __linux__
+	#if defined(__x86_64__)
+		return (void *)ctx->uc.uc_mcontext.gregs[REG_RIP];
+	#elif defined(__i386__)
+		return (void *)ctx->uc.uc_mcontext.gregs[REG_EIP];
+	#elif defined(__arm__)
+		return (void *)ctx->uc.uc_mcontext.arm_pc;
+	#elif defined(__aarch64__)
+		return (void *)ctx->uc.uc_mcontext.pc;
+	#else
+		return NULL;
+	#endif
+#elif defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__NetBSD__)
+	#if defined(__x86_64__)
+		return (void *)ctx->uc.uc_mcontext.mc_rip;
+	#elif defined(__i386__)
+		return (void *)ctx->uc.uc_mcontext.mc_eip;
+	#elif defined(__arm__)
+		return (void *)ctx->uc.uc_mcontext.__gregs[_REG_PC];
+	#else
+		return NULL;
+	#endif
+#elif defined(__APPLE__)
+	#if defined(__x86_64__)
+		return (void *)ctx->uc.uc_mcontext->__ss.__rip;
+	#elif defined(__i386__)
+		return (void *)ctx->uc.uc_mcontext->__ss.__eip;
+	#elif defined(__arm__)
+		return (void *)ctx->uc.uc_mcontext->__ss.__pc;
+	#elif defined(__aarch64__)
+		return (void *)ctx->uc.uc_mcontext->__ss.__pc;
+	#else
+		return NULL;
+	#endif
 #else
 	return NULL;
 #endif
@@ -227,14 +258,40 @@ _seh_get_sp(void *context)
 	if (ctx == NULL)
 		return NULL;
 
-#if defined(__x86_64__)
-	return (void *)ctx->uc.uc_mcontext.gregs[REG_RSP];
-#elif defined(__i386__)
-	return (void *)ctx->uc.uc_mcontext.gregs[REG_ESP];
-#elif defined(__arm__)
-	return (void *)ctx->uc.uc_mcontext.arm_sp;
-#elif defined(__aarch64__)
-	return (void *)ctx->uc.uc_mcontext.sp;
+#ifdef __linux__
+	#if defined(__x86_64__)
+		return (void *)ctx->uc.uc_mcontext.gregs[REG_RSP];
+	#elif defined(__i386__)
+		return (void *)ctx->uc.uc_mcontext.gregs[REG_ESP];
+	#elif defined(__arm__)
+		return (void *)ctx->uc.uc_mcontext.arm_sp;
+	#elif defined(__aarch64__)
+		return (void *)ctx->uc.uc_mcontext.sp;
+	#else
+		return NULL;
+	#endif
+#elif defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__NetBSD__)
+	#if defined(__x86_64__)
+		return (void *)ctx->uc.uc_mcontext.mc_rsp;
+	#elif defined(__i386__)
+		return (void *)ctx->uc.uc_mcontext.mc_esp;
+	#elif defined(__arm__)
+		return (void *)ctx->uc.uc_mcontext.__gregs[_REG_SP];
+	#else
+		return NULL;
+	#endif
+#elif defined(__APPLE__)
+	#if defined(__x86_64__)
+		return (void *)ctx->uc.uc_mcontext->__ss.__rsp;
+	#elif defined(__i386__)
+		return (void *)ctx->uc.uc_mcontext->__ss.__esp;
+	#elif defined(__arm__)
+		return (void *)ctx->uc.uc_mcontext->__ss.__sp;
+	#elif defined(__aarch64__)
+		return (void *)ctx->uc.uc_mcontext->__ss.__sp;
+	#else
+		return NULL;
+	#endif
 #else
 	return NULL;
 #endif
@@ -251,14 +308,34 @@ _seh_set_ip(void *context, void *ip)
 	if (ctx == NULL)
 		return;
 
-#if defined(__x86_64__)
-	ctx->uc.uc_mcontext.gregs[REG_RIP] = (unsigned long)ip;
-#elif defined(__i386__)
-	ctx->uc.uc_mcontext.gregs[REG_EIP] = (unsigned long)ip;
-#elif defined(__arm__)
-	ctx->uc.uc_mcontext.arm_pc = (unsigned long)ip;
-#elif defined(__aarch64__)
-	ctx->uc.uc_mcontext.pc = (unsigned long)ip;
+#ifdef __linux__
+	#if defined(__x86_64__)
+		ctx->uc.uc_mcontext.gregs[REG_RIP] = (unsigned long)ip;
+	#elif defined(__i386__)
+		ctx->uc.uc_mcontext.gregs[REG_EIP] = (unsigned long)ip;
+	#elif defined(__arm__)
+		ctx->uc.uc_mcontext.arm_pc = (unsigned long)ip;
+	#elif defined(__aarch64__)
+		ctx->uc.uc_mcontext.pc = (unsigned long)ip;
+	#endif
+#elif defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__NetBSD__)
+	#if defined(__x86_64__)
+		ctx->uc.uc_mcontext.mc_rip = (unsigned long)ip;
+	#elif defined(__i386__)
+		ctx->uc.uc_mcontext.mc_eip = (unsigned long)ip;
+	#elif defined(__arm__)
+		ctx->uc.uc_mcontext.__gregs[_REG_PC] = (unsigned long)ip;
+	#endif
+#elif defined(__APPLE__)
+	#if defined(__x86_64__)
+		ctx->uc.uc_mcontext->__ss.__rip = (unsigned long)ip;
+	#elif defined(__i386__)
+		ctx->uc.uc_mcontext->__ss.__eip = (unsigned long)ip;
+	#elif defined(__arm__)
+		ctx->uc.uc_mcontext->__ss.__pc = (unsigned long)ip;
+	#elif defined(__aarch64__)
+		ctx->uc.uc_mcontext->__ss.__pc = (unsigned long)ip;
+	#endif
 #endif
 }
 
@@ -274,42 +351,120 @@ _seh_get_register(void *context, int reg_index)
 	if (ctx == NULL)
 		return 0;
 
-#if defined(__x86_64__)
-	/* AMD64 register indices (Windows CONTEXT compatible) */
-	switch (reg_index) {
-	case 0:  return ctx->uc.uc_mcontext.gregs[REG_RAX];
-	case 1:  return ctx->uc.uc_mcontext.gregs[REG_RCX];
-	case 2:  return ctx->uc.uc_mcontext.gregs[REG_RDX];
-	case 3:  return ctx->uc.uc_mcontext.gregs[REG_RBX];
-	case 4:  return ctx->uc.uc_mcontext.gregs[REG_RSP];
-	case 5:  return ctx->uc.uc_mcontext.gregs[REG_RBP];
-	case 6:  return ctx->uc.uc_mcontext.gregs[REG_RSI];
-	case 7:  return ctx->uc.uc_mcontext.gregs[REG_RDI];
-	case 8:  return ctx->uc.uc_mcontext.gregs[REG_R8];
-	case 9:  return ctx->uc.uc_mcontext.gregs[REG_R9];
-	case 10: return ctx->uc.uc_mcontext.gregs[REG_R10];
-	case 11: return ctx->uc.uc_mcontext.gregs[REG_R11];
-	case 12: return ctx->uc.uc_mcontext.gregs[REG_R12];
-	case 13: return ctx->uc.uc_mcontext.gregs[REG_R13];
-	case 14: return ctx->uc.uc_mcontext.gregs[REG_R14];
-	case 15: return ctx->uc.uc_mcontext.gregs[REG_R15];
-	default: return 0;
-	}
-
-#elif defined(__i386__)
-	/* i386 register indices */
-	switch (reg_index) {
-	case 0:  return ctx->uc.uc_mcontext.gregs[REG_EAX];
-	case 1:  return ctx->uc.uc_mcontext.gregs[REG_ECX];
-	case 2:  return ctx->uc.uc_mcontext.gregs[REG_EDX];
-	case 3:  return ctx->uc.uc_mcontext.gregs[REG_EBX];
-	case 4:  return ctx->uc.uc_mcontext.gregs[REG_ESP];
-	case 5:  return ctx->uc.uc_mcontext.gregs[REG_EBP];
-	case 6:  return ctx->uc.uc_mcontext.gregs[REG_ESI];
-	case 7:  return ctx->uc.uc_mcontext.gregs[REG_EDI];
-	default: return 0;
-	}
-
+#ifdef __linux__
+	#if defined(__x86_64__)
+		/* AMD64 register indices (Windows CONTEXT compatible) */
+		switch (reg_index) {
+		case 0:  return ctx->uc.uc_mcontext.gregs[REG_RAX];
+		case 1:  return ctx->uc.uc_mcontext.gregs[REG_RCX];
+		case 2:  return ctx->uc.uc_mcontext.gregs[REG_RDX];
+		case 3:  return ctx->uc.uc_mcontext.gregs[REG_RBX];
+		case 4:  return ctx->uc.uc_mcontext.gregs[REG_RSP];
+		case 5:  return ctx->uc.uc_mcontext.gregs[REG_RBP];
+		case 6:  return ctx->uc.uc_mcontext.gregs[REG_RSI];
+		case 7:  return ctx->uc.uc_mcontext.gregs[REG_RDI];
+		case 8:  return ctx->uc.uc_mcontext.gregs[REG_R8];
+		case 9:  return ctx->uc.uc_mcontext.gregs[REG_R9];
+		case 10: return ctx->uc.uc_mcontext.gregs[REG_R10];
+		case 11: return ctx->uc.uc_mcontext.gregs[REG_R11];
+		case 12: return ctx->uc.uc_mcontext.gregs[REG_R12];
+		case 13: return ctx->uc.uc_mcontext.gregs[REG_R13];
+		case 14: return ctx->uc.uc_mcontext.gregs[REG_R14];
+		case 15: return ctx->uc.uc_mcontext.gregs[REG_R15];
+		default: return 0;
+		}
+	#elif defined(__i386__)
+		/* i386 register indices */
+		switch (reg_index) {
+		case 0:  return ctx->uc.uc_mcontext.gregs[REG_EAX];
+		case 1:  return ctx->uc.uc_mcontext.gregs[REG_ECX];
+		case 2:  return ctx->uc.uc_mcontext.gregs[REG_EDX];
+		case 3:  return ctx->uc.uc_mcontext.gregs[REG_EBX];
+		case 4:  return ctx->uc.uc_mcontext.gregs[REG_ESP];
+		case 5:  return ctx->uc.uc_mcontext.gregs[REG_EBP];
+		case 6:  return ctx->uc.uc_mcontext.gregs[REG_ESI];
+		case 7:  return ctx->uc.uc_mcontext.gregs[REG_EDI];
+		default: return 0;
+		}
+	#else
+		return 0;
+	#endif
+#elif defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__NetBSD__)
+	#if defined(__x86_64__)
+		/* BSD AMD64 register access */
+		switch (reg_index) {
+		case 0:  return ctx->uc.uc_mcontext.mc_rax;
+		case 1:  return ctx->uc.uc_mcontext.mc_rcx;
+		case 2:  return ctx->uc.uc_mcontext.mc_rdx;
+		case 3:  return ctx->uc.uc_mcontext.mc_rbx;
+		case 4:  return ctx->uc.uc_mcontext.mc_rsp;
+		case 5:  return ctx->uc.uc_mcontext.mc_rbp;
+		case 6:  return ctx->uc.uc_mcontext.mc_rsi;
+		case 7:  return ctx->uc.uc_mcontext.mc_rdi;
+		case 8:  return ctx->uc.uc_mcontext.mc_r8;
+		case 9:  return ctx->uc.uc_mcontext.mc_r9;
+		case 10: return ctx->uc.uc_mcontext.mc_r10;
+		case 11: return ctx->uc.uc_mcontext.mc_r11;
+		case 12: return ctx->uc.uc_mcontext.mc_r12;
+		case 13: return ctx->uc.uc_mcontext.mc_r13;
+		case 14: return ctx->uc.uc_mcontext.mc_r14;
+		case 15: return ctx->uc.uc_mcontext.mc_r15;
+		default: return 0;
+		}
+	#elif defined(__i386__)
+		/* BSD i386 register access */
+		switch (reg_index) {
+		case 0:  return ctx->uc.uc_mcontext.mc_eax;
+		case 1:  return ctx->uc.uc_mcontext.mc_ecx;
+		case 2:  return ctx->uc.uc_mcontext.mc_edx;
+		case 3:  return ctx->uc.uc_mcontext.mc_ebx;
+		case 4:  return ctx->uc.uc_mcontext.mc_esp;
+		case 5:  return ctx->uc.uc_mcontext.mc_ebp;
+		case 6:  return ctx->uc.uc_mcontext.mc_esi;
+		case 7:  return ctx->uc.uc_mcontext.mc_edi;
+		default: return 0;
+		}
+	#else
+		return 0;
+	#endif
+#elif defined(__APPLE__)
+	#if defined(__x86_64__)
+		/* macOS AMD64 register access */
+		switch (reg_index) {
+		case 0:  return ctx->uc.uc_mcontext->__ss.__rax;
+		case 1:  return ctx->uc.uc_mcontext->__ss.__rcx;
+		case 2:  return ctx->uc.uc_mcontext->__ss.__rdx;
+		case 3:  return ctx->uc.uc_mcontext->__ss.__rbx;
+		case 4:  return ctx->uc.uc_mcontext->__ss.__rsp;
+		case 5:  return ctx->uc.uc_mcontext->__ss.__rbp;
+		case 6:  return ctx->uc.uc_mcontext->__ss.__rsi;
+		case 7:  return ctx->uc.uc_mcontext->__ss.__rdi;
+		case 8:  return ctx->uc.uc_mcontext->__ss.__r8;
+		case 9:  return ctx->uc.uc_mcontext->__ss.__r9;
+		case 10: return ctx->uc.uc_mcontext->__ss.__r10;
+		case 11: return ctx->uc.uc_mcontext->__ss.__r11;
+		case 12: return ctx->uc.uc_mcontext->__ss.__r12;
+		case 13: return ctx->uc.uc_mcontext->__ss.__r13;
+		case 14: return ctx->uc.uc_mcontext->__ss.__r14;
+		case 15: return ctx->uc.uc_mcontext->__ss.__r15;
+		default: return 0;
+		}
+	#elif defined(__i386__)
+		/* macOS i386 register access */
+		switch (reg_index) {
+		case 0:  return ctx->uc.uc_mcontext->__ss.__eax;
+		case 1:  return ctx->uc.uc_mcontext->__ss.__ecx;
+		case 2:  return ctx->uc.uc_mcontext->__ss.__edx;
+		case 3:  return ctx->uc.uc_mcontext->__ss.__ebx;
+		case 4:  return ctx->uc.uc_mcontext->__ss.__esp;
+		case 5:  return ctx->uc.uc_mcontext->__ss.__ebp;
+		case 6:  return ctx->uc.uc_mcontext->__ss.__esi;
+		case 7:  return ctx->uc.uc_mcontext->__ss.__edi;
+		default: return 0;
+		}
+	#else
+		return 0;
+	#endif
 #else
 	return 0;
 #endif

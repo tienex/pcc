@@ -25,14 +25,54 @@
  */
 
 # include "pass1.h"
-
+# include "../../common/abi/abi.h"
+# include "seh.h"
 
 struct symtab spole0 = { 0, 0, 0, 0, 0, 0, 0, "base", "base", };
 struct symtab *spole = &spole0;
 struct symtab *nscur = &spole0;
 int elnk, nsptr;
+int cxxcuraccess = ACCESS_PUBLIC; /* default access in structs */
+
+/* C++ standard and ABI selection */
+int cxx_standard = CXX_STD_98;          /* Default to C++98 for compatibility */
+int cxx_abi = CXX_ABI_ITANIUM;          /* Default to Itanium ABI (GCC/Clang) */
+static abi_context_t *abi_ctx = NULL;   /* ABI library context */
+
+/* RAII: Track objects needing destruction at scope exit */
+struct dtor_entry {
+	struct symtab *obj;        /* Object to destroy */
+	struct symtab *dtor;       /* Destructor function */
+	int level;                 /* Block level where created */
+	struct dtor_entry *next;   /* Next in list */
+};
+
+static struct dtor_entry *dtor_stack = NULL;  /* Stack of objects needing destruction */
 
 static struct symtab *sfind(char *n, struct symtab *sp);
+
+/*
+ * Set current access level for class members.
+ * Called when 'public:', 'private:', or 'protected:' appears in class body.
+ */
+void
+cxxaccess(char *name)
+{
+	if (strcmp(name, "public") == 0) {
+		cxxcuraccess = ACCESS_PUBLIC;
+		if (cppdebug)printf("access: public\n");
+	} else if (strcmp(name, "private") == 0) {
+		cxxcuraccess = ACCESS_PRIVATE;
+		if (cppdebug)printf("access: private\n");
+	} else if (strcmp(name, "protected") == 0) {
+		cxxcuraccess = ACCESS_PROTECTED;
+		if (cppdebug)printf("access: protected\n");
+	} else {
+		/* Labels in C++, e.g., "label:" */
+		if (cppdebug)printf("label or unknown access: %s\n", name);
+	}
+}
+
 /*
  * Declare a namespace.
  */
@@ -330,7 +370,21 @@ decoratename(struct symtab *sp, int type)
 		n = exname(sp->sname);
 		return addname(n);
 	}
-	/* Compute the mangled name for other symbols */
+
+	/* Use ABI library for function mangling if available */
+	if (ISFTN(sp->stype) && abi_ctx != NULL) {
+		char *abi_mangled = cxxabi_mangle_function(sp);
+		if (abi_mangled != NULL) {
+			if (cppdebug)
+				printf("ABI mangled %s -> %s\n", sp->sname, abi_mangled);
+			return abi_mangled;
+		}
+		/* Fall through to manual mangling if ABI mangling fails */
+		if (cppdebug)
+			printf("ABI mangling failed for %s, using manual mangling\n", sp->sname);
+	}
+
+	/* Compute the mangled name for other symbols using manual Itanium-style mangling */
 	nmptr = 0;
 	subptr = 0;
 	nmch('_'); nmch('Z');
@@ -552,14 +606,14 @@ cxxdclstr(char *n)
 	sp = sfind(n, nscur->sup);
 	while (sp && !CLORNS(sp))
 		sp = sfind(n, sp->snext);
-	if (sp == 0)
+	if (sp == 0) {
 		sp = getsymtab(n, STAGNAME);
-//	else
-//		uerror("class/namespace redefined");
-//	INSSYM(sp);
-//	nscur = sp;
+		INSSYM(sp);
+	}
+	/* Allow forward declarations and reopening for definitions */
+	nscur = sp;
 
-if (cppdebug)printf("declaring2 struct %s %p nscur %s\n", n, sp, nscur->sname);
+if (cppdebug)printf("declaring struct %s %p nscur %s\n", n, sp, nscur->sname);
 	return sp;
 }
 
@@ -827,4 +881,647 @@ cxxstructref(NODE *p, int f, char *n)
 		sp = sfind(n, sp->snext);
 	}
 	return structref(p, f, n);
+}
+
+/*
+ * Check if function name fname is a constructor for classsym.
+ * Constructor: function name == class name
+ */
+int
+cxxisctor(char *fname, struct symtab *classsym)
+{
+	if (classsym == NULL || fname == NULL)
+		return 0;
+	return (strcmp(fname, classsym->sname) == 0);
+}
+
+/*
+ * Check if function name fname is a destructor for classsym.
+ * Destructor: function name == ~ClassName
+ */
+int
+cxxisdtor(char *fname, struct symtab *classsym)
+{
+	if (classsym == NULL || fname == NULL)
+		return 0;
+	if (fname[0] != '~')
+		return 0;
+	return (strcmp(fname + 1, classsym->sname) == 0);
+}
+
+/*
+ * Mark function sp as a constructor.
+ */
+void
+cxxmarkctor(struct symtab *sp)
+{
+	if (sp == NULL)
+		return;
+	sp->sflags |= SCTOR;
+	if (cppdebug)
+		printf("Marked %s as constructor\n", sp->sname);
+}
+
+/*
+ * Mark function sp as a destructor.
+ */
+void
+cxxmarkdtor(struct symtab *sp)
+{
+	if (sp == NULL)
+		return;
+	sp->sflags |= SDTOR;
+	if (cppdebug)
+		printf("Marked %s as destructor\n", sp->sname);
+}
+
+/*
+ * Check if a type is a class type (struct in C++ terms).
+ * Returns 1 if type is a class, 0 otherwise.
+ */
+int
+cxxisclass(TWORD type)
+{
+	TWORD t = BTYPE(type);
+	return (t == STRTY);
+}
+
+/*
+ * Find a constructor for a given class symbol.
+ * Returns the constructor symtab entry, or NULL if not found.
+ */
+struct symtab *
+cxxfindctor(struct symtab *classsym)
+{
+	struct symtab *sp;
+
+	if (classsym == NULL || classsym->sclass != STNAME)
+		return NULL;
+
+	/* Look for a constructor in the class's symbol list */
+	for (sp = classsym->sup; sp != NULL; sp = sp->snext) {
+		if (sp->sflags & SCTOR)
+			return sp;
+	}
+
+	return NULL;
+}
+
+/*
+ * Find a destructor for a given class symbol.
+ * Returns the destructor symtab entry, or NULL if not found.
+ */
+struct symtab *
+cxxfinddtor(struct symtab *classsym)
+{
+	struct symtab *sp;
+
+	if (classsym == NULL || classsym->sclass != STNAME)
+		return NULL;
+
+	/* Look for a destructor in the class's symbol list */
+	for (sp = classsym->sup; sp != NULL; sp = sp->snext) {
+		if (sp->sflags & SDTOR)
+			return sp;
+	}
+
+	return NULL;
+}
+
+/*
+ * Generate a call to a constructor or destructor.
+ * sp: the object being constructed/destructed
+ * fnsym: the constructor/destructor function symbol
+ * Returns a function call node.
+ */
+NODE *
+cxxgencall(struct symtab *sp, struct symtab *fnsym)
+{
+	NODE *fn, *obj, *call;
+
+	if (sp == NULL || fnsym == NULL)
+		return NULL;
+
+	/* Create function name node */
+	fn = nametree(fnsym);
+
+	/* Create object reference node */
+	obj = nametree(sp);
+
+	/* For member functions, we need to pass the object address as first argument */
+	/* Build a call: ctor(&obj) or dtor(&obj) */
+	obj = buildtree(ADDROF, obj, NIL);
+
+	/* Build function call */
+	call = buildtree(CALL, fn, obj);
+
+	if (cppdebug)
+		printf("Generated call to %s for object %s\n", fnsym->sname, sp->sname);
+
+	return call;
+}
+
+/*
+ * Register an object for destruction at scope exit (RAII).
+ * Called when an automatic object with a destructor is created.
+ */
+void
+cxxregister_dtor(struct symtab *obj, struct symtab *dtor, int level)
+{
+	struct dtor_entry *entry;
+
+	if (obj == NULL || dtor == NULL)
+		return;
+
+	/* Create new destructor entry */
+	entry = malloc(sizeof(struct dtor_entry));
+	if (entry == NULL)
+		return;
+
+	entry->obj = obj;
+	entry->dtor = dtor;
+	entry->level = level;
+	entry->next = dtor_stack;
+	dtor_stack = entry;
+
+	if (cppdebug)
+		printf("Registered destructor for %s at level %d\n", obj->sname, level);
+}
+
+/*
+ * Call destructors for all objects at or above the given level.
+ * Called at scope exit to implement RAII.
+ * Destructors are called in reverse order of construction (LIFO).
+ */
+void
+cxxcall_dtors(int level)
+{
+	struct dtor_entry *entry, *prev, *next;
+	NODE *call;
+	int count = 0;
+
+	if (cppdebug)
+		printf("cxxcall_dtors: level %d\n", level);
+
+	/* First pass: emit destructor calls for matching level */
+	entry = dtor_stack;
+	while (entry != NULL) {
+		if (entry->level >= level) {
+			/* Generate destructor call */
+			call = cxxgencall(entry->obj, entry->dtor);
+			if (call != NULL) {
+				ecomp(call);
+				count++;
+				if (cppdebug)
+					printf("Called destructor for %s\n", entry->obj->sname);
+			}
+		}
+		entry = entry->next;
+	}
+
+	/* Second pass: remove destroyed objects from stack */
+	prev = NULL;
+	entry = dtor_stack;
+	while (entry != NULL) {
+		next = entry->next;
+		if (entry->level >= level) {
+			/* Remove from stack */
+			if (prev == NULL)
+				dtor_stack = next;
+			else
+				prev->next = next;
+			free(entry);
+		} else {
+			prev = entry;
+		}
+		entry = next;
+	}
+
+	if (cppdebug && count > 0)
+		printf("Called %d destructors at level %d\n", count, level);
+}
+
+/*
+ * Convert our CXX_ABI_* enum to ABI library's abi_kind_t.
+ */
+static abi_kind_t
+cxx_to_abi_kind(int cxx_abi_type)
+{
+	switch (cxx_abi_type) {
+	case CXX_ABI_ITANIUM:  return ABI_ITANIUM;
+	case CXX_ABI_MSVC:     return ABI_MSVC;
+	case CXX_ABI_WATCOM:   return ABI_WATCOM;
+	case CXX_ABI_BORLAND:  return ABI_BORLAND;
+	case CXX_ABI_GNU_OLD:  return ABI_GNU_OLD;
+	case CXX_ABI_DMC:      return ABI_DMC;
+	case CXX_ABI_ARM:      return ABI_ARM;
+	default:               return ABI_ITANIUM; /* Safe default */
+	}
+}
+
+/*
+ * Initialize the ABI library context.
+ * Should be called once during compiler initialization.
+ */
+void
+cxxabi_init(void)
+{
+	abi_kind_t abi_kind;
+
+	/* Convert C++ ABI type to ABI library type */
+	abi_kind = cxx_to_abi_kind(cxx_abi);
+
+	/* Initialize ABI context */
+	if (abi_ctx != NULL)
+		abi_destroy(abi_ctx);
+
+	abi_ctx = abi_init(abi_kind);
+
+	if (abi_ctx == NULL)
+		cerror("Failed to initialize ABI library");
+
+	if (cppdebug)
+		printf("Initialized %s ABI (C++%s)\n",
+		       cxx_abi == CXX_ABI_ITANIUM ? "Itanium" :
+		       cxx_abi == CXX_ABI_MSVC ? "MSVC" :
+		       cxx_abi == CXX_ABI_WATCOM ? "Watcom" :
+		       cxx_abi == CXX_ABI_BORLAND ? "Borland" : "Unknown",
+		       cxx_standard == CXX_STD_98 ? "98" :
+		       cxx_standard == CXX_STD_03 ? "03" :
+		       cxx_standard == CXX_STD_11 ? "11" :
+		       cxx_standard == CXX_STD_14 ? "14" :
+		       cxx_standard == CXX_STD_17 ? "17" :
+		       cxx_standard == CXX_STD_20 ? "20" :
+		       cxx_standard == CXX_STD_23 ? "23" : "Unknown");
+}
+
+/*
+ * Get the current ABI context.
+ */
+abi_context_t *
+cxxabi_get_context(void)
+{
+	if (abi_ctx == NULL)
+		cxxabi_init();
+	return abi_ctx;
+}
+
+/*
+ * Convert PCC TWORD type to ABI type kind.
+ */
+static abi_type_kind_t
+pcc_to_abi_type(TWORD t)
+{
+	switch (BTYPE(t)) {
+	case VOID:      return ABI_TYPE_VOID;
+	case BOOL:      return ABI_TYPE_BOOL;
+	case CHAR:      return ABI_TYPE_CHAR;
+	case UCHAR:     return ABI_TYPE_UCHAR;
+	case SHORT:     return ABI_TYPE_SHORT;
+	case USHORT:    return ABI_TYPE_USHORT;
+	case INT:       return ABI_TYPE_INT;
+	case UNSIGNED:  return ABI_TYPE_UINT;
+	case LONG:      return ABI_TYPE_LONG;
+	case ULONG:     return ABI_TYPE_ULONG;
+	case LONGLONG:  return ABI_TYPE_LONGLONG;
+	case ULONGLONG: return ABI_TYPE_ULONGLONG;
+	case FLOAT:     return ABI_TYPE_FLOAT;
+	case DOUBLE:    return ABI_TYPE_DOUBLE;
+	case LDOUBLE:   return ABI_TYPE_LONGDOUBLE;
+	case STRTY:     return ABI_TYPE_CLASS;
+	case UNIONTY:   return ABI_TYPE_UNION;
+	case ENUMTY:    return ABI_TYPE_ENUM;
+	default:        return ABI_TYPE_INT; /* fallback */
+	}
+}
+
+/*
+ * Create an ABI type descriptor from PCC type.
+ */
+static abi_type_t *
+create_abi_type(TWORD type, union dimfun *df, struct attr *ap)
+{
+	abi_type_t *atype;
+
+	atype = abi_create_type(pcc_to_abi_type(type));
+	if (atype == NULL)
+		return NULL;
+
+	/* Handle type qualifiers */
+	if (type & CON)
+		atype->is_const = 1;
+	if (type & VOL)
+		atype->is_volatile = 1;
+
+	/* Handle pointers and references */
+	if (ISPTR(type)) {
+		TWORD pointee_type = DECREF(type);
+		atype->kind = ABI_TYPE_POINTER;
+		atype->u.pointee = create_abi_type(pointee_type, df, ap);
+	}
+
+	return atype;
+}
+
+/*
+ * Create an ABI function descriptor from PCC symbol table entry.
+ */
+static abi_function_t *
+create_abi_function(struct symtab *sp)
+{
+	abi_function_t *func;
+	abi_param_t *param, *last_param = NULL;
+
+	func = calloc(1, sizeof(abi_function_t));
+	if (func == NULL)
+		return NULL;
+
+	func->name = sp->sname;
+
+	/* Set return type */
+	func->return_type = create_abi_type(DECREF(sp->stype), sp->sdf, sp->sap);
+
+	/* Check if constructor or destructor */
+	if (sp->sflags & SCTOR)
+		func->is_constructor = 1;
+	if (sp->sflags & SDTOR)
+		func->is_destructor = 1;
+
+	/* Check if member function */
+	if (sp->sdown != NULL && sp->sdown != spole && sp->sdown->sclass != NSPACE) {
+		/* This is a member function - we'll set parent_class later if needed */
+		func->parent_class = NULL; /* For now */
+	}
+
+	/* Add parameters if this is a function with prototype */
+	if (ISFTN(sp->stype) && sp->sdf && sp->sdf->dfun) {
+		union arglist *al;
+		int param_num = 0;
+
+		for (al = sp->sdf->dfun; al->type != TNULL; al++, param_num++) {
+			/* Skip ellipsis */
+			if (al->type == TELLIPSIS)
+				continue;
+
+			param = calloc(1, sizeof(abi_param_t));
+			if (param == NULL)
+				break;
+
+			/* Parameters don't have names in arglist, use generic name */
+			/* In practice, the ABI library mainly needs the types */
+			param->name = NULL;
+			param->type = create_abi_type(al->type, al->df, al->sap);
+			param->next = NULL;
+
+			if (last_param == NULL)
+				func->params = param;
+			else
+				last_param->next = param;
+			last_param = param;
+		}
+	}
+
+	return func;
+}
+
+/*
+ * Free ABI function descriptor and associated memory.
+ */
+static void
+free_abi_function(abi_function_t *func)
+{
+	abi_param_t *param, *next;
+
+	if (func == NULL)
+		return;
+
+	/* Free parameters */
+	param = func->params;
+	while (param != NULL) {
+		next = param->next;
+		if (param->type)
+			abi_destroy_type(param->type);
+		free(param);
+		param = next;
+	}
+
+	/* Free return type */
+	if (func->return_type)
+		abi_destroy_type(func->return_type);
+
+	free(func);
+}
+
+/*
+ * Mangle a function or method name using the ABI library.
+ * Returns a statically allocated string (via addname).
+ */
+char *
+cxxabi_mangle_function(struct symtab *sp)
+{
+	abi_context_t *ctx;
+	abi_function_t *func;
+	char *mangled;
+	char *result;
+
+	/* Get ABI context */
+	ctx = cxxabi_get_context();
+	if (ctx == NULL)
+		return NULL;
+
+	/* Create ABI function descriptor */
+	func = create_abi_function(sp);
+	if (func == NULL)
+		return NULL;
+
+	/* Mangle using ABI library */
+	mangled = abi_mangle_function(ctx, func);
+
+	/* Copy to permanent storage via addname */
+	result = mangled ? addname(mangled) : NULL;
+
+	/* Clean up */
+	if (mangled)
+		free(mangled);
+	free_abi_function(func);
+
+	return result;
+}
+
+/*
+ * C++ Exception Handling Code Generation
+ *
+ * These functions generate code for try/catch/throw statements.
+ * Currently using stub implementations - full implementation will
+ * require integration with libseh (SEH runtime library).
+ *
+ * See SEH_LIBRARY_STATUS.md for details on library integration status.
+ */
+
+/*
+ * Generate code for try-catch block
+ *
+ * try { ... } catch (Type e) { ... }
+ *
+ * Architecture limitations:
+ * PCC's current code generation architecture does not support the complex
+ * control flow needed for proper exception handling. A full implementation
+ * requires:
+ *
+ * 1. Stack frame modification to allocate _seh_registration structure
+ * 2. Prolog code to call _seh_register() before try block
+ * 3. setjmp() call to establish exception handler entry point
+ * 4. Exception type matching code for each catch block
+ * 5. Epilog code to call _seh_unregister() on all exit paths
+ * 6. Integration with RAII destructor unwinding
+ *
+ * This would require significant changes to:
+ * - Function prologue/epilogue generation (local.c, local2.c)
+ * - Stack frame layout (order.c)
+ * - Control flow graph management (optim.c)
+ * - Statement emission (ecomp() in pftn.c)
+ *
+ * Current implementation: Minimal stub with SEH headers included.
+ */
+NODE *
+cxxtry(NODE *try_body, NODE *handler_seq)
+{
+	static int warned = 0;
+
+	if (!warned) {
+		werror("try/catch blocks not yet fully implemented");
+		werror("Exception handling requires architectural changes to code generator");
+		werror("See cxxcode.c:cxxtry() for details");
+		warned = 1;
+	}
+
+	/* For now, execute try body normally (no exception handling) */
+	if (try_body)
+		ecomp(try_body);
+
+	if (handler_seq)
+		tfree(handler_seq);
+
+	/* TODO: Full implementation requires:
+	 *
+	 * struct _seh_registration reg;
+	 * _seh_register(&reg, handler_func, NULL);
+	 * if (setjmp(reg.jmpbuf) == 0) {
+	 *     // try body
+	 * } else {
+	 *     // exception occurred - dispatch to catch blocks
+	 *     if (type_matches_catch1) { catch1_body; }
+	 *     else if (type_matches_catch2) { catch2_body; }
+	 *     else { _seh_reraise(); }
+	 * }
+	 * _seh_unregister(&reg);
+	 */
+
+	return NIL;
+}
+
+/*
+ * Generate code for catch block
+ *
+ * catch (Type e) { ... }
+ *
+ * This function is called during parsing to build the catch handler tree.
+ * In a full implementation, it would:
+ * 1. Extract type information from exception_decl
+ * 2. Create exception type descriptor for runtime type matching
+ * 3. Generate code to extract exception object from _seh_get_cxx_exception()
+ * 4. Bind exception to catch parameter variable
+ * 5. Return a node representing the catch block for cxxtry() to process
+ *
+ * Current implementation: Placeholder that frees nodes.
+ */
+NODE *
+cxxcatch(NODE *exception_decl, NODE *handler_body)
+{
+	/* TODO: Extract exception type and create type descriptor */
+	/* Would use: type_spec from exception_decl to create runtime type info */
+
+	if (exception_decl)
+		tfree(exception_decl);
+
+	if (handler_body)
+		tfree(handler_body);
+
+	/* TODO: Return node containing type descriptor and handler code */
+	return NIL;
+}
+
+/*
+ * Generate code for throw statement
+ *
+ * throw expr;  - throw new exception
+ * throw;       - re-throw current exception
+ *
+ * A full implementation would generate code equivalent to:
+ *
+ * For "throw expr;":
+ *   1. void *exception_obj = malloc(sizeof(expr_type));
+ *   2. new (exception_obj) expr_type(expr);  // copy constructor
+ *   3. _seh_translate_cxx_exception(exception_obj);
+ *   4. _seh_raise_exception(EXCEPTION_CXX_EXCEPTION, 0, 1, &exception_obj);
+ *   5. [unreachable code - raise_exception does not return]
+ *
+ * For "throw;" (re-throw):
+ *   1. _seh_raise_exception(_seh_get_exception_code(), 0, 0, NULL);
+ *
+ * Current implementation: Placeholder warning.
+ */
+NODE *
+cxxthrow(NODE *expr)
+{
+	static int warned = 0;
+
+	if (!warned) {
+		werror("throw statements not yet fully implemented");
+		werror("Would require: exception object allocation, type descriptors, SEH calls");
+		werror("See cxxcode.c:cxxthrow() for implementation details");
+		warned = 1;
+	}
+
+	if (expr) {
+		/* throw expr; - throw new exception */
+		tfree(expr);
+
+		/* TODO: Generate code:
+		 * - Evaluate expr
+		 * - Allocate exception object on heap
+		 * - Call copy/move constructor
+		 * - Call _seh_translate_cxx_exception()
+		 * - Call _seh_raise_exception()
+		 */
+	} else {
+		/* throw; - re-throw current exception */
+		/* TODO: Generate call to _seh_raise_exception() with current exception */
+	}
+
+	return NIL;
+}
+
+/*
+ * Generate code for exception declaration in catch block
+ *
+ * This handles:
+ * - catch (Type var)
+ * - catch (Type)
+ * - catch (...)
+ *
+ * Full implementation will create a symbol table entry for the
+ * exception variable and generate code to extract it from the
+ * SEH exception structure.
+ */
+NODE *
+cxxexception_decl(NODE *type_spec, NODE *declarator)
+{
+	/* TODO: Process exception declaration */
+	/* For now, just return the declarator node */
+	
+	if (type_spec)
+		tfree(type_spec);
+	
+	return declarator;
 }

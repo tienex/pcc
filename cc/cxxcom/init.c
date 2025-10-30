@@ -1208,6 +1208,26 @@ simpleinit(struct symtab *sp, NODE *p)
 		if (ISARY(sp->stype))
 			cerror("no array init");
 		q = nt;
+
+		/* C++: For class objects, call constructor before assignment */
+		if (cxxisclass(sp->stype)) {
+			struct symtab *classsym, *ctorsym;
+			NODE *call;
+
+			/* Get the class symbol from the struct */
+			classsym = strmemb(sp->sap);
+			if (classsym != NULL) {
+				/* Find the default constructor */
+				ctorsym = cxxfindctor(classsym);
+				if (ctorsym != NULL) {
+					/* Generate and emit constructor call */
+					call = cxxgencall(sp, ctorsym);
+					if (call != NULL)
+						ecomp(call);
+				}
+			}
+		}
+
 #ifndef NO_COMPLEX
 
 		if (ANYCX(q) || ANYCX(p))

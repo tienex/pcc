@@ -109,6 +109,55 @@ fflags(char *str)
 		flagval = 0;
 	}
 
+	/* C++ standard selection: -fstd=c++XX */
+	if (strncmp(str, "std=c++", 7) == 0) {
+		const char *std = str + 7;
+		if (strcmp(std, "98") == 0 || strcmp(std, "03") == 0)
+			cxx_standard = CXX_STD_98;
+		else if (strcmp(std, "11") == 0 || strcmp(std, "0x") == 0)
+			cxx_standard = CXX_STD_11;
+		else if (strcmp(std, "14") == 0 || strcmp(std, "1y") == 0)
+			cxx_standard = CXX_STD_14;
+		else if (strcmp(std, "17") == 0 || strcmp(std, "1z") == 0)
+			cxx_standard = CXX_STD_17;
+		else if (strcmp(std, "20") == 0 || strcmp(std, "2a") == 0)
+			cxx_standard = CXX_STD_20;
+		else if (strcmp(std, "23") == 0 || strcmp(std, "2b") == 0)
+			cxx_standard = CXX_STD_23;
+		else if (strcmp(std, "26") == 0 || strcmp(std, "2c") == 0)
+			cxx_standard = CXX_STD_26;
+		else {
+			fprintf(stderr, "unknown C++ standard '%s'\n", std);
+			fprintf(stderr, "supported: c++98, c++03, c++11, c++14, c++17, c++20, c++23, c++26\n");
+			exit(1);
+		}
+		return;
+	}
+	/* C++ ABI vendor selection: -fabi=VENDOR */
+	else if (strncmp(str, "abi=", 4) == 0) {
+		const char *abi = str + 4;
+		if (strcmp(abi, "itanium") == 0 || strcmp(abi, "gcc") == 0)
+			cxx_abi = CXX_ABI_ITANIUM;
+		else if (strcmp(abi, "msvc") == 0 || strcmp(abi, "microsoft") == 0)
+			cxx_abi = CXX_ABI_MSVC;
+		else if (strcmp(abi, "watcom") == 0)
+			cxx_abi = CXX_ABI_WATCOM;
+		else if (strcmp(abi, "borland") == 0)
+			cxx_abi = CXX_ABI_BORLAND;
+		else if (strcmp(abi, "gnu-old") == 0 || strcmp(abi, "gnu2") == 0)
+			cxx_abi = CXX_ABI_GNU_OLD;
+		else if (strcmp(abi, "dmc") == 0 || strcmp(abi, "digimars") == 0)
+			cxx_abi = CXX_ABI_DMC;
+		else if (strcmp(abi, "arm") == 0)
+			cxx_abi = CXX_ABI_ARM;
+		else {
+			fprintf(stderr, "unknown C++ ABI '%s'\n", abi);
+			fprintf(stderr, "supported: itanium, msvc, watcom, borland, gnu-old, dmc, arm\n");
+			exit(1);
+		}
+		return;
+	}
+
 	if (strcmp(str, "stack-protector") == 0)
 		sspflag = flagval;
 	else if (strcmp(str, "stack-protector-all") == 0)
@@ -268,6 +317,9 @@ main(int argc, char *argv[])
 			exit(1);
 		}
 	}
+
+	/* Initialize C++ ABI library based on selected standard and ABI */
+	cxxabi_init();
 
 	mkdope();
 	signal(SIGSEGV, segvcatch);

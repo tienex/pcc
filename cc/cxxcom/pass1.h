@@ -103,6 +103,8 @@ extern	char *scnames(int);
 #define	SLOCAL1		010000
 #define	SLOCAL2		020000
 #define	SLOCAL3		040000
+#define	SCTOR		0100000	/* C++ constructor function */
+#define	SDTOR		0200000	/* C++ destructor function */
 
 	/* alignment of initialized quantities */
 #ifndef AL_INIT

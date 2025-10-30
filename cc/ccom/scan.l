@@ -229,7 +229,6 @@ extern void yyset_lineno (int);
 
 %%
 
-/* lineno is defined in mip/common.c and declared extern in pass1.h */
 int issyshdr;
 
 int

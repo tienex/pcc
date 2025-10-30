@@ -32,6 +32,7 @@ extern "C" {
 #include <stdlib.h>
 #include <string.h>
 #include "seh.h"
+#include "seh_helpers.h"
 
 #ifdef __cplusplus
 }

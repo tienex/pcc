@@ -589,6 +589,13 @@ dclargs(void)
 		p = cxxstrvar(cftnsp->sdown);
 		ssave(p);
 		nparams++;
+
+		/* Check if this is a constructor or destructor */
+		if (cxxisctor(cftnsp->sname, cftnsp->sdown)) {
+			cxxmarkctor(cftnsp);
+		} else if (cxxisdtor(cftnsp->sname, cftnsp->sdown)) {
+			cxxmarkdtor(cftnsp);
+		}
 	}
 	/*
 	 * Generate a list for bfcode().
@@ -1638,6 +1645,32 @@ nidcl(NODE *p, int class)
 
 	if (sp->sflags & SASG)
 		return; /* already initialized */
+
+	/* C++: For auto/register class objects, call default constructor */
+	if ((class == AUTO || class == REGISTER) && cxxisclass(sp->stype)) {
+		struct symtab *classsym, *ctorsym, *dtorsym;
+		NODE *call;
+
+		/* Get the class symbol from the struct */
+		classsym = strmemb(sp->sap);
+		if (classsym != NULL) {
+			/* Find the default constructor */
+			ctorsym = cxxfindctor(classsym);
+			if (ctorsym != NULL) {
+				/* Generate and emit constructor call */
+				call = cxxgencall(sp, ctorsym);
+				if (call != NULL)
+					ecomp(call);
+			}
+
+			/* RAII: Register destructor for automatic cleanup */
+			dtorsym = cxxfinddtor(classsym);
+			if (dtorsym != NULL) {
+				cxxregister_dtor(sp, dtorsym, blevel);
+			}
+		}
+		return;
+	}
 
 	switch (class) {
 	case EXTDEF:

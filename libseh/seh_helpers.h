@@ -30,6 +30,13 @@
 #include "seh.h"
 
 /*
+ * Internal variables (defined in seh.c)
+ */
+#ifndef _WIN32
+extern __thread struct _seh_exception_record _seh_current_exception;
+#endif
+
+/*
  * SEH Helper Macros for Manual SEH Usage
  *
  * Until the compiler has full code generation for __try/__except/__finally,
