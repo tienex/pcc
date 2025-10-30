@@ -11,6 +11,17 @@ BOOTSTRAP_STAGES = @bootstrap_stages@
 BOOTSTRAP_COMPARE = @bootstrap_compare@
 ASM_FORMAT = @asm_format@
 
+# Language selection
+ENABLE_C = @enable_c@
+ENABLE_CXX = @enable_cxx@
+ENABLE_PASCAL = @enable_pascal@
+ENABLE_F77 = @enable_f77@
+ENABLE_BLISS = @enable_bliss@
+
+# Architecture and OS target selection
+ENABLE_ARCHS = @enable_archs@
+ENABLE_TARGETS = @enable_targets@
+
 # C11/C23 portable libraries configuration
 BUILD_LIBUNICODE=@BUILD_LIBUNICODE@
 BUILD_LIBTHREAD=@BUILD_LIBTHREAD@
@@ -25,11 +36,31 @@ bindir = @bindir@
 libdir = @libdir@
 libexecdir = @libexecdir@
 
-C_SUBDIRS=	common/abi libx86asm include
-CC_SUBDIR=	cc
-EXTRA_SUBDIRS=	pascal f77
-ALL_SUBDIRS=	$(PORTABLE_LIBS) $(C_SUBDIRS) $(CC_SUBDIR)
-DIST_SUBDIRS=	$(C_SUBDIRS) $(CC_SUBDIR) $(EXTRA_SUBDIRS) libunicode libthread libstdbit libckdint libdecimal libmetaware libblocks
+# Base directories (always built)
+BASE_SUBDIRS=	common/abi libx86asm include
+
+# Language-specific subdirectories (conditionally built based on configuration)
+C_SUBDIR=	cc
+CXX_SUBDIR=	# C++ is part of cc/cxxcom
+PASCAL_SUBDIR=	pascal
+F77_SUBDIR=	f77
+BLISS_SUBDIR=	bliss
+
+# Build subdirectory list based on enabled languages
+# Note: C is always built first for bootstrap
+LANG_SUBDIRS=	$(C_SUBDIR)
+ifeq ($(ENABLE_PASCAL),yes)
+LANG_SUBDIRS+=	$(PASCAL_SUBDIR)
+endif
+ifeq ($(ENABLE_F77),yes)
+LANG_SUBDIRS+=	$(F77_SUBDIR)
+endif
+ifeq ($(ENABLE_BLISS),yes)
+LANG_SUBDIRS+=	$(BLISS_SUBDIR)
+endif
+
+ALL_SUBDIRS=	$(PORTABLE_LIBS) $(BASE_SUBDIRS) $(LANG_SUBDIRS)
+DIST_SUBDIRS=	$(BASE_SUBDIRS) $(C_SUBDIR) pascal f77 bliss libunicode libthread libstdbit libckdint libdecimal libmetaware libblocks libbliss
 
 # Default targets - conditional on bootstrap
 all:
@@ -46,10 +77,11 @@ install:
 		$(MAKE) install-standard; \
 	fi
 
-# Minimal C-only build (stage 0 bootstrap)
+# Minimal C-only build (bootstrap stage 0 - always builds C first)
 all-c install-c clean-c:
 	@target=`echo $@ | sed 's/-c//'`; \
-	for subdir in $(C_SUBDIRS); do \
+	echo "===> Building C compiler first (bootstrap requirement)"; \
+	for subdir in $(PORTABLE_LIBS) $(BASE_SUBDIRS); do \
 		_nextdir_=$${_thisdir_+$$_thisdir_/}$$subdir; \
 		echo "===> $$_nextdir_"; \
 		(_thisdir_=$$_nextdir_; export _thisdir_; cd $$subdir && \
@@ -93,8 +125,10 @@ distclean:
 	rm -f config.log config.status include/config.h.in~ include/config.h
 
 # Bootstrap build
+# Bootstrap always builds C compiler first, then other enabled languages
 bootstrap-build:
 	@echo "Starting bootstrap build ($(BOOTSTRAP_STAGES) stages)"
+	@echo "Note: Bootstrap always compiles C first, then other enabled languages"
 	@$(MAKE) bootstrap-stage1
 	@$(MAKE) bootstrap-stage2
 	@if [ "$(BOOTSTRAP_STAGES)" = "3" ]; then \
@@ -103,18 +137,24 @@ bootstrap-build:
 	fi
 
 bootstrap-stage1:
-	@echo "===> Bootstrap Stage 1: Building with system compiler"
+	@echo "===> Bootstrap Stage 1: Building C compiler with system compiler"
+	@$(MAKE) all-c CC="$(CC)" CFLAGS="$(CFLAGS)"
+	@echo "===> Bootstrap Stage 1: Building other enabled languages"
 	@$(MAKE) all-standard CC="$(CC)" CFLAGS="$(CFLAGS)"
 
 bootstrap-stage2:
-	@echo "===> Bootstrap Stage 2: Building with stage1 compiler"
+	@echo "===> Bootstrap Stage 2: Building C compiler with stage1 compiler"
 	@$(MAKE) clean
-	@$(MAKE) all-standard CC="./cc/ccom/ccom" CFLAGS="-O"
+	@$(MAKE) all-c CC="./cc/cc/pcc" CFLAGS="-O"
+	@echo "===> Bootstrap Stage 2: Building other enabled languages with stage1 compiler"
+	@$(MAKE) all-standard CC="./cc/cc/pcc" CFLAGS="-O"
 
 bootstrap-stage3:
-	@echo "===> Bootstrap Stage 3: Building with stage2 compiler"
+	@echo "===> Bootstrap Stage 3: Building C compiler with stage2 compiler"
 	@$(MAKE) clean
-	@$(MAKE) all-standard CC="./cc/ccom/ccom" CFLAGS="-O"
+	@$(MAKE) all-c CC="./cc/cc/pcc" CFLAGS="-O"
+	@echo "===> Bootstrap Stage 3: Building other enabled languages with stage2 compiler"
+	@$(MAKE) all-standard CC="./cc/cc/pcc" CFLAGS="-O"
 
 bootstrap-compare:
 	@echo "===> Comparing stage2 and stage3 compilers"
