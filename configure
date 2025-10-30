@@ -691,6 +691,13 @@ LDFLAGS
 CFLAGS
 CC
 BINPREFIX
+enable_targets
+enable_archs
+enable_bliss
+enable_f77
+enable_pascal
+enable_cxx
+enable_c
 asm_format
 bootstrap_compare
 bootstrap_stages
@@ -766,6 +773,9 @@ enable_nativefp
 with_yasm
 with_asm_format
 enable_native
+enable_languages
+enable_archs
+enable_targets
 enable_bootstrap
 with_bootstrap_stage
 '
@@ -1413,6 +1423,13 @@ Optional Features:
   --disable-nativefp      Disable use of compiler host floating point.
   --enable-native         Build the compiler as a native rather than
                           cross-build compiler
+  --enable-languages=LANGLIST
+                          Comma-separated list of languages to build:
+                          c,c++,pascal,f77,bliss (default: c,c++)
+  --enable-archs=ARCHLIST Comma-separated list of target architectures
+                          (default: host architecture)
+  --enable-targets=OSLIST Comma-separated list of target operating systems
+                          (default: host OS)
   --enable-bootstrap[=ARG]
                           Enable multi-stage bootstrap build (yes/no/lean,
                           default: no) - yes: 3-stage bootstrap with
@@ -3016,6 +3033,8 @@ case "$target_os" in
 	    mips64) targmach=mips64 endian=big ;;
 	    mipseb) targmach=mips endian=big ;;
 	    mips*) targmach=mips ;;
+	    wasm32) targmach=wasm ;;
+	    wasm64) targmach=wasm ;;
 	esac
 	case "$target_os" in
 	    *-musl*) ADD_CPPFLAGS="$ADD_CPPFLAGS -DUSE_MUSL" ;;
@@ -3164,6 +3183,15 @@ case "$target_os" in
         esac
         ;;
 
+    wasm*)
+	targos=wasm
+	abi=elf
+	case "$target_cpu" in
+	    wasm32) targmach=wasm ;;
+	    wasm64) targmach=wasm ;;
+	esac
+	;;
+
     windows*|pe*)
 	target_alias=i386-pe
 	targos=win32
@@ -3179,6 +3207,8 @@ case "$target_os" in
 	    nova) targmach=nova ;;
 	    i86) targmach=i86 ;;
 	    pdp7) targmach=pdp7 ;;
+	    wasm32) targmach=wasm ;;
+	    wasm64) targmach=wasm ;;
 	esac
 	;;
 esac
@@ -3451,6 +3481,36 @@ then :
 fi
 
 
+# Language selection options
+# Check whether --enable-languages was given.
+if test ${enable_languages+y}
+then :
+  enableval=$enable_languages; enable_languages=$enableval
+else $as_nop
+  enable_languages=c,c++
+fi
+
+
+# Architecture selection options
+# Check whether --enable-archs was given.
+if test ${enable_archs+y}
+then :
+  enableval=$enable_archs; enable_archs=$enableval
+else $as_nop
+  enable_archs=auto
+fi
+
+
+# OS target selection options
+# Check whether --enable-targets was given.
+if test ${enable_targets+y}
+then :
+  enableval=$enable_targets; enable_targets=$enableval
+else $as_nop
+  enable_targets=auto
+fi
+
+
 # Bootstrap options
 bootstrap_stage=0
 # Check whether --enable-bootstrap was given.
@@ -3498,6 +3558,81 @@ printf "%s\n" "#define BOOTSTRAP_STAGE $bootstrap_stage" >>confdefs.h
 fi
 
 
+
+
+
+
+# Process language selection
+enable_c=no
+enable_cxx=no
+enable_pascal=no
+enable_f77=no
+enable_bliss=no
+
+# Normalize language list (replace spaces with commas)
+enable_languages=`echo "$enable_languages" | tr ' ' ',' | tr -d ' '`
+
+# Parse comma-separated language list using portable shell syntax
+old_IFS=$IFS
+IFS=','
+for lang in $enable_languages; do
+	case "$lang" in
+	c|C)
+		enable_c=yes
+		;;
+	c++|C++|cxx|CXX)
+		enable_cxx=yes
+		;;
+	pascal|Pascal|PASCAL)
+		enable_pascal=yes
+		;;
+	f77|F77|fortran|FORTRAN)
+		enable_f77=yes
+		;;
+	bliss|BLISS)
+		enable_bliss=yes
+		;;
+	all|ALL)
+		enable_c=yes
+		enable_cxx=yes
+		enable_pascal=yes
+		enable_f77=yes
+		enable_bliss=yes
+		;;
+	"")
+		# Skip empty entries
+		;;
+	*)
+		as_fn_error $? "Unknown language '$lang'. Supported: c, c++, pascal, f77, bliss, all" "$LINENO" 5
+		;;
+	esac
+done
+IFS=$old_IFS
+
+# C is always required for bootstrap
+if test "$enable_c" = "no"; then
+	{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: WARNING: C language is required and will be enabled" >&5
+printf "%s\n" "$as_me: WARNING: C language is required and will be enabled" >&2;}
+	enable_c=yes
+fi
+
+
+
+
+
+
+
+# Process architecture selection
+if test "$enable_archs" = "auto" -o "$enable_archs" = ""; then
+	# Default to target machine
+	enable_archs="$targmach"
+fi
+
+# Process OS target selection
+if test "$enable_targets" = "auto" -o "$enable_targets" = ""; then
+	# Default to target OS
+	enable_targets="$targos"
+fi
 
 
 
@@ -6490,7 +6625,58 @@ esac
 
 
 
-ac_config_files="$ac_config_files Makefile cc/Makefile cc/cc/Makefile cc/cpp/Makefile cc/ccom/Makefile cc/cxxcom/Makefile cc/driver/Makefile f77/Makefile f77/f77/Makefile f77/fcom/Makefile pascal/Makefile pascal/pascal/Makefile pascal/pcom/Makefile common/abi/Makefile include/Makefile libunicode/Makefile libthread/Makefile libstdbit/Makefile libckdint/Makefile libdecimal/Makefile libmetaware/Makefile libblocks/Makefile"
+# Build list of Makefiles to configure based on enabled languages
+CONFIG_MAKEFILES="Makefile
+		common/abi/Makefile
+		include/Makefile
+		libunicode/Makefile
+		libthread/Makefile
+		libstdbit/Makefile
+		libckdint/Makefile
+		libdecimal/Makefile
+		libmetaware/Makefile
+		libblocks/Makefile"
+
+# C language is always included (required for bootstrap)
+CONFIG_MAKEFILES="$CONFIG_MAKEFILES
+		cc/Makefile
+		cc/cc/Makefile
+		cc/cpp/Makefile
+		cc/ccom/Makefile
+		cc/driver/Makefile"
+
+# Add C++ if enabled
+if test "$enable_cxx" = "yes"; then
+	CONFIG_MAKEFILES="$CONFIG_MAKEFILES
+		cc/cxxcom/Makefile"
+fi
+
+# Add Fortran 77 if enabled
+if test "$enable_f77" = "yes"; then
+	CONFIG_MAKEFILES="$CONFIG_MAKEFILES
+		f77/Makefile
+		f77/f77/Makefile
+		f77/fcom/Makefile"
+fi
+
+# Add Pascal if enabled
+if test "$enable_pascal" = "yes"; then
+	CONFIG_MAKEFILES="$CONFIG_MAKEFILES
+		pascal/Makefile
+		pascal/pascal/Makefile
+		pascal/pcom/Makefile"
+fi
+
+# Add BLISS if enabled
+if test "$enable_bliss" = "yes"; then
+	CONFIG_MAKEFILES="$CONFIG_MAKEFILES
+		bliss/Makefile
+		bliss/bliss/Makefile
+		bliss/bcom/Makefile
+		libbliss/Makefile"
+fi
+
+ac_config_files="$ac_config_files $CONFIG_MAKEFILES"
 
 cat >confcache <<\_ACEOF
 # This file is a shell script that caches the results of configure
@@ -7180,28 +7366,7 @@ for ac_config_target in $ac_config_targets
 do
   case $ac_config_target in
     "config.h") CONFIG_HEADERS="$CONFIG_HEADERS config.h" ;;
-    "Makefile") CONFIG_FILES="$CONFIG_FILES Makefile" ;;
-    "cc/Makefile") CONFIG_FILES="$CONFIG_FILES cc/Makefile" ;;
-    "cc/cc/Makefile") CONFIG_FILES="$CONFIG_FILES cc/cc/Makefile" ;;
-    "cc/cpp/Makefile") CONFIG_FILES="$CONFIG_FILES cc/cpp/Makefile" ;;
-    "cc/ccom/Makefile") CONFIG_FILES="$CONFIG_FILES cc/ccom/Makefile" ;;
-    "cc/cxxcom/Makefile") CONFIG_FILES="$CONFIG_FILES cc/cxxcom/Makefile" ;;
-    "cc/driver/Makefile") CONFIG_FILES="$CONFIG_FILES cc/driver/Makefile" ;;
-    "f77/Makefile") CONFIG_FILES="$CONFIG_FILES f77/Makefile" ;;
-    "f77/f77/Makefile") CONFIG_FILES="$CONFIG_FILES f77/f77/Makefile" ;;
-    "f77/fcom/Makefile") CONFIG_FILES="$CONFIG_FILES f77/fcom/Makefile" ;;
-    "pascal/Makefile") CONFIG_FILES="$CONFIG_FILES pascal/Makefile" ;;
-    "pascal/pascal/Makefile") CONFIG_FILES="$CONFIG_FILES pascal/pascal/Makefile" ;;
-    "pascal/pcom/Makefile") CONFIG_FILES="$CONFIG_FILES pascal/pcom/Makefile" ;;
-    "common/abi/Makefile") CONFIG_FILES="$CONFIG_FILES common/abi/Makefile" ;;
-    "include/Makefile") CONFIG_FILES="$CONFIG_FILES include/Makefile" ;;
-    "libunicode/Makefile") CONFIG_FILES="$CONFIG_FILES libunicode/Makefile" ;;
-    "libthread/Makefile") CONFIG_FILES="$CONFIG_FILES libthread/Makefile" ;;
-    "libstdbit/Makefile") CONFIG_FILES="$CONFIG_FILES libstdbit/Makefile" ;;
-    "libckdint/Makefile") CONFIG_FILES="$CONFIG_FILES libckdint/Makefile" ;;
-    "libdecimal/Makefile") CONFIG_FILES="$CONFIG_FILES libdecimal/Makefile" ;;
-    "libmetaware/Makefile") CONFIG_FILES="$CONFIG_FILES libmetaware/Makefile" ;;
-    "libblocks/Makefile") CONFIG_FILES="$CONFIG_FILES libblocks/Makefile" ;;
+    "$CONFIG_MAKEFILES") CONFIG_FILES="$CONFIG_FILES $CONFIG_MAKEFILES" ;;
 
   *) as_fn_error $? "invalid argument: \`$ac_config_target'" "$LINENO" 5;;
   esac
@@ -7793,10 +7958,23 @@ eval "exec_prefix=$exec_prefix"
 eval "bindir=$bindir"
 eval "libexecdir=$libexecdir"
 
+# Build language list for display
+ENABLED_LANGUAGES=""
+test "$enable_c" = "yes" && ENABLED_LANGUAGES="$ENABLED_LANGUAGES c"
+test "$enable_cxx" = "yes" && ENABLED_LANGUAGES="$ENABLED_LANGUAGES c++"
+test "$enable_pascal" = "yes" && ENABLED_LANGUAGES="$ENABLED_LANGUAGES pascal"
+test "$enable_f77" = "yes" && ENABLED_LANGUAGES="$ENABLED_LANGUAGES f77"
+test "$enable_bliss" = "yes" && ENABLED_LANGUAGES="$ENABLED_LANGUAGES bliss"
+ENABLED_LANGUAGES=`echo $ENABLED_LANGUAGES | sed 's/^ *//'`
+
 echo
 echo "Target CPU is .................... ${targmach}"
 echo "Target ABI is .................... ${abi}"
 echo "Target OS is ..................... ${targos}"
+echo "Enabled languages ................ ${ENABLED_LANGUAGES}"
+echo "Enabled architectures ............ ${enable_archs}"
+echo "Enabled OS targets ............... ${enable_targets}"
+echo "Bootstrap build .................. ${bootstrap} (${bootstrap_stages} stage(s))"
 echo "Compiler is called ............... ${BINPREFIX}pcc${EXEEXT}"
 echo "Installing compiler into ......... ${bindir}"
 echo "Installing pre-processor into .... ${libexecdir}"
