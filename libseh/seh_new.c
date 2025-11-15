@@ -4,7 +4,10 @@
  * SEH Runtime - Platform Dispatcher
  */
 
-#if defined(__NETWARE__) || defined(__netware__)
+#if defined(__UEFI__) || defined(UEFI) || defined(_UEFI)
+  /* UEFI (Unified Extensible Firmware Interface) */
+  #include "uefi/seh_uefi.c"
+#elif defined(__NETWARE__) || defined(__netware__)
   /* Novell NetWare 3.x+ */
   #include "netware/seh_netware.c"
 #elif defined(__amigaos__) || defined(__AMIGA__) || defined(AMIGA)
@@ -45,6 +48,8 @@
    * - Linux, *BSD, macOS (OS X), Solaris, AIX, HP-UX, IRIX
    * - UnixWare, SCO OpenServer
    * - OpenStep, NEXTSTEP, OPENSTEP
+   * - Plan 9 from Bell Labs
+   * - MINIX 3.x
    * - QNX, Tru64 UNIX, and other POSIX-compliant systems
    */
   #include "unix/seh_unix.c"

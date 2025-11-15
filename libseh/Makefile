@@ -53,7 +53,9 @@ PLATFORM_SRCS=	\
 	macos/seh_macos.c \
 	macos/seh_context_macos.c \
 	netware/seh_netware.c \
-	netware/seh_context_netware.c
+	netware/seh_context_netware.c \
+	uefi/seh_uefi.c \
+	uefi/seh_context_uefi.c
 
 EXTRA_DIST=	$(PLATFORM_SRCS) seh_helpers.h
 

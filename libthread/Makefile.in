@@ -36,7 +36,9 @@ PLATFORM_SRCS=	\
 	amiga/threads_amiga.c \
 	atari/threads_atari.c \
 	macos/threads_macos.c \
-	netware/threads_netware.c
+	netware/threads_netware.c \
+	uefi/threads_uefi.c \
+	coop/threads_coop.c
 
 LIB=libthread.a
 
