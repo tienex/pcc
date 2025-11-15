@@ -1,0 +1,13 @@
+; Test MOVS - Move Swapped (PDP10)
+; Expected: AC2 = swapped halves of AC1
+
+	.PSECT	CODE
+
+START:
+	MOVEI 1,0123456
+	MOVS	2,1
+	HALT
+
+DATA:	.WORD	0
+
+	.END

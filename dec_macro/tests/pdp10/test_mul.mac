@@ -1,0 +1,14 @@
+; Test MUL - Multiply (PDP10)
+; Expected: AC1 = AC1 * AC2 = 120
+
+	.PSECT	CODE
+
+START:
+	MOVEI 1,12
+	MOVEI 2,10
+	MUL	1,2
+	HALT
+
+DATA:	.WORD	0
+
+	.END

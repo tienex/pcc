@@ -1,0 +1,13 @@
+; Test TST - Test (PDP11)
+; Expected: Flags set, N=1, Z=0
+
+	.PSECT	CODE
+
+START:
+	MOV #-5,R0
+	TST	R0
+	HALT
+
+DATA:	.WORD	0
+
+	.END

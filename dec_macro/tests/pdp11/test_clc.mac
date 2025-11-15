@@ -1,0 +1,12 @@
+; Test CLC - Clear Carry (PDP11)
+; Expected: C = 0
+
+	.PSECT	CODE
+
+START:
+	CLC
+	HALT
+
+DATA:	.WORD	0
+
+	.END

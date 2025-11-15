@@ -1,0 +1,15 @@
+; Test HRR - Half Right to Right (PDP10)
+; Expected: AC1 right = DATA right
+
+	.PSECT	CODE
+
+START:
+	MOVEI 1,0777777000000
+	MOVEI 3,0765432
+	MOVEM 3,DATA
+	HRR	1,DATA
+	HALT
+
+DATA:	.WORD	0
+
+	.END

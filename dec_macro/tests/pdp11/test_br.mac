@@ -1,0 +1,13 @@
+; Test BR - Branch (PDP11)
+; Expected: Branch to LBL
+
+	.PSECT	CODE
+
+START:
+	BR	LBL
+LBL:
+	HALT
+
+DATA:	.WORD	0
+
+	.END

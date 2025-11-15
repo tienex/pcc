@@ -1,0 +1,14 @@
+; Test BGTR - Branch Greater (VAX)
+; Expected: Branch if N=0,Z=0
+
+	.PSECT	CODE
+
+START:
+	CMPL #10,#5
+	BGTR	LBL
+LBL:
+	HALT
+
+DATA:	.WORD	0
+
+	.END

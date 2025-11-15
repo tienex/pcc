@@ -1,0 +1,13 @@
+; Test TSTB - Test Byte (PDP11)
+; Expected: Flags set
+
+	.PSECT	CODE
+
+START:
+	MOV #200,R0
+	TSTB	R0
+	HALT
+
+DATA:	.WORD	0
+
+	.END

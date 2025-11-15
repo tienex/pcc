@@ -1,0 +1,14 @@
+; Test BNEQ - Branch Not Equal (VAX)
+; Expected: Branch if Z=0
+
+	.PSECT	CODE
+
+START:
+	CMPL #5,#6
+	BNEQ	LBL
+LBL:
+	HALT
+
+DATA:	.WORD	0
+
+	.END

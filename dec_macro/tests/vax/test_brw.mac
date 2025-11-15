@@ -1,0 +1,13 @@
+; Test BRW - Branch Word (VAX)
+; Expected: Branch to LBL
+
+	.PSECT	CODE
+
+START:
+	BRW	LBL
+LBL:
+	HALT
+
+DATA:	.WORD	0
+
+	.END

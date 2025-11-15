@@ -1,0 +1,12 @@
+; Test MOVEI - Move Immediate (PDP10)
+; Expected: AC1 = 12345
+
+	.PSECT	CODE
+
+START:
+	MOVEI	1,12345
+	HALT
+
+DATA:	.WORD	0
+
+	.END

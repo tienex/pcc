@@ -1,0 +1,13 @@
+; Test COMB - Complement Byte (PDP11)
+; Expected: R0 byte = ~byte
+
+	.PSECT	CODE
+
+START:
+	MOV #255,R0
+	COMB	R0
+	HALT
+
+DATA:	.WORD	0
+
+	.END

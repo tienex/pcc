@@ -1,0 +1,13 @@
+; Test BIC - Bit Clear (PDP11)
+; Expected: Clear bit 15
+
+	.PSECT	CODE
+
+START:
+	MOV #0177777,R0
+	BIC	#0100000,R0
+	HALT
+
+DATA:	.WORD	0
+
+	.END

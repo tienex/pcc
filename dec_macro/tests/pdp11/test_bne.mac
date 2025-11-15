@@ -1,0 +1,14 @@
+; Test BNE - Branch Not Equal (PDP11)
+; Expected: Branch if Z=0
+
+	.PSECT	CODE
+
+START:
+	CMP #1,#2
+	BNE	LBL
+LBL:
+	HALT
+
+DATA:	.WORD	0
+
+	.END

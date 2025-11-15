@@ -1,0 +1,12 @@
+; Test CLRB - Clear Byte (PDP11)
+; Expected: R0 byte = 0, Z=1
+
+	.PSECT	CODE
+
+START:
+	CLRB	R0
+	HALT
+
+DATA:	.WORD	0
+
+	.END

@@ -1,0 +1,12 @@
+; Test SEC - Set Carry (PDP11)
+; Expected: C = 1
+
+	.PSECT	CODE
+
+START:
+	SEC
+	HALT
+
+DATA:	.WORD	0
+
+	.END

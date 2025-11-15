@@ -1,0 +1,13 @@
+; Test INCB - Increment Byte (PDP11)
+; Expected: R0 byte = 51
+
+	.PSECT	CODE
+
+START:
+	MOV #50,R0
+	INCB	R0
+	HALT
+
+DATA:	.WORD	0
+
+	.END

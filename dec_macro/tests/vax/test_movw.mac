@@ -1,0 +1,12 @@
+; Test MOVW - Move Word (VAX)
+; Expected: R0 = 12345 (16-bit)
+
+	.PSECT	CODE
+
+START:
+	MOVW	#12345,R0
+	HALT
+
+DATA:	.WORD	0
+
+	.END

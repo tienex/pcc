@@ -1,0 +1,13 @@
+; Test DIVB - Divide Byte (VAX)
+; Expected: R0 = R0 / 5 = 20
+
+	.PSECT	CODE
+
+START:
+	MOVB #100,R0
+	DIVB	#5,R0
+	HALT
+
+DATA:	.WORD	0
+
+	.END

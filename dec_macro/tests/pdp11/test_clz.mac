@@ -1,0 +1,12 @@
+; Test CLZ - Clear Zero (PDP11)
+; Expected: Z = 0
+
+	.PSECT	CODE
+
+START:
+	CLZ
+	HALT
+
+DATA:	.WORD	0
+
+	.END

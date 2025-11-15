@@ -1,0 +1,12 @@
+; Test POP - Pop (PDP10)
+; Expected: Pop into AC2
+
+	.PSECT	CODE
+
+START:
+	POP	17,2
+	HALT
+
+DATA:	.WORD	0
+
+	.END

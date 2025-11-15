@@ -1,0 +1,13 @@
+; Test SUBL - Subtract Long (VAX)
+; Expected: R0 = 500000
+
+	.PSECT	CODE
+
+START:
+	MOVL #1000000,R0
+	SUBL	#500000,R0
+	HALT
+
+DATA:	.WORD	0
+
+	.END

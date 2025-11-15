@@ -1,0 +1,12 @@
+; Test CLRW - Clear Word (VAX)
+; Expected: R0 = 0, Z=1
+
+	.PSECT	CODE
+
+START:
+	CLRW	R0
+	HALT
+
+DATA:	.WORD	0
+
+	.END

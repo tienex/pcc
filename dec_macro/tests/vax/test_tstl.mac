@@ -1,0 +1,12 @@
+; Test TSTL - Test Long (VAX)
+; Expected: N=1
+
+	.PSECT	CODE
+
+START:
+	TSTL	#-1000000
+	HALT
+
+DATA:	.WORD	0
+
+	.END

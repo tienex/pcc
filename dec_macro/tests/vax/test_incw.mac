@@ -1,0 +1,13 @@
+; Test INCW - Increment Word (VAX)
+; Expected: R0 = 1001
+
+	.PSECT	CODE
+
+START:
+	MOVW #1000,R0
+	INCW	R0
+	HALT
+
+DATA:	.WORD	0
+
+	.END

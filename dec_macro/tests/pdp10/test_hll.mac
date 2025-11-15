@@ -1,0 +1,15 @@
+; Test HLL - Half Left to Left (PDP10)
+; Expected: AC1 left = DATA left
+
+	.PSECT	CODE
+
+START:
+	MOVEI 1,0777777
+	MOVEI 3,0123456
+	MOVEM 3,DATA
+	HLL	1,DATA
+	HALT
+
+DATA:	.WORD	0
+
+	.END

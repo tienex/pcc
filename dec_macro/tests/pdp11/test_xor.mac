@@ -1,0 +1,14 @@
+; Test XOR - XOR (PDP11)
+; Expected: R0 = R0 ^ R1
+
+	.PSECT	CODE
+
+START:
+	MOV #0177777,R0
+	MOV #0100000,R1
+	XOR	R1,R0
+	HALT
+
+DATA:	.WORD	0
+
+	.END

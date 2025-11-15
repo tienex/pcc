@@ -1,0 +1,13 @@
+; Test SUB - Subtract (PDP11)
+; Expected: R0 = R0 - 25 = 75
+
+	.PSECT	CODE
+
+START:
+	MOV #100,R0
+	SUB	#25,R0
+	HALT
+
+DATA:	.WORD	0
+
+	.END

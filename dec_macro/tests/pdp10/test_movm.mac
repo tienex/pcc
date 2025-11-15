@@ -1,0 +1,13 @@
+; Test MOVM - Move Magnitude (PDP10)
+; Expected: AC2 = |AC1|
+
+	.PSECT	CODE
+
+START:
+	MOVEI 1,-50
+	MOVM	2,1
+	HALT
+
+DATA:	.WORD	0
+
+	.END

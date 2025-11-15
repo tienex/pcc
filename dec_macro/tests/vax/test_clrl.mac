@@ -1,0 +1,12 @@
+; Test CLRL - Clear Long (VAX)
+; Expected: R0 = 0, Z=1
+
+	.PSECT	CODE
+
+START:
+	CLRL	R0
+	HALT
+
+DATA:	.WORD	0
+
+	.END

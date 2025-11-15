@@ -1,0 +1,14 @@
+; Test BCC - Branch Carry Clear (PDP11)
+; Expected: Branch if C=0
+
+	.PSECT	CODE
+
+START:
+	CLC
+	BCC	LBL
+LBL:
+	HALT
+
+DATA:	.WORD	0
+
+	.END

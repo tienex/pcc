@@ -1,0 +1,13 @@
+; Test COM - Complement (PDP11)
+; Expected: R0 = ~R0
+
+	.PSECT	CODE
+
+START:
+	MOV #12345,R0
+	COM	R0
+	HALT
+
+DATA:	.WORD	0
+
+	.END

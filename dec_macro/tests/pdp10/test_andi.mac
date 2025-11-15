@@ -1,0 +1,13 @@
+; Test ANDI - AND Immediate (PDP10)
+; Expected: AC1 = AC1 & 0777000
+
+	.PSECT	CODE
+
+START:
+	MOVEI 1,0123456
+	ANDI	1,0777000
+	HALT
+
+DATA:	.WORD	0
+
+	.END

@@ -1,0 +1,12 @@
+; Test SEN - Set Negative (PDP11)
+; Expected: N = 1
+
+	.PSECT	CODE
+
+START:
+	SEN
+	HALT
+
+DATA:	.WORD	0
+
+	.END

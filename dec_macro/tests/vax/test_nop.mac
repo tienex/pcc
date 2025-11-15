@@ -1,0 +1,12 @@
+; Test NOP - No Operation (VAX)
+; Expected: No effect
+
+	.PSECT	CODE
+
+START:
+	NOP
+	HALT
+
+DATA:	.WORD	0
+
+	.END

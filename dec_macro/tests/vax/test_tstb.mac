@@ -1,0 +1,12 @@
+; Test TSTB - Test Byte (VAX)
+; Expected: N=1, Z=0
+
+	.PSECT	CODE
+
+START:
+	TSTB	#-10
+	HALT
+
+DATA:	.WORD	0
+
+	.END

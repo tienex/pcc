@@ -1,0 +1,12 @@
+; Test HLLI - Half Left to Left Immediate (PDP10)
+; Expected: AC1 left = 0123
+
+	.PSECT	CODE
+
+START:
+	HLLI	1,0123
+	HALT
+
+DATA:	.WORD	0
+
+	.END

@@ -1,0 +1,13 @@
+; Test NEG - Negate (PDP11)
+; Expected: R0 = -R0 = -100
+
+	.PSECT	CODE
+
+START:
+	MOV #100,R0
+	NEG	R0
+	HALT
+
+DATA:	.WORD	0
+
+	.END

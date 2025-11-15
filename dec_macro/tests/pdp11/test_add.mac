@@ -1,0 +1,13 @@
+; Test ADD - Add (PDP11)
+; Expected: R0 = R0 + 50 = 150
+
+	.PSECT	CODE
+
+START:
+	MOV #100,R0
+	ADD	#50,R0
+	HALT
+
+DATA:	.WORD	0
+
+	.END

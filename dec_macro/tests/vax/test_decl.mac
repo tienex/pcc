@@ -1,0 +1,13 @@
+; Test DECL - Decrement Long (VAX)
+; Expected: R0 = 999999
+
+	.PSECT	CODE
+
+START:
+	MOVL #1000000,R0
+	DECL	R0
+	HALT
+
+DATA:	.WORD	0
+
+	.END

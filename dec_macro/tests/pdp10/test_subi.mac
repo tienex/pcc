@@ -1,0 +1,13 @@
+; Test SUBI - Subtract Immediate (PDP10)
+; Expected: AC1 = AC1 - 100 = 200
+
+	.PSECT	CODE
+
+START:
+	MOVEI 1,300
+	SUBI	1,100
+	HALT
+
+DATA:	.WORD	0
+
+	.END

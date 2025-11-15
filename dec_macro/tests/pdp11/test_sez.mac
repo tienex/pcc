@@ -1,0 +1,12 @@
+; Test SEZ - Set Zero (PDP11)
+; Expected: Z = 1
+
+	.PSECT	CODE
+
+START:
+	SEZ
+	HALT
+
+DATA:	.WORD	0
+
+	.END

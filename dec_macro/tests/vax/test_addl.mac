@@ -1,0 +1,13 @@
+; Test ADDL - Add Long (VAX)
+; Expected: R0 = 1500000
+
+	.PSECT	CODE
+
+START:
+	MOVL #1000000,R0
+	ADDL	#500000,R0
+	HALT
+
+DATA:	.WORD	0
+
+	.END

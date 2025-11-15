@@ -1,0 +1,13 @@
+; Test XORI - XOR Immediate (PDP10)
+; Expected: AC1 = AC1 ^ 0777777 = 0
+
+	.PSECT	CODE
+
+START:
+	MOVEI 1,0777777
+	XORI	1,0777777
+	HALT
+
+DATA:	.WORD	0
+
+	.END

@@ -1,0 +1,12 @@
+; Test SEV - Set Overflow (PDP11)
+; Expected: V = 1
+
+	.PSECT	CODE
+
+START:
+	SEV
+	HALT
+
+DATA:	.WORD	0
+
+	.END

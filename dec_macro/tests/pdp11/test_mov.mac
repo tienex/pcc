@@ -1,0 +1,12 @@
+; Test MOV - Move (PDP11)
+; Expected: R0 = 100
+
+	.PSECT	CODE
+
+START:
+	MOV	#100,R0
+	HALT
+
+DATA:	.WORD	0
+
+	.END

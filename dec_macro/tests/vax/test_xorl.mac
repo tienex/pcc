@@ -1,0 +1,13 @@
+; Test XORL - XOR Long (VAX)
+; Expected: R0 = ~R0
+
+	.PSECT	CODE
+
+START:
+	MOVL #0xAAAAAAAA,R0
+	XORL	#0xFFFFFFFF,R0
+	HALT
+
+DATA:	.WORD	0
+
+	.END

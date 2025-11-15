@@ -1,0 +1,14 @@
+; Test BLSS - Branch Less (VAX)
+; Expected: Branch if N=1
+
+	.PSECT	CODE
+
+START:
+	CMPL #-5,#0
+	BLSS	LBL
+LBL:
+	HALT
+
+DATA:	.WORD	0
+
+	.END

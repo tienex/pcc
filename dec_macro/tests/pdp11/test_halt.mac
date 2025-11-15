@@ -1,0 +1,12 @@
+; Test HALT - Halt (PDP11)
+; Expected: Halt processor
+
+	.PSECT	CODE
+
+START:
+	HALT
+	HALT
+
+DATA:	.WORD	0
+
+	.END

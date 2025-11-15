@@ -1,0 +1,13 @@
+; Test ROL - Rotate Left (PDP11)
+; Expected: R0 rotated left
+
+	.PSECT	CODE
+
+START:
+	MOV #100,R0
+	ROL	R0
+	HALT
+
+DATA:	.WORD	0
+
+	.END

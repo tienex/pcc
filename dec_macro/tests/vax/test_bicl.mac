@@ -1,0 +1,13 @@
+; Test BICL - Bit Clear Long (VAX)
+; Expected: High 4 bits cleared
+
+	.PSECT	CODE
+
+START:
+	MOVL #0xFFFFFFFF,R0
+	BICL	#0xF0000000,R0
+	HALT
+
+DATA:	.WORD	0
+
+	.END

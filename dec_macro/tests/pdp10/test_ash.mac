@@ -1,0 +1,13 @@
+; Test ASH - Arithmetic Shift (PDP10)
+; Expected: AC1 = AC1 << 4 = 256
+
+	.PSECT	CODE
+
+START:
+	MOVEI 1,16
+	ASH	1,4
+	HALT
+
+DATA:	.WORD	0
+
+	.END

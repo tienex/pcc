@@ -1,0 +1,13 @@
+; Test DECW - Decrement Word (VAX)
+; Expected: R0 = 999
+
+	.PSECT	CODE
+
+START:
+	MOVW #1000,R0
+	DECW	R0
+	HALT
+
+DATA:	.WORD	0
+
+	.END

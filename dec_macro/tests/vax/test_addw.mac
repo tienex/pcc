@@ -1,0 +1,13 @@
+; Test ADDW - Add Word (VAX)
+; Expected: R0 = 1500
+
+	.PSECT	CODE
+
+START:
+	MOVW #1000,R0
+	ADDW	#500,R0
+	HALT
+
+DATA:	.WORD	0
+
+	.END

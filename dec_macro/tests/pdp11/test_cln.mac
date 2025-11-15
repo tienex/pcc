@@ -1,0 +1,12 @@
+; Test CLN - Clear Negative (PDP11)
+; Expected: N = 0
+
+	.PSECT	CODE
+
+START:
+	CLN
+	HALT
+
+DATA:	.WORD	0
+
+	.END

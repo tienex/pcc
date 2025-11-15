@@ -1,0 +1,14 @@
+; Test DIV - Divide (PDP10)
+; Expected: AC1 = AC1 / AC2 = 30
+
+	.PSECT	CODE
+
+START:
+	MOVEI 1,360
+	MOVEI 2,12
+	DIV	1,2
+	HALT
+
+DATA:	.WORD	0
+
+	.END

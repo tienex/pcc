@@ -1,0 +1,13 @@
+; Test MOVES - Move to Self (PDP10)
+; Expected: AC1 = DATA, DATA = AC1
+
+	.PSECT	CODE
+
+START:
+	MOVEI 1,777
+	MOVES	1,DATA
+	HALT
+
+DATA:	.WORD	0
+
+	.END

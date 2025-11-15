@@ -1,0 +1,13 @@
+; Test LSH - Logical Shift (PDP10)
+; Expected: AC1 = AC1 << 8 = 256
+
+	.PSECT	CODE
+
+START:
+	MOVEI 1,1
+	LSH	1,8
+	HALT
+
+DATA:	.WORD	0
+
+	.END

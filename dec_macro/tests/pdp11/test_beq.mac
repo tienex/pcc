@@ -1,0 +1,14 @@
+; Test BEQ - Branch Equal (PDP11)
+; Expected: Branch if Z=1
+
+	.PSECT	CODE
+
+START:
+	CMP #5,#5
+	BEQ	LBL
+LBL:
+	HALT
+
+DATA:	.WORD	0
+
+	.END

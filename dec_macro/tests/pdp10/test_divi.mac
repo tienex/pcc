@@ -1,0 +1,13 @@
+; Test DIVI - Divide Immediate (PDP10)
+; Expected: AC1 = AC1 / 16 = 30
+
+	.PSECT	CODE
+
+START:
+	MOVEI 1,480
+	DIVI	1,16
+	HALT
+
+DATA:	.WORD	0
+
+	.END

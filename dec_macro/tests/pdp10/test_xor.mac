@@ -1,0 +1,14 @@
+; Test XOR - Exclusive OR (PDP10)
+; Expected: AC1 = AC1 ^ AC2
+
+	.PSECT	CODE
+
+START:
+	MOVEI 1,0123456
+	MOVEI 2,0707070
+	XOR	1,2
+	HALT
+
+DATA:	.WORD	0
+
+	.END

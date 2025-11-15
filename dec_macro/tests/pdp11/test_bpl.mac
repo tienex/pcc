@@ -1,0 +1,14 @@
+; Test BPL - Branch Plus (PDP11)
+; Expected: Branch if N=0
+
+	.PSECT	CODE
+
+START:
+	TST #10
+	BPL	LBL
+LBL:
+	HALT
+
+DATA:	.WORD	0
+
+	.END

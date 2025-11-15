@@ -1,0 +1,13 @@
+; Test CMP - Compare (PDP11)
+; Expected: Flags: Z=1
+
+	.PSECT	CODE
+
+START:
+	MOV #100,R0
+	CMP	R0,#100
+	HALT
+
+DATA:	.WORD	0
+
+	.END

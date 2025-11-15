@@ -1,0 +1,12 @@
+; Test CMPB - Compare Byte (VAX)
+; Expected: Z=1 (equal)
+
+	.PSECT	CODE
+
+START:
+	CMPB	#50,#50
+	HALT
+
+DATA:	.WORD	0
+
+	.END

@@ -1,0 +1,13 @@
+; Test BRB - Branch (VAX)
+; Expected: Branch to LBL
+
+	.PSECT	CODE
+
+START:
+	BRB	LBL
+LBL:
+	HALT
+
+DATA:	.WORD	0
+
+	.END
