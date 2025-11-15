@@ -440,6 +440,15 @@ This directory contains BGI implementations for various platforms and graphics s
 - **Characters**: Unicode Braille U+2800-U+28FF
 - **Notes**: Highest resolution possible in text mode, monochrome only, excellent for detailed graphics
 
+### CP437/CP850 Block Graphics (cp437/)
+- **Platform**: DOS, OS/2, Windows console, Linux console with CP437/850 font
+- **Status**: ✅ Implemented
+- **Features**: IBM PC code page block characters, 160x50 pixels, 16 colors via ANSI
+- **Dependencies**: CP437 or CP850 code page support
+- **Resolution**: 80x25 characters, 2 pixels per character (160x50 total)
+- **Characters**: Block chars (space, ▄ 0xDC, ▀ 0xDF, █ 0xDB)
+- **Notes**: Platform-independent stdio, works on DOS/OS/2/Windows console, ANSI escape codes for color
+
 ## Specialized Backends
 
 ### CGA Composite (cga_composite/)
@@ -481,7 +490,7 @@ When multiple backends are available, use this priority order:
 10. **Plan 9**: Native /dev/draw
 11. **UEFI**: GOP > UGA
 12. **Terminal Graphics**: SIXEL > iTerm2 > kitty > Tektronix
-13. **Text Mode Graphics**: Unicode Blocks > Braille > CGA Text > ASCII Art
+13. **Text Mode Graphics**: Unicode Blocks > Braille > CP437 > CGA Text > ASCII Art
 
 ## Build System
 
@@ -508,7 +517,7 @@ Each backend should pass the BGI test suite:
 
 ## Implementation Status Summary
 
-**Implemented (21)**:
+**Implemented (22)**:
 - SDL2, SDL1
 - Linux framebuffer
 - VGA, VESA, EGA, CGA, Hercules
@@ -521,7 +530,8 @@ Each backend should pass the BGI test suite:
 - Plan 9 (/dev/draw)
 - OS/2 PM/DIVE
 - SIXEL terminal graphics
-- CGA Text Mode (CP437 blocks)
+- CGA Text Mode (CP437 blocks, DOS direct memory)
+- CP437/CP850 Block Graphics (ANSI stdio)
 - ASCII Art Luminance
 - Unicode Block Graphics
 - Braille Pattern Graphics
