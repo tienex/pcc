@@ -63,6 +63,21 @@ static P1ND *handle_mfpi(INSTRUCTION *inst);
 static P1ND *handle_mtpi(INSTRUCTION *inst);
 static P1ND *handle_mfps(INSTRUCTION *inst);
 static P1ND *handle_mtps(INSTRUCTION *inst);
+/* PDP-11 specific instructions */
+static P1ND *handle_mfpt(INSTRUCTION *inst);
+static P1ND *handle_csm(INSTRUCTION *inst);
+static P1ND *handle_tstset(INSTRUCTION *inst);
+static P1ND *handle_wrtlck(INSTRUCTION *inst);
+static P1ND *handle_adcb(INSTRUCTION *inst);
+static P1ND *handle_sbcb(INSTRUCTION *inst);
+static P1ND *handle_bicb(INSTRUCTION *inst);
+static P1ND *handle_bisb(INSTRUCTION *inst);
+static P1ND *handle_subb(INSTRUCTION *inst);
+/* PDP-11 FIS (Floating Instruction Set) */
+static P1ND *handle_fadd(INSTRUCTION *inst);
+static P1ND *handle_fsub(INSTRUCTION *inst);
+static P1ND *handle_fmul(INSTRUCTION *inst);
+static P1ND *handle_fdiv(INSTRUCTION *inst);
 /* VAX 32-bit operations */
 static P1ND *handle_movl(INSTRUCTION *inst);
 static P1ND *handle_pushl(INSTRUCTION *inst);
@@ -351,6 +366,8 @@ static const insn_table_entry_t insn_table[] = {
 	{ "NEGB",  handle_neg,   0105400 },
 	{ "ADC",   handle_inc,   0005500 },  /* Add carry */
 	{ "SBC",   handle_dec,   0005600 },  /* Subtract carry */
+	{ "ADCB",  handle_adcb,  0105500 },  /* Add carry byte */
+	{ "SBCB",  handle_sbcb,  0105600 },  /* Subtract carry byte */
 
 	/* Logical */
 	{ "AND",   handle_and,   0040000 },
@@ -358,6 +375,8 @@ static const insn_table_entry_t insn_table[] = {
 	{ "XOR",   handle_xor,   0074000 },
 	{ "BIC",   handle_bic,   0040000 },  /* Bit clear */
 	{ "BIS",   handle_bis,   0050000 },  /* Bit set */
+	{ "BICB",  handle_bicb,  0140000 },  /* Bit clear byte */
+	{ "BISB",  handle_bisb,  0150000 },  /* Bit set byte */
 	{ "BIT",   handle_bit,   0030000 },  /* Bit test */
 	{ "COM",   handle_com,   0005100 },  /* Complement */
 	{ "COMB",  handle_com,   0105100 },
@@ -443,6 +462,18 @@ static const insn_table_entry_t insn_table[] = {
 	{ "MTPD",  handle_mtpi,  0106600 },  /* Move to previous D space */
 	{ "MFPS",  handle_mfps,  0106700 },  /* Move from PS */
 	{ "MTPS",  handle_mtps,  0106400 },  /* Move to PS */
+
+	/* PDP-11 specific extended instructions */
+	{ "MFPT",   handle_mfpt,   0000007 },  /* Move from processor type */
+	{ "CSM",    handle_csm,    0007000 },  /* Call to supervisor mode */
+	{ "TSTSET", handle_tstset, 0007200 },  /* Test and set */
+	{ "WRTLCK", handle_wrtlck, 0007300 },  /* Write lock */
+
+	/* PDP-11 FIS (Floating Instruction Set) - opcodes 170000-177777 */
+	{ "FADD",   handle_fadd,   0075000 },  /* FIS floating add */
+	{ "FSUB",   handle_fsub,   0075001 },  /* FIS floating subtract */
+	{ "FMUL",   handle_fmul,   0075002 },  /* FIS floating multiply */
+	{ "FDIV",   handle_fdiv,   0075003 },  /* FIS floating divide */
 
 	/* VAX 32-bit operations */
 	{ "MOVL",  handle_movl,  0x90 },     /* Move longword */
@@ -2994,3 +3025,138 @@ static P1ND *handle_chmu(INSTRUCTION *inst) { return handle_chme(inst); }  /* Ch
 /* CVTLP/CVTPL - Convert Long to/from Packed Decimal */
 static P1ND *handle_cvtlp(INSTRUCTION *inst) { return handle_mov(inst); }  /* Convert long to packed */
 static P1ND *handle_cvtpl(INSTRUCTION *inst) { return handle_mov(inst); }  /* Convert packed to long */
+
+/* ============== MISSING PDP-11 INSTRUCTION HANDLERS ============== */
+
+/* PDP-11 byte variants of add/subtract carry */
+static P1ND *handle_adcb(INSTRUCTION *inst) { return handle_inc(inst); }  /* Add carry byte */
+static P1ND *handle_sbcb(INSTRUCTION *inst) { return handle_dec(inst); }  /* Subtract carry byte */
+
+/* Note: handle_bicb, handle_bisb, handle_subb already defined in VAX section above */
+
+/* MFPT - Move From Processor Type */
+static P1ND *
+handle_mfpt(INSTRUCTION *inst)
+{
+	/* MFPT - move processor type to R0 */
+	/* Returns processor type identification in R0 */
+	P1ND *r0 = build_reg(0);
+	/* Return a constant identifying processor type (e.g., 1 for 11/34) */
+	return build_assign(r0, build_icon(1));
+}
+
+/* CSM - Call to Supervisor Mode */
+static P1ND *
+handle_csm(INSTRUCTION *inst)
+{
+	/* CSM dst - call to supervisor mode */
+	/* This is a privileged instruction for mode switching */
+	/* Generate as a call/jump */
+	if (inst->noperands >= 1) {
+		return handle_jmp(inst);
+	}
+	return handle_nop(inst);
+}
+
+/* TSTSET - Test and Set */
+static P1ND *
+handle_tstset(INSTRUCTION *inst)
+{
+	/* TSTSET dst - test and set (atomic operation) */
+	/* Test destination, set it to 1, return old value */
+	if (inst->noperands >= 1) {
+		P1ND *dst = operand_to_node(&inst->operands[0]);
+		P1ND *dst_copy = operand_to_node(&inst->operands[0]);
+		
+		/* Test the value first */
+		send_passt(IP_NODE, build_unop(UMINUS, dst_copy));
+		
+		/* Then set to 1 */
+		return build_assign(dst, build_icon(1));
+	}
+	return handle_nop(inst);
+}
+
+/* WRTLCK - Write Lock */
+static P1ND *
+handle_wrtlck(INSTRUCTION *inst)
+{
+	/* WRTLCK dst - write lock (atomic operation) */
+	/* Lock a memory location for atomic writes */
+	/* Similar to test-and-set, but for write operations */
+	if (inst->noperands >= 1) {
+		P1ND *dst = operand_to_node(&inst->operands[0]);
+		/* For now, just perform the write */
+		return build_assign(dst, build_icon(0));
+	}
+	return handle_nop(inst);
+}
+
+/* PDP-11 FIS (Floating Instruction Set) handlers */
+
+/* FADD - FIS Floating Add */
+static P1ND *
+handle_fadd(INSTRUCTION *inst)
+{
+	/* FADD - floating point add using accumulator registers AC0-AC3 */
+	/* FIS uses a special accumulator-based architecture */
+	/* For PCC IR, generate floating-point add */
+	if (inst->noperands >= 1) {
+		/* FIS operates on AC registers, simulate with standard registers */
+		P1ND *src = operand_to_node(&inst->operands[0]);
+		P1ND *ac0 = build_reg(0);  /* Accumulator 0 */
+		P1ND *ac0_rhs = build_reg(0);
+		
+		/* AC0 = AC0 + src */
+		return build_assign(ac0, build_binop(PLUS, ac0_rhs, src));
+	}
+	return handle_nop(inst);
+}
+
+/* FSUB - FIS Floating Subtract */
+static P1ND *
+handle_fsub(INSTRUCTION *inst)
+{
+	/* FSUB - floating point subtract using accumulator registers */
+	if (inst->noperands >= 1) {
+		P1ND *src = operand_to_node(&inst->operands[0]);
+		P1ND *ac0 = build_reg(0);
+		P1ND *ac0_rhs = build_reg(0);
+		
+		/* AC0 = AC0 - src */
+		return build_assign(ac0, build_binop(MINUS, ac0_rhs, src));
+	}
+	return handle_nop(inst);
+}
+
+/* FMUL - FIS Floating Multiply */
+static P1ND *
+handle_fmul(INSTRUCTION *inst)
+{
+	/* FMUL - floating point multiply using accumulator registers */
+	if (inst->noperands >= 1) {
+		P1ND *src = operand_to_node(&inst->operands[0]);
+		P1ND *ac0 = build_reg(0);
+		P1ND *ac0_rhs = build_reg(0);
+		
+		/* AC0 = AC0 * src */
+		return build_assign(ac0, build_binop(MUL, ac0_rhs, src));
+	}
+	return handle_nop(inst);
+}
+
+/* FDIV - FIS Floating Divide */
+static P1ND *
+handle_fdiv(INSTRUCTION *inst)
+{
+	/* FDIV - floating point divide using accumulator registers */
+	if (inst->noperands >= 1) {
+		P1ND *src = operand_to_node(&inst->operands[0]);
+		P1ND *ac0 = build_reg(0);
+		P1ND *ac0_rhs = build_reg(0);
+		
+		/* AC0 = AC0 / src */
+		return build_assign(ac0, build_binop(DIV, ac0_rhs, src));
+	}
+	return handle_nop(inst);
+}
