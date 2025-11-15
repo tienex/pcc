@@ -1,0 +1,56 @@
+# Makefile for libwirth (Wirth Languages Unified Runtime Library)
+
+CC = @CC@
+AR = ar
+RANLIB = @RANLIB@
+CFLAGS = @CFLAGS@ -I. -Wall -Wextra -std=c99
+DESTDIR = @DESTDIR@
+prefix = @prefix@
+exec_prefix = @exec_prefix@
+libdir = @libdir@
+includedir = @includedir@
+
+LIB = libwirth.a
+HEADERS = wirthrt.h
+OBJS = wirthrt.o wirthio.o wirthstr.o wirthmath.o wirthmem.o wirthset.o wirthcoro.o
+
+all: $(LIB)
+
+$(LIB): $(OBJS)
+	$(AR) rcs $(LIB) $(OBJS)
+	$(RANLIB) $(LIB)
+
+wirthrt.o: wirthrt.c wirthrt.h
+	$(CC) $(CFLAGS) -c wirthrt.c -o wirthrt.o
+
+wirthio.o: wirthio.c wirthrt.h
+	$(CC) $(CFLAGS) -c wirthio.c -o wirthio.o
+
+wirthstr.o: wirthstr.c wirthrt.h
+	$(CC) $(CFLAGS) -c wirthstr.c -o wirthstr.o
+
+wirthmath.o: wirthmath.c wirthrt.h
+	$(CC) $(CFLAGS) -c wirthmath.c -o wirthmath.o
+
+wirthmem.o: wirthmem.c wirthrt.h
+	$(CC) $(CFLAGS) -c wirthmem.c -o wirthmem.o
+
+wirthset.o: wirthset.c wirthrt.h
+	$(CC) $(CFLAGS) -c wirthset.c -o wirthset.o
+
+wirthcoro.o: wirthcoro.c wirthrt.h
+	$(CC) $(CFLAGS) -c wirthcoro.c -o wirthcoro.o
+
+install: $(LIB)
+	mkdir -p $(DESTDIR)$(libdir)
+	mkdir -p $(DESTDIR)$(includedir)
+	install -m 644 $(LIB) $(DESTDIR)$(libdir)/
+	install -m 644 $(HEADERS) $(DESTDIR)$(includedir)/
+
+clean:
+	rm -f $(OBJS) $(LIB)
+
+distclean: clean
+	rm -f Makefile
+
+.PHONY: all install clean distclean
