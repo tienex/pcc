@@ -1200,7 +1200,10 @@ CONFIG_MAKEFILES="Makefile
 		libnet/Makefile
 		libpccir/Makefile
 		libunwind/Makefile
-		libxmath/Makefile"
+		libxmath/Makefile
+		libvtable/Makefile
+		libcrt/Makefile
+		libbgi/Makefile"
 
 # C language is always included (required for bootstrap)
 CONFIG_MAKEFILES="$CONFIG_MAKEFILES
