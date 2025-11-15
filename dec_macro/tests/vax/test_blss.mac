@@ -1,12 +1,9 @@
-; Test BLSS - Branch Less (VAX)
-; Expected: Branch if N=1
+; Test BLSS - BLSS operation (VAX)
 
 	.PSECT	CODE
 
 START:
-	CMPL #-5,#0
-	BLSS	LBL
-LBL:
+	BLSS	R1,R2
 	HALT
 
 DATA:	.WORD	0

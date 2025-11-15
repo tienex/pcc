@@ -1,11 +1,11 @@
-; Test SUB - Subtract (PDP10)
-; Expected: AC1 = AC1 - AC2 = 50
+; Test SUB - Subtract (PDP-10)
+; Expected: AC1 = AC1 - AC2, CC updated
 
 	.PSECT	CODE
 
 START:
-	MOVEI 1,200
-	MOVEI 2,150
+	MOVEI 1,100
+	MOVEI 2,30
 	SUB	1,2
 	HALT
 

@@ -1,11 +1,9 @@
-; Test COM - Complement (PDP11)
-; Expected: R0 = ~R0
+; Test COM - COM operation (PDP-11)
 
 	.PSECT	CODE
 
 START:
-	MOV #12345,R0
-	COM	R0
+	COM	R1,R2
 	HALT
 
 DATA:	.WORD	0

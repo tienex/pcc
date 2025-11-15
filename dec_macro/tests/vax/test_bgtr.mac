@@ -1,12 +1,9 @@
-; Test BGTR - Branch Greater (VAX)
-; Expected: Branch if N=0,Z=0
+; Test BGTR - BGTR operation (VAX)
 
 	.PSECT	CODE
 
 START:
-	CMPL #10,#5
-	BGTR	LBL
-LBL:
+	BGTR	R1,R2
 	HALT
 
 DATA:	.WORD	0

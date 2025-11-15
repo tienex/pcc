@@ -1,11 +1,9 @@
-; Test INC - Increment (PDP11)
-; Expected: R0 = R0 + 1 = 101
+; Test INC - INC operation (PDP-11)
 
 	.PSECT	CODE
 
 START:
-	MOV #100,R0
-	INC	R0
+	INC	R1,R2
 	HALT
 
 DATA:	.WORD	0

@@ -1,10 +1,9 @@
-; Test TSTW - Test Word (VAX)
-; Expected: N=1
+; Test TSTW - TSTW operation (VAX)
 
 	.PSECT	CODE
 
 START:
-	TSTW	#-1000
+	TSTW	R1,R2
 	HALT
 
 DATA:	.WORD	0

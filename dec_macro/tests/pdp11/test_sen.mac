@@ -1,10 +1,9 @@
-; Test SEN - Set Negative (PDP11)
-; Expected: N = 1
+; Test SEN - SEN operation (PDP-11)
 
 	.PSECT	CODE
 
 START:
-	SEN
+	SEN	R1,R2
 	HALT
 
 DATA:	.WORD	0

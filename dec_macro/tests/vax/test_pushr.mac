@@ -1,0 +1,11 @@
+; Test PUSHR - PUSHR operation (VAX)
+
+	.PSECT	CODE
+
+START:
+	PUSHR	R1,R2
+	HALT
+
+DATA:	.WORD	0
+
+	.END

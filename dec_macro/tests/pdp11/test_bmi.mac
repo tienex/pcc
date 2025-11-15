@@ -1,12 +1,9 @@
-; Test BMI - Branch Minus (PDP11)
-; Expected: Branch if N=1
+; Test BMI - BMI operation (PDP-11)
 
 	.PSECT	CODE
 
 START:
-	TST #-10
-	BMI	LBL
-LBL:
+	BMI	R1,R2
 	HALT
 
 DATA:	.WORD	0

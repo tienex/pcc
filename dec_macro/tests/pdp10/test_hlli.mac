@@ -1,10 +1,11 @@
-; Test HLLI - Half Left to Left Immediate (PDP10)
-; Expected: AC1 left = 0123
+; Test HLLI - Half Left to Left Immediate (PDP-10)
+; Expected: AC1[0:17] = immediate, AC1[18:35] unchanged
 
 	.PSECT	CODE
 
 START:
-	HLLI	1,0123
+	MOVEI 1,0123456
+	HLLI	1,0777000
 	HALT
 
 DATA:	.WORD	0

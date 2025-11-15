@@ -1,0 +1,14 @@
+; Test SETCMM - Set Complement Memory to Memory (PDP-10)
+; Expected: DATA = ~DATA, CC updated
+
+	.PSECT	CODE
+
+START:
+	MOVEI 2,0123456
+	MOVEM 2,DATA
+	SETCMM	1,DATA
+	HALT
+
+DATA:	.WORD	0
+
+	.END

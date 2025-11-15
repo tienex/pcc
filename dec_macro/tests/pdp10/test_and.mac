@@ -1,5 +1,5 @@
-; Test AND - Logical AND (PDP10)
-; Expected: AC1 = AC1 & AC2
+; Test AND - Logical AND (PDP-10)
+; Expected: AC1 = AC1 & AC2, CC updated
 
 	.PSECT	CODE
 

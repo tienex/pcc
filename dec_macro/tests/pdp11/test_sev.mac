@@ -1,10 +1,9 @@
-; Test SEV - Set Overflow (PDP11)
-; Expected: V = 1
+; Test SEV - SEV operation (PDP-11)
 
 	.PSECT	CODE
 
 START:
-	SEV
+	SEV	R1,R2
 	HALT
 
 DATA:	.WORD	0

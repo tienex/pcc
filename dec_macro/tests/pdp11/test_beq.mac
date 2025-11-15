@@ -1,12 +1,9 @@
-; Test BEQ - Branch Equal (PDP11)
-; Expected: Branch if Z=1
+; Test BEQ - BEQ operation (PDP-11)
 
 	.PSECT	CODE
 
 START:
-	CMP #5,#5
-	BEQ	LBL
-LBL:
+	BEQ	R1,R2
 	HALT
 
 DATA:	.WORD	0

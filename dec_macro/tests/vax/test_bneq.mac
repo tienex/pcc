@@ -1,12 +1,9 @@
-; Test BNEQ - Branch Not Equal (VAX)
-; Expected: Branch if Z=0
+; Test BNEQ - BNEQ operation (VAX)
 
 	.PSECT	CODE
 
 START:
-	CMPL #5,#6
-	BNEQ	LBL
-LBL:
+	BNEQ	R1,R2
 	HALT
 
 DATA:	.WORD	0

@@ -1,0 +1,15 @@
+; Test EQVM - Equivalence to Memory (PDP-10)
+; Expected: DATA = ~(DATA ^ AC1), CC updated
+
+	.PSECT	CODE
+
+START:
+	MOVEI 1,0707070
+	MOVEI 2,0707070
+	MOVEM 2,DATA
+	EQVM	1,DATA
+	HALT
+
+DATA:	.WORD	0
+
+	.END

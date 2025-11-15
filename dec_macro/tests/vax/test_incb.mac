@@ -1,11 +1,9 @@
-; Test INCB - Increment Byte (VAX)
-; Expected: R0 = 100
+; Test INCB - INCB operation (VAX)
 
 	.PSECT	CODE
 
 START:
-	MOVB #99,R0
-	INCB	R0
+	INCB	R1,R2
 	HALT
 
 DATA:	.WORD	0

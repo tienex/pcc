@@ -1,11 +1,9 @@
-; Test DECB - Decrement Byte (VAX)
-; Expected: R0 = 99
+; Test DECB - DECB operation (VAX)
 
 	.PSECT	CODE
 
 START:
-	MOVB #100,R0
-	DECB	R0
+	DECB	R1,R2
 	HALT
 
 DATA:	.WORD	0

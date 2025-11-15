@@ -1,0 +1,11 @@
+; Test ACBW - ACBW operation (VAX)
+
+	.PSECT	CODE
+
+START:
+	ACBW	R1,R2
+	HALT
+
+DATA:	.WORD	0
+
+	.END

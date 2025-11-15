@@ -1,11 +1,12 @@
-; Test ASH - Arithmetic Shift (PDP10)
-; Expected: AC1 = AC1 << 4 = 256
+; Test ASH - Arithmetic Shift (PDP-10)
+; Expected: AC1 = AC1 << AC2 (or >> if negative), CC updated
 
 	.PSECT	CODE
 
 START:
-	MOVEI 1,16
-	ASH	1,4
+	MOVEI 1,1
+	MOVEI 2,3
+	ASH	1,2
 	HALT
 
 DATA:	.WORD	0

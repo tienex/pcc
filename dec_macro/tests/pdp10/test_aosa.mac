@@ -1,0 +1,14 @@
+; Test AOSA - Add One to memory and Skip Always (PDP-10)
+; Expected: DATA++, skip always
+
+	.PSECT	CODE
+
+START:
+	MOVEI 1,10
+	MOVEM 1,DATA
+	AOSA	DATA
+	HALT
+
+DATA:	.WORD	0
+
+	.END

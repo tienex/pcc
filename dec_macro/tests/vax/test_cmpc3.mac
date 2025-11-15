@@ -1,0 +1,11 @@
+; Test CMPC3 - CMPC3 operation (VAX)
+
+	.PSECT	CODE
+
+START:
+	CMPC3	R1,R2,R3
+	HALT
+
+DATA:	.WORD	0
+
+	.END

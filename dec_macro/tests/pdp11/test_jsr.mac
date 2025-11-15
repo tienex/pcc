@@ -1,0 +1,11 @@
+; Test JSR - JSR operation (PDP-11)
+
+	.PSECT	CODE
+
+START:
+	JSR	R1,R2
+	HALT
+
+DATA:	.WORD	0
+
+	.END

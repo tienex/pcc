@@ -1,4 +1,4 @@
-; Test MOVEI - Move Immediate (PDP10)
+; Test MOVEI - Move Immediate (PDP-10)
 ; Expected: AC1 = 12345
 
 	.PSECT	CODE

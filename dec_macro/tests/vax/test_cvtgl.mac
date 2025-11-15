@@ -1,0 +1,11 @@
+; Test CVTGL - CVTGL operation (VAX)
+
+	.PSECT	CODE
+
+START:
+	CVTGL	R1,R2
+	HALT
+
+DATA:	.WORD	0
+
+	.END

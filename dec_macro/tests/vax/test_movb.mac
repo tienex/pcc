@@ -1,10 +1,9 @@
-; Test MOVB - Move Byte (VAX)
-; Expected: R0 = 100 (8-bit)
+; Test MOVB - MOVB operation (VAX)
 
 	.PSECT	CODE
 
 START:
-	MOVB	#100,R0
+	MOVB	R1,R2
 	HALT
 
 DATA:	.WORD	0

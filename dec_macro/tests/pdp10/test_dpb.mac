@@ -1,0 +1,14 @@
+; Test DPB - Deposit Byte (PDP-10)
+; Expected: Deposit AC2 into DEST at byte position
+
+	.PSECT	CODE
+
+START:
+	MOVEI 2,0777
+	MOVEI 1,BYTEPTR
+	DPB	2,DEST
+	HALT
+
+DATA:	.WORD	0
+
+	.END

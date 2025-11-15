@@ -1,11 +1,11 @@
-; Test DIV - Divide (PDP10)
-; Expected: AC1 = AC1 / AC2 = 30
+; Test DIV - Divide (PDP-10)
+; Expected: AC1 = AC1 / AC2, AC2 = remainder, CC updated
 
 	.PSECT	CODE
 
 START:
-	MOVEI 1,360
-	MOVEI 2,12
+	MOVEI 1,100
+	MOVEI 2,7
 	DIV	1,2
 	HALT
 

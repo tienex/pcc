@@ -1,11 +1,11 @@
-; Test ADDI - Add Immediate (PDP10)
-; Expected: AC1 = AC1 + 75 = 100
+; Test ADDI - Add Immediate (PDP-10)
+; Expected: AC1 = AC1 + 100, CC updated
 
 	.PSECT	CODE
 
 START:
-	MOVEI 1,25
-	ADDI	1,75
+	MOVEI 1,50
+	ADDI	1,100
 	HALT
 
 DATA:	.WORD	0

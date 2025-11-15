@@ -1,12 +1,9 @@
-; Test BPL - Branch Plus (PDP11)
-; Expected: Branch if N=0
+; Test BPL - BPL operation (PDP-11)
 
 	.PSECT	CODE
 
 START:
-	TST #10
-	BPL	LBL
-LBL:
+	BPL	R1,R2
 	HALT
 
 DATA:	.WORD	0

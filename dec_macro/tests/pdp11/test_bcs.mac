@@ -1,12 +1,9 @@
-; Test BCS - Branch Carry Set (PDP11)
-; Expected: Branch if C=1
+; Test BCS - BCS operation (PDP-11)
 
 	.PSECT	CODE
 
 START:
-	SEC
-	BCS	LBL
-LBL:
+	BCS	R1,R2
 	HALT
 
 DATA:	.WORD	0

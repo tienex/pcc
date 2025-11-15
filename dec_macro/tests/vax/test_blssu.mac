@@ -1,0 +1,11 @@
+; Test BLSSU - BLSSU operation (VAX)
+
+	.PSECT	CODE
+
+START:
+	BLSSU	R1,R2
+	HALT
+
+DATA:	.WORD	0
+
+	.END

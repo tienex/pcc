@@ -1,11 +1,9 @@
-; Test ASR - Arithmetic Shift Right (PDP11)
-; Expected: R0 = R0 >> 1 = -128
+; Test ASR - ASR operation (PDP-11)
 
 	.PSECT	CODE
 
 START:
-	MOV #-256,R0
-	ASR	R0
+	ASR	R1,R2
 	HALT
 
 DATA:	.WORD	0

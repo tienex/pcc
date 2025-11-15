@@ -1,0 +1,11 @@
+; Test WAIT - WAIT operation (PDP-11)
+
+	.PSECT	CODE
+
+START:
+	WAIT	R1,R2
+	HALT
+
+DATA:	.WORD	0
+
+	.END

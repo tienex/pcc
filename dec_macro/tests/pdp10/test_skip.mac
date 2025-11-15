@@ -1,0 +1,12 @@
+; Test SKIP - Skip (PDP-10)
+; Expected: Skip next instruction
+
+	.PSECT	CODE
+
+START:
+	SKIP
+	HALT
+
+DATA:	.WORD	0
+
+	.END

@@ -1,0 +1,11 @@
+; Test BITW - BITW operation (VAX)
+
+	.PSECT	CODE
+
+START:
+	BITW	R1,R2
+	HALT
+
+DATA:	.WORD	0
+
+	.END

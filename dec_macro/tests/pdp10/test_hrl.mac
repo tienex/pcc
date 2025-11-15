@@ -1,13 +1,12 @@
-; Test HRL - Half Right to Left (PDP10)
-; Expected: AC1 left = DATA right
+; Test HRL - Half Right to Left (PDP-10)
+; Expected: AC1[0:17] = AC2[18:35], AC1[18:35] unchanged
 
 	.PSECT	CODE
 
 START:
-	MOVEI 1,0
-	MOVEI 3,0123456
-	MOVEM 3,DATA
-	HRL	1,DATA
+	MOVEI 1,0123456
+	MOVEI 2,0777
+	HRL	1,2
 	HALT
 
 DATA:	.WORD	0

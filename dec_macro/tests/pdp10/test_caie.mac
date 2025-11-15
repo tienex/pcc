@@ -1,0 +1,13 @@
+; Test CAIE - Compare AC Immediate, skip if Equal (PDP-10)
+; Expected: Compare AC1 with 100, skip if AC1 = 100
+
+	.PSECT	CODE
+
+START:
+	MOVEI 1,100
+	CAIE	1,100
+	HALT
+
+DATA:	.WORD	0
+
+	.END

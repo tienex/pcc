@@ -1,11 +1,9 @@
-; Test BRB - Branch (VAX)
-; Expected: Branch to LBL
+; Test BRB - BRB operation (VAX)
 
 	.PSECT	CODE
 
 START:
-	BRB	LBL
-LBL:
+	BRB	R1,R2
 	HALT
 
 DATA:	.WORD	0

@@ -1,0 +1,11 @@
+; Test SCANC - SCANC operation (VAX)
+
+	.PSECT	CODE
+
+START:
+	SCANC	R1,R2
+	HALT
+
+DATA:	.WORD	0
+
+	.END

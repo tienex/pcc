@@ -1,11 +1,9 @@
-; Test ROR - Rotate Right (PDP11)
-; Expected: R0 rotated right
+; Test ROR - ROR operation (PDP-11)
 
 	.PSECT	CODE
 
 START:
-	MOV #100,R0
-	ROR	R0
+	ROR	R1,R2
 	HALT
 
 DATA:	.WORD	0

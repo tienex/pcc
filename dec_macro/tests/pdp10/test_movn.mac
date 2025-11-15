@@ -1,11 +1,11 @@
-; Test MOVN - Move Negative (PDP10)
-; Expected: AC2 = -AC1
+; Test MOVN - Move Negated (PDP-10)
+; Expected: AC1 = -AC2
 
 	.PSECT	CODE
 
 START:
-	MOVEI 1,100
-	MOVN	2,1
+	MOVEI 2,123
+	MOVN	1,2
 	HALT
 
 DATA:	.WORD	0

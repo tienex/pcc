@@ -1,0 +1,13 @@
+; Test SKIPG - Skip if Greater (PDP-10)
+; Expected: Skip if AC1 > 0
+
+	.PSECT	CODE
+
+START:
+	MOVEI 1,25
+	SKIPG	1
+	HALT
+
+DATA:	.WORD	0
+
+	.END

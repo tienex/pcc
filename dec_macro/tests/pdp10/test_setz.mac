@@ -1,5 +1,5 @@
-; Test SETZ - Set to Zero (PDP10)
-; Expected: AC1 = 0
+; Test SETZ - Set to Zero (PDP-10)
+; Expected: AC1 = 0, Z=1
 
 	.PSECT	CODE
 

@@ -1,0 +1,11 @@
+; Test ADDP4 - ADDP4 operation (VAX)
+
+	.PSECT	CODE
+
+START:
+	ADDP4	R1,R2
+	HALT
+
+DATA:	.WORD	0
+
+	.END

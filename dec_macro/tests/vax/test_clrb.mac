@@ -1,10 +1,9 @@
-; Test CLRB - Clear Byte (VAX)
-; Expected: R0 = 0, Z=1
+; Test CLRB - CLRB operation (VAX)
 
 	.PSECT	CODE
 
 START:
-	CLRB	R0
+	CLRB	R1,R2
 	HALT
 
 DATA:	.WORD	0

@@ -1,0 +1,11 @@
+; Test MFPR - MFPR operation (VAX)
+
+	.PSECT	CODE
+
+START:
+	MFPR	R1,R2
+	HALT
+
+DATA:	.WORD	0
+
+	.END

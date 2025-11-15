@@ -1,0 +1,11 @@
+; Test MUL - MUL operation (PDP-11)
+
+	.PSECT	CODE
+
+START:
+	MUL	R1,R2
+	HALT
+
+DATA:	.WORD	0
+
+	.END

@@ -1,11 +1,11 @@
-; Test MULI - Multiply Immediate (PDP10)
-; Expected: AC1 = AC1 * 8 = 120
+; Test MULI - Multiply Immediate (PDP-10)
+; Expected: AC1 = AC1 * 10, CC updated
 
 	.PSECT	CODE
 
 START:
-	MOVEI 1,15
-	MULI	1,8
+	MOVEI 1,5
+	MULI	1,10
 	HALT
 
 DATA:	.WORD	0

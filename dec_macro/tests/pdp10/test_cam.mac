@@ -1,0 +1,15 @@
+; Test CAM - Compare AC with Memory (PDP-10)
+; Expected: Compare AC1 with DATA, set CC
+
+	.PSECT	CODE
+
+START:
+	MOVEI 1,100
+	MOVEI 2,100
+	MOVEM 2,DATA
+	CAM	1,DATA
+	HALT
+
+DATA:	.WORD	0
+
+	.END

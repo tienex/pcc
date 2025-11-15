@@ -1,11 +1,9 @@
-; Test SWAB - Swap Bytes (PDP11)
-; Expected: Bytes swapped
+; Test SWAB - SWAB operation (PDP-11)
 
 	.PSECT	CODE
 
 START:
-	MOV #01234,R0
-	SWAB	R0
+	SWAB	R1,R2
 	HALT
 
 DATA:	.WORD	0

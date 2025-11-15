@@ -1,0 +1,11 @@
+; Test SBC - SBC operation (PDP-11)
+
+	.PSECT	CODE
+
+START:
+	SBC	R1,R2
+	HALT
+
+DATA:	.WORD	0
+
+	.END

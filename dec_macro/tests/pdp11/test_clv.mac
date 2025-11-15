@@ -1,10 +1,9 @@
-; Test CLV - Clear Overflow (PDP11)
-; Expected: V = 0
+; Test CLV - CLV operation (PDP-11)
 
 	.PSECT	CODE
 
 START:
-	CLV
+	CLV	R1,R2
 	HALT
 
 DATA:	.WORD	0

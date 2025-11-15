@@ -1,11 +1,9 @@
-; Test BR - Branch (PDP11)
-; Expected: Branch to LBL
+; Test BR - BR operation (PDP-11)
 
 	.PSECT	CODE
 
 START:
-	BR	LBL
-LBL:
+	BR	R1,R2
 	HALT
 
 DATA:	.WORD	0

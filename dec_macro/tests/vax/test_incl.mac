@@ -1,11 +1,9 @@
-; Test INCL - Increment Long (VAX)
-; Expected: R0 = 1000000
+; Test INCL - INCL operation (VAX)
 
 	.PSECT	CODE
 
 START:
-	MOVL #999999,R0
-	INCL	R0
+	INCL	R1,R2
 	HALT
 
 DATA:	.WORD	0

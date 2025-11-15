@@ -1,11 +1,11 @@
-; Test MOVM - Move Magnitude (PDP10)
-; Expected: AC2 = |AC1|
+; Test MOVM - Move Magnitude (PDP-10)
+; Expected: AC1 = |AC2|
 
 	.PSECT	CODE
 
 START:
-	MOVEI 1,-50
-	MOVM	2,1
+	MOVEI 2,-100
+	MOVM	1,2
 	HALT
 
 DATA:	.WORD	0

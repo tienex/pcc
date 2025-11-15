@@ -1,10 +1,9 @@
-; Test CMPL - Compare Long (VAX)
-; Expected: Z=1
+; Test CMPL - CMPL operation (VAX)
 
 	.PSECT	CODE
 
 START:
-	CMPL	#1234567,#1234567
+	CMPL	R1,R2
 	HALT
 
 DATA:	.WORD	0

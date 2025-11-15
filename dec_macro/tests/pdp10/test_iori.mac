@@ -1,5 +1,5 @@
-; Test IORI - IOR Immediate (PDP10)
-; Expected: AC1 = AC1 | 0007070
+; Test IORI - IOR Immediate (PDP-10)
+; Expected: AC1 = AC1 | immediate, CC updated
 
 	.PSECT	CODE
 

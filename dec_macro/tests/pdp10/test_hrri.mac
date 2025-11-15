@@ -1,10 +1,11 @@
-; Test HRRI - Half Right to Right Immediate (PDP10)
-; Expected: AC1 right = 0456
+; Test HRRI - Half Right to Right Immediate (PDP-10)
+; Expected: AC1[18:35] = immediate, AC1[0:17] unchanged
 
 	.PSECT	CODE
 
 START:
-	HRRI	1,0456
+	MOVEI 1,0777000
+	HRRI	1,0123
 	HALT
 
 DATA:	.WORD	0

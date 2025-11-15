@@ -1,5 +1,5 @@
-; Test XORI - XOR Immediate (PDP10)
-; Expected: AC1 = AC1 ^ 0777777 = 0
+; Test XORI - XOR Immediate (PDP-10)
+; Expected: AC1 = AC1 ^ immediate, CC updated
 
 	.PSECT	CODE
 

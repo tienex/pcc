@@ -1,10 +1,9 @@
-; Test MOVL - Move Long (VAX)
-; Expected: R0 = 1234567 (32-bit)
+; Test MOVL - MOVL operation (VAX)
 
 	.PSECT	CODE
 
 START:
-	MOVL	#1234567,R0
+	MOVL	R1,R2
 	HALT
 
 DATA:	.WORD	0

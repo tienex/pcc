@@ -1,0 +1,13 @@
+; Test POPJ - Pop Jump (PDP-10)
+; Expected: Pop return address, jump
+
+	.PSECT	CODE
+
+START:
+	MOVEI 1,STACK
+	POPJ	1,0
+	HALT
+
+DATA:	.WORD	0
+
+	.END

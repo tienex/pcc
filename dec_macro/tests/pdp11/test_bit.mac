@@ -1,11 +1,9 @@
-; Test BIT - Bit Test (PDP11)
-; Expected: Test bit 15
+; Test BIT - BIT operation (PDP-11)
 
 	.PSECT	CODE
 
 START:
-	MOV #0177777,R0
-	BIT	#0100000,R0
+	BIT	R1,R2
 	HALT
 
 DATA:	.WORD	0

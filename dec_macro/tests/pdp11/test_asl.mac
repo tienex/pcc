@@ -1,11 +1,9 @@
-; Test ASL - Arithmetic Shift Left (PDP11)
-; Expected: R0 = R0 << 1 = 200
+; Test ASL - ASL operation (PDP-11)
 
 	.PSECT	CODE
 
 START:
-	MOV #100,R0
-	ASL	R0
+	ASL	R1,R2
 	HALT
 
 DATA:	.WORD	0

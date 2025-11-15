@@ -1,0 +1,13 @@
+; Test HLLM - Half Left to Left to Memory (PDP-10)
+; Expected: DATA[0:17] = AC1[0:17], DATA[18:35] unchanged
+
+	.PSECT	CODE
+
+START:
+	MOVEI 1,0777000
+	HLLM	1,DATA
+	HALT
+
+DATA:	.WORD	0
+
+	.END

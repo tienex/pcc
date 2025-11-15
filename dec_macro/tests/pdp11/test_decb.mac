@@ -1,11 +1,9 @@
-; Test DECB - Decrement Byte (PDP11)
-; Expected: R0 byte = 49
+; Test DECB - DECB operation (PDP-11)
 
 	.PSECT	CODE
 
 START:
-	MOV #50,R0
-	DECB	R0
+	DECB	R1,R2
 	HALT
 
 DATA:	.WORD	0

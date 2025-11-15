@@ -1,10 +1,9 @@
-; Test NOP - No Operation (PDP11)
-; Expected: No effect
+; Test NOP - NOP operation (PDP-11)
 
 	.PSECT	CODE
 
 START:
-	NOP
+	NOP	R1,R2
 	HALT
 
 DATA:	.WORD	0

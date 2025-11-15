@@ -1,11 +1,9 @@
-; Test BRW - Branch Word (VAX)
-; Expected: Branch to LBL
+; Test BRW - BRW operation (VAX)
 
 	.PSECT	CODE
 
 START:
-	BRW	LBL
-LBL:
+	BRW	R1,R2
 	HALT
 
 DATA:	.WORD	0

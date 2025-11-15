@@ -1,11 +1,12 @@
-; Test PUSH - Push (PDP10)
-; Expected: Push AC1 onto stack
+; Test PUSH - Push (PDP-10)
+; Expected: Push AC2 onto stack, decrement AC1
 
 	.PSECT	CODE
 
 START:
-	MOVEI 1,0777
-	PUSH	17,1
+	MOVEI 1,STACK
+	MOVEI 2,12345
+	PUSH	1,2
 	HALT
 
 DATA:	.WORD	0

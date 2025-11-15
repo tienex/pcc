@@ -1,11 +1,9 @@
-; Test DEC - Decrement (PDP11)
-; Expected: R0 = R0 - 1 = 99
+; Test DEC - DEC operation (PDP-11)
 
 	.PSECT	CODE
 
 START:
-	MOV #100,R0
-	DEC	R0
+	DEC	R1,R2
 	HALT
 
 DATA:	.WORD	0

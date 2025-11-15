@@ -1,5 +1,5 @@
-; Test ANDI - AND Immediate (PDP10)
-; Expected: AC1 = AC1 & 0777000
+; Test ANDI - AND Immediate (PDP-10)
+; Expected: AC1 = AC1 & immediate, CC updated
 
 	.PSECT	CODE
 

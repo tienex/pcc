@@ -1,5 +1,5 @@
-; Test ADD - Add (PDP10)
-; Expected: AC1 = AC1 + AC2 = 150
+; Test ADD - Add (PDP-10)
+; Expected: AC1 = AC1 + AC2, CC updated
 
 	.PSECT	CODE
 

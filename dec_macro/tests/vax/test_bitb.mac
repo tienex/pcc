@@ -1,0 +1,11 @@
+; Test BITB - BITB operation (VAX)
+
+	.PSECT	CODE
+
+START:
+	BITB	R1,R2
+	HALT
+
+DATA:	.WORD	0
+
+	.END

@@ -1,11 +1,9 @@
-; Test BIS - Bit Set (PDP11)
-; Expected: Set bit 15
+; Test BIS - BIS operation (PDP-11)
 
 	.PSECT	CODE
 
 START:
-	MOV #0,R0
-	BIS	#0100000,R0
+	BIS	R1,R2
 	HALT
 
 DATA:	.WORD	0

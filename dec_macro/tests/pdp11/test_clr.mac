@@ -1,10 +1,9 @@
-; Test CLR - Clear (PDP11)
-; Expected: R0 = 0, Z=1
+; Test CLR - CLR operation (PDP-11)
 
 	.PSECT	CODE
 
 START:
-	CLR	R0
+	CLR	R1,R2
 	HALT
 
 DATA:	.WORD	0

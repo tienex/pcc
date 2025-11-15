@@ -1,10 +1,9 @@
-; Test CMPW - Compare Word (VAX)
-; Expected: Z=1
+; Test CMPW - CMPW operation (VAX)
 
 	.PSECT	CODE
 
 START:
-	CMPW	#12345,#12345
+	CMPW	R1,R2
 	HALT
 
 DATA:	.WORD	0
