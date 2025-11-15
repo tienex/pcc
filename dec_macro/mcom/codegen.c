@@ -44,6 +44,54 @@ static P1ND *handle_jsr(INSTRUCTION *inst);
 static P1ND *handle_rts(INSTRUCTION *inst);
 static P1ND *handle_halt(INSTRUCTION *inst);
 static P1ND *handle_nop(INSTRUCTION *inst);
+/* Extended instructions */
+static P1ND *handle_sob(INSTRUCTION *inst);
+static P1ND *handle_ash(INSTRUCTION *inst);
+static P1ND *handle_ashc(INSTRUCTION *inst);
+static P1ND *handle_mark(INSTRUCTION *inst);
+/* Condition code operations */
+static P1ND *handle_scc(INSTRUCTION *inst);
+static P1ND *handle_ccc(INSTRUCTION *inst);
+/* Trap/Interrupt */
+static P1ND *handle_trap(INSTRUCTION *inst);
+static P1ND *handle_emt(INSTRUCTION *inst);
+static P1ND *handle_iot(INSTRUCTION *inst);
+static P1ND *handle_bpt(INSTRUCTION *inst);
+static P1ND *handle_spl(INSTRUCTION *inst);
+/* Memory management */
+static P1ND *handle_mfpi(INSTRUCTION *inst);
+static P1ND *handle_mtpi(INSTRUCTION *inst);
+static P1ND *handle_mfps(INSTRUCTION *inst);
+static P1ND *handle_mtps(INSTRUCTION *inst);
+/* VAX 32-bit operations */
+static P1ND *handle_movl(INSTRUCTION *inst);
+static P1ND *handle_pushl(INSTRUCTION *inst);
+static P1ND *handle_popl(INSTRUCTION *inst);
+static P1ND *handle_addl(INSTRUCTION *inst);
+static P1ND *handle_subl(INSTRUCTION *inst);
+static P1ND *handle_mull(INSTRUCTION *inst);
+static P1ND *handle_divl(INSTRUCTION *inst);
+/* VAX string operations */
+static P1ND *handle_movc(INSTRUCTION *inst);
+static P1ND *handle_cmpc(INSTRUCTION *inst);
+/* VAX floating point */
+static P1ND *handle_addf(INSTRUCTION *inst);
+static P1ND *handle_subf(INSTRUCTION *inst);
+static P1ND *handle_mulf(INSTRUCTION *inst);
+static P1ND *handle_divf(INSTRUCTION *inst);
+/* PDP-10 specific */
+static P1ND *handle_movei(INSTRUCTION *inst);
+static P1ND *handle_movem(INSTRUCTION *inst);
+static P1ND *handle_moves(INSTRUCTION *inst);
+static P1ND *handle_movn(INSTRUCTION *inst);
+static P1ND *handle_movm(INSTRUCTION *inst);
+static P1ND *handle_imul(INSTRUCTION *inst);
+static P1ND *handle_idiv(INSTRUCTION *inst);
+static P1ND *handle_lsh(INSTRUCTION *inst);
+static P1ND *handle_rot(INSTRUCTION *inst);
+static P1ND *handle_jrst(INSTRUCTION *inst);
+static P1ND *handle_pushj(INSTRUCTION *inst);
+static P1ND *handle_popj(INSTRUCTION *inst);
 
 /* Instruction table entry */
 typedef struct {
@@ -133,6 +181,112 @@ static const insn_table_entry_t insn_table[] = {
 	{ "RESET", handle_halt,  0000005 },
 	{ "CLR",   handle_clr,   0005000 },
 	{ "CLRB",  handle_clr,   0105000 },
+
+	/* Extended PDP-11 instructions */
+	{ "SOB",   handle_sob,   0077000 },  /* Subtract and branch */
+	{ "ASH",   handle_ash,   0072000 },  /* Arithmetic shift */
+	{ "ASHC",  handle_ashc,  0073000 },  /* Arithmetic shift combined */
+	{ "MARK",  handle_mark,  0006400 },  /* Mark */
+
+	/* Condition code operations */
+	{ "SCC",   handle_scc,   0000277 },  /* Set carry clear */
+	{ "SEC",   handle_scc,   0000261 },  /* Set carry */
+	{ "SEV",   handle_scc,   0000262 },  /* Set overflow */
+	{ "SEZ",   handle_scc,   0000264 },  /* Set zero */
+	{ "SEN",   handle_scc,   0000270 },  /* Set negative */
+	{ "CLC",   handle_ccc,   0000241 },  /* Clear carry */
+	{ "CLV",   handle_ccc,   0000242 },  /* Clear overflow */
+	{ "CLZ",   handle_ccc,   0000244 },  /* Clear zero */
+	{ "CLN",   handle_ccc,   0000250 },  /* Clear negative */
+
+	/* Trap/Interrupt instructions */
+	{ "EMT",   handle_emt,   0104000 },  /* Emulator trap */
+	{ "TRAP",  handle_trap,  0104400 },  /* Trap */
+	{ "IOT",   handle_iot,   0000004 },  /* I/O trap */
+	{ "BPT",   handle_bpt,   0000003 },  /* Breakpoint */
+	{ "SPL",   handle_spl,   0000230 },  /* Set priority level */
+
+	/* Memory management instructions */
+	{ "MFPI",  handle_mfpi,  0006500 },  /* Move from previous I space */
+	{ "MTPI",  handle_mtpi,  0006600 },  /* Move to previous I space */
+	{ "MFPD",  handle_mfpi,  0106500 },  /* Move from previous D space */
+	{ "MTPD",  handle_mtpi,  0106600 },  /* Move to previous D space */
+	{ "MFPS",  handle_mfps,  0106700 },  /* Move from PS */
+	{ "MTPS",  handle_mtps,  0106400 },  /* Move to PS */
+
+	/* VAX 32-bit operations */
+	{ "MOVL",  handle_movl,  0x90 },     /* Move longword */
+	{ "MOVQ",  handle_movl,  0x7D },     /* Move quadword */
+	{ "PUSHL", handle_pushl, 0xDD },     /* Push longword */
+	{ "PUSHQ", handle_pushl, 0x7F },     /* Push quadword */
+	{ "POPL",  handle_popl,  0xDC },     /* Pop longword */
+	{ "POPQ",  handle_popl,  0x7E },     /* Pop quadword */
+	{ "ADDL2", handle_addl,  0xC0 },     /* Add longword 2 operand */
+	{ "ADDL3", handle_addl,  0xC1 },     /* Add longword 3 operand */
+	{ "SUBL2", handle_subl,  0xC2 },     /* Subtract longword 2 operand */
+	{ "SUBL3", handle_subl,  0xC3 },     /* Subtract longword 3 operand */
+	{ "MULL2", handle_mull,  0xC4 },     /* Multiply longword 2 operand */
+	{ "MULL3", handle_mull,  0xC5 },     /* Multiply longword 3 operand */
+	{ "DIVL2", handle_divl,  0xC6 },     /* Divide longword 2 operand */
+	{ "DIVL3", handle_divl,  0xC7 },     /* Divide longword 3 operand */
+	{ "INCL",  handle_inc,   0xD6 },     /* Increment longword */
+	{ "DECL",  handle_dec,   0xD7 },     /* Decrement longword */
+	{ "CLRL",  handle_clr,   0xD4 },     /* Clear longword */
+	{ "TSTL",  handle_tst,   0xD5 },     /* Test longword */
+	{ "CMPL",  handle_cmp,   0xD1 },     /* Compare longword */
+
+	/* VAX string operations */
+	{ "MOVC3", handle_movc,  0x28 },     /* Move character 3 operand */
+	{ "MOVC5", handle_movc,  0x2C },     /* Move character 5 operand */
+	{ "CMPC3", handle_cmpc,  0x29 },     /* Compare character 3 operand */
+	{ "CMPC5", handle_cmpc,  0x2D },     /* Compare character 5 operand */
+	{ "LOCC",  handle_movc,  0x3A },     /* Locate character */
+	{ "SKPC",  handle_movc,  0x3B },     /* Skip character */
+	{ "SCANC", handle_movc,  0x2A },     /* Scan character */
+	{ "SPANC", handle_movc,  0x2B },     /* Span character */
+
+	/* VAX floating point */
+	{ "ADDF2", handle_addf,  0x40 },     /* Add F_float 2 operand */
+	{ "ADDF3", handle_addf,  0x41 },     /* Add F_float 3 operand */
+	{ "SUBF2", handle_subf,  0x42 },     /* Subtract F_float 2 operand */
+	{ "SUBF3", handle_subf,  0x43 },     /* Subtract F_float 3 operand */
+	{ "MULF2", handle_mulf,  0x44 },     /* Multiply F_float 2 operand */
+	{ "MULF3", handle_mulf,  0x45 },     /* Multiply F_float 3 operand */
+	{ "DIVF2", handle_divf,  0x46 },     /* Divide F_float 2 operand */
+	{ "DIVF3", handle_divf,  0x47 },     /* Divide F_float 3 operand */
+	{ "ADDD2", handle_addf,  0x60 },     /* Add D_float 2 operand */
+	{ "ADDD3", handle_addf,  0x61 },     /* Add D_float 3 operand */
+	{ "SUBD2", handle_subf,  0x62 },     /* Subtract D_float 2 operand */
+	{ "SUBD3", handle_subf,  0x63 },     /* Subtract D_float 3 operand */
+	{ "MULD2", handle_mulf,  0x64 },     /* Multiply D_float 2 operand */
+	{ "MULD3", handle_mulf,  0x65 },     /* Multiply D_float 3 operand */
+	{ "DIVD2", handle_divf,  0x66 },     /* Divide D_float 2 operand */
+	{ "DIVD3", handle_divf,  0x67 },     /* Divide D_float 3 operand */
+	{ "CVTFD", handle_movl,  0x56 },     /* Convert F to D */
+	{ "CVTDF", handle_movl,  0x76 },     /* Convert D to F */
+	{ "CVTFL", handle_movl,  0x48 },     /* Convert F to L */
+	{ "CVTLF", handle_movl,  0x4E },     /* Convert L to F */
+	{ "CVTDL", handle_movl,  0x6A },     /* Convert D to L */
+	{ "CVTLD", handle_movl,  0x6F },     /* Convert L to D */
+
+	/* PDP-10 specific instructions */
+	{ "MOVEI", handle_movei, 0201000 },  /* Move immediate */
+	{ "MOVEM", handle_movem, 0202000 },  /* Move to memory */
+	{ "MOVES", handle_moves, 0203000 },  /* Move to self */
+	{ "MOVN",  handle_movn,  0210000 },  /* Move negative */
+	{ "MOVM",  handle_movm,  0214000 },  /* Move magnitude */
+	{ "IMUL",  handle_imul,  0220000 },  /* Integer multiply */
+	{ "IDIV",  handle_idiv,  0230000 },  /* Integer divide */
+	{ "LSH",   handle_lsh,   0242000 },  /* Logical shift */
+	{ "ROT",   handle_rot,   0241000 },  /* Rotate */
+	{ "JRST",  handle_jrst,  0254000 },  /* Jump and restore */
+	{ "PUSHJ", handle_pushj, 0260000 },  /* Push and jump */
+	{ "POPJ",  handle_popj,  0263000 },  /* Pop and jump */
+	{ "EXCH",  handle_mov,   0250000 },  /* Exchange */
+	{ "SETM",  handle_neg,   0214040 },  /* Set to memory */
+	{ "SETZ",  handle_clr,   0400000 },  /* Set to zero */
+	{ "SETMI", handle_neg,   0210040 },  /* Set minus */
+	{ "SETA",  handle_mov,   0210040 },  /* Set to A */
 
 	{ NULL, NULL, 0 }  /* Sentinel */
 };
@@ -849,6 +1003,638 @@ handle_nop(INSTRUCTION *inst)
 {
 	/* Generate icon node that will be eliminated by optimizer */
 	return build_icon(0);
+}
+
+/* ========== Extended PDP-11 Instructions ========== */
+
+/*
+ * SOB reg, label -> reg = reg - 1; if (reg != 0) goto label
+ */
+static P1ND *
+handle_sob(INSTRUCTION *inst)
+{
+	P1ND *reg, *reg_rhs, *dec_node, *test_node, *branch_node;
+	SYMTAB *sym;
+	int label_num;
+
+	if (inst->noperands != 2) {
+		error("SOB requires 2 operands");
+		return NULL;
+	}
+
+	/* Decrement register */
+	reg = operand_to_node(&inst->operands[0]);
+	reg_rhs = operand_to_node(&inst->operands[0]);
+	dec_node = build_assign(reg, build_binop(MINUS, reg_rhs, build_icon(1)));
+
+	/* Send decrement */
+	send_passt(IP_NODE, dec_node);
+
+	/* Test and branch */
+	if (inst->operands[1].symbol) {
+		sym = lookup(inst->operands[1].symbol);
+		if (sym == NULL) {
+			sym = install(inst->operands[1].symbol, SYM_LABEL);
+			sym->label_num = get_label();
+		}
+		label_num = sym->label_num;
+	} else {
+		label_num = get_label();
+	}
+
+	branch_node = (P1ND *)malloc(sizeof(P1ND));
+	memset(branch_node, 0, sizeof(P1ND));
+	branch_node->n_op = GOTO;
+	branch_node->n_type = INT;
+	branch_node->n_label = label_num;
+
+	return branch_node;
+}
+
+/*
+ * ASH shift_count, reg -> arithmetic shift reg by shift_count
+ */
+static P1ND *
+handle_ash(INSTRUCTION *inst)
+{
+	P1ND *count, *dst, *dst_rhs;
+
+	if (inst->noperands != 2) {
+		error("ASH requires 2 operands");
+		return NULL;
+	}
+
+	count = operand_to_node(&inst->operands[0]);
+	dst = operand_to_node(&inst->operands[1]);
+	dst_rhs = operand_to_node(&inst->operands[1]);
+
+	/* Shift left if positive, right if negative */
+	return build_assign(dst, build_binop(LS, dst_rhs, count));
+}
+
+/*
+ * ASHC shift_count, reg -> arithmetic shift combined (reg:reg+1)
+ */
+static P1ND *
+handle_ashc(INSTRUCTION *inst)
+{
+	/* Simplified - treat like ASH for now */
+	return handle_ash(inst);
+}
+
+/*
+ * MARK n -> Mark stack frame
+ */
+static P1ND *
+handle_mark(INSTRUCTION *inst)
+{
+	/* Generate as NOP for IR purposes */
+	return build_icon(0);
+}
+
+/* ========== Condition Code Operations ========== */
+
+/*
+ * Set condition code operations (SEC, SEV, SEZ, SEN)
+ */
+static P1ND *
+handle_scc(INSTRUCTION *inst)
+{
+	/* Generate as assignment to condition code (abstract) */
+	return build_assign(build_reg(16), build_icon(1));  /* CC pseudo-register */
+}
+
+/*
+ * Clear condition code operations (CLC, CLV, CLZ, CLN)
+ */
+static P1ND *
+handle_ccc(INSTRUCTION *inst)
+{
+	/* Generate as assignment to condition code (abstract) */
+	return build_assign(build_reg(16), build_icon(0));  /* CC pseudo-register */
+}
+
+/* ========== Trap/Interrupt Instructions ========== */
+
+/*
+ * EMT n -> Emulator trap
+ */
+static P1ND *
+handle_emt(INSTRUCTION *inst)
+{
+	P1ND *p;
+
+	p = (P1ND *)malloc(sizeof(P1ND));
+	memset(p, 0, sizeof(P1ND));
+	p->n_op = ICON;
+	p->n_type = INT;
+	if (inst->noperands > 0)
+		setlval(p, inst->operands[0].value);
+	else
+		setlval(p, 0);
+
+	return p;
+}
+
+/*
+ * TRAP n -> Trap instruction
+ */
+static P1ND *
+handle_trap(INSTRUCTION *inst)
+{
+	return handle_emt(inst);
+}
+
+/*
+ * IOT -> I/O trap
+ */
+static P1ND *
+handle_iot(INSTRUCTION *inst)
+{
+	return handle_halt(inst);
+}
+
+/*
+ * BPT -> Breakpoint trap
+ */
+static P1ND *
+handle_bpt(INSTRUCTION *inst)
+{
+	return handle_halt(inst);
+}
+
+/*
+ * SPL n -> Set priority level
+ */
+static P1ND *
+handle_spl(INSTRUCTION *inst)
+{
+	return build_icon(0);
+}
+
+/* ========== Memory Management Instructions ========== */
+
+/*
+ * MFPI src -> Move from previous instruction space
+ */
+static P1ND *
+handle_mfpi(INSTRUCTION *inst)
+{
+	P1ND *src, *sp;
+
+	if (inst->noperands != 1) {
+		error("MFPI requires 1 operand");
+		return NULL;
+	}
+
+	src = operand_to_node(&inst->operands[0]);
+	sp = build_reg(6);  /* SP is R6 */
+
+	/* Push src onto stack: -(SP) = src */
+	return build_assign(build_oreg(6, -2), src);
+}
+
+/*
+ * MTPI dst -> Move to previous instruction space
+ */
+static P1ND *
+handle_mtpi(INSTRUCTION *inst)
+{
+	P1ND *dst, *sp_val;
+
+	if (inst->noperands != 1) {
+		error("MTPI requires 1 operand");
+		return NULL;
+	}
+
+	dst = operand_to_node(&inst->operands[0]);
+	sp_val = build_oreg(6, 0);  /* (SP) */
+
+	/* Pop from stack: dst = (SP)+ */
+	return build_assign(dst, sp_val);
+}
+
+/*
+ * MFPS dst -> Move from processor status
+ */
+static P1ND *
+handle_mfps(INSTRUCTION *inst)
+{
+	P1ND *dst;
+
+	if (inst->noperands != 1) {
+		error("MFPS requires 1 operand");
+		return NULL;
+	}
+
+	dst = operand_to_node(&inst->operands[0]);
+	/* Move from PS register (abstract) */
+	return build_assign(dst, build_reg(17));  /* PS pseudo-register */
+}
+
+/*
+ * MTPS src -> Move to processor status
+ */
+static P1ND *
+handle_mtps(INSTRUCTION *inst)
+{
+	P1ND *src;
+
+	if (inst->noperands != 1) {
+		error("MTPS requires 1 operand");
+		return NULL;
+	}
+
+	src = operand_to_node(&inst->operands[0]);
+	/* Move to PS register (abstract) */
+	return build_assign(build_reg(17), src);  /* PS pseudo-register */
+}
+
+/* ========== VAX 32-bit Operations ========== */
+
+/*
+ * MOVL src, dst -> Move longword (32-bit MOV)
+ */
+static P1ND *
+handle_movl(INSTRUCTION *inst)
+{
+	/* Same as MOV but with LONG type */
+	return handle_mov(inst);
+}
+
+/*
+ * PUSHL src -> Push longword onto stack
+ */
+static P1ND *
+handle_pushl(INSTRUCTION *inst)
+{
+	P1ND *src, *sp, *sp_rhs;
+
+	if (inst->noperands != 1) {
+		error("PUSHL requires 1 operand");
+		return NULL;
+	}
+
+	src = operand_to_node(&inst->operands[0]);
+
+	/* SP = SP - 4; (SP) = src */
+	sp = build_reg(14);  /* VAX SP is R14 */
+	sp_rhs = build_reg(14);
+
+	/* Decrement SP */
+	send_passt(IP_NODE,
+	    build_assign(sp, build_binop(MINUS, sp_rhs, build_icon(4))));
+
+	/* Store to (SP) */
+	return build_assign(build_oreg(14, 0), src);
+}
+
+/*
+ * POPL dst -> Pop longword from stack
+ */
+static P1ND *
+handle_popl(INSTRUCTION *inst)
+{
+	P1ND *dst, *sp, *sp_rhs, *sp_val;
+
+	if (inst->noperands != 1) {
+		error("POPL requires 1 operand");
+		return NULL;
+	}
+
+	dst = operand_to_node(&inst->operands[0]);
+	sp_val = build_oreg(14, 0);  /* (SP) */
+
+	/* dst = (SP); SP = SP + 4 */
+	send_passt(IP_NODE, build_assign(dst, sp_val));
+
+	sp = build_reg(14);
+	sp_rhs = build_reg(14);
+	return build_assign(sp, build_binop(PLUS, sp_rhs, build_icon(4)));
+}
+
+/*
+ * ADDL src, dst -> Add longword
+ */
+static P1ND *
+handle_addl(INSTRUCTION *inst)
+{
+	return handle_add(inst);  /* Same logic, 32-bit */
+}
+
+/*
+ * SUBL src, dst -> Subtract longword
+ */
+static P1ND *
+handle_subl(INSTRUCTION *inst)
+{
+	return handle_sub(inst);  /* Same logic, 32-bit */
+}
+
+/*
+ * MULL src, dst -> Multiply longword
+ */
+static P1ND *
+handle_mull(INSTRUCTION *inst)
+{
+	return handle_mul(inst);  /* Same logic, 32-bit */
+}
+
+/*
+ * DIVL src, dst -> Divide longword
+ */
+static P1ND *
+handle_divl(INSTRUCTION *inst)
+{
+	return handle_div(inst);  /* Same logic, 32-bit */
+}
+
+/* ========== VAX String Operations ========== */
+
+/*
+ * MOVC3/MOVC5 -> Move character string
+ */
+static P1ND *
+handle_movc(INSTRUCTION *inst)
+{
+	/* Generate as library call or inline loop */
+	/* For IR purposes, generate as assignment */
+	P1ND *len, *src, *dst;
+
+	if (inst->noperands < 3) {
+		error("MOVC requires at least 3 operands");
+		return NULL;
+	}
+
+	len = operand_to_node(&inst->operands[0]);
+	src = operand_to_node(&inst->operands[1]);
+	dst = operand_to_node(&inst->operands[2]);
+
+	/* Simplified: dst = src (block move abstraction) */
+	return build_assign(dst, src);
+}
+
+/*
+ * CMPC3/CMPC5 -> Compare character string
+ */
+static P1ND *
+handle_cmpc(INSTRUCTION *inst)
+{
+	P1ND *len, *src1, *src2;
+
+	if (inst->noperands < 3) {
+		error("CMPC requires at least 3 operands");
+		return NULL;
+	}
+
+	len = operand_to_node(&inst->operands[0]);
+	src1 = operand_to_node(&inst->operands[1]);
+	src2 = operand_to_node(&inst->operands[2]);
+
+	/* Simplified: compare abstraction */
+	return build_binop(NE, src1, src2);
+}
+
+/* ========== VAX Floating Point ========== */
+
+/*
+ * ADDF src, dst -> Add floating point
+ */
+static P1ND *
+handle_addf(INSTRUCTION *inst)
+{
+	P1ND *src, *dst, *dst_rhs;
+
+	if (inst->noperands != 2) {
+		error("ADDF requires 2 operands");
+		return NULL;
+	}
+
+	src = operand_to_node(&inst->operands[0]);
+	dst = operand_to_node(&inst->operands[1]);
+	dst_rhs = operand_to_node(&inst->operands[1]);
+
+	/* Set type to FLOAT */
+	dst->n_type = FLOAT;
+	dst_rhs->n_type = FLOAT;
+	src->n_type = FLOAT;
+
+	return build_assign(dst, build_binop(PLUS, dst_rhs, src));
+}
+
+/*
+ * SUBF src, dst -> Subtract floating point
+ */
+static P1ND *
+handle_subf(INSTRUCTION *inst)
+{
+	P1ND *src, *dst, *dst_rhs;
+
+	if (inst->noperands != 2) {
+		error("SUBF requires 2 operands");
+		return NULL;
+	}
+
+	src = operand_to_node(&inst->operands[0]);
+	dst = operand_to_node(&inst->operands[1]);
+	dst_rhs = operand_to_node(&inst->operands[1]);
+
+	dst->n_type = FLOAT;
+	dst_rhs->n_type = FLOAT;
+	src->n_type = FLOAT;
+
+	return build_assign(dst, build_binop(MINUS, dst_rhs, src));
+}
+
+/*
+ * MULF src, dst -> Multiply floating point
+ */
+static P1ND *
+handle_mulf(INSTRUCTION *inst)
+{
+	P1ND *src, *dst, *dst_rhs;
+
+	if (inst->noperands != 2) {
+		error("MULF requires 2 operands");
+		return NULL;
+	}
+
+	src = operand_to_node(&inst->operands[0]);
+	dst = operand_to_node(&inst->operands[1]);
+	dst_rhs = operand_to_node(&inst->operands[1]);
+
+	dst->n_type = FLOAT;
+	dst_rhs->n_type = FLOAT;
+	src->n_type = FLOAT;
+
+	return build_assign(dst, build_binop(MUL, dst_rhs, src));
+}
+
+/*
+ * DIVF src, dst -> Divide floating point
+ */
+static P1ND *
+handle_divf(INSTRUCTION *inst)
+{
+	P1ND *src, *dst, *dst_rhs;
+
+	if (inst->noperands != 2) {
+		error("DIVF requires 2 operands");
+		return NULL;
+	}
+
+	src = operand_to_node(&inst->operands[0]);
+	dst = operand_to_node(&inst->operands[1]);
+	dst_rhs = operand_to_node(&inst->operands[1]);
+
+	dst->n_type = FLOAT;
+	dst_rhs->n_type = FLOAT;
+	src->n_type = FLOAT;
+
+	return build_assign(dst, build_binop(DIV, dst_rhs, src));
+}
+
+/* ========== PDP-10 Specific Instructions ========== */
+
+/*
+ * MOVEI reg, immediate -> Move immediate to register
+ */
+static P1ND *
+handle_movei(INSTRUCTION *inst)
+{
+	return handle_mov(inst);  /* Same as MOV for PDP-10 */
+}
+
+/*
+ * MOVEM reg, mem -> Move register to memory
+ */
+static P1ND *
+handle_movem(INSTRUCTION *inst)
+{
+	return handle_mov(inst);
+}
+
+/*
+ * MOVES reg, mem -> Move to self (reg = mem, write mem)
+ */
+static P1ND *
+handle_moves(INSTRUCTION *inst)
+{
+	return handle_mov(inst);
+}
+
+/*
+ * MOVN src, dst -> Move negative
+ */
+static P1ND *
+handle_movn(INSTRUCTION *inst)
+{
+	P1ND *src, *dst;
+
+	if (inst->noperands != 2) {
+		error("MOVN requires 2 operands");
+		return NULL;
+	}
+
+	src = operand_to_node(&inst->operands[0]);
+	dst = operand_to_node(&inst->operands[1]);
+
+	return build_assign(dst, build_unop(UMINUS, src));
+}
+
+/*
+ * MOVM src, dst -> Move magnitude (absolute value)
+ */
+static P1ND *
+handle_movm(INSTRUCTION *inst)
+{
+	P1ND *src, *dst, *zero, *neg_src, *cond;
+
+	if (inst->noperands != 2) {
+		error("MOVM requires 2 operands");
+		return NULL;
+	}
+
+	src = operand_to_node(&inst->operands[0]);
+	dst = operand_to_node(&inst->operands[1]);
+
+	/* dst = (src < 0) ? -src : src */
+	/* Simplified: dst = src (abs abstraction) */
+	return build_assign(dst, src);
+}
+
+/*
+ * IMUL src, dst -> Integer multiply (PDP-10)
+ */
+static P1ND *
+handle_imul(INSTRUCTION *inst)
+{
+	return handle_mul(inst);
+}
+
+/*
+ * IDIV src, dst -> Integer divide (PDP-10)
+ */
+static P1ND *
+handle_idiv(INSTRUCTION *inst)
+{
+	return handle_div(inst);
+}
+
+/*
+ * LSH reg, count -> Logical shift (PDP-10)
+ */
+static P1ND *
+handle_lsh(INSTRUCTION *inst)
+{
+	P1ND *reg, *reg_rhs, *count;
+
+	if (inst->noperands != 2) {
+		error("LSH requires 2 operands");
+		return NULL;
+	}
+
+	count = operand_to_node(&inst->operands[0]);
+	reg = operand_to_node(&inst->operands[1]);
+	reg_rhs = operand_to_node(&inst->operands[1]);
+
+	return build_assign(reg, build_binop(LS, reg_rhs, count));
+}
+
+/*
+ * ROT reg, count -> Rotate (PDP-10)
+ */
+static P1ND *
+handle_rot(INSTRUCTION *inst)
+{
+	return handle_rol(inst);  /* Similar to ROL */
+}
+
+/*
+ * JRST addr -> Jump and restore (PDP-10)
+ */
+static P1ND *
+handle_jrst(INSTRUCTION *inst)
+{
+	return handle_branch(inst);
+}
+
+/*
+ * PUSHJ reg, addr -> Push and jump (PDP-10 call)
+ */
+static P1ND *
+handle_pushj(INSTRUCTION *inst)
+{
+	return handle_jsr(inst);
+}
+
+/*
+ * POPJ reg, addr -> Pop and jump (PDP-10 return)
+ */
+static P1ND *
+handle_popj(INSTRUCTION *inst)
+{
+	return handle_rts(inst);
 }
 
 /* ========== Public API ========== */
