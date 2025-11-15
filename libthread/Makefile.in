@@ -32,7 +32,11 @@ PLATFORM_SRCS=	\
 	os2_16/threads_os2_16.c \
 	os2_32/threads_os2_32.c \
 	openvms/threads_openvms.c \
-	beos/threads_beos.c
+	beos/threads_beos.c \
+	amiga/threads_amiga.c \
+	atari/threads_atari.c \
+	macos/threads_macos.c \
+	netware/threads_netware.c
 
 LIB=libthread.a
 

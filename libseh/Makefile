@@ -45,7 +45,15 @@ PLATFORM_SRCS=	\
 	openvms/seh_openvms.c \
 	openvms/seh_context_openvms.c \
 	beos/seh_beos.c \
-	beos/seh_context_beos.c
+	beos/seh_context_beos.c \
+	amiga/seh_amiga.c \
+	amiga/seh_context_amiga.c \
+	atari/seh_atari.c \
+	atari/seh_context_atari.c \
+	macos/seh_macos.c \
+	macos/seh_context_macos.c \
+	netware/seh_netware.c \
+	netware/seh_context_netware.c
 
 EXTRA_DIST=	$(PLATFORM_SRCS) seh_helpers.h
 

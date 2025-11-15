@@ -3,7 +3,16 @@
  * Platform Dispatcher
  */
 
-#if defined(__OS2__) && defined(__I16__)
+#if defined(__amigaos__) || defined(__AMIGA__) || defined(AMIGA)
+  /* AmigaOS (68k cooperative, OS4 has pthreads) */
+  #include "amiga/threads_amiga.c"
+#elif defined(__ATARI__) || defined(__atarist__) || defined(ATARI)
+  /* Atari TOS/GEM - no real threading */
+  #include "atari/threads_atari.c"
+#elif defined(macintosh) || (defined(__APPLE__) && !defined(__MACH__))
+  /* Mac OS Classic (pre-OSX) - cooperative multitasking */
+  #include "macos/threads_macos.c"
+#elif defined(__OS2__) && defined(__I16__)
   /* OS/2 16-bit - no native threading */
   #include "os2_16/threads_os2_16.c"
 #elif defined(__OS2__) || defined(__EMX__)

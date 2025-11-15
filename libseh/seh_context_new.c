@@ -4,7 +4,16 @@
  * SEH Context Handling - Platform Dispatcher
  */
 
-#if defined(__OS2__) && defined(__I16__)
+#if defined(__amigaos__) || defined(__AMIGA__) || defined(AMIGA)
+  /* AmigaOS (68k and PowerPC) */
+  #include "amiga/seh_context_amiga.c"
+#elif defined(__ATARI__) || defined(__atarist__) || defined(ATARI)
+  /* Atari TOS/GEM */
+  #include "atari/seh_context_atari.c"
+#elif defined(macintosh) || (defined(__APPLE__) && !defined(__MACH__))
+  /* Mac OS Classic (pre-OSX) */
+  #include "macos/seh_context_macos.c"
+#elif defined(__OS2__) && defined(__I16__)
   /* OS/2 16-bit */
   #include "os2_16/seh_context_os2_16.c"
 #elif defined(__OS2__) || defined(__EMX__)
