@@ -111,6 +111,11 @@ directive:
 	| DIR_END {
 		emit_directive_ir(DIR_END);
 	}
+	| DIR_END IDENTIFIER {
+		/* .END with optional start address */
+		emit_directive_ir(DIR_END, $2);
+		free($2);
+	}
 	| DIR_GLOBL symbol_list {
 		/* Symbols marked global in symbol_list production */
 	}

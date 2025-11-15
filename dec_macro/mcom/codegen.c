@@ -954,8 +954,37 @@ handle_jmp(INSTRUCTION *inst)
 static P1ND *
 handle_jsr(INSTRUCTION *inst)
 {
-	/* For now, treat as branch - full implementation needs CALL node */
-	return handle_branch(inst);
+	SYMTAB *sym;
+	P1ND *p;
+	int label_num;
+
+	if (inst->noperands != 2) {
+		error("JSR requires 2 operands (link register, target)");
+		return NULL;
+	}
+
+	/* Get or create label symbol for target (second operand) */
+	if (inst->operands[1].symbol) {
+		sym = lookup(inst->operands[1].symbol);
+		if (sym == NULL) {
+			sym = install(inst->operands[1].symbol, SYM_LABEL);
+			sym->label_num = get_label();
+		}
+		label_num = sym->label_num;
+	} else {
+		label_num = get_label();
+	}
+
+	/* Build GOTO node for the jump */
+	p = (P1ND *)malloc(sizeof(P1ND));
+	memset(p, 0, sizeof(P1ND));
+	p->n_op = GOTO;
+	p->n_label = label_num;
+
+	/* Note: In a full implementation, we would save PC to the link register
+	 * (first operand), but for now we just implement the jump */
+
+	return p;
 }
 
 /*
