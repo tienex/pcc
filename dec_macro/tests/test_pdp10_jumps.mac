@@ -1,0 +1,133 @@
+; Test PDP-10 Skip/Jump Operations
+; Tests SKIP*, JUMP*, AOJ*, SOJ*, AOS*, SOS* with condition codes
+
+	.TITLE	PDP10 Jump and Skip Tests
+
+COUNTER:	.WORD	10
+ZERO:		.WORD	0
+POSITIVE:	.WORD	100
+NEGATIVE:	.WORD	-50
+RESULT:		.WORD	0
+
+START::
+	; Test SKIP - Basic skip (should skip next instruction)
+	SKIP
+	MOVEI	1,999		; Should be skipped
+	MOVEI	1,100		; AC1 = 100
+	MOVEM	1,RESULT
+
+	; Test SKIPE - Skip if Equal to zero
+	MOVEI	2,0		; AC2 = 0
+	SKIPE	2		; Should skip (AC2 = 0)
+	MOVEI	1,999		; Should be skipped
+	MOVEM	1,RESULT
+
+	; Test SKIPN - Skip if Not zero
+	MOVEI	2,5		; AC2 = 5
+	SKIPN	2		; Should skip (AC2 != 0)
+	MOVEI	1,999		; Should be skipped
+	MOVEM	1,RESULT
+
+	; Test SKIPL - Skip if Less than zero
+	MOVEI	3,-10		; AC3 = -10
+	SKIPL	3		; Should skip (AC3 < 0)
+	MOVEI	1,999		; Should be skipped
+	MOVEM	1,RESULT
+
+	; Test SKIPG - Skip if Greater than zero
+	MOVEI	3,25		; AC3 = 25
+	SKIPG	3		; Should skip (AC3 > 0)
+	MOVEI	1,999		; Should be skipped
+	MOVEM	1,RESULT
+
+	; Test SKIPLE - Skip if Less or Equal to zero
+	MOVEI	3,0		; AC3 = 0
+	SKIPLE	3		; Should skip (AC3 <= 0)
+	MOVEI	1,999		; Should be skipped
+	MOVEM	1,RESULT
+
+	; Test SKIPGE - Skip if Greater or Equal to zero
+	MOVEI	3,1		; AC3 = 1
+	SKIPGE	3		; Should skip (AC3 >= 0)
+	MOVEI	1,999		; Should be skipped
+	MOVEM	1,RESULT
+
+	; Test JUMP - Unconditional jump
+	JUMP	LABEL1
+	MOVEI	1,999		; Should be skipped
+LABEL1:	MOVEI	1,200		; AC1 = 200
+	MOVEM	1,RESULT
+
+	; Test JUMPE - Jump if Equal to zero
+	MOVEI	2,0		; AC2 = 0
+	JUMPE	2,LABEL2	; Should jump
+	MOVEI	1,999		; Should be skipped
+LABEL2:	MOVEM	1,RESULT
+
+	; Test JUMPN - Jump if Not zero
+	MOVEI	2,1		; AC2 = 1
+	JUMPN	2,LABEL3	; Should jump
+	MOVEI	1,999		; Should be skipped
+LABEL3:	MOVEM	1,RESULT
+
+	; Test JUMPL - Jump if Less than zero
+	MOVEI	3,-5		; AC3 = -5
+	JUMPL	3,LABEL4	; Should jump (AC3 < 0)
+	MOVEI	1,999		; Should be skipped
+LABEL4:	MOVEM	1,RESULT
+
+	; Test JUMPG - Jump if Greater than zero
+	MOVEI	3,10		; AC3 = 10
+	JUMPG	3,LABEL5	; Should jump (AC3 > 0)
+	MOVEI	1,999		; Should be skipped
+LABEL5:	MOVEM	1,RESULT
+
+	; Test AOJ - Add One and Jump
+	MOVEI	1,5		; AC1 = 5
+	AOJ	1,LABEL6	; AC1 = 6, jump to LABEL6
+	MOVEI	1,999		; Should be skipped
+LABEL6:	MOVEM	1,RESULT
+	; Expected: RESULT = 6
+
+	; Test AOJA - Add One and Jump Always
+	MOVEI	1,10		; AC1 = 10
+	AOJA	1,LABEL7	; AC1 = 11, jump always
+	MOVEI	1,999		; Should be skipped
+LABEL7:	MOVEM	1,RESULT
+	; Expected: RESULT = 11
+
+	; Test AOS - Add One to memory and Skip
+	MOVEI	1,5		; Initial value
+	MOVEM	1,COUNTER	; COUNTER = 5
+	AOS	COUNTER		; COUNTER = 6, skip next
+	MOVEI	1,999		; Should be skipped
+	MOVEI	1,100		; AC1 = 100
+	MOVEM	1,RESULT
+	; Expected: COUNTER = 6
+
+	; Test SOJ - Subtract One and Jump
+	MOVEI	2,10		; AC2 = 10
+	SOJ	2,LABEL8	; AC2 = 9, jump
+	MOVEI	1,999		; Should be skipped
+LABEL8:	MOVEM	2,RESULT
+	; Expected: RESULT = 9
+
+	; Test SOJA - Subtract One and Jump Always
+	MOVEI	2,20		; AC2 = 20
+	SOJA	2,LABEL9	; AC2 = 19, jump always
+	MOVEI	1,999		; Should be skipped
+LABEL9:	MOVEM	2,RESULT
+	; Expected: RESULT = 19
+
+	; Test SOS - Subtract One from memory and Skip
+	MOVEI	1,3		; Initial value
+	MOVEM	1,COUNTER	; COUNTER = 3
+	SOS	COUNTER		; COUNTER = 2, skip next
+	MOVEI	1,999		; Should be skipped
+	MOVEI	1,200		; AC1 = 200
+	MOVEM	1,RESULT
+	; Expected: COUNTER = 2
+
+	HALT
+
+	.END	START

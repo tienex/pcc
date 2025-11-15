@@ -1,0 +1,81 @@
+; Test PDP-10 Byte Operations
+; Tests LDB, ILDB, DPB, IDPB, IBP with 9-bit byte support
+
+	.TITLE	PDP10 Byte Operations Tests
+
+; PDP-10 uses byte pointers: P = position, S = size
+; Format: [P,S] where P is bit position (0-35), S is size (1-36)
+; For 9-bit bytes: 4 bytes fit in a 36-bit word
+
+STRING:	.WORD	0001002003004	; Four 9-bit bytes (octal)
+DEST:	.WORD	0
+BYTEPTR:.WORD	0440000000000	; Byte pointer: 9-bit, position 0
+RESULT:	.WORD	0
+
+START::
+	; Test LDB - Load Byte
+	; Load first 9-bit byte from STRING
+	MOVEI	1,BYTEPTR	; AC1 = byte pointer
+	LDB	2,STRING	; AC2 = byte from STRING
+	MOVEM	2,RESULT
+	; Expected: RESULT = 0001 (first 9-bit byte)
+
+	; Test ILDB - Increment pointer and Load Byte
+	MOVEI	1,BYTEPTR	; AC1 = byte pointer
+	ILDB	2,STRING	; Load byte, increment pointer
+	MOVEM	2,RESULT
+	; Expected: RESULT = 0001 (first byte)
+	ILDB	2,STRING	; Load next byte
+	MOVEM	2,RESULT
+	; Expected: RESULT = 0002 (second byte)
+
+	; Test DPB - Deposit Byte
+	MOVEI	2,0777		; AC2 = value to deposit (9 bits)
+	MOVEI	1,BYTEPTR	; AC1 = byte pointer
+	DPB	2,DEST		; Deposit AC2 into DEST at position
+	; Expected: DEST has 0777 in appropriate byte position
+
+	; Test IDPB - Increment pointer and Deposit Byte
+	MOVEI	1,BYTEPTR	; AC1 = byte pointer
+	MOVEI	2,0101		; AC2 = first byte value
+	IDPB	2,DEST		; Deposit and increment
+	MOVEI	2,0202		; AC2 = second byte value
+	IDPB	2,DEST		; Deposit and increment
+	; Expected: DEST = 0101202... (two 9-bit bytes)
+
+	; Test IBP - Increment Byte Pointer
+	MOVEI	1,BYTEPTR	; AC1 = byte pointer
+	IBP	1		; Increment the pointer
+	; Pointer now points to next 9-bit byte
+
+	; Test 9-bit byte boundary conditions
+	; A 36-bit word holds exactly 4 9-bit bytes
+	MOVEI	1,0777		; Maximum 9-bit value (511 decimal)
+	MOVEM	1,RESULT
+	; Expected: RESULT = 0777 (9 bits, not extended)
+
+	; Test byte extraction from word with multiple bytes
+	MOVEI	3,STRING	; Point to string
+	MOVEI	1,0440000000000	; Byte pointer for byte 0
+	LDB	2,0(3)		; Load byte 0
+	MOVEM	2,RESULT
+	; Expected: RESULT = 0001
+
+	MOVEI	1,0310000000000	; Byte pointer for byte 1 (position 9)
+	LDB	2,0(3)		; Load byte 1
+	MOVEM	2,RESULT
+	; Expected: RESULT = 0002
+
+	MOVEI	1,0220000000000	; Byte pointer for byte 2 (position 18)
+	LDB	2,0(3)		; Load byte 2
+	MOVEM	2,RESULT
+	; Expected: RESULT = 0003
+
+	MOVEI	1,0110000000000	; Byte pointer for byte 3 (position 27)
+	LDB	2,0(3)		; Load byte 3
+	MOVEM	2,RESULT
+	; Expected: RESULT = 0004
+
+	HALT
+
+	.END	START

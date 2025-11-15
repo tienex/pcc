@@ -1,0 +1,157 @@
+; Simple VAX Instruction Test
+; Tests basic VAX instructions with proper syntax
+
+	.PSECT	CODE
+
+START:
+	; Move operations (various sizes)
+	MOVB	#100,R0
+	MOVW	#12345,R1
+	MOVL	#1234567,R2
+
+	; Arithmetic byte (8-bit)
+	ADDB	#50,R0
+	SUBB	#25,R0
+	MULB	#2,R0
+	DIVB	#5,R0
+	CMPB	#100,R0
+	TSTB	R0
+	INCB	R0
+	DECB	R0
+	CLRB	R0
+
+	; Arithmetic word (16-bit)
+	ADDW	#1000,R1
+	SUBW	#500,R1
+	MULW	#10,R1
+	DIVW	#2,R1
+	CMPW	#12345,R1
+	TSTW	R1
+	INCW	R1
+	DECW	R1
+	CLRW	R1
+
+	; Arithmetic long (32-bit)
+	ADDL	#100000,R2
+	SUBL	#50000,R2
+	MULL	#5,R2
+	DIVL	#10,R2
+	CMPL	#1234567,R2
+	TSTL	R2
+	INCL	R2
+	DECL	R2
+	CLRL	R2
+
+	; Logical operations long
+	BICL	#0xF0000000,R2
+	BISL	#0x0F000000,R2
+	XORL	#0x00FF0000,R2
+	MCOML	#0x12345678,R3
+
+	; Logical operations word
+	BICW	#0xF000,R1
+	BISW	#0x0F00,R1
+	XORW	#0x00FF,R1
+
+	; Logical operations byte
+	BICB	#0xF0,R0
+	BISB	#0x0F,R0
+	XORB	#0xFF,R0
+
+	; Floating point F_float
+	ADDF	#3.14,R4
+	SUBF	#1.0,R4
+	MULF	#2.0,R4
+	DIVF	#1.5,R4
+	CMPF	#3.14,R4
+	TSTF	R4
+	CLRF	R4
+
+	; Floating point D_float
+	ADDD	#2.71828,R5
+	SUBD	#1.0,R5
+	MULD	#2.0,R5
+	DIVD	#3.0,R5
+	CMPD	#2.71828,R5
+	TSTD	R5
+	CLRD	R5
+
+	; Branch instructions
+	BRB	LBL1
+LBL1:	BRW	LBL2
+LBL2:	BEQL	LBL3
+LBL3:	BNEQ	LBL4
+LBL4:	BLSS	LBL5
+LBL5:	BGTR	LBL6
+LBL6:	BLEQ	LBL7
+LBL7:	BGEQ	LBL8
+LBL8:	BVC	LBL9
+LBL9:	BVS	LBL10
+LBL10:	BGEQU	LBL11
+LBL11:	BLSSU	LBL12
+LBL12:	BCC	LBL13
+LBL13:	BCS	LBL14
+
+LBL14:
+	; Data conversion
+	CVTBW	R0,R1
+	CVTBL	R0,R2
+	CVTWL	R1,R2
+	CVTLB	R2,R0
+	CVTLW	R2,R1
+	CVTWB	R1,R0
+
+	; String operations
+	MOVC3	#10,SRC,DST
+	CMPC3	#10,SRC,DST
+	LOCC	#65,#10,SRC
+	SKPC	#32,#10,SRC
+
+	; Bit field operations
+	EXTV	#4,#8,DATA,R3
+	EXTZV	#4,#8,DATA,R3
+	INSV	#255,#4,#8,DATA
+	FFC	#0,#32,DATA,R4
+	FFS	#0,#32,DATA,R4
+
+	; Packed decimal
+	ADDP4	#10,SRC,#10,DST
+	SUBP4	#10,SRC,#10,DST
+	MULP	#10,SRC,#10,DST,#10,RESULT
+	DIVP	#10,SRC,#10,DST,#10,RESULT
+	CMPP3	#10,SRC,DST
+
+	; Queue operations
+	INSQUE	ENTRY,QUEUE
+	REMQUE	ENTRY,R5
+
+	; Index
+	INDEX	#0,#10,#1,#5,R6,R7
+
+	; Special VAX instructions
+	PUSHR	#0xFF
+	POPR	#0xFF
+	MOVPSL	R8
+	BISPSW	#0x0F
+	BICPSW	#0x0F
+
+	; Change mode
+	CHME	#0
+	CHMK	#0
+	CHMS	#0
+	CHMU	#0
+
+	; Misc
+	NOP
+	HALT
+	RET
+
+; Data area
+DATA:	.WORD	0x12345678
+SRC:	.BLKB	20
+DST:	.BLKB	20
+RESULT:	.BLKB	20
+QUEUE:	.LONG	0,0
+ENTRY:	.LONG	0,0
+
+	.END
