@@ -1,0 +1,38 @@
+# Makefile for libexcept
+
+CC = @CC@
+AR = ar
+RANLIB = @RANLIB@
+CFLAGS = @CFLAGS@ -I. -Wall -Wextra -std=c11
+DESTDIR = @DESTDIR@
+prefix = @prefix@
+exec_prefix = @exec_prefix@
+libdir = @libdir@
+includedir = @includedir@
+
+LIB = libexcept.a
+HEADERS = *.h
+OBJS = *.o
+
+all: $(LIB)
+
+$(LIB): $(OBJS)
+	$(AR) rcs $(LIB) $(OBJS)
+	$(RANLIB) $(LIB)
+
+%.o: %.c
+	$(CC) $(CFLAGS) -c $< -o $@
+
+install: $(LIB)
+	mkdir -p $(DESTDIR)$(libdir)
+	mkdir -p $(DESTDIR)$(includedir)
+	install -m 644 $(LIB) $(DESTDIR)$(libdir)/
+	install -m 644 $(HEADERS) $(DESTDIR)$(includedir)/
+
+clean:
+	rm -f $(OBJS) $(LIB)
+
+distclean: clean
+	rm -f Makefile
+
+.PHONY: all install clean distclean
