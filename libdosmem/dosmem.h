@@ -180,6 +180,33 @@ int dosmem_ems_alloc(unsigned int pages, dosmem_handle_t *handle);
 int dosmem_ems_free(dosmem_handle_t *handle);
 int dosmem_ems_get_page_frame(unsigned int *segment);
 
+/* HMA (High Memory Area) functions */
+int dosmem_hma_available(void);
+int dosmem_hma_alloc(unsigned int bytes_needed, dosmem_handle_t *handle);
+int dosmem_hma_free(dosmem_handle_t *handle);
+void far *dosmem_hma_get_pointer(void);
+unsigned long dosmem_hma_get_size(void);
+
+/* UMB (Upper Memory Blocks) functions */
+int dosmem_umb_available(void);
+int dosmem_umb_alloc(unsigned long size, dosmem_handle_t *handle);
+int dosmem_umb_free(dosmem_handle_t *handle);
+int dosmem_umb_alloc_dos(unsigned long size, dosmem_handle_t *handle);
+int dosmem_umb_free_dos(dosmem_handle_t *handle);
+unsigned long dosmem_umb_get_free(void);
+
+/* Swapping functions */
+int dosmem_swap_init(const char *swap_file, unsigned long max_swap_size);
+void dosmem_swap_shutdown(void);
+int dosmem_swap_alloc(unsigned long size, dosmem_handle_t *handle);
+int dosmem_swap_free(dosmem_handle_t *handle);
+int dosmem_swap_read(dosmem_handle_t *handle, unsigned long offset,
+                     void *buffer, unsigned long size);
+int dosmem_swap_write(dosmem_handle_t *handle, unsigned long offset,
+                      const void *buffer, unsigned long size);
+int dosmem_swap_lock(dosmem_handle_t *handle);
+int dosmem_swap_unlock(dosmem_handle_t *handle);
+
 #ifdef __cplusplus
 }
 #endif

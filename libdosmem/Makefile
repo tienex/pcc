@@ -24,8 +24,12 @@ DPMI_SRCS=	dpmi/dpmi.c
 XMS_SRCS=	xms/xms.c
 EMS_SRCS=	ems/ems.c
 VCPI_SRCS=	vcpi/vcpi.c
+HMA_SRCS=	hma/hma.c
+UMB_SRCS=	umb/umb.c
+SWAP_SRCS=	swap/swap.c
 
-SRCS=		$(CORE_SRCS) $(DPMI_SRCS) $(XMS_SRCS) $(EMS_SRCS) $(VCPI_SRCS)
+SRCS=		$(CORE_SRCS) $(DPMI_SRCS) $(XMS_SRCS) $(EMS_SRCS) $(VCPI_SRCS) \
+		$(HMA_SRCS) $(UMB_SRCS) $(SWAP_SRCS)
 OBJS=		$(SRCS:.c=.o)
 
 HEADERS=	dosmem.h vmem_compat.h
