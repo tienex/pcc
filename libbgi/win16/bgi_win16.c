@@ -1,11 +1,11 @@
 /*	$Id$	*/
 /*
  * Copyright (c) 2025 PCC Project.
- * BGI Implementation for Windows 3.x (16-bit GDI + WinG)
+ * BGI Implementation for Windows 3.x (16-bit GDI)
  *
- * 16-bit Windows graphics using GDI and optional WinG acceleration
+ * Pure 16-bit Windows graphics using GDI
  * Works on: Windows 3.0, 3.1, 3.11 (16-bit)
- * Features: GDI graphics, WinG hardware acceleration (optional)
+ * Features: GDI double buffering, standard Windows graphics
  */
 
 #include "../graphics.h"
@@ -13,18 +13,12 @@
 #include <stdlib.h>
 #include <string.h>
 
-/* WinG support (optional) */
-#ifdef USE_WING
-#include <wing.h>
-#endif
-
 static struct {
 	HWND hwnd;
 	HDC hdc;
 	HDC mem_dc;
 	HBITMAP mem_bitmap;
 	HBITMAP old_bitmap;
-	void FAR *bits;
 	int width, height;
 	int current_color, current_bkcolor, current_x, current_y;
 	int line_style;
@@ -32,10 +26,6 @@ static struct {
 	int fill_style, fill_color, text_justify_h, text_justify_v;
 	COLORREF colors[16];
 	int initialized;
-#ifdef USE_WING
-	WinGDC wing_dc;
-	HBITMAP wing_bitmap;
-#endif
 } win16_state;
 
 static const COLORREF ega_colors[16] = {
@@ -65,7 +55,6 @@ static LRESULT FAR PASCAL WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPa
 
 void FAR PASCAL initgraph(int FAR *driver, int FAR *mode, const char FAR *path) {
 	WNDCLASS wc;
-	BITMAPINFO FAR *bmi;
 	int width = 640, height = 480, i;
 
 	if (*driver == DETECT) { *driver = VGA; *mode = VGAHI; }
@@ -87,7 +76,7 @@ void FAR PASCAL initgraph(int FAR *driver, int FAR *mode, const char FAR *path) 
 	RegisterClass(&wc);
 
 	/* Create window */
-	win16_state.hwnd = CreateWindow("BGI_Win16_Class", "BGI Graphics (Win16)",
+	win16_state.hwnd = CreateWindow("BGI_Win16_Class", "BGI Graphics (Win16 GDI)",
 	                                 WS_OVERLAPPEDWINDOW | WS_VISIBLE,
 	                                 CW_USEDEFAULT, CW_USEDEFAULT, width, height,
 	                                 NULL, NULL, wc.hInstance, NULL);
@@ -100,34 +89,25 @@ void FAR PASCAL initgraph(int FAR *driver, int FAR *mode, const char FAR *path) 
 		return;
 	}
 
-#ifdef USE_WING
-	/* Try to use WinG for hardware acceleration */
-	win16_state.wing_dc = WinGCreateDC();
-	if (win16_state.wing_dc) {
-		bmi = (BITMAPINFO FAR *)_fmalloc(sizeof(BITMAPINFOHEADER));
-		bmi->bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
-		bmi->bmiHeader.biWidth = width;
-		bmi->bmiHeader.biHeight = -height;
-		bmi->bmiHeader.biPlanes = 1;
-		bmi->bmiHeader.biBitCount = 8;
-		bmi->bmiHeader.biCompression = BI_RGB;
-
-		win16_state.wing_bitmap = WinGCreateBitmap(win16_state.wing_dc, bmi, &win16_state.bits);
-		_ffree(bmi);
-
-		if (win16_state.wing_bitmap) {
-			SelectObject(win16_state.wing_dc, win16_state.wing_bitmap);
-			win16_state.mem_dc = win16_state.wing_dc;
-		}
-	}
-#endif
-
-	/* Fallback to regular GDI if WinG not available */
+	/* Create GDI double buffer */
+	win16_state.mem_dc = CreateCompatibleDC(win16_state.hdc);
 	if (!win16_state.mem_dc) {
-		win16_state.mem_dc = CreateCompatibleDC(win16_state.hdc);
-		win16_state.mem_bitmap = CreateCompatibleBitmap(win16_state.hdc, width, height);
-		win16_state.old_bitmap = SelectObject(win16_state.mem_dc, win16_state.mem_bitmap);
+		ReleaseDC(win16_state.hwnd, win16_state.hdc);
+		DestroyWindow(win16_state.hwnd);
+		*driver = grNotDetected;
+		return;
 	}
+
+	win16_state.mem_bitmap = CreateCompatibleBitmap(win16_state.hdc, width, height);
+	if (!win16_state.mem_bitmap) {
+		DeleteDC(win16_state.mem_dc);
+		ReleaseDC(win16_state.hwnd, win16_state.hdc);
+		DestroyWindow(win16_state.hwnd);
+		*driver = grNotDetected;
+		return;
+	}
+
+	win16_state.old_bitmap = SelectObject(win16_state.mem_dc, win16_state.mem_bitmap);
 
 	/* Copy EGA colors */
 	for (i = 0; i < 16; i++)
@@ -153,14 +133,6 @@ void FAR PASCAL initgraph(int FAR *driver, int FAR *mode, const char FAR *path) 
 
 void FAR PASCAL closegraph(void) {
 	if (!win16_state.initialized) return;
-
-#ifdef USE_WING
-	if (win16_state.wing_dc) {
-		if (win16_state.wing_bitmap)
-			DeleteObject(win16_state.wing_bitmap);
-		WinGDeleteDC(win16_state.wing_dc);
-	}
-#endif
 
 	if (win16_state.old_bitmap)
 		SelectObject(win16_state.mem_dc, win16_state.old_bitmap);
