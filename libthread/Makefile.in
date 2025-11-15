@@ -20,7 +20,13 @@ exec_prefix = @exec_prefix@
 libdir = @libdir@
 includedir = @includedir@
 
-OBJS=	threads.o
+OBJS=	threads_new.o
+
+# Platform-specific source files (included by dispatcher)
+PLATFORM_SRCS=	\
+	unix/threads_unix.c \
+	win32/threads_win32.c \
+	dos/threads_dos.c
 
 LIB=libthread.a
 
@@ -30,8 +36,8 @@ $(LIB): $(OBJS)
 	$(AR) rv $@ $(OBJS)
 	$(RANLIB) $@
 
-threads.o: $(srcdir)/threads.c $(srcdir)/threads.h
-	$(CC) $(CFLAGS) $(CPPFLAGS) -c $(srcdir)/threads.c
+threads_new.o: $(srcdir)/threads_new.c $(srcdir)/threads.h $(PLATFORM_SRCS)
+	$(CC) $(CFLAGS) $(CPPFLAGS) -c $(srcdir)/threads_new.c
 
 install: $(LIB)
 	test -z "$(DESTDIR)$(libdir)" || mkdir -p "$(DESTDIR)$(libdir)"

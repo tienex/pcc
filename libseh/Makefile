@@ -21,9 +21,21 @@ LIB=		libseh.a
 SOLIB=		libseh.so
 SOVERSION=	0.1
 
-SRCS=		seh.c seh_dwarf.c seh_context.c
+SRCS=		seh_new.c seh_context_new.c
 CXXSRCS=	seh_cxx.cpp
 OBJS=		$(SRCS:.c=.o) $(CXXSRCS:.cpp=.o)
+
+# Platform-specific source files (included by dispatcher)
+PLATFORM_SRCS=	\
+	unix/seh_unix.c \
+	unix/seh_context_unix.c \
+	unix/seh_dwarf.c \
+	win32/seh_win32.c \
+	win32/seh_context_win32.c \
+	dos/seh_dos.c \
+	dos/seh_context_dos.c
+
+EXTRA_DIST=	$(PLATFORM_SRCS) seh_helpers.h
 
 HEADERS=	seh.h
 
