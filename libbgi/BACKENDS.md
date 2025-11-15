@@ -121,11 +121,11 @@ This directory contains BGI implementations for various platforms and graphics s
 - **Notes**: 16-bit Windows applications
 
 ### Win32 GDI (win32/)
-- **Platform**: Windows 95/98/ME/NT/2000/XP+
-- **Status**: ⏳ Planned
-- **Features**: GDI graphics, double buffering
+- **Platform**: Windows 95/98/ME/NT/2000/XP/Vista/7/8/10/11
+- **Status**: ✅ Implemented
+- **Features**: GDI graphics, double buffering, window management
 - **Dependencies**: Windows API
-- **Notes**: Compatible with modern Windows
+- **Notes**: Compatible with all modern Windows versions
 
 ### Direct2D (d2d/)
 - **Platform**: Windows 7+
@@ -207,17 +207,17 @@ This directory contains BGI implementations for various platforms and graphics s
 
 ### macOS Classic (macos_classic/)
 - **Platform**: Mac OS 7-9 (pre-OSX)
-- **Status**: ⏳ Planned
-- **Features**: QuickDraw, Toolbox
+- **Status**: ✅ Implemented
+- **Features**: QuickDraw, Toolbox, Color QuickDraw
 - **Dependencies**: Mac Toolbox
-- **Notes**: 68k and PowerPC Macs
+- **Notes**: 68k and PowerPC Macs, System 7+
 
 ### macOS Cocoa (macos/)
 - **Platform**: macOS 10.0+ (OS X, macOS)
-- **Status**: ⏳ Planned
-- **Features**: Quartz 2D, Cocoa, Core Graphics
+- **Status**: ✅ Implemented
+- **Features**: Quartz 2D, Cocoa, Core Graphics, CGLayer for off-screen rendering
 - **Dependencies**: Cocoa framework, Core Graphics
-- **Notes**: Intel and Apple Silicon, modern macOS
+- **Notes**: Intel and Apple Silicon, modern macOS, uses Objective-C
 
 ### macOS Catalyst (catalyst/)
 - **Platform**: macOS 10.15+ (Catalyst apps)
@@ -228,10 +228,10 @@ This directory contains BGI implementations for various platforms and graphics s
 
 ### Plan 9 (plan9/)
 - **Platform**: Plan 9 from Bell Labs
-- **Status**: ⏳ Planned
-- **Features**: /dev/draw interface, native graphics
-- **Dependencies**: Plan 9 graphics system
-- **Notes**: Rio window system, 9front
+- **Status**: ✅ Implemented
+- **Features**: /dev/draw interface, native graphics, double buffering with Image
+- **Dependencies**: Plan 9 graphics system, libdraw
+- **Notes**: Rio window system, 9front, plan9port
 
 ### RISC OS (riscos/)
 - **Platform**: Acorn RISC OS
@@ -367,23 +367,27 @@ Each backend should pass the BGI test suite:
 
 ## Implementation Status Summary
 
-**Implemented (11)**:
+**Implemented (15)**:
 - SDL2, SDL1
 - Linux framebuffer
 - VGA, VESA, EGA, CGA, Hercules
 - X11, X11+Motif
 - Amiga Intuition
 - Atari GEM
+- Win32 GDI
+- macOS Classic (QuickDraw)
+- macOS Cocoa
+- Plan 9 (/dev/draw)
 
-**Planned (30+)**:
+**Planned (26+)**:
 - Modern: EGL, DRM, GLX, WGL, CGL, Direct2D
 - BSD: FreeBSD, OpenBSD, NetBSD framebuffers
 - DOS: SVGAlib, XGA
-- Windows: Win16/WinG, Win32/GDI
+- Windows: Win16/WinG
 - OS/2: 16-bit PM, 32-bit PM/DIVE
-- macOS: Classic, Cocoa, Catalyst
+- macOS: Catalyst
 - Mobile: Android, iOS, Symbian
-- Retro: Plan 9, RISC OS, PC/GEOS
+- Retro: RISC OS, PC/GEOS
 - UEFI: GOP, UGA
 - Terminal: SIXEL, iTerm2, kitty, Tektronix
 
