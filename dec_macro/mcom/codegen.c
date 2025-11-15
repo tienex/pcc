@@ -107,6 +107,214 @@ static P1ND *handle_rot(INSTRUCTION *inst);
 static P1ND *handle_jrst(INSTRUCTION *inst);
 static P1ND *handle_pushj(INSTRUCTION *inst);
 static P1ND *handle_popj(INSTRUCTION *inst);
+
+/* PDP-10 Half-word operations */
+static P1ND *handle_hll(INSTRUCTION *inst);
+static P1ND *handle_hlli(INSTRUCTION *inst);
+static P1ND *handle_hllm(INSTRUCTION *inst);
+static P1ND *handle_hlls(INSTRUCTION *inst);
+static P1ND *handle_hrl(INSTRUCTION *inst);
+static P1ND *handle_hrli(INSTRUCTION *inst);
+static P1ND *handle_hrlm(INSTRUCTION *inst);
+static P1ND *handle_hrls(INSTRUCTION *inst);
+static P1ND *handle_hrr(INSTRUCTION *inst);
+static P1ND *handle_hrri(INSTRUCTION *inst);
+static P1ND *handle_hrrm(INSTRUCTION *inst);
+static P1ND *handle_hrrs(INSTRUCTION *inst);
+static P1ND *handle_hlr(INSTRUCTION *inst);
+static P1ND *handle_hlri(INSTRUCTION *inst);
+static P1ND *handle_hlrm(INSTRUCTION *inst);
+static P1ND *handle_hlrs(INSTRUCTION *inst);
+
+/* PDP-10 Arithmetic */
+static P1ND *handle_add(INSTRUCTION *inst);
+static P1ND *handle_addi(INSTRUCTION *inst);
+static P1ND *handle_addm(INSTRUCTION *inst);
+static P1ND *handle_sub(INSTRUCTION *inst);
+static P1ND *handle_subi(INSTRUCTION *inst);
+static P1ND *handle_subm(INSTRUCTION *inst);
+static P1ND *handle_mul(INSTRUCTION *inst);
+static P1ND *handle_muli(INSTRUCTION *inst);
+static P1ND *handle_mulm(INSTRUCTION *inst);
+static P1ND *handle_div(INSTRUCTION *inst);
+static P1ND *handle_divi(INSTRUCTION *inst);
+static P1ND *handle_divm(INSTRUCTION *inst);
+static P1ND *handle_ash(INSTRUCTION *inst);
+static P1ND *handle_ashc(INSTRUCTION *inst);
+static P1ND *handle_lshc(INSTRUCTION *inst);
+static P1ND *handle_rotc(INSTRUCTION *inst);
+
+/* PDP-10 Floating Point */
+static P1ND *handle_fad(INSTRUCTION *inst);
+static P1ND *handle_fadl(INSTRUCTION *inst);
+static P1ND *handle_fadm(INSTRUCTION *inst);
+static P1ND *handle_fadb(INSTRUCTION *inst);
+static P1ND *handle_fadr(INSTRUCTION *inst);
+static P1ND *handle_fadri(INSTRUCTION *inst);
+static P1ND *handle_fadrm(INSTRUCTION *inst);
+static P1ND *handle_fadrb(INSTRUCTION *inst);
+static P1ND *handle_fsb(INSTRUCTION *inst);
+static P1ND *handle_fsbl(INSTRUCTION *inst);
+static P1ND *handle_fsbm(INSTRUCTION *inst);
+static P1ND *handle_fsbb(INSTRUCTION *inst);
+static P1ND *handle_fsbr(INSTRUCTION *inst);
+static P1ND *handle_fsbri(INSTRUCTION *inst);
+static P1ND *handle_fsbrm(INSTRUCTION *inst);
+static P1ND *handle_fsbrb(INSTRUCTION *inst);
+static P1ND *handle_fmp(INSTRUCTION *inst);
+static P1ND *handle_fmpl(INSTRUCTION *inst);
+static P1ND *handle_fmpm(INSTRUCTION *inst);
+static P1ND *handle_fmpb(INSTRUCTION *inst);
+static P1ND *handle_fmpr(INSTRUCTION *inst);
+static P1ND *handle_fmpri(INSTRUCTION *inst);
+static P1ND *handle_fmprm(INSTRUCTION *inst);
+static P1ND *handle_fmprb(INSTRUCTION *inst);
+static P1ND *handle_fdv(INSTRUCTION *inst);
+static P1ND *handle_fdvl(INSTRUCTION *inst);
+static P1ND *handle_fdvm(INSTRUCTION *inst);
+static P1ND *handle_fdvb(INSTRUCTION *inst);
+static P1ND *handle_fdvr(INSTRUCTION *inst);
+static P1ND *handle_fdvri(INSTRUCTION *inst);
+static P1ND *handle_fdvrm(INSTRUCTION *inst);
+static P1ND *handle_fdvrb(INSTRUCTION *inst);
+
+/* PDP-10 Logical Operations */
+static P1ND *handle_and(INSTRUCTION *inst);
+static P1ND *handle_andi(INSTRUCTION *inst);
+static P1ND *handle_andm(INSTRUCTION *inst);
+static P1ND *handle_andca(INSTRUCTION *inst);
+static P1ND *handle_andcai(INSTRUCTION *inst);
+static P1ND *handle_andcam(INSTRUCTION *inst);
+static P1ND *handle_andcm(INSTRUCTION *inst);
+static P1ND *handle_andcmi(INSTRUCTION *inst);
+static P1ND *handle_andcmm(INSTRUCTION *inst);
+static P1ND *handle_ior(INSTRUCTION *inst);
+static P1ND *handle_iori(INSTRUCTION *inst);
+static P1ND *handle_iorm(INSTRUCTION *inst);
+static P1ND *handle_xor(INSTRUCTION *inst);
+static P1ND *handle_xori(INSTRUCTION *inst);
+static P1ND *handle_xorm(INSTRUCTION *inst);
+static P1ND *handle_eqv(INSTRUCTION *inst);
+static P1ND *handle_eqvi(INSTRUCTION *inst);
+static P1ND *handle_eqvm(INSTRUCTION *inst);
+
+/* PDP-10 Set Operations */
+static P1ND *handle_seto(INSTRUCTION *inst);
+static P1ND *handle_setoi(INSTRUCTION *inst);
+static P1ND *handle_setom(INSTRUCTION *inst);
+static P1ND *handle_setca(INSTRUCTION *inst);
+static P1ND *handle_setcai(INSTRUCTION *inst);
+static P1ND *handle_setcam(INSTRUCTION *inst);
+static P1ND *handle_setcm(INSTRUCTION *inst);
+static P1ND *handle_setcmi(INSTRUCTION *inst);
+static P1ND *handle_setcmm(INSTRUCTION *inst);
+static P1ND *handle_setz(INSTRUCTION *inst);
+static P1ND *handle_setzi(INSTRUCTION *inst);
+static P1ND *handle_setzm(INSTRUCTION *inst);
+
+/* PDP-10 Skip/Jump Operations */
+static P1ND *handle_skip(INSTRUCTION *inst);
+static P1ND *handle_skipl(INSTRUCTION *inst);
+static P1ND *handle_skipe(INSTRUCTION *inst);
+static P1ND *handle_skiple(INSTRUCTION *inst);
+static P1ND *handle_skipa(INSTRUCTION *inst);
+static P1ND *handle_skipge(INSTRUCTION *inst);
+static P1ND *handle_skipn(INSTRUCTION *inst);
+static P1ND *handle_skipg(INSTRUCTION *inst);
+static P1ND *handle_jump(INSTRUCTION *inst);
+static P1ND *handle_jumpl(INSTRUCTION *inst);
+static P1ND *handle_jumpe(INSTRUCTION *inst);
+static P1ND *handle_jumple(INSTRUCTION *inst);
+static P1ND *handle_jumpa(INSTRUCTION *inst);
+static P1ND *handle_jumpge(INSTRUCTION *inst);
+static P1ND *handle_jumpn(INSTRUCTION *inst);
+static P1ND *handle_jumpg(INSTRUCTION *inst);
+
+/* PDP-10 Add/Subtract with Jump */
+static P1ND *handle_aoj(INSTRUCTION *inst);
+static P1ND *handle_aojl(INSTRUCTION *inst);
+static P1ND *handle_aoje(INSTRUCTION *inst);
+static P1ND *handle_aojle(INSTRUCTION *inst);
+static P1ND *handle_aoja(INSTRUCTION *inst);
+static P1ND *handle_aojge(INSTRUCTION *inst);
+static P1ND *handle_aojn(INSTRUCTION *inst);
+static P1ND *handle_aojg(INSTRUCTION *inst);
+static P1ND *handle_aos(INSTRUCTION *inst);
+static P1ND *handle_aosl(INSTRUCTION *inst);
+static P1ND *handle_aose(INSTRUCTION *inst);
+static P1ND *handle_aosle(INSTRUCTION *inst);
+static P1ND *handle_aosa(INSTRUCTION *inst);
+static P1ND *handle_aosge(INSTRUCTION *inst);
+static P1ND *handle_aosn(INSTRUCTION *inst);
+static P1ND *handle_aosg(INSTRUCTION *inst);
+static P1ND *handle_soj(INSTRUCTION *inst);
+static P1ND *handle_sojl(INSTRUCTION *inst);
+static P1ND *handle_soje(INSTRUCTION *inst);
+static P1ND *handle_sojle(INSTRUCTION *inst);
+static P1ND *handle_soja(INSTRUCTION *inst);
+static P1ND *handle_sojge(INSTRUCTION *inst);
+static P1ND *handle_sojn(INSTRUCTION *inst);
+static P1ND *handle_sojg(INSTRUCTION *inst);
+static P1ND *handle_sos(INSTRUCTION *inst);
+static P1ND *handle_sosl(INSTRUCTION *inst);
+static P1ND *handle_sose(INSTRUCTION *inst);
+static P1ND *handle_sosle(INSTRUCTION *inst);
+static P1ND *handle_sosa(INSTRUCTION *inst);
+static P1ND *handle_sosge(INSTRUCTION *inst);
+static P1ND *handle_sosn(INSTRUCTION *inst);
+static P1ND *handle_sosg(INSTRUCTION *inst);
+
+/* PDP-10 Test Operations */
+static P1ND *handle_cai(INSTRUCTION *inst);
+static P1ND *handle_cail(INSTRUCTION *inst);
+static P1ND *handle_caie(INSTRUCTION *inst);
+static P1ND *handle_caile(INSTRUCTION *inst);
+static P1ND *handle_caia(INSTRUCTION *inst);
+static P1ND *handle_caige(INSTRUCTION *inst);
+static P1ND *handle_cain(INSTRUCTION *inst);
+static P1ND *handle_caig(INSTRUCTION *inst);
+static P1ND *handle_cam(INSTRUCTION *inst);
+static P1ND *handle_caml(INSTRUCTION *inst);
+static P1ND *handle_came(INSTRUCTION *inst);
+static P1ND *handle_camle(INSTRUCTION *inst);
+static P1ND *handle_cama(INSTRUCTION *inst);
+static P1ND *handle_camge(INSTRUCTION *inst);
+static P1ND *handle_camn(INSTRUCTION *inst);
+static P1ND *handle_camg(INSTRUCTION *inst);
+
+/* PDP-10 Byte Operations */
+static P1ND *handle_ldb(INSTRUCTION *inst);
+static P1ND *handle_ildb(INSTRUCTION *inst);
+static P1ND *handle_dpb(INSTRUCTION *inst);
+static P1ND *handle_idpb(INSTRUCTION *inst);
+static P1ND *handle_ibp(INSTRUCTION *inst);
+
+/* PDP-10 I/O Operations */
+static P1ND *handle_blki(INSTRUCTION *inst);
+static P1ND *handle_datai(INSTRUCTION *inst);
+static P1ND *handle_blko(INSTRUCTION *inst);
+static P1ND *handle_datao(INSTRUCTION *inst);
+static P1ND *handle_cono(INSTRUCTION *inst);
+static P1ND *handle_coni(INSTRUCTION *inst);
+static P1ND *handle_consz(INSTRUCTION *inst);
+static P1ND *handle_conso(INSTRUCTION *inst);
+
+/* PDP-10 Stack Operations */
+static P1ND *handle_push(INSTRUCTION *inst);
+static P1ND *handle_pop(INSTRUCTION *inst);
+
+/* PDP-10 Move variants */
+static P1ND *handle_movs(INSTRUCTION *inst);
+static P1ND *handle_movsi(INSTRUCTION *inst);
+static P1ND *handle_movsm(INSTRUCTION *inst);
+static P1ND *handle_movss(INSTRUCTION *inst);
+static P1ND *handle_movni(INSTRUCTION *inst);
+static P1ND *handle_movnm(INSTRUCTION *inst);
+static P1ND *handle_movns(INSTRUCTION *inst);
+static P1ND *handle_movmi(INSTRUCTION *inst);
+static P1ND *handle_movmm(INSTRUCTION *inst);
+static P1ND *handle_movms(INSTRUCTION *inst);
+
 /* VAX-specific handlers */
 static P1ND *handle_addb(INSTRUCTION *inst);
 static P1ND *handle_addw(INSTRUCTION *inst);
@@ -824,6 +1032,220 @@ static const insn_table_entry_t insn_table[] = {
 	{ "SETZ",  handle_clr,   0400000 },  /* Set to zero */
 	{ "SETMI", handle_neg,   0210040 },  /* Set minus */
 	{ "SETA",  handle_mov,   0210040 },  /* Set to A */
+
+	/* PDP-10 Half-word operations */
+	{ "HLL",   handle_hll,   0500000 },  /* Half left to left */
+	{ "HLLI",  handle_hlli,  0501000 },  /* Half left to left immediate */
+	{ "HLLM",  handle_hllm,  0502000 },  /* Half left to left to memory */
+	{ "HLLS",  handle_hlls,  0503000 },  /* Half left to left to self */
+	{ "HRL",   handle_hrl,   0504000 },  /* Half right to left */
+	{ "HRLI",  handle_hrli,  0505000 },  /* Half right to left immediate */
+	{ "HRLM",  handle_hrlm,  0506000 },  /* Half right to left to memory */
+	{ "HRLS",  handle_hrls,  0507000 },  /* Half right to left to self */
+	{ "HRR",   handle_hrr,   0540000 },  /* Half right to right */
+	{ "HRRI",  handle_hrri,  0541000 },  /* Half right to right immediate */
+	{ "HRRM",  handle_hrrm,  0542000 },  /* Half right to right to memory */
+	{ "HRRS",  handle_hrrs,  0543000 },  /* Half right to right to self */
+	{ "HLR",   handle_hlr,   0544000 },  /* Half left to right */
+	{ "HLRI",  handle_hlri,  0545000 },  /* Half left to right immediate */
+	{ "HLRM",  handle_hlrm,  0546000 },  /* Half left to right to memory */
+	{ "HLRS",  handle_hlrs,  0547000 },  /* Half left to right to self */
+
+	/* PDP-10 Arithmetic (non-conflicting names) */
+	{ "ADD",   handle_add,   0270000 },  /* Add */
+	{ "ADDI",  handle_addi,  0271000 },  /* Add immediate */
+	{ "ADDM",  handle_addm,  0272000 },  /* Add to memory */
+	{ "SUB",   handle_sub,   0274000 },  /* Subtract */
+	{ "SUBI",  handle_subi,  0275000 },  /* Subtract immediate */
+	{ "SUBM",  handle_subm,  0276000 },  /* Subtract to memory */
+	{ "MUL",   handle_mul,   0224000 },  /* Multiply */
+	{ "MULI",  handle_muli,  0225000 },  /* Multiply immediate */
+	{ "MULM",  handle_mulm,  0226000 },  /* Multiply to memory */
+	{ "DIV",   handle_div,   0234000 },  /* Divide */
+	{ "DIVI",  handle_divi,  0235000 },  /* Divide immediate */
+	{ "DIVM",  handle_divm,  0236000 },  /* Divide to memory */
+	{ "ASH",   handle_ash,   0240000 },  /* Arithmetic shift */
+	{ "ASHC",  handle_ashc,  0244000 },  /* Arithmetic shift combined */
+	{ "LSHC",  handle_lshc,  0246000 },  /* Logical shift combined */
+	{ "ROTC",  handle_rotc,  0245000 },  /* Rotate combined */
+
+	/* PDP-10 Floating Point */
+	{ "FAD",   handle_fad,   0140000 },  /* Floating add */
+	{ "FADL",  handle_fadl,  0141000 },  /* Floating add long */
+	{ "FADM",  handle_fadm,  0142000 },  /* Floating add to memory */
+	{ "FADB",  handle_fadb,  0143000 },  /* Floating add both */
+	{ "FADR",  handle_fadr,  0144000 },  /* Floating add rounded */
+	{ "FADRI", handle_fadri, 0145000 },  /* Floating add rounded immediate */
+	{ "FADRM", handle_fadrm, 0146000 },  /* Floating add rounded to memory */
+	{ "FADRB", handle_fadrb, 0147000 },  /* Floating add rounded both */
+	{ "FSB",   handle_fsb,   0150000 },  /* Floating subtract */
+	{ "FSBL",  handle_fsbl,  0151000 },  /* Floating subtract long */
+	{ "FSBM",  handle_fsbm,  0152000 },  /* Floating subtract to memory */
+	{ "FSBB",  handle_fsbb,  0153000 },  /* Floating subtract both */
+	{ "FSBR",  handle_fsbr,  0154000 },  /* Floating subtract rounded */
+	{ "FSBRI", handle_fsbri, 0155000 },  /* Floating subtract rounded immediate */
+	{ "FSBRM", handle_fsbrm, 0156000 },  /* Floating subtract rounded to memory */
+	{ "FSBRB", handle_fsbrb, 0157000 },  /* Floating subtract rounded both */
+	{ "FMP",   handle_fmp,   0160000 },  /* Floating multiply */
+	{ "FMPL",  handle_fmpl,  0161000 },  /* Floating multiply long */
+	{ "FMPM",  handle_fmpm,  0162000 },  /* Floating multiply to memory */
+	{ "FMPB",  handle_fmpb,  0163000 },  /* Floating multiply both */
+	{ "FMPR",  handle_fmpr,  0164000 },  /* Floating multiply rounded */
+	{ "FMPRI", handle_fmpri, 0165000 },  /* Floating multiply rounded immediate */
+	{ "FMPRM", handle_fmprm, 0166000 },  /* Floating multiply rounded to memory */
+	{ "FMPRB", handle_fmprb, 0167000 },  /* Floating multiply rounded both */
+	{ "FDV",   handle_fdv,   0170000 },  /* Floating divide */
+	{ "FDVL",  handle_fdvl,  0171000 },  /* Floating divide long */
+	{ "FDVM",  handle_fdvm,  0172000 },  /* Floating divide to memory */
+	{ "FDVB",  handle_fdvb,  0173000 },  /* Floating divide both */
+	{ "FDVR",  handle_fdvr,  0174000 },  /* Floating divide rounded */
+	{ "FDVRI", handle_fdvri, 0175000 },  /* Floating divide rounded immediate */
+	{ "FDVRM", handle_fdvrm, 0176000 },  /* Floating divide rounded to memory */
+	{ "FDVRB", handle_fdvrb, 0177000 },  /* Floating divide rounded both */
+
+	/* PDP-10 Logical Operations */
+	{ "AND",   handle_and,   0404000 },  /* Logical AND */
+	{ "ANDI",  handle_andi,  0405000 },  /* Logical AND immediate */
+	{ "ANDM",  handle_andm,  0406000 },  /* Logical AND to memory */
+	{ "ANDCA", handle_andca, 0410000 },  /* AND with complement of AC */
+	{ "ANDCAI",handle_andcai,0411000 },  /* AND with complement of AC immediate */
+	{ "ANDCAM",handle_andcam,0412000 },  /* AND with complement of AC to memory */
+	{ "ANDCM", handle_andcm, 0414000 },  /* AND with complement of memory */
+	{ "ANDCMI",handle_andcmi,0415000 },  /* AND with complement of memory immediate */
+	{ "ANDCMM",handle_andcmm,0416000 },  /* AND with complement of memory to memory */
+	{ "IOR",   handle_ior,   0434000 },  /* Inclusive OR */
+	{ "IORI",  handle_iori,  0435000 },  /* Inclusive OR immediate */
+	{ "IORM",  handle_iorm,  0436000 },  /* Inclusive OR to memory */
+	{ "XOR",   handle_xor,   0424000 },  /* Exclusive OR */
+	{ "XORI",  handle_xori,  0425000 },  /* Exclusive OR immediate */
+	{ "XORM",  handle_xorm,  0426000 },  /* Exclusive OR to memory */
+	{ "EQV",   handle_eqv,   0444000 },  /* Equivalence */
+	{ "EQVI",  handle_eqvi,  0445000 },  /* Equivalence immediate */
+	{ "EQVM",  handle_eqvm,  0446000 },  /* Equivalence to memory */
+
+	/* PDP-10 Set Operations */
+	{ "SETO",  handle_seto,  0474000 },  /* Set to ones */
+	{ "SETOI", handle_setoi, 0475000 },  /* Set to ones immediate */
+	{ "SETOM", handle_setom, 0476000 },  /* Set to ones to memory */
+	{ "SETCA", handle_setca, 0450000 },  /* Set to complement of AC */
+	{ "SETCAI",handle_setcai,0451000 },  /* Set to complement of AC immediate */
+	{ "SETCAM",handle_setcam,0452000 },  /* Set to complement of AC to memory */
+	{ "SETCM", handle_setcm, 0454000 },  /* Set to complement of memory */
+	{ "SETCMI",handle_setcmi,0455000 },  /* Set to complement of memory immediate */
+	{ "SETCMM",handle_setcmm,0456000 },  /* Set to complement of memory to memory */
+	{ "SETZI", handle_setzi, 0401000 },  /* Set to zero immediate */
+	{ "SETZM", handle_setzm, 0402000 },  /* Set to zero to memory */
+
+	/* PDP-10 Skip/Jump Operations */
+	{ "SKIP",  handle_skip,  0330000 },  /* Skip */
+	{ "SKIPL", handle_skipl, 0331000 },  /* Skip if less than zero */
+	{ "SKIPE", handle_skipe, 0332000 },  /* Skip if equal to zero */
+	{ "SKIPLE",handle_skiple,0333000 },  /* Skip if less or equal to zero */
+	{ "SKIPA", handle_skipa, 0334000 },  /* Skip always */
+	{ "SKIPGE",handle_skipge,0335000 },  /* Skip if greater or equal to zero */
+	{ "SKIPN", handle_skipn, 0336000 },  /* Skip if not zero */
+	{ "SKIPG", handle_skipg, 0337000 },  /* Skip if greater than zero */
+	{ "JUMP",  handle_jump,  0320000 },  /* Jump */
+	{ "JUMPL", handle_jumpl, 0321000 },  /* Jump if less than zero */
+	{ "JUMPE", handle_jumpe, 0322000 },  /* Jump if equal to zero */
+	{ "JUMPLE",handle_jumple,0323000 },  /* Jump if less or equal to zero */
+	{ "JUMPA", handle_jumpa, 0324000 },  /* Jump always */
+	{ "JUMPGE",handle_jumpge,0325000 },  /* Jump if greater or equal to zero */
+	{ "JUMPN", handle_jumpn, 0326000 },  /* Jump if not zero */
+	{ "JUMPG", handle_jumpg, 0327000 },  /* Jump if greater than zero */
+
+	/* PDP-10 Add One and Jump */
+	{ "AOJ",   handle_aoj,   0340000 },  /* Add one and jump */
+	{ "AOJL",  handle_aojl,  0341000 },  /* Add one and jump if less */
+	{ "AOJE",  handle_aoje,  0342000 },  /* Add one and jump if equal */
+	{ "AOJLE", handle_aojle, 0343000 },  /* Add one and jump if less or equal */
+	{ "AOJA",  handle_aoja,  0344000 },  /* Add one and jump always */
+	{ "AOJGE", handle_aojge, 0345000 },  /* Add one and jump if greater or equal */
+	{ "AOJN",  handle_aojn,  0346000 },  /* Add one and jump if not zero */
+	{ "AOJG",  handle_aojg,  0347000 },  /* Add one and jump if greater */
+
+	/* PDP-10 Add One to memory and Skip */
+	{ "AOS",   handle_aos,   0350000 },  /* Add one to memory and skip */
+	{ "AOSL",  handle_aosl,  0351000 },  /* Add one to memory and skip if less */
+	{ "AOSE",  handle_aose,  0352000 },  /* Add one to memory and skip if equal */
+	{ "AOSLE", handle_aosle, 0353000 },  /* Add one to memory and skip if less or equal */
+	{ "AOSA",  handle_aosa,  0354000 },  /* Add one to memory and skip always */
+	{ "AOSGE", handle_aosge, 0355000 },  /* Add one to memory and skip if greater or equal */
+	{ "AOSN",  handle_aosn,  0356000 },  /* Add one to memory and skip if not zero */
+	{ "AOSG",  handle_aosg,  0357000 },  /* Add one to memory and skip if greater */
+
+	/* PDP-10 Subtract One and Jump */
+	{ "SOJ",   handle_soj,   0360000 },  /* Subtract one and jump */
+	{ "SOJL",  handle_sojl,  0361000 },  /* Subtract one and jump if less */
+	{ "SOJE",  handle_soje,  0362000 },  /* Subtract one and jump if equal */
+	{ "SOJLE", handle_sojle, 0363000 },  /* Subtract one and jump if less or equal */
+	{ "SOJA",  handle_soja,  0364000 },  /* Subtract one and jump always */
+	{ "SOJGE", handle_sojge, 0365000 },  /* Subtract one and jump if greater or equal */
+	{ "SOJN",  handle_sojn,  0366000 },  /* Subtract one and jump if not zero */
+	{ "SOJG",  handle_sojg,  0367000 },  /* Subtract one and jump if greater */
+
+	/* PDP-10 Subtract One from memory and Skip */
+	{ "SOS",   handle_sos,   0370000 },  /* Subtract one from memory and skip */
+	{ "SOSL",  handle_sosl,  0371000 },  /* Subtract one from memory and skip if less */
+	{ "SOSE",  handle_sose,  0372000 },  /* Subtract one from memory and skip if equal */
+	{ "SOSLE", handle_sosle, 0373000 },  /* Subtract one from memory and skip if less or equal */
+	{ "SOSA",  handle_sosa,  0374000 },  /* Subtract one from memory and skip always */
+	{ "SOSGE", handle_sosge, 0375000 },  /* Subtract one from memory and skip if greater or equal */
+	{ "SOSN",  handle_sosn,  0376000 },  /* Subtract one from memory and skip if not zero */
+	{ "SOSG",  handle_sosg,  0377000 },  /* Subtract one from memory and skip if greater */
+
+	/* PDP-10 Compare Immediate */
+	{ "CAI",   handle_cai,   0300000 },  /* Compare accumulator immediate */
+	{ "CAIL",  handle_cail,  0301000 },  /* Compare accumulator immediate, skip if less */
+	{ "CAIE",  handle_caie,  0302000 },  /* Compare accumulator immediate, skip if equal */
+	{ "CAILE", handle_caile, 0303000 },  /* Compare accumulator immediate, skip if less or equal */
+	{ "CAIA",  handle_caia,  0304000 },  /* Compare accumulator immediate, skip always */
+	{ "CAIGE", handle_caige, 0305000 },  /* Compare accumulator immediate, skip if greater or equal */
+	{ "CAIN",  handle_cain,  0306000 },  /* Compare accumulator immediate, skip if not equal */
+	{ "CAIG",  handle_caig,  0307000 },  /* Compare accumulator immediate, skip if greater */
+
+	/* PDP-10 Compare Memory */
+	{ "CAM",   handle_cam,   0310000 },  /* Compare accumulator with memory */
+	{ "CAML",  handle_caml,  0311000 },  /* Compare accumulator with memory, skip if less */
+	{ "CAME",  handle_came,  0312000 },  /* Compare accumulator with memory, skip if equal */
+	{ "CAMLE", handle_camle, 0313000 },  /* Compare accumulator with memory, skip if less or equal */
+	{ "CAMA",  handle_cama,  0314000 },  /* Compare accumulator with memory, skip always */
+	{ "CAMGE", handle_camge, 0315000 },  /* Compare accumulator with memory, skip if greater or equal */
+	{ "CAMN",  handle_camn,  0316000 },  /* Compare accumulator with memory, skip if not equal */
+	{ "CAMG",  handle_camg,  0317000 },  /* Compare accumulator with memory, skip if greater */
+
+	/* PDP-10 Byte Operations */
+	{ "LDB",   handle_ldb,   0135000 },  /* Load byte */
+	{ "ILDB",  handle_ildb,  0136000 },  /* Increment pointer and load byte */
+	{ "DPB",   handle_dpb,   0137000 },  /* Deposit byte */
+	{ "IDPB",  handle_idpb,  0134000 },  /* Increment pointer and deposit byte */
+	{ "IBP",   handle_ibp,   0133000 },  /* Increment byte pointer */
+
+	/* PDP-10 I/O Operations */
+	{ "BLKI",  handle_blki,  0700000 },  /* Block input */
+	{ "DATAI", handle_datai, 0704000 },  /* Data input */
+	{ "BLKO",  handle_blko,  0710000 },  /* Block output */
+	{ "DATAO", handle_datao, 0714000 },  /* Data output */
+	{ "CONO",  handle_cono,  0720000 },  /* Conditions output */
+	{ "CONI",  handle_coni,  0724000 },  /* Conditions input */
+	{ "CONSZ", handle_consz, 0730000 },  /* Conditions skip if zero */
+	{ "CONSO", handle_conso, 0734000 },  /* Conditions skip if one */
+
+	/* PDP-10 Stack Operations */
+	{ "PUSH",  handle_push,  0261000 },  /* Push */
+	{ "POP",   handle_pop,   0262000 },  /* Pop */
+
+	/* PDP-10 Move variants */
+	{ "MOVS",  handle_movs,  0200000 },  /* Move swapped */
+	{ "MOVSI", handle_movsi, 0205000 },  /* Move swapped immediate */
+	{ "MOVSM", handle_movsm, 0206000 },  /* Move swapped to memory */
+	{ "MOVSS", handle_movss, 0207000 },  /* Move swapped to self */
+	{ "MOVNI", handle_movni, 0211000 },  /* Move negative immediate */
+	{ "MOVNM", handle_movnm, 0212000 },  /* Move negative to memory */
+	{ "MOVNS", handle_movns, 0213000 },  /* Move negative to self */
+	{ "MOVMI", handle_movmi, 0215000 },  /* Move magnitude immediate */
+	{ "MOVMM", handle_movmm, 0216000 },  /* Move magnitude to memory */
+	{ "MOVMS", handle_movms, 0217000 },  /* Move magnitude to self */
 
 	{ NULL, NULL, 0 }  /* Sentinel */
 };
@@ -2201,6 +2623,1013 @@ static P1ND *
 handle_popj(INSTRUCTION *inst)
 {
 	return handle_rts(inst);
+}
+
+/*
+ * ========== PDP-10 Half-word Operations ==========
+ * PDP-10 has 36-bit words split into two 18-bit halves
+ */
+
+/* HLL - Half left to left */
+static P1ND *
+handle_hll(INSTRUCTION *inst)
+{
+	P1ND *dst, *dst_rhs, *src, *mask_left, *mask_right, *left_half, *result;
+	if (inst->noperands != 2) {
+		error("HLL requires 2 operands");
+		return NULL;
+	}
+	dst = operand_to_node(&inst->operands[0]);
+	dst_rhs = operand_to_node(&inst->operands[0]);
+	src = operand_to_node(&inst->operands[1]);
+	/* dst[18:35] = dst[18:35], dst[0:17] = src[0:17] */
+	/* (dst & 0777777) | (src & 0777777000000) */
+	mask_right = build_icon(0777777);
+	mask_left = build_icon(0777777000000LL);
+	left_half = build_binop(AND, src, mask_left);
+	result = build_binop(OR, build_binop(AND, dst_rhs, mask_right), left_half);
+	return build_assign(dst, result);
+}
+
+/* HLLI - Half left to left immediate */
+static P1ND *
+handle_hlli(INSTRUCTION *inst)
+{
+	return handle_hll(inst);
+}
+
+/* HLLM - Half left to left to memory */
+static P1ND *
+handle_hllm(INSTRUCTION *inst)
+{
+	return handle_hll(inst);
+}
+
+/* HLLS - Half left to left to self */
+static P1ND *
+handle_hlls(INSTRUCTION *inst)
+{
+	return handle_hll(inst);
+}
+
+/* HRL - Half right to left */
+static P1ND *
+handle_hrl(INSTRUCTION *inst)
+{
+	P1ND *dst, *dst_rhs, *src, *mask, *right_half, *shifted, *result;
+	if (inst->noperands != 2) {
+		error("HRL requires 2 operands");
+		return NULL;
+	}
+	dst = operand_to_node(&inst->operands[0]);
+	dst_rhs = operand_to_node(&inst->operands[0]);
+	src = operand_to_node(&inst->operands[1]);
+	/* dst[0:17] = src[18:35] */
+	mask = build_icon(0777777);
+	right_half = build_binop(AND, src, mask);
+	shifted = build_binop(LS, right_half, build_icon(18));
+	result = build_binop(OR, build_binop(AND, dst_rhs, mask), shifted);
+	return build_assign(dst, result);
+}
+
+/* HRLI - Half right to left immediate */
+static P1ND *
+handle_hrli(INSTRUCTION *inst)
+{
+	return handle_hrl(inst);
+}
+
+/* HRLM - Half right to left to memory */
+static P1ND *
+handle_hrlm(INSTRUCTION *inst)
+{
+	return handle_hrl(inst);
+}
+
+/* HRLS - Half right to left to self */
+static P1ND *
+handle_hrls(INSTRUCTION *inst)
+{
+	return handle_hrl(inst);
+}
+
+/* HRR - Half right to right */
+static P1ND *
+handle_hrr(INSTRUCTION *inst)
+{
+	P1ND *dst, *dst_rhs, *src, *mask_left, *mask_right, *right_half, *result;
+	if (inst->noperands != 2) {
+		error("HRR requires 2 operands");
+		return NULL;
+	}
+	dst = operand_to_node(&inst->operands[0]);
+	dst_rhs = operand_to_node(&inst->operands[0]);
+	src = operand_to_node(&inst->operands[1]);
+	/* dst[18:35] = src[18:35], keep dst[0:17] */
+	mask_left = build_icon(0777777000000LL);
+	mask_right = build_icon(0777777);
+	right_half = build_binop(AND, src, mask_right);
+	result = build_binop(OR, build_binop(AND, dst_rhs, mask_left), right_half);
+	return build_assign(dst, result);
+}
+
+/* HRRI - Half right to right immediate */
+static P1ND *
+handle_hrri(INSTRUCTION *inst)
+{
+	return handle_hrr(inst);
+}
+
+/* HRRM - Half right to right to memory */
+static P1ND *
+handle_hrrm(INSTRUCTION *inst)
+{
+	return handle_hrr(inst);
+}
+
+/* HRRS - Half right to right to self */
+static P1ND *
+handle_hrrs(INSTRUCTION *inst)
+{
+	return handle_hrr(inst);
+}
+
+/* HLR - Half left to right */
+static P1ND *
+handle_hlr(INSTRUCTION *inst)
+{
+	P1ND *dst, *dst_rhs, *src, *mask_left, *mask_right, *left_half, *shifted, *result;
+	if (inst->noperands != 2) {
+		error("HLR requires 2 operands");
+		return NULL;
+	}
+	dst = operand_to_node(&inst->operands[0]);
+	dst_rhs = operand_to_node(&inst->operands[0]);
+	src = operand_to_node(&inst->operands[1]);
+	/* dst[18:35] = src[0:17] */
+	mask_left = build_icon(0777777000000LL);
+	mask_right = build_icon(0777777);
+	left_half = build_binop(AND, build_binop(RS, src, build_icon(18)), mask_right);
+	result = build_binop(OR, build_binop(AND, dst_rhs, mask_left), left_half);
+	return build_assign(dst, result);
+}
+
+/* HLRI - Half left to right immediate */
+static P1ND *
+handle_hlri(INSTRUCTION *inst)
+{
+	return handle_hlr(inst);
+}
+
+/* HLRM - Half left to right to memory */
+static P1ND *
+handle_hlrm(INSTRUCTION *inst)
+{
+	return handle_hlr(inst);
+}
+
+/* HLRS - Half left to right to self */
+static P1ND *
+handle_hlrs(INSTRUCTION *inst)
+{
+	return handle_hlr(inst);
+}
+
+/*
+ * ========== PDP-10 Arithmetic Operations ==========
+ * ADD, SUB, MUL, DIV, AND, XOR use the existing generic handlers
+ */
+
+/* ADDI - Add immediate */
+static P1ND *
+handle_addi(INSTRUCTION *inst)
+{
+	return handle_add(inst);
+}
+
+/* ADDM - Add to memory */
+static P1ND *
+handle_addm(INSTRUCTION *inst)
+{
+	return handle_add(inst);
+}
+
+/* SUBI - Subtract immediate */
+static P1ND *
+handle_subi(INSTRUCTION *inst)
+{
+	return handle_sub(inst);
+}
+
+/* SUBM - Subtract to memory */
+static P1ND *
+handle_subm(INSTRUCTION *inst)
+{
+	return handle_sub(inst);
+}
+
+/* MULI - Multiply immediate */
+static P1ND *
+handle_muli(INSTRUCTION *inst)
+{
+	return handle_mul(inst);
+}
+
+/* MULM - Multiply to memory */
+static P1ND *
+handle_mulm(INSTRUCTION *inst)
+{
+	return handle_mul(inst);
+}
+
+/* DIVI - Divide immediate */
+static P1ND *
+handle_divi(INSTRUCTION *inst)
+{
+	return handle_div(inst);
+}
+
+/* DIVM - Divide to memory */
+static P1ND *
+handle_divm(INSTRUCTION *inst)
+{
+	return handle_div(inst);
+}
+
+/* ASH, ASHC already defined - use existing handlers */
+
+/* LSHC - Logical shift combined */
+static P1ND *
+handle_lshc(INSTRUCTION *inst)
+{
+	return handle_lsh(inst);
+}
+
+/* ROTC - Rotate combined */
+static P1ND *
+handle_rotc(INSTRUCTION *inst)
+{
+	return handle_rot(inst);
+}
+
+/* ========== PDP-10 Floating Point Operations ========== */
+
+/* Floating point - simplified implementations */
+#define IMPL_FP_OP(name, op) \
+static P1ND * \
+handle_##name(INSTRUCTION *inst) \
+{ \
+	P1ND *src, *dst, *dst_rhs; \
+	if (inst->noperands != 2) { \
+		error(#name " requires 2 operands"); \
+		return NULL; \
+	} \
+	src = operand_to_node(&inst->operands[0]); \
+	dst = operand_to_node(&inst->operands[1]); \
+	dst_rhs = operand_to_node(&inst->operands[1]); \
+	return build_assign(dst, build_binop(op, dst_rhs, src)); \
+}
+
+IMPL_FP_OP(fad, PLUS)
+IMPL_FP_OP(fadl, PLUS)
+IMPL_FP_OP(fadm, PLUS)
+IMPL_FP_OP(fadb, PLUS)
+IMPL_FP_OP(fadr, PLUS)
+IMPL_FP_OP(fadri, PLUS)
+IMPL_FP_OP(fadrm, PLUS)
+IMPL_FP_OP(fadrb, PLUS)
+IMPL_FP_OP(fsb, MINUS)
+IMPL_FP_OP(fsbl, MINUS)
+IMPL_FP_OP(fsbm, MINUS)
+IMPL_FP_OP(fsbb, MINUS)
+IMPL_FP_OP(fsbr, MINUS)
+IMPL_FP_OP(fsbri, MINUS)
+IMPL_FP_OP(fsbrm, MINUS)
+IMPL_FP_OP(fsbrb, MINUS)
+IMPL_FP_OP(fmp, MUL)
+IMPL_FP_OP(fmpl, MUL)
+IMPL_FP_OP(fmpm, MUL)
+IMPL_FP_OP(fmpb, MUL)
+IMPL_FP_OP(fmpr, MUL)
+IMPL_FP_OP(fmpri, MUL)
+IMPL_FP_OP(fmprm, MUL)
+IMPL_FP_OP(fmprb, MUL)
+IMPL_FP_OP(fdv, DIV)
+IMPL_FP_OP(fdvl, DIV)
+IMPL_FP_OP(fdvm, DIV)
+IMPL_FP_OP(fdvb, DIV)
+IMPL_FP_OP(fdvr, DIV)
+IMPL_FP_OP(fdvri, DIV)
+IMPL_FP_OP(fdvrm, DIV)
+IMPL_FP_OP(fdvrb, DIV)
+
+/* ========== PDP-10 Logical Operations ========== */
+/* AND, XOR use the existing generic handlers */
+
+/* ANDI - AND immediate */
+static P1ND *
+handle_andi(INSTRUCTION *inst)
+{
+	return handle_and(inst);
+}
+
+/* ANDM - AND to memory */
+static P1ND *
+handle_andm(INSTRUCTION *inst)
+{
+	return handle_and(inst);
+}
+
+/* ANDCA - AND with complement of AC */
+static P1ND *
+handle_andca(INSTRUCTION *inst)
+{
+	P1ND *src, *dst, *dst_rhs;
+	if (inst->noperands != 2) {
+		error("ANDCA requires 2 operands");
+		return NULL;
+	}
+	src = operand_to_node(&inst->operands[0]);
+	dst = operand_to_node(&inst->operands[1]);
+	dst_rhs = operand_to_node(&inst->operands[1]);
+	/* dst = ~dst & src */
+	return build_assign(dst, build_binop(AND, build_unop(COMPL, dst_rhs), src));
+}
+
+/* ANDCAI - AND with complement of AC immediate */
+static P1ND *
+handle_andcai(INSTRUCTION *inst)
+{
+	return handle_andca(inst);
+}
+
+/* ANDCAM - AND with complement of AC to memory */
+static P1ND *
+handle_andcam(INSTRUCTION *inst)
+{
+	return handle_andca(inst);
+}
+
+/* ANDCM - AND with complement of memory */
+static P1ND *
+handle_andcm(INSTRUCTION *inst)
+{
+	P1ND *src, *dst, *dst_rhs;
+	if (inst->noperands != 2) {
+		error("ANDCM requires 2 operands");
+		return NULL;
+	}
+	src = operand_to_node(&inst->operands[0]);
+	dst = operand_to_node(&inst->operands[1]);
+	dst_rhs = operand_to_node(&inst->operands[1]);
+	/* dst = dst & ~src */
+	return build_assign(dst, build_binop(AND, dst_rhs, build_unop(COMPL, src)));
+}
+
+/* ANDCMI - AND with complement of memory immediate */
+static P1ND *
+handle_andcmi(INSTRUCTION *inst)
+{
+	return handle_andcm(inst);
+}
+
+/* ANDCMM - AND with complement of memory to memory */
+static P1ND *
+handle_andcmm(INSTRUCTION *inst)
+{
+	return handle_andcm(inst);
+}
+
+/* IOR - Inclusive OR */
+static P1ND *
+handle_ior(INSTRUCTION *inst)
+{
+	P1ND *src, *dst, *dst_rhs;
+	if (inst->noperands != 2) {
+		error("IOR requires 2 operands");
+		return NULL;
+	}
+	src = operand_to_node(&inst->operands[0]);
+	dst = operand_to_node(&inst->operands[1]);
+	dst_rhs = operand_to_node(&inst->operands[1]);
+	return build_assign(dst, build_binop(OR, dst_rhs, src));
+}
+
+/* IORI - Inclusive OR immediate */
+static P1ND *
+handle_iori(INSTRUCTION *inst)
+{
+	return handle_ior(inst);
+}
+
+/* IORM - Inclusive OR to memory */
+static P1ND *
+handle_iorm(INSTRUCTION *inst)
+{
+	return handle_ior(inst);
+}
+
+/* XORI - Exclusive OR immediate */
+static P1ND *
+handle_xori(INSTRUCTION *inst)
+{
+	return handle_xor(inst);
+}
+
+/* XORM - Exclusive OR to memory */
+static P1ND *
+handle_xorm(INSTRUCTION *inst)
+{
+	return handle_xor(inst);
+}
+
+/* EQV - Equivalence (XNOR) */
+static P1ND *
+handle_eqv(INSTRUCTION *inst)
+{
+	P1ND *src, *dst, *dst_rhs;
+	if (inst->noperands != 2) {
+		error("EQV requires 2 operands");
+		return NULL;
+	}
+	src = operand_to_node(&inst->operands[0]);
+	dst = operand_to_node(&inst->operands[1]);
+	dst_rhs = operand_to_node(&inst->operands[1]);
+	/* dst = ~(dst ^ src) */
+	return build_assign(dst, build_unop(COMPL, build_binop(ER, dst_rhs, src)));
+}
+
+/* EQVI - Equivalence immediate */
+static P1ND *
+handle_eqvi(INSTRUCTION *inst)
+{
+	return handle_eqv(inst);
+}
+
+/* EQVM - Equivalence to memory */
+static P1ND *
+handle_eqvm(INSTRUCTION *inst)
+{
+	return handle_eqv(inst);
+}
+
+/* ========== PDP-10 Set Operations ========== */
+
+/* SETO - Set to ones (all 1's) */
+static P1ND *
+handle_seto(INSTRUCTION *inst)
+{
+	P1ND *dst;
+	if (inst->noperands < 1) {
+		error("SETO requires at least 1 operand");
+		return NULL;
+	}
+	dst = operand_to_node(&inst->operands[0]);
+	return build_assign(dst, build_icon(-1));
+}
+
+/* SETOI - Set to ones immediate */
+static P1ND *
+handle_setoi(INSTRUCTION *inst)
+{
+	return handle_seto(inst);
+}
+
+/* SETOM - Set to ones to memory */
+static P1ND *
+handle_setom(INSTRUCTION *inst)
+{
+	return handle_seto(inst);
+}
+
+/* SETCA - Set to complement of AC */
+static P1ND *
+handle_setca(INSTRUCTION *inst)
+{
+	P1ND *src, *dst;
+	if (inst->noperands != 2) {
+		error("SETCA requires 2 operands");
+		return NULL;
+	}
+	src = operand_to_node(&inst->operands[0]);
+	dst = operand_to_node(&inst->operands[1]);
+	return build_assign(dst, build_unop(COMPL, src));
+}
+
+/* SETCAI - Set to complement of AC immediate */
+static P1ND *
+handle_setcai(INSTRUCTION *inst)
+{
+	return handle_setca(inst);
+}
+
+/* SETCAM - Set to complement of AC to memory */
+static P1ND *
+handle_setcam(INSTRUCTION *inst)
+{
+	return handle_setca(inst);
+}
+
+/* SETCM - Set to complement of memory */
+static P1ND *
+handle_setcm(INSTRUCTION *inst)
+{
+	return handle_setca(inst);
+}
+
+/* SETCMI - Set to complement of memory immediate */
+static P1ND *
+handle_setcmi(INSTRUCTION *inst)
+{
+	return handle_setca(inst);
+}
+
+/* SETCMM - Set to complement of memory to memory */
+static P1ND *
+handle_setcmm(INSTRUCTION *inst)
+{
+	return handle_setca(inst);
+}
+
+/* SETZ - Set to zero (handled by existing handle_clr) */
+static P1ND *
+handle_setz(INSTRUCTION *inst)
+{
+	return handle_clr(inst);
+}
+
+/* SETZI - Set to zero immediate */
+static P1ND *
+handle_setzi(INSTRUCTION *inst)
+{
+	return handle_clr(inst);
+}
+
+/* SETZM - Set to zero to memory */
+static P1ND *
+handle_setzm(INSTRUCTION *inst)
+{
+	return handle_clr(inst);
+}
+
+/* ========== PDP-10 Skip/Jump Operations ========== */
+
+/* SKIP - Skip (no-op that can skip) */
+static P1ND *
+handle_skip(INSTRUCTION *inst)
+{
+	return handle_nop(inst);
+}
+
+/* SKIPL - Skip if less than zero */
+static P1ND *
+handle_skipl(INSTRUCTION *inst)
+{
+	return handle_branch(inst);  /* Simplified */
+}
+
+/* SKIPE - Skip if equal to zero */
+static P1ND *
+handle_skipe(INSTRUCTION *inst)
+{
+	return handle_branch(inst);
+}
+
+/* SKIPLE - Skip if less or equal to zero */
+static P1ND *
+handle_skiple(INSTRUCTION *inst)
+{
+	return handle_branch(inst);
+}
+
+/* SKIPA - Skip always */
+static P1ND *
+handle_skipa(INSTRUCTION *inst)
+{
+	return handle_branch(inst);
+}
+
+/* SKIPGE - Skip if greater or equal to zero */
+static P1ND *
+handle_skipge(INSTRUCTION *inst)
+{
+	return handle_branch(inst);
+}
+
+/* SKIPN - Skip if not zero */
+static P1ND *
+handle_skipn(INSTRUCTION *inst)
+{
+	return handle_branch(inst);
+}
+
+/* SKIPG - Skip if greater than zero */
+static P1ND *
+handle_skipg(INSTRUCTION *inst)
+{
+	return handle_branch(inst);
+}
+
+/* JUMP - Jump */
+static P1ND *
+handle_jump(INSTRUCTION *inst)
+{
+	return handle_branch(inst);
+}
+
+/* JUMPL - Jump if less than zero */
+static P1ND *
+handle_jumpl(INSTRUCTION *inst)
+{
+	return handle_branch(inst);
+}
+
+/* JUMPE - Jump if equal to zero */
+static P1ND *
+handle_jumpe(INSTRUCTION *inst)
+{
+	return handle_branch(inst);
+}
+
+/* JUMPLE - Jump if less or equal to zero */
+static P1ND *
+handle_jumple(INSTRUCTION *inst)
+{
+	return handle_branch(inst);
+}
+
+/* JUMPA - Jump always */
+static P1ND *
+handle_jumpa(INSTRUCTION *inst)
+{
+	return handle_branch(inst);
+}
+
+/* JUMPGE - Jump if greater or equal to zero */
+static P1ND *
+handle_jumpge(INSTRUCTION *inst)
+{
+	return handle_branch(inst);
+}
+
+/* JUMPN - Jump if not zero */
+static P1ND *
+handle_jumpn(INSTRUCTION *inst)
+{
+	return handle_branch(inst);
+}
+
+/* JUMPG - Jump if greater than zero */
+static P1ND *
+handle_jumpg(INSTRUCTION *inst)
+{
+	return handle_branch(inst);
+}
+
+/* ========== PDP-10 Add/Subtract with Jump ========== */
+
+/* AOJ - Add one and jump */
+static P1ND *
+handle_aoj(INSTRUCTION *inst)
+{
+	P1ND *reg, *reg_rhs;
+	if (inst->noperands < 1) {
+		error("AOJ requires at least 1 operand");
+		return NULL;
+	}
+	reg = operand_to_node(&inst->operands[0]);
+	reg_rhs = operand_to_node(&inst->operands[0]);
+	return build_assign(reg, build_binop(PLUS, reg_rhs, build_icon(1)));
+}
+
+#define IMPL_AOJ(name) \
+static P1ND * \
+handle_##name(INSTRUCTION *inst) \
+{ \
+	return handle_aoj(inst); \
+}
+
+IMPL_AOJ(aojl)
+IMPL_AOJ(aoje)
+IMPL_AOJ(aojle)
+IMPL_AOJ(aoja)
+IMPL_AOJ(aojge)
+IMPL_AOJ(aojn)
+IMPL_AOJ(aojg)
+
+/* AOS - Add one to memory and skip */
+static P1ND *
+handle_aos(INSTRUCTION *inst)
+{
+	return handle_aoj(inst);
+}
+
+IMPL_AOJ(aosl)
+IMPL_AOJ(aose)
+IMPL_AOJ(aosle)
+IMPL_AOJ(aosa)
+IMPL_AOJ(aosge)
+IMPL_AOJ(aosn)
+IMPL_AOJ(aosg)
+
+/* SOJ - Subtract one and jump */
+static P1ND *
+handle_soj(INSTRUCTION *inst)
+{
+	P1ND *reg, *reg_rhs;
+	if (inst->noperands < 1) {
+		error("SOJ requires at least 1 operand");
+		return NULL;
+	}
+	reg = operand_to_node(&inst->operands[0]);
+	reg_rhs = operand_to_node(&inst->operands[0]);
+	return build_assign(reg, build_binop(MINUS, reg_rhs, build_icon(1)));
+}
+
+#define IMPL_SOJ(name) \
+static P1ND * \
+handle_##name(INSTRUCTION *inst) \
+{ \
+	return handle_soj(inst); \
+}
+
+IMPL_SOJ(sojl)
+IMPL_SOJ(soje)
+IMPL_SOJ(sojle)
+IMPL_SOJ(soja)
+IMPL_SOJ(sojge)
+IMPL_SOJ(sojn)
+IMPL_SOJ(sojg)
+
+/* SOS - Subtract one from memory and skip */
+static P1ND *
+handle_sos(INSTRUCTION *inst)
+{
+	return handle_soj(inst);
+}
+
+IMPL_SOJ(sosl)
+IMPL_SOJ(sose)
+IMPL_SOJ(sosle)
+IMPL_SOJ(sosa)
+IMPL_SOJ(sosge)
+IMPL_SOJ(sosn)
+IMPL_SOJ(sosg)
+
+/* ========== PDP-10 Compare Operations ========== */
+
+/* CAI - Compare accumulator immediate */
+static P1ND *
+handle_cai(INSTRUCTION *inst)
+{
+	return handle_cmp(inst);
+}
+
+#define IMPL_CAI(name) \
+static P1ND * \
+handle_##name(INSTRUCTION *inst) \
+{ \
+	return handle_cmp(inst); \
+}
+
+IMPL_CAI(cail)
+IMPL_CAI(caie)
+IMPL_CAI(caile)
+IMPL_CAI(caia)
+IMPL_CAI(caige)
+IMPL_CAI(cain)
+IMPL_CAI(caig)
+
+/* CAM - Compare accumulator with memory */
+static P1ND *
+handle_cam(INSTRUCTION *inst)
+{
+	return handle_cmp(inst);
+}
+
+IMPL_CAI(caml)
+IMPL_CAI(came)
+IMPL_CAI(camle)
+IMPL_CAI(cama)
+IMPL_CAI(camge)
+IMPL_CAI(camn)
+IMPL_CAI(camg)
+
+/* ========== PDP-10 Byte Operations ========== */
+
+/* LDB - Load byte */
+static P1ND *
+handle_ldb(INSTRUCTION *inst)
+{
+	/* Simplified byte load */
+	if (inst->noperands != 2) {
+		error("LDB requires 2 operands");
+		return NULL;
+	}
+	return build_assign(operand_to_node(&inst->operands[0]),
+	                    operand_to_node(&inst->operands[1]));
+}
+
+/* ILDB - Increment pointer and load byte */
+static P1ND *
+handle_ildb(INSTRUCTION *inst)
+{
+	return handle_ldb(inst);
+}
+
+/* DPB - Deposit byte */
+static P1ND *
+handle_dpb(INSTRUCTION *inst)
+{
+	if (inst->noperands != 2) {
+		error("DPB requires 2 operands");
+		return NULL;
+	}
+	return build_assign(operand_to_node(&inst->operands[1]),
+	                    operand_to_node(&inst->operands[0]));
+}
+
+/* IDPB - Increment pointer and deposit byte */
+static P1ND *
+handle_idpb(INSTRUCTION *inst)
+{
+	return handle_dpb(inst);
+}
+
+/* IBP - Increment byte pointer */
+static P1ND *
+handle_ibp(INSTRUCTION *inst)
+{
+	P1ND *ptr, *ptr_rhs;
+	if (inst->noperands < 1) {
+		error("IBP requires at least 1 operand");
+		return NULL;
+	}
+	ptr = operand_to_node(&inst->operands[0]);
+	ptr_rhs = operand_to_node(&inst->operands[0]);
+	return build_assign(ptr, build_binop(PLUS, ptr_rhs, build_icon(1)));
+}
+
+/* ========== PDP-10 I/O Operations ========== */
+
+/* I/O operations - simplified to no-ops for now */
+static P1ND *
+handle_blki(INSTRUCTION *inst)
+{
+	return handle_nop(inst);
+}
+
+static P1ND *
+handle_datai(INSTRUCTION *inst)
+{
+	return handle_nop(inst);
+}
+
+static P1ND *
+handle_blko(INSTRUCTION *inst)
+{
+	return handle_nop(inst);
+}
+
+static P1ND *
+handle_datao(INSTRUCTION *inst)
+{
+	return handle_nop(inst);
+}
+
+static P1ND *
+handle_cono(INSTRUCTION *inst)
+{
+	return handle_nop(inst);
+}
+
+static P1ND *
+handle_coni(INSTRUCTION *inst)
+{
+	return handle_nop(inst);
+}
+
+static P1ND *
+handle_consz(INSTRUCTION *inst)
+{
+	return handle_nop(inst);
+}
+
+static P1ND *
+handle_conso(INSTRUCTION *inst)
+{
+	return handle_nop(inst);
+}
+
+/* ========== PDP-10 Stack Operations ========== */
+
+/* PUSH - Push onto stack */
+static P1ND *
+handle_push(INSTRUCTION *inst)
+{
+	/* Simplified push */
+	if (inst->noperands >= 1) {
+		P1ND *val = operand_to_node(&inst->operands[0]);
+		/* Would emit stack pointer manipulation here */
+		return val;
+	}
+	return handle_nop(inst);
+}
+
+/* POP - Pop from stack */
+static P1ND *
+handle_pop(INSTRUCTION *inst)
+{
+	/* Simplified pop */
+	if (inst->noperands >= 1) {
+		P1ND *dst = operand_to_node(&inst->operands[0]);
+		/* Would emit stack pointer manipulation here */
+		return dst;
+	}
+	return handle_nop(inst);
+}
+
+/* ========== PDP-10 Move Variants ========== */
+
+/* MOVS - Move swapped (swap left/right halves) */
+static P1ND *
+handle_movs(INSTRUCTION *inst)
+{
+	P1ND *src, *dst, *left, *right, *result;
+	if (inst->noperands != 2) {
+		error("MOVS requires 2 operands");
+		return NULL;
+	}
+	src = operand_to_node(&inst->operands[0]);
+	dst = operand_to_node(&inst->operands[1]);
+	/* Swap 18-bit halves: dst = (src << 18) | (src >> 18) */
+	left = build_binop(LS, build_binop(AND, src, build_icon(0777777)), build_icon(18));
+	right = build_binop(RS, build_binop(AND, src, build_icon(0777777000000LL)), build_icon(18));
+	result = build_binop(OR, left, right);
+	return build_assign(dst, result);
+}
+
+/* MOVSI - Move swapped immediate */
+static P1ND *
+handle_movsi(INSTRUCTION *inst)
+{
+	return handle_movs(inst);
+}
+
+/* MOVSM - Move swapped to memory */
+static P1ND *
+handle_movsm(INSTRUCTION *inst)
+{
+	return handle_movs(inst);
+}
+
+/* MOVSS - Move swapped to self */
+static P1ND *
+handle_movss(INSTRUCTION *inst)
+{
+	return handle_movs(inst);
+}
+
+/* MOVNI - Move negative immediate */
+static P1ND *
+handle_movni(INSTRUCTION *inst)
+{
+	return handle_movn(inst);
+}
+
+/* MOVNM - Move negative to memory */
+static P1ND *
+handle_movnm(INSTRUCTION *inst)
+{
+	return handle_movn(inst);
+}
+
+/* MOVNS - Move negative to self */
+static P1ND *
+handle_movns(INSTRUCTION *inst)
+{
+	return handle_movn(inst);
+}
+
+/* MOVMI - Move magnitude immediate */
+static P1ND *
+handle_movmi(INSTRUCTION *inst)
+{
+	return handle_movm(inst);
+}
+
+/* MOVMM - Move magnitude to memory */
+static P1ND *
+handle_movmm(INSTRUCTION *inst)
+{
+	return handle_movm(inst);
+}
+
+/* MOVMS - Move magnitude to self */
+static P1ND *
+handle_movms(INSTRUCTION *inst)
+{
+	return handle_movm(inst);
 }
 
 /* ========== Public API ========== */

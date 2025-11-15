@@ -84,7 +84,46 @@ typedef struct instruction {
 	int noperands;          /* Number of operands */
 	OPERAND operands[4];    /* Operands (max 4) */
 	int lineno;             /* Source line number */
+	int arch;               /* Target architecture */
+	int size;               /* Operand size in bits */
 } INSTRUCTION;
+
+/* Architecture types */
+#define ARCH_PDP11     1    /* PDP-11 (16-bit) */
+#define ARCH_VAX       2    /* VAX (32-bit) */
+#define ARCH_PDP10     3    /* PDP-10 (36-bit) */
+#define ARCH_PDP6      4    /* PDP-6 (36-bit) */
+
+/* PDP-10/PDP-6 bit sizes */
+#define SIZE_9BIT      9    /* Byte (PDP-10) */
+#define SIZE_18BIT    18    /* Half-word (PDP-10) */
+#define SIZE_36BIT    36    /* Full word (PDP-10) */
+#define SIZE_72BIT    72    /* Double word (PDP-10) */
+
+/* PDP-11/VAX bit sizes */
+#define SIZE_BYTE      8    /* Byte */
+#define SIZE_WORD     16    /* Word */
+#define SIZE_LONG     32    /* Longword */
+#define SIZE_QUAD     64    /* Quadword */
+#define SIZE_OCTA    128    /* Octaword */
+
+/* Condition code flags (virtual registers for PCC) */
+typedef struct cc_flags {
+	int N;  /* Negative flag */
+	int Z;  /* Zero flag */
+	int V;  /* Overflow flag */
+	int C;  /* Carry flag */
+} CC_FLAGS;
+
+/* PDP-10 specific flags */
+typedef struct pdp10_flags {
+	int AROV;     /* Arithmetic overflow */
+	int CRY0;     /* Carry 0 */
+	int CRY1;     /* Carry 1 */
+	int FOV;      /* Floating overflow */
+	int FPD;      /* First part done */
+	int USER;     /* User mode */
+} PDP10_FLAGS;
 
 /*
  * Directive types are defined as tokens in mgram.y
