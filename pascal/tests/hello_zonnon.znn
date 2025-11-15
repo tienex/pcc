@@ -1,0 +1,30 @@
+(* Zonnon - Wirth's Last Language (2004) *)
+module HelloZonnon;
+
+import System.Console as Console;
+
+object Greeter;
+  var name: string;
+
+  procedure {public} Init(n: string);
+  begin
+    name := n;
+  end Init;
+
+  procedure {public} Greet;
+  begin
+    Console.WriteLine("Hello, " + name + "!");
+    Console.WriteLine("Welcome to Zonnon");
+    Console.WriteLine("Niklaus Wirth's final language");
+  end Greet;
+
+end Greeter;
+
+var
+  g: Greeter;
+
+begin
+  new(g);
+  g.Init("World");
+  g.Greet();
+end HelloZonnon.

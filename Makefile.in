@@ -60,7 +60,7 @@ LANG_SUBDIRS+=	$(BLISS_SUBDIR)
 endif
 
 ALL_SUBDIRS=	$(PORTABLE_LIBS) $(BASE_SUBDIRS) $(LANG_SUBDIRS)
-DIST_SUBDIRS=	$(BASE_SUBDIRS) $(C_SUBDIR) pascal f77 bliss libunicode libthread libstdbit libckdint libdecimal libmetaware libblocks libbliss
+DIST_SUBDIRS=	$(BASE_SUBDIRS) $(C_SUBDIR) pascal f77 bliss libunicode libthread libstdbit libckdint libdecimal libmetaware libblocks libpascal libwirth libbliss libmangle libgc libexcept libustring libgthread libnet libpccir libunwind libxmath libvtable libcrt libbgi libvm libfs
 
 # Default targets - conditional on bootstrap
 all:

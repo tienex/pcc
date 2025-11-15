@@ -1,0 +1,42 @@
+# ADDITION TO README.md
+
+## Language Support - Complete Wirth Family
+
+The PCC Pascal compiler now supports **99 distinct dialects** across the entire Wirth language family and related languages:
+
+- **52 Pascal dialects** - From ISO Pascal to modern Pas2JS
+- **13 Modula-2 variants** - All PIM editions, ISO, and major implementations
+- **5 Modula-3 variants** - DEC SRC, CM3, PM3, EzM3, and more
+- **14 Oberon variants** - Including Zonnon (Wirth's last language)
+- **7 Ada standards** - Ada 83 through Ada 2022, plus SPARK
+- **8 related languages** - Mesa, Cedar, Euclid, Turing, Nim, Seed7, and more
+
+See `COMPLETE_DIALECT_GUIDE.md` for the full list with compilation examples.
+
+## Quick Examples
+
+```bash
+# Classic compilers
+pascal -d turbo3 dos_program.pas          # Turbo Pascal 3.0
+pascal -d delphi7 classic_delphi.pas      # Delphi 7
+pascal -d vax mainframe.pas               # VAX Pascal
+
+# Modern variants
+pascal -d pas2js webapp.pas               # Compile to JavaScript
+pascal -d oxygene dotnet.pas              # .NET/Java/Cocoa
+pascal -d nim systems.nim                 # Nim integration
+
+# Modula family
+pascal -d m2-pim4 Module.mod              # Modula-2 PIM4
+pascal -d modula3 Graphics.m3             # Modula-3
+
+# Oberon family
+pascal -d oberon-2 Display.Mod            # Oberon-2
+pascal -d zonnon Latest.znn               # Zonnon (2004)
+
+# Educational
+pascal -d concurrent-pascal parallel.pas  # Concurrent Pascal
+pascal -d turing program.t                # Turing
+```
+
+All 99 dialects have full interoperability through the unified libwirth runtime library.

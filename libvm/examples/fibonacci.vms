@@ -1,0 +1,37 @@
+# Fibonacci Sequence Calculator
+# Calculates first 10 Fibonacci numbers
+
+# Initialize
+ldi r0, 0          # fib(0) = 0
+ldi r1, 1          # fib(1) = 1
+ldi r2, 10         # counter
+
+# Print first two numbers
+print r0
+print r1
+
+# Loop label
+loop:
+# Check if counter is zero
+cmp r2, r0
+jz done
+
+# Calculate next Fibonacci number
+add r3, r0, r1     # r3 = r0 + r1
+
+# Print result
+print r3
+
+# Shift values
+mov r0, r1         # r0 = r1
+mov r1, r3         # r1 = r3
+
+# Decrement counter
+subi r2, r2, 1
+
+# Jump back to loop
+jmp loop
+
+done:
+# Exit
+halt
