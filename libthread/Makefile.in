@@ -26,7 +26,13 @@ OBJS=	threads_new.o
 PLATFORM_SRCS=	\
 	unix/threads_unix.c \
 	win32/threads_win32.c \
-	dos/threads_dos.c
+	win16/threads_win16.c \
+	dos/threads_dos.c \
+	dos32/threads_dos32.c \
+	os2_16/threads_os2_16.c \
+	os2_32/threads_os2_32.c \
+	openvms/threads_openvms.c \
+	beos/threads_beos.c
 
 LIB=libthread.a
 

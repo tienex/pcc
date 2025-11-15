@@ -32,8 +32,20 @@ PLATFORM_SRCS=	\
 	unix/seh_dwarf.c \
 	win32/seh_win32.c \
 	win32/seh_context_win32.c \
+	win16/seh_win16.c \
+	win16/seh_context_win16.c \
 	dos/seh_dos.c \
-	dos/seh_context_dos.c
+	dos/seh_context_dos.c \
+	dos32/seh_dos32.c \
+	dos32/seh_context_dos32.c \
+	os2_16/seh_os2_16.c \
+	os2_16/seh_context_os2_16.c \
+	os2_32/seh_os2_32.c \
+	os2_32/seh_context_os2_32.c \
+	openvms/seh_openvms.c \
+	openvms/seh_context_openvms.c \
+	beos/seh_beos.c \
+	beos/seh_context_beos.c
 
 EXTRA_DIST=	$(PLATFORM_SRCS) seh_helpers.h
 
