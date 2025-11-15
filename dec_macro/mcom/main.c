@@ -97,7 +97,12 @@ print_node_as_asm(NODE *p, FILE *fp)
 		break;
 
 	case EQ:
-		/* Comparison - print as TST or CMP */
+	case NE:
+	case LT:
+	case LE:
+	case GT:
+	case GE:
+		/* Comparison operations */
 		fprintf(fp, "\tTST\t");
 		if (p->n_left->n_op == REG)
 			fprintf(fp, "r%d\n", p->n_left->n_rval);
@@ -105,6 +110,24 @@ print_node_as_asm(NODE *p, FILE *fp)
 			fprintf(fp, "%s\n", p->n_left->n_name);
 		else
 			fprintf(fp, "<operand>\n");
+		break;
+
+	case GOTO:
+		/* Branch/goto */
+		fprintf(fp, "\tBR\tL%d\n", p->n_label);
+		break;
+
+	case RETURN:
+		/* Return from subroutine */
+		fprintf(fp, "\tRTS\n");
+		break;
+
+	case ICON:
+		/* Standalone icon - treat as HALT for now */
+		if (getlval(p) == 0)
+			fprintf(fp, "\tHALT\n");
+		else
+			fprintf(fp, "\t; ICON %lld\n", (long long)getlval(p));
 		break;
 
 	default:
