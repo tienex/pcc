@@ -26,6 +26,14 @@ typedef enum {
 	THREAD_NATIVE          /* Native OS thread */
 } thread_type_t;
 
+/* Scheduling policies */
+typedef enum {
+	SCHED_COOPERATIVE = 0,  /* Cooperative scheduling (yield-based) */
+	SCHED_PREEMPTIVE,       /* Preemptive scheduling (timer-based) */
+	SCHED_PRIORITY,         /* Priority-based preemptive */
+	SCHED_ROUND_ROBIN       /* Round-robin preemptive */
+} sched_policy_t;
+
 /* Thread handle */
 typedef struct gthread gthread_t;
 
@@ -98,7 +106,12 @@ void gthread_key_delete(gthread_key_t *key);
  */
 void gthread_sched_init(int num_workers);
 void gthread_sched_shutdown(void);
-void gthread_sched_set_policy(int policy);
+void gthread_sched_set_policy(sched_policy_t policy);
+sched_policy_t gthread_sched_get_policy(void);
+void gthread_sched_set_quantum(uint64_t quantum_us);  /* Time slice in microseconds */
+uint64_t gthread_sched_get_quantum(void);
+void gthread_set_priority(gthread_t *thread, int priority);
+int gthread_get_priority(gthread_t *thread);
 
 #ifdef __cplusplus
 }
