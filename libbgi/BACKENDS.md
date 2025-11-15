@@ -111,6 +111,48 @@ This directory contains BGI implementations for various platforms and graphics s
 - **Features**: 1024x768, hardware acceleration
 - **Dependencies**: XGA adapter
 
+### Paradise PVGA (paradise/)
+- **Platform**: DOS
+- **Status**: ⏳ Planned
+- **Features**: Paradise/Western Digital PVGA1A, 800x600x256
+- **Dependencies**: Paradise VGA card
+
+### Tseng ET3000/ET4000 (tseng/)
+- **Platform**: DOS
+- **Status**: ⏳ Planned
+- **Features**: High-resolution SVGA, up to 1280x1024
+- **Dependencies**: Tseng Labs ET3000 or ET4000 chipset
+
+### S3 (s3/)
+- **Platform**: DOS
+- **Status**: ⏳ Planned
+- **Features**: S3 86C911/924, Trio32/64, ViRGE, hardware acceleration
+- **Dependencies**: S3 graphics card
+
+### 8514/A (8514a/)
+- **Platform**: DOS/OS2
+- **Status**: ⏳ Planned
+- **Features**: 1024x768, hardware acceleration, IBM 8514/A compatibility
+- **Dependencies**: 8514/A or compatible adapter
+
+### ATI (ati/)
+- **Platform**: DOS
+- **Status**: ⏳ Planned
+- **Features**: VGA Wonder, Mach8, Mach32, Mach64, hardware acceleration
+- **Dependencies**: ATI graphics card
+
+### PCjr (pcjr/)
+- **Platform**: IBM PCjr
+- **Status**: ⏳ Planned
+- **Features**: 320x200x16, PCjr video gate array
+- **Dependencies**: IBM PCjr
+
+### Tandy (tandy/)
+- **Platform**: Tandy 1000 series
+- **Status**: ⏳ Planned
+- **Features**: Tandy Graphics Adapter, 320x200x16
+- **Dependencies**: Tandy 1000
+
 ## Windows Backends
 
 ### Win16 (win16/)
@@ -145,10 +187,10 @@ This directory contains BGI implementations for various platforms and graphics s
 
 ### OS/2 32-bit (os2_32/)
 - **Platform**: OS/2 2.x, Warp 3/4, eComStation, ArcaOS
-- **Status**: ⏳ Planned
-- **Features**: Presentation Manager graphics, DIVE acceleration
-- **Dependencies**: OS/2 2.0+ PM, DIVE library (optional)
-- **Notes**: Hardware acceleration via DIVE
+- **Status**: ✅ Implemented
+- **Features**: Presentation Manager graphics, DIVE hardware acceleration, double buffering
+- **Dependencies**: OS/2 2.0+ PM, DIVE library (optional for acceleration)
+- **Notes**: Hardware acceleration via DIVE when available, falls back to GPI
 
 ## X11-Based Backends
 
@@ -270,6 +312,50 @@ This directory contains BGI implementations for various platforms and graphics s
 - **Dependencies**: Symbian SDK
 - **Notes**: Nokia, Sony Ericsson, historical
 
+## Graphics Library Backends
+
+### OpenGL (opengl/)
+- **Platform**: Cross-platform
+- **Status**: ⏳ Planned
+- **Features**: OpenGL 1.x/2.x/3.x/4.x, hardware-accelerated
+- **Dependencies**: OpenGL library
+- **Notes**: Works on any platform with OpenGL support
+
+### OpenGL ES (opengles/)
+- **Platform**: Embedded, mobile
+- **Status**: ⏳ Planned
+- **Features**: OpenGL ES 1.x/2.x/3.x, embedded systems
+- **Dependencies**: OpenGL ES library
+- **Notes**: For embedded Linux, Android, iOS
+
+### Cairo (cairo/)
+- **Platform**: Cross-platform
+- **Status**: ⏳ Planned
+- **Features**: 2D vector graphics, anti-aliasing
+- **Dependencies**: Cairo library
+- **Notes**: High-quality 2D rendering
+
+### Skia (skia/)
+- **Platform**: Cross-platform
+- **Status**: ⏳ Planned
+- **Features**: 2D graphics library, GPU acceleration
+- **Dependencies**: Skia library
+- **Notes**: Used by Chrome, Android
+
+### GGI (ggi/)
+- **Platform**: Linux, BSD
+- **Status**: ⏳ Planned
+- **Features**: General Graphics Interface, modular architecture
+- **Dependencies**: libggi
+- **Notes**: Alternative to X11 on Linux
+
+### xf86vm (xf86vm/)
+- **Platform**: X11 with XFree86/Xorg
+- **Status**: ⏳ Planned
+- **Features**: Video mode switching, fullscreen
+- **Dependencies**: X11, libXxf86vm
+- **Notes**: Direct video mode control
+
 ## UEFI Backends
 
 ### UEFI GOP (uefi_gop/)
@@ -290,10 +376,10 @@ This directory contains BGI implementations for various platforms and graphics s
 
 ### SIXEL (sixel/)
 - **Platform**: SIXEL-capable terminals
-- **Status**: ⏳ Planned
-- **Features**: Raster graphics in text terminals
-- **Dependencies**: VT340, xterm, mintty, mlterm
-- **Notes**: DEC VT340 compatibility, widely supported
+- **Status**: ✅ Implemented
+- **Features**: Raster graphics in text terminals, 16-color EGA palette, pixel buffer
+- **Dependencies**: VT340, xterm, mintty, mlterm, WezTerm, foot
+- **Notes**: DEC VT340 compatibility, widely supported, outputs graphics directly to terminal
 
 ### iTerm2 (iterm2/)
 - **Platform**: iTerm2 terminal emulator
@@ -315,6 +401,22 @@ This directory contains BGI implementations for various platforms and graphics s
 - **Features**: Vector graphics terminal
 - **Dependencies**: Tektronix 4014 emulation (xterm)
 - **Notes**: Historical vector terminal graphics
+
+## Specialized Backends
+
+### CGA Composite (cga_composite/)
+- **Platform**: DOS, CGA with composite monitor
+- **Status**: ⏳ Planned
+- **Features**: NTSC artifact colors, 160x200x16 composite mode
+- **Dependencies**: CGA card, composite video output
+- **Notes**: Uses NTSC artifacts to create additional colors
+
+### RIPscript (ripscript/)
+- **Platform**: BBS terminals, ANSI art
+- **Status**: ⏳ Planned
+- **Features**: Remote Imaging Protocol, vector graphics for BBS
+- **Dependencies**: RIPscrip-compatible terminal
+- **Notes**: 1990s BBS graphics standard
 
 ## Microsoft Graphics Compatibility
 
@@ -367,7 +469,7 @@ Each backend should pass the BGI test suite:
 
 ## Implementation Status Summary
 
-**Implemented (15)**:
+**Implemented (17)**:
 - SDL2, SDL1
 - Linux framebuffer
 - VGA, VESA, EGA, CGA, Hercules
@@ -378,18 +480,23 @@ Each backend should pass the BGI test suite:
 - macOS Classic (QuickDraw)
 - macOS Cocoa
 - Plan 9 (/dev/draw)
+- OS/2 PM/DIVE
+- SIXEL terminal graphics
 
-**Planned (26+)**:
+**Planned (40+)**:
 - Modern: EGL, DRM, GLX, WGL, CGL, Direct2D
 - BSD: FreeBSD, OpenBSD, NetBSD framebuffers
-- DOS: SVGAlib, XGA
+- DOS Legacy: SVGAlib, XGA
+- DOS Video Cards: Paradise PVGA, Tseng ET3000/4000, S3, 8514/A, ATI, PCjr, Tandy
 - Windows: Win16/WinG
-- OS/2: 16-bit PM, 32-bit PM/DIVE
+- OS/2: 16-bit PM
 - macOS: Catalyst
 - Mobile: Android, iOS, Symbian
 - Retro: RISC OS, PC/GEOS
 - UEFI: GOP, UGA
-- Terminal: SIXEL, iTerm2, kitty, Tektronix
+- Terminal: iTerm2, kitty, Tektronix
+- Graphics Libraries: OpenGL, OpenGL ES, Cairo, Skia, GGI, xf86vm
+- Specialized: CGA Composite, RIPscript
 
 ## Contributing
 
