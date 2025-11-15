@@ -293,6 +293,35 @@ static P1ND *handle_cvtgf(INSTRUCTION *inst);
 static P1ND *handle_cvtrdl(INSTRUCTION *inst);
 static P1ND *handle_cvtrfl(INSTRUCTION *inst);
 static P1ND *handle_cvtrgl(INSTRUCTION *inst);
+/* Loop control handlers */
+static P1ND *handle_acbb(INSTRUCTION *inst);
+static P1ND *handle_acbw(INSTRUCTION *inst);
+static P1ND *handle_acbl(INSTRUCTION *inst);
+static P1ND *handle_acbf(INSTRUCTION *inst);
+static P1ND *handle_acbd(INSTRUCTION *inst);
+static P1ND *handle_acbg(INSTRUCTION *inst);
+static P1ND *handle_acbh(INSTRUCTION *inst);
+static P1ND *handle_aobleq(INSTRUCTION *inst);
+static P1ND *handle_aoblss(INSTRUCTION *inst);
+static P1ND *handle_sobgeq(INSTRUCTION *inst);
+static P1ND *handle_sobgtr(INSTRUCTION *inst);
+/* Register set handlers */
+static P1ND *handle_pushr(INSTRUCTION *inst);
+static P1ND *handle_popr(INSTRUCTION *inst);
+/* Index and PSL handlers */
+static P1ND *handle_index(INSTRUCTION *inst);
+static P1ND *handle_movpsl(INSTRUCTION *inst);
+static P1ND *handle_bispsw(INSTRUCTION *inst);
+static P1ND *handle_bicpsw(INSTRUCTION *inst);
+/* Change mode handlers */
+static P1ND *handle_xfc(INSTRUCTION *inst);
+static P1ND *handle_chme(INSTRUCTION *inst);
+static P1ND *handle_chmk(INSTRUCTION *inst);
+static P1ND *handle_chms(INSTRUCTION *inst);
+static P1ND *handle_chmu(INSTRUCTION *inst);
+/* More packed decimal conversions */
+static P1ND *handle_cvtlp(INSTRUCTION *inst);
+static P1ND *handle_cvtpl(INSTRUCTION *inst);
 
 /* Instruction table entry */
 typedef struct {
@@ -713,6 +742,38 @@ static const insn_table_entry_t insn_table[] = {
 	{ "CVTRDL", handle_cvtrdl, 0x6B },   /* Convert D_float to long rounded */
 	{ "CVTRFL", handle_cvtrfl, 0x4B },   /* Convert F_float to long rounded */
 	{ "CVTRGL", handle_cvtrgl, 0x4BFD }, /* Convert G_float to long rounded */
+	{ "CVTLP",  handle_cvtlp,  0xF9 },   /* Convert long to packed */
+	{ "CVTPL",  handle_cvtpl,  0x36 },   /* Convert packed to long */
+
+	/* VAX Loop Control Instructions */
+	{ "ACBB",   handle_acbb,   0x9D },   /* Add compare branch byte */
+	{ "ACBW",   handle_acbw,   0x3D },   /* Add compare branch word */
+	{ "ACBL",   handle_acbl,   0xF1 },   /* Add compare branch long */
+	{ "ACBF",   handle_acbf,   0x4F },   /* Add compare branch F_float */
+	{ "ACBD",   handle_acbd,   0x6F },   /* Add compare branch D_float */
+	{ "ACBG",   handle_acbg,   0x4FFD }, /* Add compare branch G_float */
+	{ "ACBH",   handle_acbh,   0x6FFD }, /* Add compare branch H_float */
+	{ "AOBLEQ", handle_aobleq, 0xF3 },   /* Add one branch less or equal */
+	{ "AOBLSS", handle_aoblss, 0xF2 },   /* Add one branch less than */
+	{ "SOBGEQ", handle_sobgeq, 0xF4 },   /* Subtract one branch greater or equal */
+	{ "SOBGTR", handle_sobgtr, 0xF5 },   /* Subtract one branch greater than */
+
+	/* VAX Register Set Instructions */
+	{ "PUSHR",  handle_pushr,  0xBB },   /* Push register set */
+	{ "POPR",   handle_popr,   0xBA },   /* Pop register set */
+
+	/* VAX Index and Processor Status */
+	{ "INDEX",  handle_index,  0x0A },   /* Compute index */
+	{ "MOVPSL", handle_movpsl, 0xDC },   /* Move processor status longword */
+	{ "BISPSW", handle_bispsw, 0xB8 },   /* Bit set processor status word */
+	{ "BICPSW", handle_bicpsw, 0xB9 },   /* Bit clear processor status word */
+
+	/* VAX Change Mode Instructions */
+	{ "XFC",    handle_xfc,    0xFC },   /* Extended function call */
+	{ "CHME",   handle_chme,   0xBD },   /* Change mode to executive */
+	{ "CHMK",   handle_chmk,   0xBC },   /* Change mode to kernel */
+	{ "CHMS",   handle_chms,   0xBE },   /* Change mode to supervisor */
+	{ "CHMU",   handle_chmu,   0xBF },   /* Change mode to user */
 
 	/* PDP-10 specific instructions */
 	{ "MOVEI", handle_movei, 0201000 },  /* Move immediate */
@@ -2778,3 +2839,158 @@ static P1ND *handle_cvtgf(INSTRUCTION *inst) { return handle_mov(inst); }
 static P1ND *handle_cvtrdl(INSTRUCTION *inst) { return handle_mov(inst); }
 static P1ND *handle_cvtrfl(INSTRUCTION *inst) { return handle_mov(inst); }
 static P1ND *handle_cvtrgl(INSTRUCTION *inst) { return handle_mov(inst); }
+
+/* ============== MISSING VAX INSTRUCTION HANDLERS ============== */
+
+/* Loop control - ACB (Add Compare Branch) family */
+static P1ND *
+handle_acbb(INSTRUCTION *inst)
+{
+	/* ACBB limit, add, index, displ - add index by add, compare to limit, branch if <= */
+	/* Complex loop control - generate simplified sequence */
+	if (inst->noperands >= 3) {
+		P1ND *index = operand_to_node(&inst->operands[2]);
+		P1ND *add = operand_to_node(&inst->operands[1]);
+		/* index = index + add */
+		send_passt(IP_NODE, build_assign(index, build_binop(PLUS, index, add)));
+		/* Then branch */
+		return handle_branch(inst);
+	}
+	return handle_nop(inst);
+}
+
+static P1ND *handle_acbw(INSTRUCTION *inst) { return handle_acbb(inst); }
+static P1ND *handle_acbl(INSTRUCTION *inst) { return handle_acbb(inst); }
+static P1ND *handle_acbf(INSTRUCTION *inst) { return handle_acbb(inst); }
+static P1ND *handle_acbd(INSTRUCTION *inst) { return handle_acbb(inst); }
+static P1ND *handle_acbg(INSTRUCTION *inst) { return handle_acbb(inst); }
+static P1ND *handle_acbh(INSTRUCTION *inst) { return handle_acbb(inst); }
+
+/* AOBLEQ/AOBLSS - Add One and Branch Less or Equal/Less */
+static P1ND *
+handle_aobleq(INSTRUCTION *inst)
+{
+	/* AOBLEQ limit, index, displ - add 1 to index, branch if index <= limit */
+	if (inst->noperands >= 2) {
+		P1ND *index = operand_to_node(&inst->operands[1]);
+		/* index = index + 1 */
+		send_passt(IP_NODE, build_assign(index, build_binop(PLUS, index, build_icon(1))));
+		/* Then branch */
+		return handle_branch(inst);
+	}
+	return handle_nop(inst);
+}
+
+static P1ND *handle_aoblss(INSTRUCTION *inst) { return handle_aobleq(inst); }
+
+/* SOBGEQ/SOBGTR - Subtract One and Branch Greater or Equal/Greater */
+static P1ND *
+handle_sobgeq(INSTRUCTION *inst)
+{
+	/* SOBGEQ limit, index, displ - subtract 1 from index, branch if index >= limit */
+	if (inst->noperands >= 2) {
+		P1ND *index = operand_to_node(&inst->operands[1]);
+		/* index = index - 1 */
+		send_passt(IP_NODE, build_assign(index, build_binop(MINUS, index, build_icon(1))));
+		/* Then branch */
+		return handle_branch(inst);
+	}
+	return handle_nop(inst);
+}
+
+static P1ND *handle_sobgtr(INSTRUCTION *inst) { return handle_sobgeq(inst); }
+
+/* PUSHR/POPR - Push/Pop register set */
+static P1ND *
+handle_pushr(INSTRUCTION *inst)
+{
+	/* PUSHR mask - push registers specified by mask onto stack */
+	/* This is a complex operation that would need to iterate through the mask */
+	/* For now, generate a placeholder */
+	return handle_nop(inst);
+}
+
+static P1ND *
+handle_popr(INSTRUCTION *inst)
+{
+	/* POPR mask - pop registers specified by mask from stack */
+	/* This is a complex operation that would need to iterate through the mask */
+	/* For now, generate a placeholder */
+	return handle_nop(inst);
+}
+
+/* INDEX - Compute array index */
+static P1ND *
+handle_index(INSTRUCTION *inst)
+{
+	/* INDEX subscript, low, high, size, indexin, indexout */
+	/* Compute: indexout = indexin + ((subscript - low) * size) */
+	/* Very complex instruction, generate simplified version */
+	if (inst->noperands >= 6) {
+		P1ND *subscript = operand_to_node(&inst->operands[0]);
+		P1ND *low = operand_to_node(&inst->operands[1]);
+		P1ND *size = operand_to_node(&inst->operands[3]);
+		P1ND *indexin = operand_to_node(&inst->operands[4]);
+		P1ND *indexout = operand_to_node(&inst->operands[5]);
+		
+		/* temp = subscript - low */
+		P1ND *temp = build_binop(MINUS, subscript, low);
+		/* temp = temp * size */
+		temp = build_binop(MUL, temp, size);
+		/* indexout = indexin + temp */
+		return build_assign(indexout, build_binop(PLUS, indexin, temp));
+	}
+	return handle_nop(inst);
+}
+
+/* MOVPSL - Move Processor Status Longword */
+static P1ND *
+handle_movpsl(INSTRUCTION *inst)
+{
+	/* MOVPSL dst - move PSL to destination */
+	/* This accesses processor state, generate mov from special register */
+	return handle_mov(inst);
+}
+
+/* BISPSW/BICPSW - Bit Set/Clear Processor Status Word */
+static P1ND *
+handle_bispsw(INSTRUCTION *inst)
+{
+	/* BISPSW src - set bits in PSW from mask */
+	/* This modifies processor state, generate placeholder */
+	return handle_nop(inst);
+}
+
+static P1ND *
+handle_bicpsw(INSTRUCTION *inst)
+{
+	/* BICPSW src - clear bits in PSW from mask */
+	/* This modifies processor state, generate placeholder */
+	return handle_nop(inst);
+}
+
+/* XFC - Extended Function Call */
+static P1ND *
+handle_xfc(INSTRUCTION *inst)
+{
+	/* XFC - extended function call (emulator trap) */
+	/* This is a trap instruction, generate as halt */
+	return handle_halt(inst);
+}
+
+/* CHMx - Change Mode instructions */
+static P1ND *
+handle_chme(INSTRUCTION *inst)
+{
+	/* CHME code - change mode to executive with argument */
+	/* This is a privileged operation, generate as nop or trap */
+	return handle_nop(inst);
+}
+
+static P1ND *handle_chmk(INSTRUCTION *inst) { return handle_chme(inst); }  /* Change mode to kernel */
+static P1ND *handle_chms(INSTRUCTION *inst) { return handle_chme(inst); }  /* Change mode to supervisor */
+static P1ND *handle_chmu(INSTRUCTION *inst) { return handle_chme(inst); }  /* Change mode to user */
+
+/* CVTLP/CVTPL - Convert Long to/from Packed Decimal */
+static P1ND *handle_cvtlp(INSTRUCTION *inst) { return handle_mov(inst); }  /* Convert long to packed */
+static P1ND *handle_cvtpl(INSTRUCTION *inst) { return handle_mov(inst); }  /* Convert packed to long */
