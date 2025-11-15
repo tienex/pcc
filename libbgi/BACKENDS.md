@@ -386,7 +386,7 @@ This directory contains BGI implementations for various platforms and graphics s
 - **Status**: ⏳ Planned
 - **Features**: Inline images protocol
 - **Dependencies**: iTerm2 on macOS
-- **Notes**: macOS-specific terminal
+- **Notes**: macOS-specific terminal emulator
 
 ### kitty (kitty/)
 - **Platform**: kitty terminal emulator
@@ -401,6 +401,44 @@ This directory contains BGI implementations for various platforms and graphics s
 - **Features**: Vector graphics terminal
 - **Dependencies**: Tektronix 4014 emulation (xterm)
 - **Notes**: Historical vector terminal graphics
+
+## Text Mode Graphics Backends
+
+### CGA Text Mode (cga_text/)
+- **Platform**: DOS, IBM PC with CGA/VGA
+- **Status**: ✅ Implemented
+- **Features**: CP437 block characters, 160x50 pixels, 16 foreground + 8 background colors
+- **Dependencies**: DOS, direct video memory access (0xB800:0000)
+- **Resolution**: 80x25 characters, 2 pixels per character (160x50 total)
+- **Characters**: Block chars (space, ▄ 0xDC, ▀ 0xDF, █ 0xDB)
+- **Notes**: Uses DOS CGA/VGA text mode, direct hardware access, fastest text-mode option
+
+### ASCII Art Luminance (ascii_art/)
+- **Platform**: Any text terminal
+- **Status**: ✅ Implemented
+- **Features**: Grayscale rendering using ASCII luminance ramp, universal compatibility
+- **Dependencies**: None (works on any terminal)
+- **Resolution**: 80x24 characters, 2x oversampling (160x48 pixels)
+- **Characters**: 64-level luminance ramp from space to @ ($)
+- **Notes**: Converts EGA colors to grayscale, character averaging for anti-aliasing, works on serial terminals
+
+### Unicode Block Graphics (unicode_blocks/)
+- **Platform**: UTF-8 capable terminals
+- **Status**: ✅ Implemented
+- **Features**: Unicode half-blocks, 160x100 pixels, 16 colors via ANSI escape codes
+- **Dependencies**: UTF-8 locale support, ANSI color support
+- **Resolution**: 80x25 characters, 4 pixels per character (160x100 total)
+- **Characters**: Unicode blocks (U+2580 ▀, U+2584 ▄, U+2588 █)
+- **Notes**: Best color text-mode option, works on modern terminals (xterm, GNOME Terminal, Konsole, etc.)
+
+### Braille Pattern Graphics (braille/)
+- **Platform**: UTF-8 capable terminals
+- **Status**: ✅ Implemented
+- **Features**: Unicode Braille patterns, highest resolution text graphics (160x100 pixels), monochrome
+- **Dependencies**: UTF-8 locale support, Braille character support
+- **Resolution**: 80x25 characters, 8 pixels per character (2x4 dots = 160x100 total)
+- **Characters**: Unicode Braille U+2800-U+28FF
+- **Notes**: Highest resolution possible in text mode, monochrome only, excellent for detailed graphics
 
 ## Specialized Backends
 
@@ -434,7 +472,7 @@ When multiple backends are available, use this priority order:
 1. **Modern Cross-Platform**: SDL2 > SDL1 > EGL
 2. **Linux**: DRM > fbdev > SVGAlib > GLX > X11
 3. **BSD**: Native fbdev > X11
-4. **DOS**: VESA > VGA > EGA > CGA > Hercules
+4. **DOS**: VESA > VGA > EGA > CGA > Hercules > CGA Text Mode
 5. **Windows**: Direct2D > WGL > GDI > WinG
 6. **macOS**: Cocoa/Quartz > CGL > SDL2
 7. **OS/2**: DIVE > PM
@@ -442,7 +480,8 @@ When multiple backends are available, use this priority order:
 9. **Atari**: GEM VDI > fbdev
 10. **Plan 9**: Native /dev/draw
 11. **UEFI**: GOP > UGA
-12. **Terminal**: SIXEL > iTerm2 > kitty > Tektronix
+12. **Terminal Graphics**: SIXEL > iTerm2 > kitty > Tektronix
+13. **Text Mode Graphics**: Unicode Blocks > Braille > CGA Text > ASCII Art
 
 ## Build System
 
@@ -469,7 +508,7 @@ Each backend should pass the BGI test suite:
 
 ## Implementation Status Summary
 
-**Implemented (17)**:
+**Implemented (21)**:
 - SDL2, SDL1
 - Linux framebuffer
 - VGA, VESA, EGA, CGA, Hercules
@@ -482,6 +521,10 @@ Each backend should pass the BGI test suite:
 - Plan 9 (/dev/draw)
 - OS/2 PM/DIVE
 - SIXEL terminal graphics
+- CGA Text Mode (CP437 blocks)
+- ASCII Art Luminance
+- Unicode Block Graphics
+- Braille Pattern Graphics
 
 **Planned (40+)**:
 - Modern: EGL, DRM, GLX, WGL, CGL, Direct2D
