@@ -4,10 +4,12 @@
  * EMS (Expanded Memory Specification) Support
  *
  * Supports EMS 3.2 and EMS 4.0 (LIM EMS)
+ * Works with: PCC, Watcom, Microsoft C, Borland C, DJGPP
+ * Works on: DOS16 real mode, DOS16 protected mode, DOS32
  */
 
 #include "../dosmem.h"
-#include <dos.h>
+#include "../compiler.h"
 #include <string.h>
 
 /* EMS Interrupt */
@@ -49,7 +51,7 @@ dosmem_ems_available(void)
 {
 	union REGS regs;
 	struct SREGS sregs;
-	char far *ems_name;
+	char FAR *ems_name;
 	const char *expected = "EMMXXXX0";
 	int i;
 
@@ -58,11 +60,11 @@ dosmem_ems_available(void)
 	memset(&sregs, 0, sizeof(sregs));
 	regs.h.ah = 0x35;
 	regs.h.al = EMS_INT;
-	int86x(0x21, &regs, &regs, &sregs);
+	INT86X(0x21, &regs, &regs, &sregs);
 
 	/* ES:BX points to interrupt handler */
 	/* Device name should be at offset 0x0A */
-	ems_name = (char far *)((unsigned long)sregs.es << 16 | (regs.x.bx + 0x0A));
+	ems_name = (char FAR *)MK_FP(sregs.es, regs.x.bx + 0x0A);
 
 	/* Check for "EMMXXXX0" */
 	for (i = 0; i < 8; i++) {
@@ -73,7 +75,7 @@ dosmem_ems_available(void)
 	/* Verify EMS is actually functional */
 	memset(&regs, 0, sizeof(regs));
 	regs.h.ah = EMS_GET_STATUS;
-	int86(EMS_INT, &regs, &regs);
+	INT86(EMS_INT, &regs, &regs);
 
 	return (regs.h.ah == EMS_SUCCESS);
 }
@@ -89,7 +91,7 @@ dosmem_ems_get_version(void)
 
 	memset(&regs, 0, sizeof(regs));
 	regs.h.ah = EMS_GET_VERSION;
-	int86(EMS_INT, &regs, &regs);
+	INT86(EMS_INT, &regs, &regs);
 
 	if (regs.h.ah != EMS_SUCCESS)
 		return 0;
@@ -109,7 +111,7 @@ dosmem_ems_get_page_frame(unsigned int *segment)
 
 	memset(&regs, 0, sizeof(regs));
 	regs.h.ah = EMS_GET_PAGE_FRAME;
-	int86(EMS_INT, &regs, &regs);
+	INT86(EMS_INT, &regs, &regs);
 
 	if (regs.h.ah != EMS_SUCCESS)
 		return DOSMEM_ERROR;
@@ -134,7 +136,7 @@ dosmem_ems_alloc(unsigned int pages, dosmem_handle_t *handle)
 	memset(&regs, 0, sizeof(regs));
 	regs.h.ah = EMS_ALLOC_PAGES;
 	regs.x.bx = pages; /* Number of 16KB pages */
-	int86(EMS_INT, &regs, &regs);
+	INT86(EMS_INT, &regs, &regs);
 
 	if (regs.h.ah != EMS_SUCCESS) {
 		if (regs.h.ah == EMS_ERROR_ALLOC_FAILED)
@@ -166,7 +168,7 @@ dosmem_ems_free(dosmem_handle_t *handle)
 	memset(&regs, 0, sizeof(regs));
 	regs.h.ah = EMS_FREE_PAGES;
 	regs.x.dx = handle->handle;
-	int86(EMS_INT, &regs, &regs);
+	INT86(EMS_INT, &regs, &regs);
 
 	if (regs.h.ah != EMS_SUCCESS)
 		return DOSMEM_ERROR;
@@ -189,7 +191,7 @@ dosmem_ems_map_page(unsigned short ems_handle, int physical_page, int logical_pa
 	regs.h.al = (unsigned char)physical_page;	/* Physical page (0-3) */
 	regs.x.bx = (unsigned short)logical_page;	/* Logical page */
 	regs.x.dx = ems_handle;				/* EMS handle */
-	int86(EMS_INT, &regs, &regs);
+	INT86(EMS_INT, &regs, &regs);
 
 	if (regs.h.ah != EMS_SUCCESS)
 		return DOSMEM_ERROR;
@@ -215,7 +217,7 @@ dosmem_ems_get_free_pages(unsigned int *total_pages, unsigned int *free_pages)
 
 	memset(&regs, 0, sizeof(regs));
 	regs.h.ah = EMS_GET_PAGES;
-	int86(EMS_INT, &regs, &regs);
+	INT86(EMS_INT, &regs, &regs);
 
 	if (regs.h.ah != EMS_SUCCESS)
 		return DOSMEM_ERROR;
@@ -247,7 +249,7 @@ dosmem_ems_realloc(dosmem_handle_t *handle, unsigned int new_pages)
 	regs.h.ah = EMS_REALLOC_PAGES;
 	regs.x.bx = new_pages;
 	regs.x.dx = handle->handle;
-	int86(EMS_INT, &regs, &regs);
+	INT86(EMS_INT, &regs, &regs);
 
 	if (regs.h.ah != EMS_SUCCESS) {
 		if (regs.h.ah == EMS_ERROR_ALLOC_FAILED)
@@ -268,7 +270,7 @@ dosmem_ems_save_map(unsigned short ems_handle)
 	memset(&regs, 0, sizeof(regs));
 	regs.h.ah = EMS_SAVE_MAP;
 	regs.x.dx = ems_handle;
-	int86(EMS_INT, &regs, &regs);
+	INT86(EMS_INT, &regs, &regs);
 
 	return (regs.h.ah == EMS_SUCCESS) ? DOSMEM_SUCCESS : DOSMEM_ERROR;
 }
@@ -282,7 +284,7 @@ dosmem_ems_restore_map(unsigned short ems_handle)
 	memset(&regs, 0, sizeof(regs));
 	regs.h.ah = EMS_RESTORE_MAP;
 	regs.x.dx = ems_handle;
-	int86(EMS_INT, &regs, &regs);
+	INT86(EMS_INT, &regs, &regs);
 
 	return (regs.h.ah == EMS_SUCCESS) ? DOSMEM_SUCCESS : DOSMEM_ERROR;
 }
@@ -299,7 +301,7 @@ dosmem_ems_get_handle_pages(unsigned short ems_handle, unsigned int *pages)
 	memset(&regs, 0, sizeof(regs));
 	regs.h.ah = EMS_GET_HANDLE_PAGES;
 	regs.x.dx = ems_handle;
-	int86(EMS_INT, &regs, &regs);
+	INT86(EMS_INT, &regs, &regs);
 
 	if (regs.h.ah != EMS_SUCCESS)
 		return DOSMEM_ERROR;
