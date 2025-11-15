@@ -1,0 +1,11 @@
+; Test CMPC5 - CMPC5 operation (VAX)
+
+	.PSECT	CODE
+
+START:
+	CMPC5	R1,R2
+	HALT
+
+DATA:	.WORD	0
+
+	.END

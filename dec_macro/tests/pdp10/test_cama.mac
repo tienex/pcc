@@ -1,0 +1,15 @@
+; Test CAMA - Compare AC with Memory Always (PDP-10)
+; Expected: Compare AC1 with DATA, skip always
+
+	.PSECT	CODE
+
+START:
+	MOVEI 1,100
+	MOVEI 2,100
+	MOVEM 2,DATA
+	CAMA	1,DATA
+	HALT
+
+DATA:	.WORD	0
+
+	.END

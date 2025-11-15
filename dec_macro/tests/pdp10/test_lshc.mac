@@ -1,0 +1,15 @@
+; Test LSHC - Logical Shift Combined (PDP-10)
+; Expected: AC1:AC2 = AC1:AC2 << operand (logical), CC updated
+
+	.PSECT	CODE
+
+START:
+	MOVEI 1,1
+	MOVEI 2,0
+	MOVEI 3,4
+	LSHC	1,2
+	HALT
+
+DATA:	.WORD	0
+
+	.END

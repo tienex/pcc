@@ -1,0 +1,4 @@
+; Test single digit
+	MOV	#5, R0
+	HALT
+	.END

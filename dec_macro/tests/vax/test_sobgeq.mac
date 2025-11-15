@@ -1,0 +1,11 @@
+; Test SOBGEQ - SOBGEQ operation (VAX)
+
+	.PSECT	CODE
+
+START:
+	SOBGEQ	R1,R2
+	HALT
+
+DATA:	.WORD	0
+
+	.END

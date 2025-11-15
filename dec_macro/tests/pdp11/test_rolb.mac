@@ -1,0 +1,11 @@
+; Test ROLB - ROLB operation (PDP-11)
+
+	.PSECT	CODE
+
+START:
+	ROLB	R1,R2
+	HALT
+
+DATA:	.WORD	0
+
+	.END

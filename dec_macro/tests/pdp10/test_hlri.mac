@@ -1,0 +1,13 @@
+; Test HLRI - Half Left to Right Immediate (PDP-10)
+; Expected: AC1[18:35] = immediate, AC1[0:17] unchanged
+
+	.PSECT	CODE
+
+START:
+	MOVEI 1,0123
+	HLRI	1,0777000
+	HALT
+
+DATA:	.WORD	0
+
+	.END

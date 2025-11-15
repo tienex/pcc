@@ -1,0 +1,11 @@
+; Test MOVC5 - MOVC5 operation (VAX)
+
+	.PSECT	CODE
+
+START:
+	MOVC5	R1,R2
+	HALT
+
+DATA:	.WORD	0
+
+	.END

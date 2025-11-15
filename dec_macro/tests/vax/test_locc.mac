@@ -1,0 +1,11 @@
+; Test LOCC - LOCC operation (VAX)
+
+	.PSECT	CODE
+
+START:
+	LOCC	R1,R2
+	HALT
+
+DATA:	.WORD	0
+
+	.END

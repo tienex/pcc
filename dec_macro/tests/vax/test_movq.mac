@@ -1,0 +1,11 @@
+; Test MOVQ - MOVQ operation (VAX)
+
+	.PSECT	CODE
+
+START:
+	MOVQ	R1,R2
+	HALT
+
+DATA:	.WORD	0
+
+	.END

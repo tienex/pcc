@@ -1,0 +1,11 @@
+; Test SKPC - SKPC operation (VAX)
+
+	.PSECT	CODE
+
+START:
+	SKPC	R1,R2
+	HALT
+
+DATA:	.WORD	0
+
+	.END

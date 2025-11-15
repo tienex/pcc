@@ -1,0 +1,11 @@
+; Test CHMK - CHMK operation (VAX)
+
+	.PSECT	CODE
+
+START:
+	CHMK	R1,R2
+	HALT
+
+DATA:	.WORD	0
+
+	.END

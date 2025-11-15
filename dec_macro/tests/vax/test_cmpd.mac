@@ -1,0 +1,11 @@
+; Test CMPD - CMPD operation (VAX)
+
+	.PSECT	CODE
+
+START:
+	CMPD	R1,R2
+	HALT
+
+DATA:	.WORD	0
+
+	.END

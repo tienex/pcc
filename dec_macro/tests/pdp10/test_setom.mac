@@ -1,0 +1,12 @@
+; Test SETOM - Set to Ones to Memory (PDP-10)
+; Expected: DATA = -1 (all 1s)
+
+	.PSECT	CODE
+
+START:
+	SETOM	DATA
+	HALT
+
+DATA:	.WORD	0
+
+	.END

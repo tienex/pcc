@@ -1,0 +1,11 @@
+; Test MOVZWL - MOVZWL operation (VAX)
+
+	.PSECT	CODE
+
+START:
+	MOVZWL	R1,R2
+	HALT
+
+DATA:	.WORD	0
+
+	.END

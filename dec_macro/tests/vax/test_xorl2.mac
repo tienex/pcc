@@ -1,0 +1,11 @@
+; Test XORL2 - XORL2 operation (VAX)
+
+	.PSECT	CODE
+
+START:
+	XORL2	R1,R2
+	HALT
+
+DATA:	.WORD	0
+
+	.END

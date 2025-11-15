@@ -1,0 +1,11 @@
+; Test BICW3 - BICW3 operation (VAX)
+
+	.PSECT	CODE
+
+START:
+	BICW3	R1,R2,R3
+	HALT
+
+DATA:	.WORD	0
+
+	.END

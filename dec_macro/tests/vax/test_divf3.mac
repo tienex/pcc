@@ -1,0 +1,11 @@
+; Test DIVF3 - DIVF3 operation (VAX)
+
+	.PSECT	CODE
+
+START:
+	DIVF3	R1,R2,R3
+	HALT
+
+DATA:	.WORD	0
+
+	.END

@@ -1,0 +1,11 @@
+; Test EMT - EMT operation (PDP-11)
+
+	.PSECT	CODE
+
+START:
+	EMT	R1,R2
+	HALT
+
+DATA:	.WORD	0
+
+	.END

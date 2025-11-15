@@ -1,0 +1,11 @@
+; Test CVTDF - CVTDF operation (VAX)
+
+	.PSECT	CODE
+
+START:
+	CVTDF	R1,R2
+	HALT
+
+DATA:	.WORD	0
+
+	.END

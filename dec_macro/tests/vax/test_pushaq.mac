@@ -1,0 +1,11 @@
+; Test PUSHAQ - PUSHAQ operation (VAX)
+
+	.PSECT	CODE
+
+START:
+	PUSHAQ	R1,R2
+	HALT
+
+DATA:	.WORD	0
+
+	.END

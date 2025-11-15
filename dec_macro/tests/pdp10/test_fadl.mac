@@ -1,0 +1,16 @@
+; Test FADL - Floating Add Long (PDP-10)
+; Expected: AC1:AC2 = AC1:AC2 + DATA (long float), CC updated
+
+	.PSECT	CODE
+
+START:
+	MOVEI 1,0200000000000
+	MOVEI 2,0
+	MOVEI 3,0200000000000
+	MOVEM 3,DATA
+	FADL	1,DATA
+	HALT
+
+DATA:	.WORD	0
+
+	.END

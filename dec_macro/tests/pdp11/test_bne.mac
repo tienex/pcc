@@ -1,0 +1,11 @@
+; Test BNE - BNE operation (PDP-11)
+
+	.PSECT	CODE
+
+START:
+	BNE	R1,R2
+	HALT
+
+DATA:	.WORD	0
+
+	.END

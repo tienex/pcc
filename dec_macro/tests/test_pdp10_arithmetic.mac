@@ -1,0 +1,92 @@
+; Test PDP-10 Arithmetic Operations
+; Tests ADD, SUB, MUL, DIV with 36-bit operations and overflow handling
+
+	.TITLE	PDP10 Arithmetic Tests
+
+VAL1:	.WORD	100		; Decimal 100
+VAL2:	.WORD	50		; Decimal 50
+VAL3:	.WORD	-25		; Negative value
+LARGE:	.WORD	0777777777777	; Large positive (36-bit max)
+RESULT:	.WORD	0
+
+START::
+	; Test ADD - Basic addition
+	MOVEI	1,100		; AC1 = 100
+	ADD	1,VAL2		; AC1 = AC1 + VAL2 = 150
+	MOVEM	1,RESULT
+	; Expected: RESULT = 150, Z=0, N=0, V=0
+
+	; Test ADDI - Add immediate
+	MOVEI	2,25		; AC2 = 25
+	ADDI	2,75		; AC2 = AC2 + 75 = 100
+	MOVEM	2,RESULT
+	; Expected: RESULT = 100
+
+	; Test ADDM - Add to memory
+	MOVEI	1,30		; AC1 = 30
+	ADDM	1,RESULT	; RESULT = RESULT + AC1
+	; Expected: RESULT = 130 (100 + 30)
+
+	; Test SUB - Basic subtraction
+	MOVEI	1,100		; AC1 = 100
+	SUB	1,VAL2		; AC1 = AC1 - VAL2 = 50
+	MOVEM	1,RESULT
+	; Expected: RESULT = 50, Z=0, N=0
+
+	; Test SUBI - Subtract immediate
+	MOVEI	3,200		; AC3 = 200
+	SUBI	3,150		; AC3 = AC3 - 150 = 50
+	MOVEM	3,RESULT
+	; Expected: RESULT = 50
+
+	; Test SUB with negative result
+	MOVEI	1,25		; AC1 = 25
+	SUB	1,VAL1		; AC1 = AC1 - VAL1 = -75
+	MOVEM	1,RESULT
+	; Expected: RESULT = -75, N=1 (negative flag set)
+
+	; Test MUL - Basic multiplication
+	MOVEI	1,12		; AC1 = 12
+	MUL	1,VAL2		; AC1 = AC1 * VAL2 = 12 * 50 = 600
+	MOVEM	1,RESULT
+	; Expected: RESULT = 600
+
+	; Test MULI - Multiply immediate
+	MOVEI	2,15		; AC2 = 15
+	MULI	2,10		; AC2 = AC2 * 10 = 150
+	MOVEM	2,RESULT
+	; Expected: RESULT = 150
+
+	; Test DIV - Basic division
+	MOVEI	1,200		; AC1 = 200
+	DIV	1,VAL2		; AC1 = AC1 / VAL2 = 200 / 50 = 4
+	MOVEM	1,RESULT
+	; Expected: RESULT = 4
+
+	; Test DIVI - Divide immediate
+	MOVEI	3,360		; AC3 = 360
+	DIVI	3,12		; AC3 = AC3 / 12 = 30
+	MOVEM	3,RESULT
+	; Expected: RESULT = 30
+
+	; Test overflow detection
+	MOVEI	1,0377777777777	; AC1 = large positive
+	ADD	1,LARGE		; AC1 = AC1 + LARGE (should overflow)
+	MOVEM	1,RESULT
+	; Expected: AROV flag set (arithmetic overflow)
+
+	; Test ASH - Arithmetic shift
+	MOVEI	1,1		; AC1 = 1
+	ASH	1,8		; AC1 = AC1 << 8 = 256
+	MOVEM	1,RESULT
+	; Expected: RESULT = 256
+
+	; Test ASH negative (right shift)
+	MOVEI	1,256		; AC1 = 256
+	ASH	1,-4		; AC1 = AC1 >> 4 = 16
+	MOVEM	1,RESULT
+	; Expected: RESULT = 16
+
+	HALT
+
+	.END	START

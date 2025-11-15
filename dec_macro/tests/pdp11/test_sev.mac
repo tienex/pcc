@@ -1,0 +1,11 @@
+; Test SEV - SEV operation (PDP-11)
+
+	.PSECT	CODE
+
+START:
+	SEV	R1,R2
+	HALT
+
+DATA:	.WORD	0
+
+	.END

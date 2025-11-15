@@ -1,0 +1,11 @@
+; Test SBWC - SBWC operation (VAX)
+
+	.PSECT	CODE
+
+START:
+	SBWC	R1,R2
+	HALT
+
+DATA:	.WORD	0
+
+	.END

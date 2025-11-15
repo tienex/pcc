@@ -1,0 +1,11 @@
+; Test ADDW2 - ADDW2 operation (VAX)
+
+	.PSECT	CODE
+
+START:
+	ADDW2	R1,R2
+	HALT
+
+DATA:	.WORD	0
+
+	.END

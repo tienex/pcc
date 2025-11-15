@@ -1,0 +1,121 @@
+; Simple PDP-11 Instruction Test
+; Tests basic PDP-11 instructions with proper syntax
+
+	.PSECT	CODE
+
+START:
+	; Single operand instructions (16-bit)
+	CLR	R0
+	COM	R0
+	INC	R0
+	DEC	R0
+	NEG	R0
+	TST	R0
+	ASR	R0
+	ASL	R0
+	ROR	R0
+	ROL	R0
+	SWAB	R0
+	ADC	R0
+	SBC	R0
+	SXT	R0
+
+	; Single operand byte instructions (8-bit)
+	CLRB	R1
+	COMB	R1
+	INCB	R1
+	DECB	R1
+	NEGB	R1
+	TSTB	R1
+	ASRB	R1
+	ASLB	R1
+	RORB	R1
+	ROLB	R1
+	ADCB	R1
+	SBCB	R1
+
+	; Double operand instructions (16-bit)
+	MOV	#100,R0
+	MOV	R0,DATA1
+	CMP	R0,#100
+	ADD	#50,R0
+	SUB	#25,R0
+	BIT	#0100000,R0
+	BIC	#0100000,R0
+	BIS	#0100000,R0
+	XOR	R1,R0
+
+	; Double operand byte instructions (8-bit)
+	MOVB	#50,R1
+	CMPB	R1,#50
+	BITB	#0200,R1
+	BICB	#0200,R1
+	BISB	#0200,R1
+
+	; Branch instructions
+	BR	LBL1
+LBL1:	BNE	LBL2
+LBL2:	BEQ	LBL3
+LBL3:	BPL	LBL4
+LBL4:	BMI	LBL5
+LBL5:	BCC	LBL6
+LBL6:	BCS	LBL7
+LBL7:	BVC	LBL8
+LBL8:	BVS	LBL9
+LBL9:	BGE	LBL10
+LBL10:	BLT	LBL11
+LBL11:	BGT	LBL12
+LBL12:	BLE	LBL13
+LBL13:	BHI	LBL14
+LBL14:	BLOS	LBL15
+LBL15:	BHIS	LBL16
+LBL16:	BLO	LBL17
+
+LBL17:
+	; Subroutine instructions
+	JSR	PC,SUBR
+	BR	SKIP
+
+SUBR:	MOV	#200,R2
+	RTS	PC
+
+SKIP:
+	; Condition code operations
+	CLC
+	CLV
+	CLZ
+	CLN
+	SEC
+	SEV
+	SEZ
+	SEN
+
+	; Extended instruction set (EIS)
+	MUL	#10,R0
+	DIV	#5,R0
+	ASH	#4,R0
+	ASHC	#8,R0
+
+	; Subtract one and branch
+	MOV	#5,R3
+LOOP:	SOB	R3,LOOP
+
+	; Atomic operations
+	TSTSET	DATA1
+	WRTLCK	DATA2
+
+	; Floating point (FIS)
+	FADD	DATA1
+	FSUB	DATA2
+	FMUL	DATA1
+	FDIV	DATA2
+
+	; Misc
+	NOP
+	HALT
+
+; Data area
+DATA1:	.WORD	12345
+DATA2:	.WORD	54321
+
+	.END

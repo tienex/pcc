@@ -1,0 +1,11 @@
+; Test TST - TST operation (PDP-11)
+
+	.PSECT	CODE
+
+START:
+	TST	R1,R2
+	HALT
+
+DATA:	.WORD	0
+
+	.END

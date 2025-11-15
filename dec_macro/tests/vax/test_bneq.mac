@@ -1,0 +1,11 @@
+; Test BNEQ - BNEQ operation (VAX)
+
+	.PSECT	CODE
+
+START:
+	BNEQ	R1,R2
+	HALT
+
+DATA:	.WORD	0
+
+	.END

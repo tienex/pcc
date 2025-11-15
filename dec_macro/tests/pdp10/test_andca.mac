@@ -1,0 +1,14 @@
+; Test ANDCA - AND Complement AC (PDP-10)
+; Expected: AC1 = ~AC1 & AC2, CC updated
+
+	.PSECT	CODE
+
+START:
+	MOVEI 1,0777000
+	MOVEI 2,0777777
+	ANDCA	1,2
+	HALT
+
+DATA:	.WORD	0
+
+	.END

@@ -1,0 +1,13 @@
+; Test IBP - Increment Byte Pointer (PDP-10)
+; Expected: Increment byte pointer in AC1
+
+	.PSECT	CODE
+
+START:
+	MOVEI 1,BYTEPTR
+	IBP	1
+	HALT
+
+DATA:	.WORD	0
+
+	.END

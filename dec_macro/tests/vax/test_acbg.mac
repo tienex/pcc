@@ -1,0 +1,11 @@
+; Test ACBG - ACBG operation (VAX)
+
+	.PSECT	CODE
+
+START:
+	ACBG	R1,R2
+	HALT
+
+DATA:	.WORD	0
+
+	.END

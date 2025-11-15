@@ -1,0 +1,12 @@
+; Test SKIPA - Skip Always (PDP-10)
+; Expected: Skip next instruction always
+
+	.PSECT	CODE
+
+START:
+	SKIPA
+	HALT
+
+DATA:	.WORD	0
+
+	.END

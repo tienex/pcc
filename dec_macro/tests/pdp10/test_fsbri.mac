@@ -1,0 +1,15 @@
+; Test FSBRI - Floating Subtract Immediate (PDP-10)
+; Expected: AC1 = AC1 - DATA (float), CC updated
+
+	.PSECT	CODE
+
+START:
+	MOVEI 1,0400000000000
+	MOVEI 2,0200000000000
+	MOVEM 2,DATA
+	FSBRI	1,DATA
+	HALT
+
+DATA:	.WORD	0
+
+	.END

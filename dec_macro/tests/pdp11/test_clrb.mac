@@ -1,0 +1,11 @@
+; Test CLRB - CLRB operation (PDP-11)
+
+	.PSECT	CODE
+
+START:
+	CLRB	R1,R2
+	HALT
+
+DATA:	.WORD	0
+
+	.END

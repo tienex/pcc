@@ -1,0 +1,11 @@
+; Test CVTLD - CVTLD operation (VAX)
+
+	.PSECT	CODE
+
+START:
+	CVTLD	R1,R2
+	HALT
+
+DATA:	.WORD	0
+
+	.END

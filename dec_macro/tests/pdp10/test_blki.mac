@@ -1,0 +1,12 @@
+; Test BLKI - BLKI (PDP-10)
+; Expected: Operation BLKI
+
+	.PSECT	CODE
+
+START:
+	BLKI
+	HALT
+
+DATA:	.WORD	0
+
+	.END

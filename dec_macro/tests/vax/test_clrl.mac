@@ -1,0 +1,11 @@
+; Test CLRL - CLRL operation (VAX)
+
+	.PSECT	CODE
+
+START:
+	CLRL	R1,R2
+	HALT
+
+DATA:	.WORD	0
+
+	.END

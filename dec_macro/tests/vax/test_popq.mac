@@ -1,0 +1,11 @@
+; Test POPQ - POPQ operation (VAX)
+
+	.PSECT	CODE
+
+START:
+	POPQ	R1,R2
+	HALT
+
+DATA:	.WORD	0
+
+	.END

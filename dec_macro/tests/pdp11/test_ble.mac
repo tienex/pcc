@@ -1,0 +1,11 @@
+; Test BLE - BLE operation (PDP-11)
+
+	.PSECT	CODE
+
+START:
+	BLE	R1,R2
+	HALT
+
+DATA:	.WORD	0
+
+	.END

@@ -1,0 +1,11 @@
+; Test ADDD2 - ADDD2 operation (VAX)
+
+	.PSECT	CODE
+
+START:
+	ADDD2	R1,R2
+	HALT
+
+DATA:	.WORD	0
+
+	.END

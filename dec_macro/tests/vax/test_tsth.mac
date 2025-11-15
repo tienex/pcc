@@ -1,0 +1,11 @@
+; Test TSTH - TSTH operation (VAX)
+
+	.PSECT	CODE
+
+START:
+	TSTH	R1,R2
+	HALT
+
+DATA:	.WORD	0
+
+	.END

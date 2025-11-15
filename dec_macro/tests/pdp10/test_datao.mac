@@ -1,0 +1,12 @@
+; Test DATAO - DATAO (PDP-10)
+; Expected: Operation DATAO
+
+	.PSECT	CODE
+
+START:
+	DATAO
+	HALT
+
+DATA:	.WORD	0
+
+	.END

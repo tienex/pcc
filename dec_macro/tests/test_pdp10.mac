@@ -1,0 +1,62 @@
+; test_pdp10.mac - PDP-10 assembly test
+; Tests PDP-10 specific features and accumulator-based architecture
+
+	.TITLE	PDP10 - PDP-10 Assembly Test
+	.IDENT	/V1.0/
+
+	.PSECT	DATA
+
+; Data section
+COUNTER: 0
+VALUES:	1, 2, 3, 4, 5, 6, 7, 8, 9, 10
+
+	.PSECT	CODE
+
+; PDP-10 uses accumulators (AC0-AC15)
+START:	.ENTRY	START
+
+	; Move operations
+	MOVE	AC0, [100]	; Load from memory
+	MOVEI	AC1, 42		; Load immediate
+	MOVEM	AC0, COUNTER	; Store to memory
+
+	; Arithmetic
+	ADD	AC0, AC1	; Add accumulators
+	SUB	AC0, AC1	; Subtract
+	IMUL	AC0, [5]	; Multiply by immediate
+	IDIV	AC0, [2]	; Divide
+
+	; Logical operations
+	AND	AC0, [^O777777]	; Logical AND (octal mask)
+	OR	AC0, [^X00FF]	; Logical OR (hex mask)
+	XOR	AC0, AC1	; Exclusive OR
+	SETCA	AC2, AC0	; Complement
+
+	; Shifting
+	LSH	AC0, 3		; Left shift 3 bits
+	LSH	AC0, -3		; Right shift 3 bits
+	ROT	AC0, 1		; Rotate left 1 bit
+
+	; Comparison and skip
+	CAMN	AC0, AC1	; Compare and skip if not equal
+	CAME	AC0, AC1	; Compare and skip if equal
+	CAMG	AC0, AC1	; Compare and skip if greater
+	CAML	AC0, AC1	; Compare and skip if less
+
+	; Jumps and branches
+	JRST	LOOP		; Jump unconditional
+	JUMPE	AC0, ZERO	; Jump if AC0 is zero
+	JUMPN	AC0, NONZERO	; Jump if AC0 is non-zero
+
+LOOP:	SOJG	AC0, LOOP	; Subtract one, jump if greater
+	AOJL	AC0, DONE	; Add one, jump if less
+
+ZERO:	SETZ	AC0,		; Set to zero
+	JRST	DONE
+
+NONZERO:
+	SETOM	AC0,		; Set to minus one
+
+DONE:	HALT			; Halt processor
+
+	.END	START

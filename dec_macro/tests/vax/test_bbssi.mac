@@ -1,0 +1,11 @@
+; Test BBSSI - BBSSI operation (VAX)
+
+	.PSECT	CODE
+
+START:
+	BBSSI	R1,R2
+	HALT
+
+DATA:	.WORD	0
+
+	.END

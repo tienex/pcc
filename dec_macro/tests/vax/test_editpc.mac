@@ -1,0 +1,11 @@
+; Test EDITPC - EDITPC operation (VAX)
+
+	.PSECT	CODE
+
+START:
+	EDITPC	R1,R2
+	HALT
+
+DATA:	.WORD	0
+
+	.END

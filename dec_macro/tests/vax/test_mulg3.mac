@@ -1,0 +1,11 @@
+; Test MULG3 - MULG3 operation (VAX)
+
+	.PSECT	CODE
+
+START:
+	MULG3	R1,R2,R3
+	HALT
+
+DATA:	.WORD	0
+
+	.END

@@ -1,0 +1,11 @@
+; Test CVTLP - CVTLP operation (VAX)
+
+	.PSECT	CODE
+
+START:
+	CVTLP	R1,R2
+	HALT
+
+DATA:	.WORD	0
+
+	.END

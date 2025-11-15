@@ -1,0 +1,13 @@
+; Test MOVNI - Move Negated Immediate (PDP-10)
+; Expected: AC1 = -AC2
+
+	.PSECT	CODE
+
+START:
+	MOVEI 2,123
+	MOVNI	1,2
+	HALT
+
+DATA:	.WORD	0
+
+	.END

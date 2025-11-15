@@ -1,0 +1,15 @@
+; Test CAML - Compare AC with Memory, skip if Less (PDP-10)
+; Expected: Compare AC1 with DATA, skip if AC1 < DATA
+
+	.PSECT	CODE
+
+START:
+	MOVEI 1,25
+	MOVEI 2,50
+	MOVEM 2,DATA
+	CAML	1,DATA
+	HALT
+
+DATA:	.WORD	0
+
+	.END

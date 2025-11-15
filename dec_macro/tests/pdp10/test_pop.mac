@@ -1,0 +1,13 @@
+; Test POP - Pop (PDP-10)
+; Expected: Pop from stack into AC2, increment AC1
+
+	.PSECT	CODE
+
+START:
+	MOVEI 1,STACK
+	POP	1,2
+	HALT
+
+DATA:	.WORD	0
+
+	.END

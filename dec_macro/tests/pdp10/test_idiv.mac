@@ -1,0 +1,12 @@
+; Test IDIV - IDIV (PDP-10)
+; Expected: Operation IDIV
+
+	.PSECT	CODE
+
+START:
+	IDIV
+	HALT
+
+DATA:	.WORD	0
+
+	.END

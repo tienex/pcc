@@ -1,0 +1,11 @@
+; Test MULD2 - MULD2 operation (VAX)
+
+	.PSECT	CODE
+
+START:
+	MULD2	R1,R2
+	HALT
+
+DATA:	.WORD	0
+
+	.END

@@ -1,0 +1,11 @@
+; Test MCOMB - MCOMB operation (VAX)
+
+	.PSECT	CODE
+
+START:
+	MCOMB	R1,R2
+	HALT
+
+DATA:	.WORD	0
+
+	.END

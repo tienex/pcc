@@ -1,0 +1,11 @@
+; Test BBCCI - BBCCI operation (VAX)
+
+	.PSECT	CODE
+
+START:
+	BBCCI	R1,R2
+	HALT
+
+DATA:	.WORD	0
+
+	.END

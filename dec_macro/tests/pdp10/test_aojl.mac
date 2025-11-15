@@ -1,0 +1,15 @@
+; Test AOJL - Add One and Jump if Less (PDP-10)
+; Expected: AC1++, jump if result < 0
+
+	.PSECT	CODE
+
+START:
+	MOVEI 1,-10
+	AOJL	1,LABEL
+	MOVEI	1,999
+LABEL:	MOVEI	1,200
+	HALT
+
+DATA:	.WORD	0
+
+	.END

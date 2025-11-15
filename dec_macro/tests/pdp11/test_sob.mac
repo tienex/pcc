@@ -1,0 +1,11 @@
+; Test SOB - SOB operation (PDP-11)
+
+	.PSECT	CODE
+
+START:
+	SOB	R1,R2
+	HALT
+
+DATA:	.WORD	0
+
+	.END

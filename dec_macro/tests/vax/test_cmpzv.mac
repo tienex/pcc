@@ -1,0 +1,11 @@
+; Test CMPZV - CMPZV operation (VAX)
+
+	.PSECT	CODE
+
+START:
+	CMPZV	R1,R2
+	HALT
+
+DATA:	.WORD	0
+
+	.END

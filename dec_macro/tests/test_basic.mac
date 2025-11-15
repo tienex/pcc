@@ -1,0 +1,42 @@
+; test_basic.mac - Basic DEC MACRO assembly test
+; Tests fundamental features: labels, instructions, directives
+
+	.TITLE	BASIC - Basic Assembly Test
+	.IDENT	/V1.0/
+
+	.PSECT	DATA, WRT
+
+; Data section
+COUNT:	.WORD	10
+ARRAY:	.BLKW	20		; Reserve 20 words
+MSG:	.ASCII	/Test message/
+MSG2:	.ASCIZ	/Null-terminated/
+
+	.PSECT	CODE, RO, I
+
+; Code section
+START:	.ENTRY	START
+	MOV	#100, R0	; Load immediate
+	MOV	COUNT, R1	; Load from memory
+	ADD	R1, R0		; Add registers
+	MOV	R0, COUNT	; Store result
+
+	CLR	R2		; Clear register
+	INC	R2		; Increment
+	DEC	R2		; Decrement
+
+	; Test various addressing modes
+	MOV	R0, R1		; Register to register
+	MOV	#42, (R2)	; Immediate to indirect
+	MOV	@#ARRAY, R3	; Indirect addressing
+	MOV	R4, (R5)+	; Autoincrement
+	MOV	-(R6), R7	; Autodecrement
+
+LOOP:	TST	R0		; Test register
+	BEQ	DONE		; Branch if equal
+	DEC	R0		; Decrement
+	BR	LOOP		; Branch unconditional
+
+DONE:	HALT			; Stop
+
+	.END	START

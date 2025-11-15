@@ -1,0 +1,13 @@
+; Test CAIN - Compare AC Immediate, skip if Not equal (PDP-10)
+; Expected: Compare AC1 with 100, skip if AC1 != 100
+
+	.PSECT	CODE
+
+START:
+	MOVEI 1,50
+	CAIN	1,100
+	HALT
+
+DATA:	.WORD	0
+
+	.END

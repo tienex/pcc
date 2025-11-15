@@ -1,0 +1,12 @@
+; Test CONO - CONO (PDP-10)
+; Expected: Operation CONO
+
+	.PSECT	CODE
+
+START:
+	CONO
+	HALT
+
+DATA:	.WORD	0
+
+	.END

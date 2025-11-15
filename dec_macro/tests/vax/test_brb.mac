@@ -1,0 +1,11 @@
+; Test BRB - BRB operation (VAX)
+
+	.PSECT	CODE
+
+START:
+	BRB	R1,R2
+	HALT
+
+DATA:	.WORD	0
+
+	.END

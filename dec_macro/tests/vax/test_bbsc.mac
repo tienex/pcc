@@ -1,0 +1,11 @@
+; Test BBSC - BBSC operation (VAX)
+
+	.PSECT	CODE
+
+START:
+	BBSC	R1,R2
+	HALT
+
+DATA:	.WORD	0
+
+	.END

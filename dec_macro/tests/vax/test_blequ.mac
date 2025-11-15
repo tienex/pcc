@@ -1,0 +1,11 @@
+; Test BLEQU - BLEQU operation (VAX)
+
+	.PSECT	CODE
+
+START:
+	BLEQU	R1,R2
+	HALT
+
+DATA:	.WORD	0
+
+	.END

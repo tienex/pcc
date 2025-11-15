@@ -1,0 +1,11 @@
+; Test BISL2 - BISL2 operation (VAX)
+
+	.PSECT	CODE
+
+START:
+	BISL2	R1,R2
+	HALT
+
+DATA:	.WORD	0
+
+	.END

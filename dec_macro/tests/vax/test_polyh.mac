@@ -1,0 +1,11 @@
+; Test POLYH - POLYH operation (VAX)
+
+	.PSECT	CODE
+
+START:
+	POLYH	R1,R2
+	HALT
+
+DATA:	.WORD	0
+
+	.END

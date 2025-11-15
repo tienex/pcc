@@ -1,0 +1,11 @@
+; Test EDIV - EDIV operation (VAX)
+
+	.PSECT	CODE
+
+START:
+	EDIV	R1,R2
+	HALT
+
+DATA:	.WORD	0
+
+	.END

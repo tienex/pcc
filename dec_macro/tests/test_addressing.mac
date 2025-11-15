@@ -1,0 +1,45 @@
+; test_addressing.mac - Test all addressing modes
+
+	.PSECT	CODE
+
+; Test all addressing modes supported by the compiler
+START:	.ENTRY	START
+
+	; Register direct
+	MOV	R0, R1
+	MOV	R2, R3
+
+	; Immediate
+	MOV	#0, R0
+	MOV	#255, R1
+	MOV	#1000, R2
+
+	; Register indirect
+	MOV	R0, (R1)
+	MOV	(R2), R3
+
+	; Autoincrement
+	MOV	(R0)+, R1
+	MOV	R2, (R3)+
+
+	; Autodecrement
+	MOV	-(R0), R1
+	MOV	R2, -(R3)
+
+	; Indexed (with offset)
+	MOV	4(R0), R1
+	MOV	R2, 8(R3)
+	MOV	100(R4), R5
+
+	; Symbol references
+	MOV	START, R0
+	MOV	R1, DATA
+
+	; Indirect through symbol
+	MOV	@DATA, R0
+
+	HALT
+
+DATA:	.WORD	42
+
+	.END

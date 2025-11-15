@@ -1,0 +1,83 @@
+; Test PDP-10 Logical Operations
+; Tests AND, IOR, XOR, EQV, ANDCA, ANDCM with 36-bit operations
+
+	.TITLE	PDP10 Logical Tests
+
+MASK1:	.WORD	0707070707070	; Alternating bit pattern
+MASK2:	.WORD	0070707070707	; Complementary pattern
+ALL1:	.WORD	0777777777777	; All 1's (36-bit)
+RESULT:	.WORD	0
+
+START::
+	; Test AND - Logical AND
+	MOVEI	1,0777777	; AC1 = 0777777 (18 bits set)
+	AND	1,MASK1		; AC1 = AC1 & MASK1
+	MOVEM	1,RESULT
+	; Expected: RESULT = bits set where both had 1's
+
+	; Test ANDI - AND immediate
+	MOVEI	2,0123456	; AC2 = 0123456
+	ANDI	2,0777000	; AC2 = AC2 & 0777000 (mask high bits)
+	MOVEM	2,RESULT
+	; Expected: RESULT = 0123000 (low bits cleared)
+
+	; Test IOR - Inclusive OR
+	MOVEI	1,0707000	; AC1 = 0707000
+	IOR	1,MASK2		; AC1 = AC1 | MASK2
+	MOVEM	1,RESULT
+	; Expected: RESULT = bits set where either had 1's
+
+	; Test IORI - IOR immediate
+	MOVEI	3,0100200	; AC3 = 0100200
+	IORI	3,0007070	; AC3 = AC3 | 0007070
+	MOVEM	3,RESULT
+	; Expected: RESULT = 0107270 (bits ORed)
+
+	; Test XOR - Exclusive OR
+	MOVEI	1,0123456	; AC1 = 0123456
+	XOR	1,MASK1		; AC1 = AC1 ^ MASK1
+	MOVEM	1,RESULT
+	; Expected: RESULT = bits set where exactly one had 1
+
+	; Test XORI - XOR immediate
+	MOVEI	2,0777777	; AC2 = 0777777
+	XORI	2,0777777	; AC2 = AC2 ^ 0777777 = 0
+	MOVEM	2,RESULT
+	; Expected: RESULT = 0, Z=1 (zero flag set)
+
+	; Test EQV - Equivalence (XNOR)
+	MOVEI	1,0707070	; AC1 = 0707070
+	EQV	1,MASK1		; AC1 = ~(AC1 ^ MASK1)
+	MOVEM	1,RESULT
+	; Expected: RESULT = bits set where both match
+
+	; Test ANDCA - AND with Complement of AC
+	MOVEI	1,0777000	; AC1 = 0777000
+	ANDCA	1,ALL1		; AC1 = ~AC1 & ALL1
+	MOVEM	1,RESULT
+	; Expected: RESULT = 0000777 (complement of AC1 ANDed with ALL1)
+
+	; Test ANDCM - AND with Complement of Memory
+	MOVEI	1,0777777	; AC1 = 0777777
+	ANDCM	1,MASK1		; AC1 = AC1 & ~MASK1
+	MOVEM	1,RESULT
+	; Expected: RESULT = bits set in AC1 but not in MASK1
+
+	; Test SETCA - Set to Complement of AC
+	MOVEI	1,0123456	; AC1 = 0123456
+	SETCA	1,1		; AC1 = ~AC1
+	MOVEM	1,RESULT
+	; Expected: RESULT = complement of 0123456 (all bits flipped)
+
+	; Test SETO - Set to Ones
+	SETO	1,0		; AC1 = -1 (all 1's)
+	MOVEM	1,RESULT
+	; Expected: RESULT = 0777777777777 (all bits set)
+
+	; Test SETZ - Set to Zero
+	SETZM	RESULT		; RESULT = 0
+	; Expected: RESULT = 0, Z=1
+
+	HALT
+
+	.END	START

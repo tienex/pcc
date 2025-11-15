@@ -1,0 +1,11 @@
+; Test CMPH - CMPH operation (VAX)
+
+	.PSECT	CODE
+
+START:
+	CMPH	R1,R2
+	HALT
+
+DATA:	.WORD	0
+
+	.END

@@ -1,0 +1,11 @@
+; Test INSQTI - INSQTI operation (VAX)
+
+	.PSECT	CODE
+
+START:
+	INSQTI	R1,R2
+	HALT
+
+DATA:	.WORD	0
+
+	.END

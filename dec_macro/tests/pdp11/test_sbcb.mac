@@ -1,0 +1,11 @@
+; Test SBCB - SBCB operation (PDP-11)
+
+	.PSECT	CODE
+
+START:
+	SBCB	R1,R2
+	HALT
+
+DATA:	.WORD	0
+
+	.END

@@ -1,0 +1,11 @@
+; Test BGEQU - BGEQU operation (VAX)
+
+	.PSECT	CODE
+
+START:
+	BGEQU	R1,R2
+	HALT
+
+DATA:	.WORD	0
+
+	.END

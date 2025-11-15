@@ -1,0 +1,11 @@
+; Test CMP - CMP operation (PDP-11)
+
+	.PSECT	CODE
+
+START:
+	CMP	R1,R2
+	HALT
+
+DATA:	.WORD	0
+
+	.END

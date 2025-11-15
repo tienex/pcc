@@ -1,0 +1,11 @@
+; Test BBC - BBC operation (VAX)
+
+	.PSECT	CODE
+
+START:
+	BBC	R1,R2
+	HALT
+
+DATA:	.WORD	0
+
+	.END

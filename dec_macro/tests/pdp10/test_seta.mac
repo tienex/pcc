@@ -1,0 +1,12 @@
+; Test SETA - SETA (PDP-10)
+; Expected: Operation SETA
+
+	.PSECT	CODE
+
+START:
+	SETA
+	HALT
+
+DATA:	.WORD	0
+
+	.END

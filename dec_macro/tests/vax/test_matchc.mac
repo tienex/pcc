@@ -1,0 +1,11 @@
+; Test MATCHC - MATCHC operation (VAX)
+
+	.PSECT	CODE
+
+START:
+	MATCHC	R1,R2
+	HALT
+
+DATA:	.WORD	0
+
+	.END

@@ -1,0 +1,11 @@
+; Test CMPB - CMPB operation (VAX)
+
+	.PSECT	CODE
+
+START:
+	CMPB	R1,R2
+	HALT
+
+DATA:	.WORD	0
+
+	.END

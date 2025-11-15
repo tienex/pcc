@@ -1,0 +1,11 @@
+; Test POLYD - POLYD operation (VAX)
+
+	.PSECT	CODE
+
+START:
+	POLYD	R1,R2
+	HALT
+
+DATA:	.WORD	0
+
+	.END

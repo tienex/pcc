@@ -1,0 +1,11 @@
+; Test POPL - POPL operation (VAX)
+
+	.PSECT	CODE
+
+START:
+	POPL	R1,R2
+	HALT
+
+DATA:	.WORD	0
+
+	.END

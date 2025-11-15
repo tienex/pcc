@@ -1,0 +1,11 @@
+; Test EMODF - EMODF operation (VAX)
+
+	.PSECT	CODE
+
+START:
+	EMODF	R1,R2
+	HALT
+
+DATA:	.WORD	0
+
+	.END

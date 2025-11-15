@@ -1,0 +1,13 @@
+; Test CAI - Compare AC Immediate (PDP-10)
+; Expected: Compare AC1 with 100, set CC
+
+	.PSECT	CODE
+
+START:
+	MOVEI 1,100
+	CAI	1,100
+	HALT
+
+DATA:	.WORD	0
+
+	.END

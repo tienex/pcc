@@ -1,0 +1,11 @@
+; Test BRW - BRW operation (VAX)
+
+	.PSECT	CODE
+
+START:
+	BRW	R1,R2
+	HALT
+
+DATA:	.WORD	0
+
+	.END

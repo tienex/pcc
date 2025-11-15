@@ -1,0 +1,80 @@
+#	$Id$
+#
+# Makefile for DEC MACRO compiler (mcom)
+#
+
+VPATH=@srcdir@
+srcdir=@srcdir@
+top_srcdir=@top_srcdir@
+top_builddir=@top_builddir@
+prefix = @prefix@
+exec_prefix = @exec_prefix@
+bindir = @bindir@
+libexecdir = @libexecdir@
+CC = @CC@
+EXEEXT = @EXEEXT@
+CFLAGS = @CFLAGS@ -I. -I$(srcdir) -I$(top_builddir)
+CPPFLAGS = @CPPFLAGS@
+LIBS = @LIBS@
+LDFLAGS = @LDFLAGS@
+LEX = @LEX@
+YACC = @YACC@
+INSTALL = @INSTALL@
+INSTALL_PROGRAM = @INSTALL_PROGRAM@
+
+DEST=@BINPREFIX@
+
+# Sources
+SRCS = main.c error.c symtab.c macro.c codegen.c
+OBJS = main.o error.o symtab.o macro.o codegen.o
+GENOBJS = y.tab.o lex.yy.o
+
+# Target
+TARGET = mcom$(EXEEXT)
+
+all: $(TARGET)
+
+$(TARGET): $(OBJS) $(GENOBJS)
+	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $(OBJS) $(GENOBJS) $(LIBS)
+
+# Parser
+y.tab.c y.tab.h: $(srcdir)/mgram.y
+	$(YACC) -d $(srcdir)/mgram.y
+
+y.tab.o: y.tab.c pass1.h
+	$(CC) $(CFLAGS) $(CPPFLAGS) -c -o $@ y.tab.c
+
+# Lexer
+lex.yy.c: $(srcdir)/scan.l y.tab.h
+	$(LEX) $(srcdir)/scan.l
+
+lex.yy.o: lex.yy.c pass1.h
+	$(CC) $(CFLAGS) $(CPPFLAGS) -c -o $@ lex.yy.c
+
+# Object files
+main.o: $(srcdir)/main.c pass1.h
+	$(CC) $(CFLAGS) $(CPPFLAGS) -c -o $@ $(srcdir)/main.c
+
+error.o: $(srcdir)/error.c pass1.h
+	$(CC) $(CFLAGS) $(CPPFLAGS) -c -o $@ $(srcdir)/error.c
+
+symtab.o: $(srcdir)/symtab.c pass1.h
+	$(CC) $(CFLAGS) $(CPPFLAGS) -c -o $@ $(srcdir)/symtab.c
+
+macro.o: $(srcdir)/macro.c pass1.h
+	$(CC) $(CFLAGS) $(CPPFLAGS) -c -o $@ $(srcdir)/macro.c
+
+codegen.o: $(srcdir)/codegen.c pass1.h
+	$(CC) $(CFLAGS) $(CPPFLAGS) -c -o $@ $(srcdir)/codegen.c
+
+install:
+	test -z "$(DESTDIR)$(libexecdir)" || mkdir -p "$(DESTDIR)$(libexecdir)"
+	$(INSTALL_PROGRAM) $(TARGET) $(DESTDIR)$(libexecdir)/$(DEST)mcom$(EXEEXT)
+
+clean:
+	rm -f $(OBJS) $(GENOBJS) $(TARGET)
+	rm -f y.tab.c y.tab.h lex.yy.c
+	rm -f *.core core
+
+distclean: clean
+	rm -f Makefile

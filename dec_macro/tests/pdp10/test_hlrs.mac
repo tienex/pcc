@@ -1,0 +1,15 @@
+; Test HLRS - Half Left to Right to Self (PDP-10)
+; Expected: AC1[18:35] = DATA[0:17], AC1[0:17] unchanged
+
+	.PSECT	CODE
+
+START:
+	MOVEI 1,0123
+	MOVEI 2,0777000
+	MOVEM 2,DATA
+	HLRS	1,DATA
+	HALT
+
+DATA:	.WORD	0
+
+	.END

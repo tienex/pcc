@@ -1,0 +1,36 @@
+; test_simple.mac - Simple DEC MACRO assembly test
+
+	.PSECT	DATA
+
+; Data section
+COUNT:	.WORD	10
+MSG:	.ASCII	"Test message"
+MSG2:	.ASCIZ	"Null-terminated"
+
+	.PSECT	CODE
+
+; Code section
+START:	.ENTRY	START
+	MOV	#100, R0
+	MOV	COUNT, R1
+	ADD	R1, R0
+	MOV	R0, COUNT
+
+	CLR	R2
+	INC	R2
+	DEC	R2
+
+	; Test various addressing modes
+	MOV	R0, R1
+	MOV	#42, (R2)
+	MOV	R4, (R5)+
+	MOV	-(R6), R7
+
+LOOP:	TST	R0
+	BEQ	DONE
+	DEC	R0
+	BR	LOOP
+
+DONE:	HALT
+
+	.END

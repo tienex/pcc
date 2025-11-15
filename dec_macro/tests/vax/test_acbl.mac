@@ -1,0 +1,11 @@
+; Test ACBL - ACBL operation (VAX)
+
+	.PSECT	CODE
+
+START:
+	ACBL	R1,R2
+	HALT
+
+DATA:	.WORD	0
+
+	.END

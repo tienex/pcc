@@ -1,0 +1,14 @@
+; Test SOS - Subtract One from memory and Skip (PDP-10)
+; Expected: DATA--, skip if result != 0
+
+	.PSECT	CODE
+
+START:
+	MOVEI 1,3
+	MOVEM 1,DATA
+	SOS	DATA
+	HALT
+
+DATA:	.WORD	0
+
+	.END

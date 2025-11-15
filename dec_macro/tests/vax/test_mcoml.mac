@@ -1,0 +1,11 @@
+; Test MCOML - MCOML operation (VAX)
+
+	.PSECT	CODE
+
+START:
+	MCOML	R1,R2
+	HALT
+
+DATA:	.WORD	0
+
+	.END

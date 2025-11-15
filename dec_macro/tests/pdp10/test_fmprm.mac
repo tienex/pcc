@@ -1,0 +1,15 @@
+; Test FMPRM - Floating Multiply to Memory (PDP-10)
+; Expected: AC1 = AC1 * DATA (float), CC updated
+
+	.PSECT	CODE
+
+START:
+	MOVEI 1,0200000000000
+	MOVEI 2,0201000000000
+	MOVEM 2,DATA
+	FMPRM	1,DATA
+	HALT
+
+DATA:	.WORD	0
+
+	.END

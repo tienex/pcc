@@ -1,0 +1,11 @@
+; Test BLEQ - BLEQ operation (VAX)
+
+	.PSECT	CODE
+
+START:
+	BLEQ	R1,R2
+	HALT
+
+DATA:	.WORD	0
+
+	.END

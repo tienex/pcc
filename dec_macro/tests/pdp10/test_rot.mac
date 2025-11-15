@@ -1,0 +1,14 @@
+; Test ROT - Rotate (PDP-10)
+; Expected: AC1 rotated, CC updated
+
+	.PSECT	CODE
+
+START:
+	MOVEI 1,0123456
+	MOVEI 2,4
+	ROT	1,2
+	HALT
+
+DATA:	.WORD	0
+
+	.END

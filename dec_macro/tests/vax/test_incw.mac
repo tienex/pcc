@@ -1,0 +1,11 @@
+; Test INCW - INCW operation (VAX)
+
+	.PSECT	CODE
+
+START:
+	INCW	R1,R2
+	HALT
+
+DATA:	.WORD	0
+
+	.END

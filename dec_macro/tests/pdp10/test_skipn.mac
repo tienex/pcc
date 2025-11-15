@@ -1,0 +1,13 @@
+; Test SKIPN - Skip if Not Equal (PDP-10)
+; Expected: Skip if AC1 != 0
+
+	.PSECT	CODE
+
+START:
+	MOVEI 1,5
+	SKIPN	1
+	HALT
+
+DATA:	.WORD	0
+
+	.END

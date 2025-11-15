@@ -1,0 +1,107 @@
+; Simple PDP-10 Instruction Test
+; Tests basic PDP-10 instructions with proper syntax
+
+	.PSECT	CODE
+
+START:
+	; Move operations
+	MOVEI	1,123
+	MOVEM	1,RESULT
+	MOVES	2,DATA1
+	MOVN	2,1
+	MOVM	3,2
+
+	; Half-word operations (18-bit)
+	HLL	1,DATA1
+	HRL	1,DATA2
+	HRR	2,DATA1
+	HLR	2,DATA2
+	HLLI	3,456
+	HRRI	3,789
+
+	; Arithmetic operations (36-bit)
+	ADD	1,2
+	ADDI	1,100
+	SUB	2,1
+	SUBI	2,50
+	MUL	3,1
+	MULI	3,10
+	DIV	3,2
+	DIVI	3,5
+
+	; Shift and rotate
+	LSH	1,8
+	ASH	2,4
+	ROT	3,2
+
+	; Logical operations (36-bit)
+	AND	1,2
+	ANDI	1,0777
+	IOR	2,3
+	IORI	2,0111
+	XOR	3,1
+	XORI	3,0777
+	EQV	1,2
+
+	; Special logical
+	ANDCA	1,2
+	ANDCM	2,3
+	SETCA	3,1
+	SETO	1,0
+	SETZ	2,0
+
+	; Skip operations
+	SKIP
+	SKIPE	1
+	SKIPN	2
+	SKIPL	3
+	SKIPG	1
+	SKIPLE	2
+	SKIPGE	3
+	SKIPA
+
+	; Jump operations
+	JUMP	LABEL1
+LABEL1:	JUMPE	1,LABEL2
+LABEL2:	JUMPN	2,LABEL3
+LABEL3:	JUMPL	3,LABEL4
+LABEL4:	JUMPG	1,LABEL5
+LABEL5:	JUMPA	LABEL6
+
+LABEL6:
+	; Add/Subtract with jump
+	AOJ	1,LABEL7
+LABEL7:	AOJA	2,LABEL8
+LABEL8:	AOS	DATA1
+	SOJ	3,LABEL9
+LABEL9:	SOJA	1,LABEL10
+LABEL10:SOS	DATA2
+
+	; Compare operations
+	CAI	1,100
+	CAIE	1,100
+	CAM	2,DATA1
+	CAME	2,DATA1
+
+	; Byte operations (9-bit)
+	LDB	1,DATA1
+	DPB	2,RESULT
+	IBP	3
+
+	; Stack operations
+	PUSH	17,1
+	POP	17,2
+
+	; Move variants
+	MOVS	1,DATA1
+	MOVSI	2,123
+	MOVNI	3,456
+
+	HALT
+
+; Data area
+DATA1:	.WORD	0123456
+DATA2:	.WORD	0765432
+RESULT:	.WORD	0
+
+	.END

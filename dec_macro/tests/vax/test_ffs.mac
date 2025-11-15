@@ -1,0 +1,11 @@
+; Test FFS - FFS operation (VAX)
+
+	.PSECT	CODE
+
+START:
+	FFS	R1,R2
+	HALT
+
+DATA:	.WORD	0
+
+	.END

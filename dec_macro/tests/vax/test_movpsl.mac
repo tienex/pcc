@@ -1,0 +1,11 @@
+; Test MOVPSL - MOVPSL operation (VAX)
+
+	.PSECT	CODE
+
+START:
+	MOVPSL	R1,R2
+	HALT
+
+DATA:	.WORD	0
+
+	.END

@@ -1,0 +1,12 @@
+; Test DATAI - DATAI (PDP-10)
+; Expected: Operation DATAI
+
+	.PSECT	CODE
+
+START:
+	DATAI
+	HALT
+
+DATA:	.WORD	0
+
+	.END

@@ -1,0 +1,69 @@
+; test_vax.mac - VAX-specific assembly test
+; Tests VAX addressing modes and instructions
+
+	.TITLE	VAX - VAX Assembly Test
+	.IDENT	/V1.0/
+
+	.PSECT	DATA, WRT, NOEXE
+
+; Data declarations
+BUFFER:	.BLKL	100		; 100 longwords
+TABLE:	.LONG	1, 2, 3, 4, 5
+COUNTER: .LONG	0
+STRING:	.ASCIZ	/VAX System/
+
+	.PSECT	CODE, RO, EXE
+
+; Main program
+MAIN:	.ENTRY	MAIN, ^M<R2,R3,R4,R5>
+
+	; VAX instructions
+	CLRL	R0		; Clear longword
+	CLRW	R1		; Clear word
+	CLRB	R2		; Clear byte
+
+	; Move operations
+	MOVL	#1000, R0	; Move long immediate
+	MOVW	#100, R1	; Move word immediate
+	MOVB	#10, R2		; Move byte immediate
+
+	; Arithmetic
+	ADDL2	#50, R0		; Add long, 2-operand
+	ADDL3	R0, R1, R2	; Add long, 3-operand
+	SUBL2	#10, R0		; Subtract long
+	MULL2	#5, R0		; Multiply long
+	DIVL2	#2, R0		; Divide long
+
+	; Logical operations
+	BISL2	#0x0F, R0	; Bit set
+	BICL2	#0xF0, R0	; Bit clear
+	XORL2	#0xFF, R0	; XOR
+
+	; Comparison and branching
+	CMPL	R0, #500	; Compare long
+	BEQL	EQUAL		; Branch if equal
+	BNEQ	NOTEQUAL	; Branch if not equal
+	BLSS	LESS		; Branch if less
+	BGTR	GREATER		; Branch if greater
+
+EQUAL:	INCL	COUNTER		; Increment long
+	BRB	CONTINUE	; Branch unconditional
+
+NOTEQUAL:
+LESS:
+GREATER:
+	DECL	COUNTER		; Decrement long
+
+CONTINUE:
+	; Array access
+	MOVL	TABLE, R3	; Load first element
+	MOVL	TABLE+4, R4	; Load second element
+	MOVL	TABLE[R0], R5	; Indexed access
+
+	; String operations
+	MOVC3	#10, STRING, BUFFER  ; Move character string
+
+	; Function return
+	RET			; Return from procedure
+
+	.END	MAIN

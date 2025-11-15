@@ -1,0 +1,11 @@
+; Test JMP - JMP operation (PDP-11)
+
+	.PSECT	CODE
+
+START:
+	JMP	R1,R2
+	HALT
+
+DATA:	.WORD	0
+
+	.END

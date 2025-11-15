@@ -1,0 +1,15 @@
+; Test DIVM - Divide to Memory (PDP-10)
+; Expected: DATA = DATA / AC1, CC updated
+
+	.PSECT	CODE
+
+START:
+	MOVEI 1,5
+	MOVEI 2,50
+	MOVEM 2,DATA
+	DIVM	1,DATA
+	HALT
+
+DATA:	.WORD	0
+
+	.END

@@ -1,0 +1,13 @@
+; Test PUSHJ - Push Jump (PDP-10)
+; Expected: Push PC, jump to SUBR
+
+	.PSECT	CODE
+
+START:
+	MOVEI 1,STACK
+	PUSHJ	1,SUBR
+	HALT
+
+DATA:	.WORD	0
+
+	.END

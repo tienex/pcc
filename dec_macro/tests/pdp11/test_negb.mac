@@ -1,0 +1,11 @@
+; Test NEGB - NEGB operation (PDP-11)
+
+	.PSECT	CODE
+
+START:
+	NEGB	R1,R2
+	HALT
+
+DATA:	.WORD	0
+
+	.END

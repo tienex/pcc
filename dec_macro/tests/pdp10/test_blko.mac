@@ -1,0 +1,12 @@
+; Test BLKO - BLKO (PDP-10)
+; Expected: Operation BLKO
+
+	.PSECT	CODE
+
+START:
+	BLKO
+	HALT
+
+DATA:	.WORD	0
+
+	.END

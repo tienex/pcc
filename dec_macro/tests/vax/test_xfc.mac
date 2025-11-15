@@ -1,0 +1,11 @@
+; Test XFC - XFC operation (VAX)
+
+	.PSECT	CODE
+
+START:
+	XFC	R1,R2
+	HALT
+
+DATA:	.WORD	0
+
+	.END

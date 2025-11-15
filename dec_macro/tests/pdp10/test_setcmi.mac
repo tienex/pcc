@@ -1,0 +1,14 @@
+; Test SETCMI - Set Complement Memory Immediate (PDP-10)
+; Expected: AC1 = ~DATA, CC updated
+
+	.PSECT	CODE
+
+START:
+	MOVEI 2,0123456
+	MOVEM 2,DATA
+	SETCMI	1,DATA
+	HALT
+
+DATA:	.WORD	0
+
+	.END

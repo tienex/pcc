@@ -1,0 +1,11 @@
+; Test TSTG - TSTG operation (VAX)
+
+	.PSECT	CODE
+
+START:
+	TSTG	R1,R2
+	HALT
+
+DATA:	.WORD	0
+
+	.END

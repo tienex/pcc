@@ -1,0 +1,11 @@
+; Test MOVTUC - MOVTUC operation (VAX)
+
+	.PSECT	CODE
+
+START:
+	MOVTUC	R1,R2
+	HALT
+
+DATA:	.WORD	0
+
+	.END

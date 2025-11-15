@@ -1,0 +1,12 @@
+; Test EXCH - EXCH (PDP-10)
+; Expected: Operation EXCH
+
+	.PSECT	CODE
+
+START:
+	EXCH
+	HALT
+
+DATA:	.WORD	0
+
+	.END

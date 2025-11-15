@@ -1,0 +1,13 @@
+; Test CAIA - Compare AC Immediate Always (PDP-10)
+; Expected: Compare AC1 with 100, skip always
+
+	.PSECT	CODE
+
+START:
+	MOVEI 1,100
+	CAIA	1,100
+	HALT
+
+DATA:	.WORD	0
+
+	.END

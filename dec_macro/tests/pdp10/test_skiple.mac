@@ -1,0 +1,13 @@
+; Test SKIPLE - Skip if Less or Equal (PDP-10)
+; Expected: Skip if AC1 <= 0
+
+	.PSECT	CODE
+
+START:
+	MOVEI 1,0
+	SKIPLE	1
+	HALT
+
+DATA:	.WORD	0
+
+	.END

@@ -1,0 +1,11 @@
+; Test EMOGG - EMOGG operation (VAX)
+
+	.PSECT	CODE
+
+START:
+	EMOGG	R1,R2
+	HALT
+
+DATA:	.WORD	0
+
+	.END

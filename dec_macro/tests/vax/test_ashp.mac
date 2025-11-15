@@ -1,0 +1,11 @@
+; Test ASHP - ASHP operation (VAX)
+
+	.PSECT	CODE
+
+START:
+	ASHP	R1,R2
+	HALT
+
+DATA:	.WORD	0
+
+	.END

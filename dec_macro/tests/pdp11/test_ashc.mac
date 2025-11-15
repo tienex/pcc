@@ -1,0 +1,11 @@
+; Test ASHC - ASHC operation (PDP-11)
+
+	.PSECT	CODE
+
+START:
+	ASHC	R1,R2
+	HALT
+
+DATA:	.WORD	0
+
+	.END

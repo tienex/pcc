@@ -1,0 +1,11 @@
+; Test CVTDB - CVTDB operation (VAX)
+
+	.PSECT	CODE
+
+START:
+	CVTDB	R1,R2
+	HALT
+
+DATA:	.WORD	0
+
+	.END

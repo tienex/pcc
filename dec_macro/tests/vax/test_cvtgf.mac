@@ -1,0 +1,11 @@
+; Test CVTGF - CVTGF operation (VAX)
+
+	.PSECT	CODE
+
+START:
+	CVTGF	R1,R2
+	HALT
+
+DATA:	.WORD	0
+
+	.END

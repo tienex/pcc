@@ -1,0 +1,11 @@
+; Test CMPB - CMPB operation (PDP-11)
+
+	.PSECT	CODE
+
+START:
+	CMPB	R1,R2
+	HALT
+
+DATA:	.WORD	0
+
+	.END
