@@ -4,7 +4,10 @@
  * SEH Runtime - Platform Dispatcher
  */
 
-#if defined(__amigaos__) || defined(__AMIGA__) || defined(AMIGA)
+#if defined(__NETWARE__) || defined(__netware__)
+  /* Novell NetWare 3.x+ */
+  #include "netware/seh_netware.c"
+#elif defined(__amigaos__) || defined(__AMIGA__) || defined(AMIGA)
   /* AmigaOS (68k and PowerPC) */
   #include "amiga/seh_amiga.c"
 #elif defined(__ATARI__) || defined(__atarist__) || defined(ATARI)
@@ -38,6 +41,11 @@
   /* DOS 16-bit */
   #include "dos/seh_dos.c"
 #else
-  /* Unix/POSIX (Linux, *BSD, macOS, Solaris, AIX, etc.) */
+  /* Unix/POSIX - includes:
+   * - Linux, *BSD, macOS (OS X), Solaris, AIX, HP-UX, IRIX
+   * - UnixWare, SCO OpenServer
+   * - OpenStep, NEXTSTEP, OPENSTEP
+   * - QNX, Tru64 UNIX, and other POSIX-compliant systems
+   */
   #include "unix/seh_unix.c"
 #endif
