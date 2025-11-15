@@ -1204,7 +1204,8 @@ CONFIG_MAKEFILES="Makefile
 		libvtable/Makefile
 		libcrt/Makefile
 		libbgi/Makefile
-		libvm/Makefile"
+		libvm/Makefile
+		libfs/Makefile"
 
 # C language is always included (required for bootstrap)
 CONFIG_MAKEFILES="$CONFIG_MAKEFILES

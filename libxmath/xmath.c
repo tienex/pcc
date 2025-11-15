@@ -506,3 +506,216 @@ void xmath_swap_endian(xmath_float_t *value) {
 		break;
 	}
 }
+
+/*
+ * VAX Floating-Point Conversions
+ */
+
+float xmath_vax_f_to_float(uint32_t vax_f) {
+	if (vax_f == 0) return 0.0f;
+	
+	/* VAX F: 1 sign, 8 exponent (bias 128), 23 mantissa (no implicit bit) */
+	uint32_t sign = (vax_f >> 15) & 0x1;
+	uint32_t exp = (vax_f >> 7) & 0xFF;
+	uint32_t mant = ((vax_f & 0x7F) << 16) | ((vax_f >> 16) & 0xFFFF);
+	
+	if (exp == 0) return 0.0f;  /* Reserved */
+	
+	/* Convert to IEEE 754 */
+	int ieee_exp = exp - 128 + 127;  /* VAX bias 128, IEEE bias 127 */
+	if (ieee_exp <= 0) return 0.0f;
+	if (ieee_exp >= 255) ieee_exp = 254;
+	
+	uint32_t ieee = (sign << 31) | (ieee_exp << 23) | (mant >> 1);
+	
+	float result;
+	memcpy(&result, &ieee, sizeof(float));
+	return result;
+}
+
+uint32_t xmath_vax_f_from_float(float value) {
+	uint32_t ieee;
+	memcpy(&ieee, &value, sizeof(float));
+	
+	if (value == 0.0f) return 0;
+	
+	uint32_t sign = (ieee >> 31) & 0x1;
+	int exp = ((ieee >> 23) & 0xFF) - 127;
+	uint32_t mant = (ieee & 0x7FFFFF) << 1;
+	
+	int vax_exp = exp + 128;
+	if (vax_exp <= 0) return 0;
+	if (vax_exp >= 255) vax_exp = 255;
+	
+	uint32_t vax_f = (sign << 15) | (vax_exp << 7) | ((mant >> 16) & 0x7F);
+	vax_f |= (mant & 0xFFFF) << 16;
+	
+	return vax_f;
+}
+
+/*
+ * Cray Floating-Point Conversions
+ */
+
+double xmath_cray_to_double(uint64_t cray_val) {
+	if (cray_val == 0) return 0.0;
+	
+	/* Cray: 1 sign, 15 exponent (bias 0x4000), 48 mantissa */
+	uint64_t sign = (cray_val >> 63) & 0x1;
+	int exp = ((cray_val >> 48) & 0x7FFF) - 0x4000;
+	uint64_t mant = cray_val & 0xFFFFFFFFFFFFULL;
+	
+	/* Convert to IEEE 754 double */
+	int ieee_exp = exp + 1023;
+	if (ieee_exp <= 0) return 0.0;
+	if (ieee_exp >= 2047) ieee_exp = 2046;
+	
+	uint64_t ieee = (sign << 63) | ((uint64_t)ieee_exp << 52) | (mant >> 4);
+	
+	double result;
+	memcpy(&result, &ieee, sizeof(double));
+	return result;
+}
+
+uint64_t xmath_cray_from_double(double value) {
+	uint64_t ieee;
+	memcpy(&ieee, &value, sizeof(double));
+	
+	if (value == 0.0) return 0;
+	
+	uint64_t sign = (ieee >> 63) & 0x1;
+	int exp = ((ieee >> 52) & 0x7FF) - 1023;
+	uint64_t mant = (ieee & 0xFFFFFFFFFFFFFULL) << 4;
+	
+	int cray_exp = exp + 0x4000;
+	if (cray_exp < 0) return 0;
+	if (cray_exp > 0x7FFF) cray_exp = 0x7FFF;
+	
+	return (sign << 63) | ((uint64_t)cray_exp << 48) | mant;
+}
+
+/*
+ * IBM Hexadecimal Floating-Point Conversions
+ */
+
+double xmath_ibm_to_double(uint64_t ibm_val) {
+	if (ibm_val == 0) return 0.0;
+	
+	/* IBM: 1 sign, 7 exponent (base 16, bias 64), 56 mantissa */
+	uint64_t sign = (ibm_val >> 63) & 0x1;
+	int exp = ((ibm_val >> 56) & 0x7F) - 64;  /* Base 16 exponent */
+	uint64_t mant = ibm_val & 0xFFFFFFFFFFFFFFULL;
+	
+	/* Normalize mantissa and convert to base 2 */
+	while (mant && !(mant & 0xF00000000000000ULL)) {
+		mant <<= 4;
+		exp--;
+	}
+	
+	/* Convert to IEEE 754 */
+	int ieee_exp = exp * 4 + 1023;  /* Base 16 to base 2, add IEEE bias */
+	if (ieee_exp <= 0) return 0.0;
+	if (ieee_exp >= 2047) ieee_exp = 2046;
+	
+	uint64_t ieee = (sign << 63) | ((uint64_t)ieee_exp << 52) | (mant >> 8);
+	
+	double result;
+	memcpy(&result, &ieee, sizeof(double));
+	return result;
+}
+
+uint64_t xmath_ibm_from_double(double value) {
+	uint64_t ieee;
+	memcpy(&ieee, &value, sizeof(double));
+	
+	if (value == 0.0) return 0;
+	
+	uint64_t sign = (ieee >> 63) & 0x1;
+	int exp = ((ieee >> 52) & 0x7FF) - 1023;
+	uint64_t mant = (ieee & 0xFFFFFFFFFFFFFULL) << 8;
+	
+	/* Convert to base 16 exponent */
+	int ibm_exp = (exp / 4) + 64;
+	int shift = exp % 4;
+	if (shift < 0) { shift += 4; ibm_exp--; }
+	mant >>= shift;
+	
+	if (ibm_exp < 0) return 0;
+	if (ibm_exp > 127) ibm_exp = 127;
+	
+	return (sign << 63) | ((uint64_t)ibm_exp << 56) | mant;
+}
+
+/*
+ * Universal Float Operations
+ */
+
+xmath_float_t xmath_float_from_native(double value, xmath_format_t format) {
+	xmath_float_t result;
+	result.format = format;
+	memset(&result.data, 0, sizeof(result.data));
+	
+	switch (format) {
+	case XMATH_IEEE754_BINARY32: {
+		float f = (float)value;
+		memcpy(&result.data.u32, &f, sizeof(float));
+		break;
+	}
+	case XMATH_IEEE754_BINARY64:
+		memcpy(&result.data.u64, &value, sizeof(double));
+		break;
+	case XMATH_BFLOAT16:
+		result.data.u16 = xmath_bfloat16_from_float((float)value);
+		break;
+	case XMATH_VAX_F_FLOAT:
+		result.data.u32 = xmath_vax_f_from_float((float)value);
+		break;
+	case XMATH_CRAY_FLOAT:
+		result.data.u64 = xmath_cray_from_double(value);
+		break;
+	case XMATH_IBM_FLOAT:
+		result.data.u64 = xmath_ibm_from_double(value);
+		break;
+	default:
+		break;
+	}
+	
+	return result;
+}
+
+double xmath_float_to_native(const xmath_float_t *value) {
+	if (!value) return 0.0;
+	
+	switch (value->format) {
+	case XMATH_IEEE754_BINARY32: {
+		float f;
+		memcpy(&f, &value->data.u32, sizeof(float));
+		return (double)f;
+	}
+	case XMATH_IEEE754_BINARY64: {
+		double d;
+		memcpy(&d, &value->data.u64, sizeof(double));
+		return d;
+	}
+	case XMATH_BFLOAT16:
+		return (double)xmath_bfloat16_to_float(value->data.u16);
+	case XMATH_VAX_F_FLOAT:
+		return (double)xmath_vax_f_to_float(value->data.u32);
+	case XMATH_CRAY_FLOAT:
+		return xmath_cray_to_double(value->data.u64);
+	case XMATH_IBM_FLOAT:
+		return xmath_ibm_to_double(value->data.u64);
+	default:
+		return 0.0;
+	}
+}
+
+xmath_float_t xmath_float_convert(const xmath_float_t *value, xmath_format_t target_format) {
+	if (!value) {
+		xmath_float_t result = {0};
+		return result;
+	}
+	
+	double native = xmath_float_to_native(value);
+	return xmath_float_from_native(native, target_format);
+}
