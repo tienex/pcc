@@ -128,36 +128,248 @@ format_operand(char *buf, size_t bufsize, OPERAND *op)
 }
 
 /*
- * Emit an instruction using PCC IR (IP_ASM)
+ * Convert OPERAND to PCC NODE
+ */
+static P1ND *
+operand_to_node(OPERAND *op)
+{
+	P1ND *p;
+	SYMTAB *sym;
+
+	switch (op->type) {
+	case OP_REGISTER:
+		/* Direct register reference */
+		return build_reg(op->reg);
+
+	case OP_IMMEDIATE:
+		/* Immediate constant */
+		return build_icon(op->value);
+
+	case OP_DIRECT:
+		/* Direct memory reference or symbol */
+		if (op->symbol) {
+			/* Symbol reference - build NAME node */
+			sym = lookup(op->symbol);
+			if (sym == NULL) {
+				sym = install(op->symbol, SYM_EXTERNAL);
+			}
+			p = (P1ND *)malloc(sizeof(P1ND));
+			memset(p, 0, sizeof(P1ND));
+			p->n_op = NAME;
+			p->n_type = INT;
+			p->n_name = op->symbol;
+			return p;
+		} else {
+			/* Direct address */
+			p = build_icon(op->value);
+			/* Wrap in UMUL to indicate indirect access */
+			return build_unop(UMUL, p);
+		}
+
+	case OP_INDIRECT:
+		/* Indirect addressing @symbol or @value */
+		if (op->symbol) {
+			sym = lookup(op->symbol);
+			if (sym == NULL) {
+				sym = install(op->symbol, SYM_EXTERNAL);
+			}
+			p = (P1ND *)malloc(sizeof(P1ND));
+			memset(p, 0, sizeof(P1ND));
+			p->n_op = NAME;
+			p->n_type = INT;
+			p->n_name = op->symbol;
+			/* Double indirect */
+			p = build_unop(UMUL, p);
+			return build_unop(UMUL, p);
+		} else {
+			p = build_icon(op->value);
+			p = build_unop(UMUL, p);
+			return build_unop(UMUL, p);
+		}
+
+	case OP_INDEXED:
+		/* offset(Rn) - register with offset */
+		return build_oreg(op->reg, op->value);
+
+	case OP_AUTODEC:
+		/* -(Rn) - predecrement */
+		/* Build as: Rn = Rn - size; use Rn */
+		p = build_reg(op->reg);
+		p = build_assign(p,
+		    build_binop(MINUS, build_reg(op->reg), build_icon(2)));
+		/* Return the decremented register for use */
+		return build_oreg(op->reg, 0);
+
+	case OP_AUTOINC:
+		/* (Rn)+ - postincrement */
+		/* Use Rn, then Rn = Rn + size */
+		p = build_oreg(op->reg, 0);
+		/* Increment will be done as side effect */
+		return p;
+
+	case OP_SYMBOL:
+		/* Symbol reference, possibly with offset */
+		sym = lookup(op->symbol);
+		if (sym == NULL) {
+			sym = install(op->symbol, SYM_EXTERNAL);
+		}
+		p = (P1ND *)malloc(sizeof(P1ND));
+		memset(p, 0, sizeof(P1ND));
+		p->n_op = NAME;
+		p->n_type = INT;
+		p->n_name = op->symbol;
+
+		if (op->value != 0) {
+			/* Add offset */
+			p = build_binop(PLUS, p, build_icon(op->value));
+		}
+		return p;
+
+	case OP_LITERAL:
+		/* Literal value */
+		return build_icon(op->value);
+
+	default:
+		error("unknown operand type %d", op->type);
+		return build_icon(0);
+	}
+}
+
+/*
+ * Emit an instruction using PCC IR (IP_NODE)
+ * This properly uses PCC's NODE-based intermediate representation
  */
 void
 emit_instruction_ir(INSTRUCTION *inst)
 {
-	char asm_line[1024];
-	char operand_buf[256];
-	int i;
+	P1ND *tree = NULL;
+	P1ND *src, *dst;
+	const char *mnemonic = inst->mnemonic;
 
-	/* Build assembly string */
-	snprintf(asm_line, sizeof(asm_line), "\t%s", inst->mnemonic);
+	/* Map DEC MACRO instructions to PCC IR operations */
 
-	/* Add operands */
-	for (i = 0; i < inst->noperands; i++) {
-		if (i == 0)
+	/* MOV src, dst -> dst = src */
+	if (strcmp(mnemonic, "MOV") == 0 || strcmp(mnemonic, "MOVB") == 0) {
+		if (inst->noperands == 2) {
+			src = operand_to_node(&inst->operands[0]);
+			dst = operand_to_node(&inst->operands[1]);
+			tree = build_assign(dst, src);
+		}
+	}
+	/* ADD src, dst -> dst = dst + src */
+	else if (strcmp(mnemonic, "ADD") == 0) {
+		if (inst->noperands == 2) {
+			src = operand_to_node(&inst->operands[0]);
+			dst = operand_to_node(&inst->operands[1]);
+			/* Need two copies of dst - one for LHS, one for RHS */
+			P1ND *dst_rhs = operand_to_node(&inst->operands[1]);
+			tree = build_assign(dst,
+			    build_binop(PLUS, dst_rhs, src));
+		}
+	}
+	/* SUB src, dst -> dst = dst - src */
+	else if (strcmp(mnemonic, "SUB") == 0) {
+		if (inst->noperands == 2) {
+			src = operand_to_node(&inst->operands[0]);
+			dst = operand_to_node(&inst->operands[1]);
+			/* Need two copies of dst - one for LHS, one for RHS */
+			P1ND *dst_rhs = operand_to_node(&inst->operands[1]);
+			tree = build_assign(dst,
+			    build_binop(MINUS, dst_rhs, src));
+		}
+	}
+	/* CLR dst -> dst = 0 */
+	else if (strcmp(mnemonic, "CLR") == 0 || strcmp(mnemonic, "CLRB") == 0) {
+		if (inst->noperands == 1) {
+			dst = operand_to_node(&inst->operands[0]);
+			tree = build_assign(dst, build_icon(0));
+		}
+	}
+	/* INC dst -> dst = dst + 1 */
+	else if (strcmp(mnemonic, "INC") == 0 || strcmp(mnemonic, "INCB") == 0) {
+		if (inst->noperands == 1) {
+			dst = operand_to_node(&inst->operands[0]);
+			P1ND *dst_rhs = operand_to_node(&inst->operands[0]);
+			tree = build_assign(dst,
+			    build_binop(PLUS, dst_rhs, build_icon(1)));
+		}
+	}
+	/* DEC dst -> dst = dst - 1 */
+	else if (strcmp(mnemonic, "DEC") == 0 || strcmp(mnemonic, "DECB") == 0) {
+		if (inst->noperands == 1) {
+			dst = operand_to_node(&inst->operands[0]);
+			P1ND *dst_rhs = operand_to_node(&inst->operands[0]);
+			tree = build_assign(dst,
+			    build_binop(MINUS, dst_rhs, build_icon(1)));
+		}
+	}
+	/* TST dst -> compare dst with 0 (sets condition codes) */
+	else if (strcmp(mnemonic, "TST") == 0 || strcmp(mnemonic, "TSTB") == 0) {
+		if (inst->noperands == 1) {
+			dst = operand_to_node(&inst->operands[0]);
+			/* Build comparison node */
+			tree = build_binop(EQ, dst, build_icon(0));
+		}
+	}
+	/* CMP src, dst -> compare (sets condition codes) */
+	else if (strcmp(mnemonic, "CMP") == 0 || strcmp(mnemonic, "CMPB") == 0) {
+		if (inst->noperands == 2) {
+			src = operand_to_node(&inst->operands[0]);
+			dst = operand_to_node(&inst->operands[1]);
+			tree = build_binop(EQ, src, dst);
+		}
+	}
+	/* BEQ, BNE, BR - branch instructions */
+	else if (strncmp(mnemonic, "B", 1) == 0) {
+		/* For now, emit as assembly - branches need special handling */
+		char asm_line[1024];
+		char operand_buf[256];
+		snprintf(asm_line, sizeof(asm_line), "\t%s", mnemonic);
+		if (inst->noperands > 0) {
 			strcat(asm_line, "\t");
-		else
-			strcat(asm_line, ",");
+			format_operand(operand_buf, sizeof(operand_buf), &inst->operands[0]);
+			strcat(asm_line, operand_buf);
+		}
+		strcat(asm_line, "\n");
+		send_passt(IP_ASM, asm_line);
+		location_counter += 2;
+		return;
+	}
+	/* HALT and other special instructions */
+	else if (strcmp(mnemonic, "HALT") == 0) {
+		/* Emit as assembly */
+		send_passt(IP_ASM, "\tHALT\n");
+		location_counter += 2;
+		return;
+	}
+	/* Fallback for unknown instructions - emit as assembly */
+	else {
+		char asm_line[1024];
+		char operand_buf[256];
+		int i;
 
-		format_operand(operand_buf, sizeof(operand_buf), &inst->operands[i]);
-		strcat(asm_line, operand_buf);
+		snprintf(asm_line, sizeof(asm_line), "\t%s", mnemonic);
+		for (i = 0; i < inst->noperands; i++) {
+			if (i == 0)
+				strcat(asm_line, "\t");
+			else
+				strcat(asm_line, ",");
+			format_operand(operand_buf, sizeof(operand_buf), &inst->operands[i]);
+			strcat(asm_line, operand_buf);
+		}
+		strcat(asm_line, "\n");
+		send_passt(IP_ASM, asm_line);
+		location_counter += 2;
+		return;
 	}
 
-	strcat(asm_line, "\n");
+	/* Send NODE tree to PCC backend if we built one */
+	if (tree != NULL) {
+		send_passt(IP_NODE, tree);
+	}
 
-	/* Send to PCC backend as inline assembly */
-	send_passt(IP_ASM, asm_line);
-
-	/* Update location counter (rough estimate) */
-	location_counter += 2;  /* Most instructions are ~2 bytes */
+	/* Update location counter */
+	location_counter += 2;
 }
 
 /*

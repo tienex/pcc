@@ -28,6 +28,92 @@ static int dump_symtab_flag = 0;
 static int list_output = 0;
 
 /*
+ * Print a NODE tree as assembly (for standalone mode)
+ * This is a simple printer that converts PCC IR nodes back to assembly
+ */
+static void
+print_node_as_asm(NODE *p, FILE *fp)
+{
+	if (p == NULL)
+		return;
+
+	switch (p->n_op) {
+	case ASSIGN:
+		/* Assignment: left = right */
+		fprintf(fp, "\t");
+		/* Determine instruction based on right side */
+		if (p->n_right->n_op == ICON) {
+			/* MOV immediate */
+			fprintf(fp, "MOV\t#%lld,", (long long)getlval(p->n_right));
+		} else if (p->n_right->n_op == REG) {
+			/* MOV register */
+			fprintf(fp, "MOV\tr%d,", p->n_right->n_rval);
+		} else if (p->n_right->n_op == NAME) {
+			/* MOV symbol */
+			fprintf(fp, "MOV\t%s,", p->n_right->n_name);
+		} else if (p->n_right->n_op == OREG) {
+			/* MOV from offset(reg) */
+			if (getlval(p->n_right) != 0)
+				fprintf(fp, "MOV\t%lld(r%d),",
+				    (long long)getlval(p->n_right), p->n_right->n_rval);
+			else
+				fprintf(fp, "MOV\t(r%d),", p->n_right->n_rval);
+		} else if (p->n_right->n_op == PLUS) {
+			/* ADD operation */
+			fprintf(fp, "ADD\t");
+			if (p->n_right->n_right->n_op == ICON)
+				fprintf(fp, "#%lld,", (long long)getlval(p->n_right->n_right));
+			else if (p->n_right->n_right->n_op == REG)
+				fprintf(fp, "r%d,", p->n_right->n_right->n_rval);
+			else
+				fprintf(fp, "?,");
+		} else if (p->n_right->n_op == MINUS) {
+			/* SUB operation */
+			fprintf(fp, "SUB\t");
+			if (p->n_right->n_right->n_op == ICON)
+				fprintf(fp, "#%lld,", (long long)getlval(p->n_right->n_right));
+			else if (p->n_right->n_right->n_op == REG)
+				fprintf(fp, "r%d,", p->n_right->n_right->n_rval);
+			else
+				fprintf(fp, "?,");
+		} else {
+			fprintf(fp, "MOV\t<complex>,");
+		}
+
+		/* Print destination */
+		if (p->n_left->n_op == REG) {
+			fprintf(fp, "r%d\n", p->n_left->n_rval);
+		} else if (p->n_left->n_op == NAME) {
+			fprintf(fp, "%s\n", p->n_left->n_name);
+		} else if (p->n_left->n_op == OREG) {
+			if (getlval(p->n_left) != 0)
+				fprintf(fp, "%lld(r%d)\n",
+				    (long long)getlval(p->n_left), p->n_left->n_rval);
+			else
+				fprintf(fp, "(r%d)\n", p->n_left->n_rval);
+		} else {
+			fprintf(fp, "<dest>\n");
+		}
+		break;
+
+	case EQ:
+		/* Comparison - print as TST or CMP */
+		fprintf(fp, "\tTST\t");
+		if (p->n_left->n_op == REG)
+			fprintf(fp, "r%d\n", p->n_left->n_rval);
+		else if (p->n_left->n_op == NAME)
+			fprintf(fp, "%s\n", p->n_left->n_name);
+		else
+			fprintf(fp, "<operand>\n");
+		break;
+
+	default:
+		fprintf(fp, "\t; <unhandled NODE op=%d>\n", p->n_op);
+		break;
+	}
+}
+
+/*
  * Simple pass2_compile implementation for standalone assembler
  * This receives interpass structures from send_passt() and
  * emits the assembly code
@@ -40,8 +126,9 @@ pass2_compile(struct interpass *ip)
 
 	switch (ip->type) {
 	case IP_NODE:
-		/* For now, we don't handle NODE IR directly in assembly mode */
-		/* In a full integration, this would go to PCC's backend */
+		/* Convert NODE IR to assembly for standalone mode */
+		/* In a full PCC integration, this would go to the backend */
+		print_node_as_asm(ip->ip_node, output_file);
 		break;
 
 	case IP_DEFLAB:
