@@ -1,0 +1,54 @@
+#	$Id$
+#
+# Makefile.in for libbasic - BASIC Runtime Library
+#
+VPATH=@srcdir@
+srcdir=@srcdir@
+top_srcdir=@top_srcdir@
+top_builddir=@top_builddir@
+CC = @CC@
+AR = ar
+RANLIB = @RANLIB@
+CFLAGS = @CFLAGS@ @ADD_CFLAGS@
+CPPFLAGS = @CPPFLAGS@ @ADD_CPPFLAGS@ -I$(srcdir) -I$(top_builddir)
+INSTALL = @INSTALL@
+INSTALL_DATA = @INSTALL_DATA@
+
+prefix = @prefix@
+exec_prefix = @exec_prefix@
+libdir = @libdir@
+includedir = @includedir@
+
+OBJS=	io.o strings.o math.o fileio.o
+
+LIB=libbasic.a
+
+all: $(LIB)
+
+$(LIB): $(OBJS)
+	$(AR) rv $@ $(OBJS)
+	$(RANLIB) $@
+
+io.o: $(srcdir)/io.c $(srcdir)/basicrt.h
+	$(CC) $(CFLAGS) $(CPPFLAGS) -c $(srcdir)/io.c
+
+strings.o: $(srcdir)/strings.c $(srcdir)/basicrt.h
+	$(CC) $(CFLAGS) $(CPPFLAGS) -c $(srcdir)/strings.c
+
+math.o: $(srcdir)/math.c $(srcdir)/basicrt.h
+	$(CC) $(CFLAGS) $(CPPFLAGS) -c $(srcdir)/math.c
+
+fileio.o: $(srcdir)/fileio.c $(srcdir)/basicrt.h
+	$(CC) $(CFLAGS) $(CPPFLAGS) -c $(srcdir)/fileio.c
+
+install: $(LIB)
+	test -z "$(DESTDIR)$(libdir)" || mkdir -p "$(DESTDIR)$(libdir)"
+	test -z "$(DESTDIR)$(includedir)" || mkdir -p "$(DESTDIR)$(includedir)"
+	$(INSTALL_DATA) $(LIB) $(DESTDIR)$(libdir)
+	$(INSTALL_DATA) $(srcdir)/basicrt.h $(DESTDIR)$(includedir)
+
+clean:
+	rm -f $(OBJS) $(LIB)
+
+distclean: clean
+	rm -f Makefile

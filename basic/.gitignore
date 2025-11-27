@@ -1,0 +1,12 @@
+# Build artifacts
+basic/basic
+pbc/pbc
+libbasic/libbasic.a
+tests/test_runtime
+*.o
+
+# Generated files
+pbc/scan.c
+pbc/pgram.c
+pbc/y.tab.h
+pbc/y.tab.c

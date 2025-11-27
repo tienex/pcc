@@ -694,6 +694,7 @@ BINPREFIX
 enable_targets
 enable_archs
 enable_bliss
+enable_basic
 enable_f77
 enable_pascal
 enable_cxx
@@ -3068,6 +3069,20 @@ case "$target_os" in
 	altlibdir="c:/mingw/lib"
 	;;
 
+    clr*|dotnet*|msil*)
+	# Microsoft CLR / .NET Framework target
+	# Generates ILASM (CIL/MSIL) for the Common Language Runtime
+	targos=clr
+	abi=ilasm
+	wchar_type=USHORT
+	# Default to i386 for CLR metadata, can override with --target=x86_64-clr
+	case "$target_cpu" in
+	    i?86) targmach=clr ;;
+	    x86_64) targmach=clr ;;  # CLR64 mode
+	    *) targmach=clr ;;  # Default CLR (32-bit)
+	esac
+	;;
+
    minix*)
         targos=minix
         targosver=`uname -v`
@@ -3567,6 +3582,7 @@ enable_c=no
 enable_cxx=no
 enable_pascal=no
 enable_f77=no
+enable_basic=no
 enable_bliss=no
 
 # Normalize language list (replace spaces with commas)
@@ -3589,6 +3605,9 @@ for lang in $enable_languages; do
 	f77|F77|fortran|FORTRAN)
 		enable_f77=yes
 		;;
+	basic|BASIC|bas|BAS)
+		enable_basic=yes
+		;;
 	bliss|BLISS)
 		enable_bliss=yes
 		;;
@@ -3597,13 +3616,14 @@ for lang in $enable_languages; do
 		enable_cxx=yes
 		enable_pascal=yes
 		enable_f77=yes
+		enable_basic=yes
 		enable_bliss=yes
 		;;
 	"")
 		# Skip empty entries
 		;;
 	*)
-		as_fn_error $? "Unknown language '$lang'. Supported: c, c++, pascal, f77, bliss, all" "$LINENO" 5
+		as_fn_error $? "Unknown language '$lang'. Supported: c, c++, pascal, f77, basic, bliss, all" "$LINENO" 5
 		;;
 	esac
 done
@@ -3615,6 +3635,7 @@ if test "$enable_c" = "no"; then
 printf "%s\n" "$as_me: WARNING: C language is required and will be enabled" >&2;}
 	enable_c=yes
 fi
+
 
 
 
@@ -6635,7 +6656,23 @@ CONFIG_MAKEFILES="Makefile
 		libckdint/Makefile
 		libdecimal/Makefile
 		libmetaware/Makefile
-		libblocks/Makefile"
+		libblocks/Makefile
+		libpascal/Makefile
+		libwirth/Makefile
+		libmangle/Makefile
+		libgc/Makefile
+		libexcept/Makefile
+		libustring/Makefile
+		libgthread/Makefile
+		libnet/Makefile
+		libpccir/Makefile
+		libunwind/Makefile
+		libxmath/Makefile
+		libvtable/Makefile
+		libcrt/Makefile
+		libbgi/Makefile
+		libvm/Makefile
+		libfs/Makefile"
 
 # C language is always included (required for bootstrap)
 CONFIG_MAKEFILES="$CONFIG_MAKEFILES
@@ -6665,6 +6702,15 @@ if test "$enable_pascal" = "yes"; then
 		pascal/Makefile
 		pascal/pascal/Makefile
 		pascal/pcom/Makefile"
+fi
+
+# Add BASIC if enabled
+if test "$enable_basic" = "yes"; then
+	CONFIG_MAKEFILES="$CONFIG_MAKEFILES
+		basic/Makefile
+		basic/basic/Makefile
+		basic/pbc/Makefile
+		basic/libbasic/Makefile"
 fi
 
 # Add BLISS if enabled
@@ -7964,6 +8010,7 @@ test "$enable_c" = "yes" && ENABLED_LANGUAGES="$ENABLED_LANGUAGES c"
 test "$enable_cxx" = "yes" && ENABLED_LANGUAGES="$ENABLED_LANGUAGES c++"
 test "$enable_pascal" = "yes" && ENABLED_LANGUAGES="$ENABLED_LANGUAGES pascal"
 test "$enable_f77" = "yes" && ENABLED_LANGUAGES="$ENABLED_LANGUAGES f77"
+test "$enable_basic" = "yes" && ENABLED_LANGUAGES="$ENABLED_LANGUAGES basic"
 test "$enable_bliss" = "yes" && ENABLED_LANGUAGES="$ENABLED_LANGUAGES bliss"
 ENABLED_LANGUAGES=`echo $ENABLED_LANGUAGES | sed 's/^ *//'`
 
