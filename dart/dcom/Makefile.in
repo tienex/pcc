@@ -1,0 +1,59 @@
+#	$Id$
+#
+# Makefile for Dart compiler (dcom)
+#
+
+CC=@CC@
+CFLAGS=@CFLAGS@ -I.
+LDFLAGS=@LDFLAGS@
+YACC=@YACC@
+LEX=@LEX@
+PREFIX=@prefix@
+LIBEXECDIR=$(PREFIX)/libexec
+
+PROG=	dcom
+OBJS=	main.o dgram.o scan.o symtab.o ast.o error.o codegen.o builtins.o
+
+all: $(PROG)
+
+$(PROG): $(OBJS)
+	$(CC) $(LDFLAGS) -o $@ $(OBJS)
+
+dgram.c dgram.h: dgram.y
+	$(YACC) -d -o dgram.c dgram.y
+
+scan.c: scan.l dgram.h
+	$(LEX) -o scan.c scan.l
+
+main.o: main.c pass1.h dgram.h
+	$(CC) $(CFLAGS) -c main.c
+
+dgram.o: dgram.c pass1.h
+	$(CC) $(CFLAGS) -c dgram.c
+
+scan.o: scan.c pass1.h dgram.h
+	$(CC) $(CFLAGS) -c scan.c
+
+symtab.o: symtab.c pass1.h
+	$(CC) $(CFLAGS) -c symtab.c
+
+ast.o: ast.c pass1.h
+	$(CC) $(CFLAGS) -c ast.c
+
+error.o: error.c pass1.h
+	$(CC) $(CFLAGS) -c error.c
+
+codegen.o: codegen.c pass1.h
+	$(CC) $(CFLAGS) -c codegen.c
+
+builtins.o: builtins.c pass1.h
+	$(CC) $(CFLAGS) -c builtins.c
+
+clean:
+	rm -f $(PROG) $(OBJS) dgram.c dgram.h scan.c
+
+install: $(PROG)
+	install -d $(LIBEXECDIR)
+	install -m 755 $(PROG) $(LIBEXECDIR)/
+
+.PHONY: all clean install

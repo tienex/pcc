@@ -1,0 +1,30 @@
+#	$Id$
+#
+# Makefile for Dart driver
+#
+
+CC=@CC@
+CFLAGS=@CFLAGS@
+LDFLAGS=@LDFLAGS@
+PREFIX=@prefix@
+BINDIR=$(PREFIX)/bin
+
+PROG=	dart
+OBJS=	dart.o
+
+all: $(PROG)
+
+$(PROG): $(OBJS)
+	$(CC) $(LDFLAGS) -o $@ $(OBJS)
+
+dart.o: dart.c
+	$(CC) $(CFLAGS) -c dart.c
+
+clean:
+	rm -f $(PROG) $(OBJS)
+
+install: $(PROG)
+	install -d $(BINDIR)
+	install -m 755 $(PROG) $(BINDIR)/
+
+.PHONY: all clean install
