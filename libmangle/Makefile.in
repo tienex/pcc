@@ -1,0 +1,50 @@
+# Makefile for libmangle (Symbol Mangler/Demangler Library)
+
+CC = @CC@
+AR = ar
+RANLIB = @RANLIB@
+CFLAGS = @CFLAGS@ -I. -Wall -Wextra -std=c99
+DESTDIR = @DESTDIR@
+prefix = @prefix@
+exec_prefix = @exec_prefix@
+libdir = @libdir@
+includedir = @includedir@
+
+LIB = libmangle.a
+HEADERS = mangle.h
+OBJS = mangle.o mangle_type.o mangle_cxx.o mangle_pcc.o demangle.o
+
+all: $(LIB)
+
+$(LIB): $(OBJS)
+	$(AR) rcs $(LIB) $(OBJS)
+	$(RANLIB) $(LIB)
+
+mangle.o: mangle.c mangle.h
+	$(CC) $(CFLAGS) -c mangle.c -o mangle.o
+
+mangle_type.o: mangle_type.c mangle.h
+	$(CC) $(CFLAGS) -c mangle_type.c -o mangle_type.o
+
+mangle_cxx.o: mangle_cxx.c mangle.h
+	$(CC) $(CFLAGS) -c mangle_cxx.c -o mangle_cxx.o
+
+mangle_pcc.o: mangle_pcc.c mangle.h
+	$(CC) $(CFLAGS) -c mangle_pcc.c -o mangle_pcc.o
+
+demangle.o: demangle.c mangle.h
+	$(CC) $(CFLAGS) -c demangle.c -o demangle.o
+
+install: $(LIB)
+	mkdir -p $(DESTDIR)$(libdir)
+	mkdir -p $(DESTDIR)$(includedir)
+	install -m 644 $(LIB) $(DESTDIR)$(libdir)/
+	install -m 644 $(HEADERS) $(DESTDIR)$(includedir)/
+
+clean:
+	rm -f $(OBJS) $(LIB)
+
+distclean: clean
+	rm -f Makefile
+
+.PHONY: all install clean distclean

@@ -1,0 +1,60 @@
+# Hello World Example
+# Prints "Hello, World!" using character output
+
+# Print 'H' (72)
+ldi r0, 72
+printc r0
+
+# Print 'e' (101)
+ldi r0, 101
+printc r0
+
+# Print 'l' (108)
+ldi r0, 108
+printc r0
+
+# Print 'l' (108)
+printc r0
+
+# Print 'o' (111)
+ldi r0, 111
+printc r0
+
+# Print ',' (44)
+ldi r0, 44
+printc r0
+
+# Print ' ' (32)
+ldi r0, 32
+printc r0
+
+# Print 'W' (87)
+ldi r0, 87
+printc r0
+
+# Print 'o' (111)
+ldi r0, 111
+printc r0
+
+# Print 'r' (114)
+ldi r0, 114
+printc r0
+
+# Print 'l' (108)
+ldi r0, 108
+printc r0
+
+# Print 'd' (100)
+ldi r0, 100
+printc r0
+
+# Print '!' (33)
+ldi r0, 33
+printc r0
+
+# Print newline (10)
+ldi r0, 10
+printc r0
+
+# Exit
+halt

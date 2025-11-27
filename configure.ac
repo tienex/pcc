@@ -1203,7 +1203,23 @@ CONFIG_MAKEFILES="Makefile
 		libckdint/Makefile
 		libdecimal/Makefile
 		libmetaware/Makefile
-		libblocks/Makefile"
+		libblocks/Makefile
+		libpascal/Makefile
+		libwirth/Makefile
+		libmangle/Makefile
+		libgc/Makefile
+		libexcept/Makefile
+		libustring/Makefile
+		libgthread/Makefile
+		libnet/Makefile
+		libpccir/Makefile
+		libunwind/Makefile
+		libxmath/Makefile
+		libvtable/Makefile
+		libcrt/Makefile
+		libbgi/Makefile
+		libvm/Makefile
+		libfs/Makefile"
 
 # C language is always included (required for bootstrap)
 CONFIG_MAKEFILES="$CONFIG_MAKEFILES
