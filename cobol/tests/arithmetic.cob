@@ -1,0 +1,27 @@
+      * Test arithmetic operations
+       IDENTIFICATION DIVISION.
+       PROGRAM-ID. ARITHMETIC-TEST.
+
+       DATA DIVISION.
+       WORKING-STORAGE SECTION.
+       01 NUM1   PIC 9(5) VALUE 100.
+       01 NUM2   PIC 9(5) VALUE 50.
+       01 RESULT PIC 9(5).
+
+       PROCEDURE DIVISION.
+           ADD NUM1 TO NUM2 GIVING RESULT.
+           DISPLAY "100 + 50 = " RESULT.
+
+           SUBTRACT NUM2 FROM NUM1 GIVING RESULT.
+           DISPLAY "100 - 50 = " RESULT.
+
+           MULTIPLY NUM1 BY 2 GIVING RESULT.
+           DISPLAY "100 * 2 = " RESULT.
+
+           DIVIDE NUM1 BY 2 GIVING RESULT.
+           DISPLAY "100 / 2 = " RESULT.
+
+           COMPUTE RESULT = NUM1 + NUM2 * 2.
+           DISPLAY "100 + 50 * 2 = " RESULT.
+
+           STOP RUN.
