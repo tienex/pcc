@@ -16,9 +16,13 @@ ENABLE_C = @enable_c@
 ENABLE_CXX = @enable_cxx@
 ENABLE_PASCAL = @enable_pascal@
 ENABLE_F77 = @enable_f77@
+ENABLE_BASIC = @enable_basic@
 ENABLE_BLISS = @enable_bliss@
 ENABLE_PXC = @enable_pxc@
 ENABLE_PLI = @enable_pli@
+ENABLE_CHILL = @enable_chill@
+ENABLE_ALGOL = @enable_algol@
+ENABLE_OCAML = @enable_ocaml@
 
 # Architecture and OS target selection
 ENABLE_ARCHS = @enable_archs@
@@ -38,7 +42,6 @@ bindir = @bindir@
 libdir = @libdir@
 libexecdir = @libexecdir@
 
-<<<<<<< HEAD
 # Base directories (always built)
 BASE_SUBDIRS=	common/abi libx86asm include
 
@@ -51,7 +54,9 @@ BASIC_SUBDIR=	basic
 BLISS_SUBDIR=	bliss
 PXC_SUBDIR=	pxc
 PLI_SUBDIR=	pli
+CHILL_SUBDIR=	chill
 ALGOL_SUBDIR=	algol60
+OCAML_SUBDIR=	ocaml
 
 # Build subdirectory list based on enabled languages
 # Note: C is always built first for bootstrap
@@ -74,12 +79,18 @@ endif
 ifeq ($(ENABLE_PLI),yes)
 LANG_SUBDIRS+=	$(PLI_SUBDIR)
 endif
+ifeq ($(ENABLE_CHILL),yes)
+LANG_SUBDIRS+=	$(CHILL_SUBDIR)
+endif
 ifeq ($(ENABLE_ALGOL),yes)
 LANG_SUBDIRS+=	$(ALGOL_SUBDIR)
 endif
+ifeq ($(ENABLE_OCAML),yes)
+LANG_SUBDIRS+=	$(OCAML_SUBDIR)
+endif
 
 ALL_SUBDIRS=	$(PORTABLE_LIBS) $(BASE_SUBDIRS) $(LANG_SUBDIRS)
-DIST_SUBDIRS=	$(BASE_SUBDIRS) $(C_SUBDIR) pascal f90 basic bliss pxc pli algol60 libunicode libthread libstdbit libckdint libdecimal libmetaware libblocks libpascal libwirth libbliss libmangle libgc libexcept libustring libgthread libnet libpccir libunwind libxmath libvtable libcrt libbgi libvm libfs libalgol60
+DIST_SUBDIRS=	$(BASE_SUBDIRS) $(C_SUBDIR) pascal f90 basic bliss pxc pli chill libchill algol60 ocaml libunicode libthread libstdbit libckdint libdecimal libmetaware libblocks libpascal libwirth libbliss libmangle libgc libexcept libustring libgthread libnet libpccir libunwind libxmath libvtable libcrt libbgi libvm libfs libalgol60 libocaml
 
 # Default targets - conditional on bootstrap
 all:

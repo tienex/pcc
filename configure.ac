@@ -610,6 +610,9 @@ enable_f77=no
 enable_basic=no
 enable_bliss=no
 enable_pxc=no
+enable_pli=no
+enable_chill=no
+enable_algol=no
 enable_ocaml=no
 
 # Normalize language list (replace spaces with commas)
@@ -641,6 +644,15 @@ for lang in $enable_languages; do
 	pxc|PXC|xbase++|xbasepp|XBASEPP)
 		enable_pxc=yes
 		;;
+	pli|PLI|pl1|PL1)
+		enable_pli=yes
+		;;
+	chill|CHILL)
+		enable_chill=yes
+		;;
+	algol|ALGOL|algol60|ALGOL60)
+		enable_algol=yes
+		;;
 	ocaml|OCaml|OCAML|ml|ML)
 		enable_ocaml=yes
 		;;
@@ -652,13 +664,16 @@ for lang in $enable_languages; do
 		enable_basic=yes
 		enable_bliss=yes
 		enable_pxc=yes
+		enable_pli=yes
+		enable_chill=yes
+		enable_algol=yes
 		enable_ocaml=yes
 		;;
 	"")
 		# Skip empty entries
 		;;
 	*)
-		AC_MSG_ERROR([Unknown language '$lang'. Supported: c, c++, pascal, f77, basic, bliss, pxc, all])
+		AC_MSG_ERROR([Unknown language '$lang'. Supported: c, c++, pascal, f77, basic, bliss, pxc, pli, chill, algol, ocaml, all])
 		;;
 	esac
 done
@@ -677,6 +692,9 @@ AC_SUBST(enable_f77)
 AC_SUBST(enable_basic)
 AC_SUBST(enable_bliss)
 AC_SUBST(enable_pxc)
+AC_SUBST(enable_pli)
+AC_SUBST(enable_chill)
+AC_SUBST(enable_algol)
 AC_SUBST(enable_ocaml)
 
 # Process architecture selection
@@ -1238,6 +1256,7 @@ CONFIG_MAKEFILES="Makefile
 		libblocks/Makefile
 		libpascal/Makefile
 		libwirth/Makefile
+		libbliss/Makefile
 		libmangle/Makefile
 		libgc/Makefile
 		libexcept/Makefile
@@ -1252,7 +1271,8 @@ CONFIG_MAKEFILES="Makefile
 		libbgi/Makefile
 		libvm/Makefile
 		libfs/Makefile
-		libalgol60/Makefile"
+		libalgol60/Makefile
+		libchill/Makefile"
 
 # C language is always included (required for bootstrap)
 CONFIG_MAKEFILES="$CONFIG_MAKEFILES
@@ -1311,13 +1331,20 @@ if test "$enable_pxc" = "yes"; then
 		pxc/libxbrt/Makefile"
 fi
 
-# Add OCaml if enabled
-if test "$enable_ocaml" = "yes"; then
+# Add PL/I if enabled
+if test "$enable_pli" = "yes"; then
 	CONFIG_MAKEFILES="$CONFIG_MAKEFILES
-		ocaml/Makefile
-		ocaml/ocaml/Makefile
-		ocaml/ocom/Makefile
-		libocaml/Makefile"
+		pli/Makefile
+		pli/pli/Makefile
+		pli/plcom/Makefile"
+fi
+
+# Add CHILL if enabled
+if test "$enable_chill" = "yes"; then
+	CONFIG_MAKEFILES="$CONFIG_MAKEFILES
+		chill/Makefile
+		chill/chill/Makefile
+		chill/chcom/Makefile"
 fi
 
 # Add ALGOL 60+ if enabled
@@ -1326,6 +1353,15 @@ if test "$enable_algol" = "yes"; then
 		algol60/Makefile
 		algol60/algol/Makefile
 		algol60/acom/Makefile"
+fi
+
+# Add OCaml if enabled
+if test "$enable_ocaml" = "yes"; then
+	CONFIG_MAKEFILES="$CONFIG_MAKEFILES
+		ocaml/Makefile
+		ocaml/ocaml/Makefile
+		ocaml/ocom/Makefile
+		libocaml/Makefile"
 fi
 
 AC_CONFIG_FILES([$CONFIG_MAKEFILES])
@@ -1344,8 +1380,10 @@ test "$enable_f77" = "yes" && ENABLED_LANGUAGES="$ENABLED_LANGUAGES f90"
 test "$enable_basic" = "yes" && ENABLED_LANGUAGES="$ENABLED_LANGUAGES basic"
 test "$enable_bliss" = "yes" && ENABLED_LANGUAGES="$ENABLED_LANGUAGES bliss"
 test "$enable_pxc" = "yes" && ENABLED_LANGUAGES="$ENABLED_LANGUAGES pxc"
-test "$enable_ocaml" = "yes" && ENABLED_LANGUAGES="$ENABLED_LANGUAGES ocaml"
+test "$enable_pli" = "yes" && ENABLED_LANGUAGES="$ENABLED_LANGUAGES pli"
+test "$enable_chill" = "yes" && ENABLED_LANGUAGES="$ENABLED_LANGUAGES chill"
 test "$enable_algol" = "yes" && ENABLED_LANGUAGES="$ENABLED_LANGUAGES algol60"
+test "$enable_ocaml" = "yes" && ENABLED_LANGUAGES="$ENABLED_LANGUAGES ocaml"
 ENABLED_LANGUAGES=`echo $ENABLED_LANGUAGES | sed 's/^ *//'`
 
 echo

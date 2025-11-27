@@ -1,0 +1,5 @@
+MODULE test;
+SPEC
+  DCL x INT;
+END;
+END;
