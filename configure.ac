@@ -541,7 +541,7 @@ AC_ARG_ENABLE(native,
 # Language selection options
 AC_ARG_ENABLE(languages,
 	AS_HELP_STRING([--enable-languages=LANGLIST],
-		[Comma-separated list of languages to build: c,c++,pascal,f77,bliss (default: c,c++)]),
+		[Comma-separated list of languages to build: c,c++,pascal,f77,bliss,prolog (default: c,c++)]),
 	[enable_languages=$enableval], [enable_languages=c,c++])
 
 # Architecture selection options
@@ -609,6 +609,7 @@ enable_pascal=no
 enable_f77=no
 enable_basic=no
 enable_bliss=no
+enable_prolog=no
 enable_pxc=no
 enable_pli=no
 enable_chill=no
@@ -641,6 +642,9 @@ for lang in $enable_languages; do
 	bliss|BLISS)
 		enable_bliss=yes
 		;;
+	prolog|PROLOG)
+		enable_prolog=yes
+		;;
 	pxc|PXC|xbase++|xbasepp|XBASEPP)
 		enable_pxc=yes
 		;;
@@ -663,6 +667,7 @@ for lang in $enable_languages; do
 		enable_f77=yes
 		enable_basic=yes
 		enable_bliss=yes
+		enable_prolog=yes
 		enable_pxc=yes
 		enable_pli=yes
 		enable_chill=yes
@@ -673,7 +678,7 @@ for lang in $enable_languages; do
 		# Skip empty entries
 		;;
 	*)
-		AC_MSG_ERROR([Unknown language '$lang'. Supported: c, c++, pascal, f77, basic, bliss, pxc, pli, chill, algol, ocaml, all])
+		AC_MSG_ERROR([Unknown language '$lang'. Supported: c, c++, pascal, f77, basic, bliss, prolog, pxc, pli, chill, algol, ocaml, all])
 		;;
 	esac
 done
@@ -691,6 +696,7 @@ AC_SUBST(enable_pascal)
 AC_SUBST(enable_f77)
 AC_SUBST(enable_basic)
 AC_SUBST(enable_bliss)
+AC_SUBST(enable_prolog)
 AC_SUBST(enable_pxc)
 AC_SUBST(enable_pli)
 AC_SUBST(enable_chill)
@@ -1254,7 +1260,6 @@ CONFIG_MAKEFILES="Makefile
 		libdecimal/Makefile
 		libmetaware/Makefile
 		libblocks/Makefile
-<<<<<<< HEAD
 		libpascal/Makefile
 		libwirth/Makefile
 		libbliss/Makefile
@@ -1322,6 +1327,15 @@ if test "$enable_bliss" = "yes"; then
 		bliss/bliss/Makefile
 		bliss/bcom/Makefile
 		libbliss/Makefile"
+fi
+
+# Add Prolog if enabled
+if test "$enable_prolog" = "yes"; then
+	CONFIG_MAKEFILES="$CONFIG_MAKEFILES
+		prolog/Makefile
+		prolog/prolog/Makefile
+		prolog/plogcom/Makefile
+		prolog/libprolog/Makefile"
 fi
 
 # Add PXC (Xbase++) if enabled
@@ -1393,6 +1407,7 @@ test "$enable_pascal" = "yes" && ENABLED_LANGUAGES="$ENABLED_LANGUAGES pascal"
 test "$enable_f77" = "yes" && ENABLED_LANGUAGES="$ENABLED_LANGUAGES f90"
 test "$enable_basic" = "yes" && ENABLED_LANGUAGES="$ENABLED_LANGUAGES basic"
 test "$enable_bliss" = "yes" && ENABLED_LANGUAGES="$ENABLED_LANGUAGES bliss"
+test "$enable_prolog" = "yes" && ENABLED_LANGUAGES="$ENABLED_LANGUAGES prolog"
 test "$enable_pxc" = "yes" && ENABLED_LANGUAGES="$ENABLED_LANGUAGES pxc"
 test "$enable_pli" = "yes" && ENABLED_LANGUAGES="$ENABLED_LANGUAGES pli"
 test "$enable_chill" = "yes" && ENABLED_LANGUAGES="$ENABLED_LANGUAGES chill"

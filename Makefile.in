@@ -52,6 +52,7 @@ PASCAL_SUBDIR=	pascal
 F77_SUBDIR=	f90
 BASIC_SUBDIR=	basic
 BLISS_SUBDIR=	bliss
+PROLOG_SUBDIR=	prolog
 PXC_SUBDIR=	pxc
 PLI_SUBDIR=	pli
 CHILL_SUBDIR=	chill
@@ -74,6 +75,9 @@ endif
 ifeq ($(ENABLE_BLISS),yes)
 LANG_SUBDIRS+=	$(BLISS_SUBDIR)
 endif
+ifeq ($(ENABLE_PROLOG),yes)
+LANG_SUBDIRS+=	$(PROLOG_SUBDIR)
+endif
 ifeq ($(ENABLE_PXC),yes)
 LANG_SUBDIRS+=	$(PXC_SUBDIR)
 endif
@@ -94,7 +98,7 @@ LANG_SUBDIRS+=	$(COBOL_SUBDIR)
 endif
 
 ALL_SUBDIRS=	$(PORTABLE_LIBS) $(BASE_SUBDIRS) $(LANG_SUBDIRS)
-DIST_SUBDIRS=	$(BASE_SUBDIRS) $(C_SUBDIR) pascal f90 basic bliss pxc pli chill libchill algol60 ocaml cobol libunicode libthread libstdbit libckdint libdecimal libmetaware libblocks libcobol libpascal libwirth libbliss libmangle libgc libexcept libustring libgthread libnet libpccir libunwind libxmath libvtable libcrt libbgi libvm libfs libalgol60 libocaml
+DIST_SUBDIRS=	$(BASE_SUBDIRS) $(C_SUBDIR) pascal f90 basic bliss prolog pxc pli chill libchill algol60 ocaml cobol libunicode libthread libstdbit libckdint libdecimal libmetaware libblocks libcobol libpascal libwirth libbliss libmangle libgc libexcept libustring libgthread libnet libpccir libunwind libxmath libvtable libcrt libbgi libvm libfs libalgol60 libocaml
 
 # Default targets - conditional on bootstrap
 all:

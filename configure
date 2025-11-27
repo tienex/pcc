@@ -698,6 +698,7 @@ enable_algol
 enable_chill
 enable_pli
 enable_pxc
+enable_prolog
 enable_bliss
 enable_basic
 enable_f77
@@ -1431,7 +1432,7 @@ Optional Features:
                           cross-build compiler
   --enable-languages=LANGLIST
                           Comma-separated list of languages to build:
-                          c,c++,pascal,f77,bliss (default: c,c++)
+                          c,c++,pascal,f77,bliss,prolog (default: c,c++)
   --enable-archs=ARCHLIST Comma-separated list of target architectures
                           (default: host architecture)
   --enable-targets=OSLIST Comma-separated list of target operating systems
@@ -3603,6 +3604,7 @@ enable_pascal=no
 enable_f77=no
 enable_basic=no
 enable_bliss=no
+enable_prolog=no
 enable_pxc=no
 enable_pli=no
 enable_chill=no
@@ -3635,6 +3637,9 @@ for lang in $enable_languages; do
 	bliss|BLISS)
 		enable_bliss=yes
 		;;
+	prolog|PROLOG)
+		enable_prolog=yes
+		;;
 	pxc|PXC|xbase++|xbasepp|XBASEPP)
 		enable_pxc=yes
 		;;
@@ -3657,6 +3662,7 @@ for lang in $enable_languages; do
 		enable_f77=yes
 		enable_basic=yes
 		enable_bliss=yes
+		enable_prolog=yes
 		enable_pxc=yes
 		enable_pli=yes
 		enable_chill=yes
@@ -3667,7 +3673,7 @@ for lang in $enable_languages; do
 		# Skip empty entries
 		;;
 	*)
-		as_fn_error $? "Unknown language '$lang'. Supported: c, c++, pascal, f77, basic, bliss, pxc, pli, chill, algol, ocaml, all" "$LINENO" 5
+		as_fn_error $? "Unknown language '$lang'. Supported: c, c++, pascal, f77, basic, bliss, prolog, pxc, pli, chill, algol, ocaml, all" "$LINENO" 5
 		;;
 	esac
 done
@@ -3679,6 +3685,7 @@ if test "$enable_c" = "no"; then
 printf "%s\n" "$as_me: WARNING: C language is required and will be enabled" >&2;}
 	enable_c=yes
 fi
+
 
 
 
@@ -6724,7 +6731,8 @@ CONFIG_MAKEFILES="Makefile
 		libvm/Makefile
 		libfs/Makefile
 		libalgol60/Makefile
-		libchill/Makefile"
+		libchill/Makefile
+		libcobol/Makefile"
 
 # C language is always included (required for bootstrap)
 CONFIG_MAKEFILES="$CONFIG_MAKEFILES
@@ -6774,6 +6782,15 @@ if test "$enable_bliss" = "yes"; then
 		libbliss/Makefile"
 fi
 
+# Add Prolog if enabled
+if test "$enable_prolog" = "yes"; then
+	CONFIG_MAKEFILES="$CONFIG_MAKEFILES
+		prolog/Makefile
+		prolog/prolog/Makefile
+		prolog/plogcom/Makefile
+		prolog/libprolog/Makefile"
+fi
+
 # Add PXC (Xbase++) if enabled
 if test "$enable_pxc" = "yes"; then
 	CONFIG_MAKEFILES="$CONFIG_MAKEFILES
@@ -6816,8 +6833,20 @@ if test "$enable_ocaml" = "yes"; then
 		libocaml/Makefile"
 fi
 
+# Add COBOL if enabled
+if test "$enable_cobol" = "yes"; then
+	CONFIG_MAKEFILES="$CONFIG_MAKEFILES
+		cobol/Makefile
+		cobol/cobol/Makefile
+		cobol/cbolcom/Makefile"
+fi
+
 ac_config_files="$ac_config_files $CONFIG_MAKEFILES"
 
+=======
+		libcobol/Makefile
+])
+>>>>>>> 1748df8 (Add comprehensive COBOL runtime library (libcobol))
 cat >confcache <<\_ACEOF
 # This file is a shell script that caches the results of configure
 # tests run on this system so they can be shared between configure
@@ -8106,11 +8135,13 @@ test "$enable_pascal" = "yes" && ENABLED_LANGUAGES="$ENABLED_LANGUAGES pascal"
 test "$enable_f77" = "yes" && ENABLED_LANGUAGES="$ENABLED_LANGUAGES f90"
 test "$enable_basic" = "yes" && ENABLED_LANGUAGES="$ENABLED_LANGUAGES basic"
 test "$enable_bliss" = "yes" && ENABLED_LANGUAGES="$ENABLED_LANGUAGES bliss"
+test "$enable_prolog" = "yes" && ENABLED_LANGUAGES="$ENABLED_LANGUAGES prolog"
 test "$enable_pxc" = "yes" && ENABLED_LANGUAGES="$ENABLED_LANGUAGES pxc"
 test "$enable_pli" = "yes" && ENABLED_LANGUAGES="$ENABLED_LANGUAGES pli"
 test "$enable_chill" = "yes" && ENABLED_LANGUAGES="$ENABLED_LANGUAGES chill"
 test "$enable_algol" = "yes" && ENABLED_LANGUAGES="$ENABLED_LANGUAGES algol60"
 test "$enable_ocaml" = "yes" && ENABLED_LANGUAGES="$ENABLED_LANGUAGES ocaml"
+test "$enable_cobol" = "yes" && ENABLED_LANGUAGES="$ENABLED_LANGUAGES cobol"
 ENABLED_LANGUAGES=`echo $ENABLED_LANGUAGES | sed 's/^ *//'`
 
 echo

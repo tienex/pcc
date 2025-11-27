@@ -1,0 +1,75 @@
+#	$Id$
+#
+# Makefile.in for Prolog runtime library
+#
+VPATH=@srcdir@
+srcdir=@srcdir@
+top_srcdir=@top_srcdir@
+top_builddir=@top_builddir@
+prefix = @prefix@
+exec_prefix = @exec_prefix@
+bindir = @bindir@
+libdir = @libdir@
+libexecdir = @libexecdir@
+datarootdir = @datarootdir@
+includedir = @includedir@
+CC = @CC@
+AR = ar
+RANLIB = @RANLIB@
+CFLAGS = @CFLAGS@ @ADD_CFLAGS@
+CPPFLAGS = @CPPFLAGS@ @ADD_CPPFLAGS@ \
+	-I$(srcdir) -I$(top_builddir)
+LIBS = @LIBS@ -lm
+LDFLAGS = @LDFLAGS@
+INSTALL = @INSTALL@
+INSTALL_DATA = @INSTALL_DATA@
+
+OBJS = engine.o unify.o terms.o backtrack.o builtins.o print.o \
+       arithmetic.o predicates.o error.o
+
+LIB = libprolog.a
+
+all: $(LIB)
+
+$(LIB): $(OBJS)
+	$(AR) rcs $@ $(OBJS)
+	$(RANLIB) $@
+
+engine.o: $(srcdir)/engine.c $(srcdir)/runtime.h
+	$(CC) $(CPPFLAGS) $(CFLAGS) -c $(srcdir)/engine.c
+
+unify.o: $(srcdir)/unify.c $(srcdir)/runtime.h
+	$(CC) $(CPPFLAGS) $(CFLAGS) -c $(srcdir)/unify.c
+
+terms.o: $(srcdir)/terms.c $(srcdir)/runtime.h
+	$(CC) $(CPPFLAGS) $(CFLAGS) -c $(srcdir)/terms.c
+
+backtrack.o: $(srcdir)/backtrack.c $(srcdir)/runtime.h
+	$(CC) $(CPPFLAGS) $(CFLAGS) -c $(srcdir)/backtrack.c
+
+builtins.o: $(srcdir)/builtins.c $(srcdir)/runtime.h
+	$(CC) $(CPPFLAGS) $(CFLAGS) -c $(srcdir)/builtins.c
+
+print.o: $(srcdir)/print.c $(srcdir)/runtime.h
+	$(CC) $(CPPFLAGS) $(CFLAGS) -c $(srcdir)/print.c
+
+arithmetic.o: $(srcdir)/arithmetic.c $(srcdir)/runtime.h
+	$(CC) $(CPPFLAGS) $(CFLAGS) -c $(srcdir)/arithmetic.c
+
+predicates.o: $(srcdir)/predicates.c $(srcdir)/runtime.h
+	$(CC) $(CPPFLAGS) $(CFLAGS) -c $(srcdir)/predicates.c
+
+error.o: $(srcdir)/error.c $(srcdir)/runtime.h
+	$(CC) $(CPPFLAGS) $(CFLAGS) -c $(srcdir)/error.c
+
+install: all
+	test -z "$(DESTDIR)$(libdir)" || mkdir -p "$(DESTDIR)$(libdir)"
+	test -z "$(DESTDIR)$(includedir)/prolog" || mkdir -p "$(DESTDIR)$(includedir)/prolog"
+	$(INSTALL_DATA) $(LIB) $(DESTDIR)$(libdir)
+	$(INSTALL_DATA) $(srcdir)/runtime.h $(DESTDIR)$(includedir)/prolog
+
+clean:
+	rm -f $(OBJS) $(LIB)
+
+distclean: clean
+	rm -f Makefile
