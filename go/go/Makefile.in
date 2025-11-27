@@ -1,0 +1,44 @@
+#	$Id$
+#
+# Makefile.in for go driver
+#
+
+VPATH=@srcdir@
+srcdir=@srcdir@
+top_srcdir=@top_srcdir@
+top_builddir=@top_builddir@
+prefix = @prefix@
+exec_prefix = @exec_prefix@
+bindir = @bindir@
+libexecdir = @libexecdir@
+CC = @CC@
+EXEEXT = @EXEEXT@
+CFLAGS = @CFLAGS@ @ADD_CFLAGS@
+CPPFLAGS = @CPPFLAGS@ @ADD_CPPFLAGS@ \
+	-DLIBEXECDIR=\"$(libexecdir)/pcc\" \
+	-DASSEMBLER=\"@ASSEMBLER@\" \
+	-DLINKER=\"@LINKER@\"
+LIBS = @LIBS@
+LDFLAGS = @LDFLAGS@
+INSTALL = @INSTALL@
+INSTALL_PROGRAM = @INSTALL_PROGRAM@
+
+all: go$(EXEEXT)
+
+go$(EXEEXT): go.o
+	$(CC) $(LDFLAGS) go.o -o $@ $(LIBS)
+
+go.o: go.c
+	$(CC) $(CPPFLAGS) $(CFLAGS) -c $(srcdir)/go.c
+
+install: all
+	test -z "$(bindir)" || mkdir -p "$(bindir)"
+	$(INSTALL_PROGRAM) go$(EXEEXT) $(bindir)
+
+clean:
+	rm -f go.o go$(EXEEXT)
+
+distclean: clean
+	rm -f Makefile
+
+.PHONY: all install clean distclean

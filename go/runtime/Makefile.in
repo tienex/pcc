@@ -1,0 +1,77 @@
+#	$Id$
+#
+# Makefile.in for Go runtime library
+#
+
+VPATH=@srcdir@
+srcdir=@srcdir@
+top_srcdir=@top_srcdir@
+top_builddir=@top_builddir@
+prefix = @prefix@
+exec_prefix = @exec_prefix@
+libdir = @libdir@
+CC = @CC@
+AR = @AR@
+RANLIB = @RANLIB@
+CFLAGS = @CFLAGS@ @ADD_CFLAGS@ -fPIC
+CPPFLAGS = @CPPFLAGS@ @ADD_CPPFLAGS@ -I$(srcdir)
+INSTALL = @INSTALL@
+INSTALL_DATA = @INSTALL_DATA@
+
+OBJS = runtime.o string.o slice.o map.o chan.o goroutine.o \
+       panic.o iface.o builtin.o gc.o atomic.o
+
+LIBNAME = libgoruntime.a
+
+all: $(LIBNAME)
+
+$(LIBNAME): $(OBJS)
+	$(AR) rcs $(LIBNAME) $(OBJS)
+	$(RANLIB) $(LIBNAME)
+
+runtime.o: runtime.c runtime.h
+	$(CC) $(CPPFLAGS) $(CFLAGS) -c $(srcdir)/runtime.c
+
+string.o: string.c runtime.h
+	$(CC) $(CPPFLAGS) $(CFLAGS) -c $(srcdir)/string.c
+
+slice.o: slice.c runtime.h
+	$(CC) $(CPPFLAGS) $(CFLAGS) -c $(srcdir)/slice.c
+
+map.o: map.c runtime.h
+	$(CC) $(CPPFLAGS) $(CFLAGS) -c $(srcdir)/map.c
+
+chan.o: chan.c runtime.h
+	$(CC) $(CPPFLAGS) $(CFLAGS) -c $(srcdir)/chan.c -pthread
+
+goroutine.o: goroutine.c runtime.h
+	$(CC) $(CPPFLAGS) $(CFLAGS) -c $(srcdir)/goroutine.c -pthread
+
+panic.o: panic.c runtime.h
+	$(CC) $(CPPFLAGS) $(CFLAGS) -c $(srcdir)/panic.c
+
+iface.o: iface.c runtime.h
+	$(CC) $(CPPFLAGS) $(CFLAGS) -c $(srcdir)/iface.c
+
+builtin.o: builtin.c runtime.h
+	$(CC) $(CPPFLAGS) $(CFLAGS) -c $(srcdir)/builtin.c
+
+gc.o: gc.c runtime.h
+	$(CC) $(CPPFLAGS) $(CFLAGS) -c $(srcdir)/gc.c
+
+atomic.o: atomic.c runtime.h
+	$(CC) $(CPPFLAGS) $(CFLAGS) -c $(srcdir)/atomic.c
+
+install: $(LIBNAME)
+	test -z "$(libdir)" || mkdir -p "$(libdir)"
+	$(INSTALL_DATA) $(LIBNAME) $(libdir)
+	test -z "$(prefix)/include/go" || mkdir -p "$(prefix)/include/go"
+	$(INSTALL_DATA) $(srcdir)/runtime.h $(prefix)/include/go
+
+clean:
+	rm -f $(OBJS) $(LIBNAME)
+
+distclean: clean
+	rm -f Makefile
+
+.PHONY: all install clean distclean
