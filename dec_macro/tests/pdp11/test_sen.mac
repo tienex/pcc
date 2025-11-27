@@ -1,0 +1,11 @@
+; Test SEN - SEN operation (PDP-11)
+
+	.PSECT	CODE
+
+START:
+	SEN	R1,R2
+	HALT
+
+DATA:	.WORD	0
+
+	.END

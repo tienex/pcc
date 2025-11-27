@@ -1,0 +1,15 @@
+; Test SOJLE - Subtract One and Jump if Less or Equal (PDP-10)
+; Expected: AC2--, jump if result <= 0
+
+	.PSECT	CODE
+
+START:
+	MOVEI 2,1
+	SOJLE	2,LABEL
+	MOVEI	1,999
+LABEL:	MOVEI	1,200
+	HALT
+
+DATA:	.WORD	0
+
+	.END

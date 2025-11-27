@@ -1,0 +1,11 @@
+; Test COM - COM operation (PDP-11)
+
+	.PSECT	CODE
+
+START:
+	COM	R1,R2
+	HALT
+
+DATA:	.WORD	0
+
+	.END

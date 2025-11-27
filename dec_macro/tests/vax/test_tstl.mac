@@ -1,0 +1,11 @@
+; Test TSTL - TSTL operation (VAX)
+
+	.PSECT	CODE
+
+START:
+	TSTL	R1,R2
+	HALT
+
+DATA:	.WORD	0
+
+	.END

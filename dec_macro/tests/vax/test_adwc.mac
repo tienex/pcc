@@ -1,0 +1,11 @@
+; Test ADWC - ADWC operation (VAX)
+
+	.PSECT	CODE
+
+START:
+	ADWC	R1,R2
+	HALT
+
+DATA:	.WORD	0
+
+	.END

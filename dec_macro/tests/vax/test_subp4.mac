@@ -1,0 +1,11 @@
+; Test SUBP4 - SUBP4 operation (VAX)
+
+	.PSECT	CODE
+
+START:
+	SUBP4	R1,R2
+	HALT
+
+DATA:	.WORD	0
+
+	.END

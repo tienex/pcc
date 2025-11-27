@@ -1,0 +1,14 @@
+; Test AOSN - Add One to memory and Skip if Not Equal (PDP-10)
+; Expected: DATA++, skip if result != 0
+
+	.PSECT	CODE
+
+START:
+	MOVEI 1,1
+	MOVEM 1,DATA
+	AOSN	DATA
+	HALT
+
+DATA:	.WORD	0
+
+	.END

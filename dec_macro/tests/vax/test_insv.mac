@@ -1,0 +1,11 @@
+; Test INSV - INSV operation (VAX)
+
+	.PSECT	CODE
+
+START:
+	INSV	R1,R2
+	HALT
+
+DATA:	.WORD	0
+
+	.END

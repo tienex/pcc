@@ -1,0 +1,13 @@
+; Test HRRM - Half Right to Right to Memory (PDP-10)
+; Expected: DATA[18:35] = AC1[18:35], DATA[0:17] unchanged
+
+	.PSECT	CODE
+
+START:
+	MOVEI 1,0123
+	HRRM	1,DATA
+	HALT
+
+DATA:	.WORD	0
+
+	.END

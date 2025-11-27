@@ -1,0 +1,11 @@
+; Test MOVAW - MOVAW operation (VAX)
+
+	.PSECT	CODE
+
+START:
+	MOVAW	R1,R2
+	HALT
+
+DATA:	.WORD	0
+
+	.END

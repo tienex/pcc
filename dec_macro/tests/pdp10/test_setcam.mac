@@ -1,0 +1,13 @@
+; Test SETCAM - Set Complement AC to Memory (PDP-10)
+; Expected: DATA = ~AC1, CC updated
+
+	.PSECT	CODE
+
+START:
+	MOVEI 1,0123456
+	SETCAM	1,DATA
+	HALT
+
+DATA:	.WORD	0
+
+	.END

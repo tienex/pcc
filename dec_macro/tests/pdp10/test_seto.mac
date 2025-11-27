@@ -1,0 +1,12 @@
+; Test SETO - Set to Ones (PDP-10)
+; Expected: AC1 = -1 (all 1s)
+
+	.PSECT	CODE
+
+START:
+	SETO	1,0
+	HALT
+
+DATA:	.WORD	0
+
+	.END

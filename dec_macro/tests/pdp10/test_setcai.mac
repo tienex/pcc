@@ -1,0 +1,13 @@
+; Test SETCAI - Set Complement AC Immediate (PDP-10)
+; Expected: AC1 = ~AC1, CC updated
+
+	.PSECT	CODE
+
+START:
+	MOVEI 1,0123456
+	SETCAI	1,1
+	HALT
+
+DATA:	.WORD	0
+
+	.END

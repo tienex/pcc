@@ -1,0 +1,12 @@
+; Test SETZM - Set to Zero to Memory (PDP-10)
+; Expected: DATA = 0, Z=1
+
+	.PSECT	CODE
+
+START:
+	SETZM	DATA
+	HALT
+
+DATA:	.WORD	0
+
+	.END

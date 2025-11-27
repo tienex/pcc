@@ -1,0 +1,12 @@
+; Test CONI - CONI (PDP-10)
+; Expected: Operation CONI
+
+	.PSECT	CODE
+
+START:
+	CONI
+	HALT
+
+DATA:	.WORD	0
+
+	.END

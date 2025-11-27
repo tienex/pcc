@@ -1,0 +1,14 @@
+; Test AOSL - Add One to memory and Skip if Less (PDP-10)
+; Expected: DATA++, skip if result < 0
+
+	.PSECT	CODE
+
+START:
+	MOVEI 1,-10
+	MOVEM 1,DATA
+	AOSL	DATA
+	HALT
+
+DATA:	.WORD	0
+
+	.END

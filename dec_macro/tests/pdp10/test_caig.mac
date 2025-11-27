@@ -1,0 +1,13 @@
+; Test CAIG - Compare AC Immediate, skip if Greater (PDP-10)
+; Expected: Compare AC1 with 50, skip if AC1 > 50
+
+	.PSECT	CODE
+
+START:
+	MOVEI 1,100
+	CAIG	1,50
+	HALT
+
+DATA:	.WORD	0
+
+	.END

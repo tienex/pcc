@@ -1,0 +1,11 @@
+; Test BSBB - BSBB operation (VAX)
+
+	.PSECT	CODE
+
+START:
+	BSBB	R1,R2
+	HALT
+
+DATA:	.WORD	0
+
+	.END

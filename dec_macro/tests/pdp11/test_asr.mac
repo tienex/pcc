@@ -1,0 +1,11 @@
+; Test ASR - ASR operation (PDP-11)
+
+	.PSECT	CODE
+
+START:
+	ASR	R1,R2
+	HALT
+
+DATA:	.WORD	0
+
+	.END

@@ -1,0 +1,11 @@
+; Test MTPS - MTPS operation (PDP-11)
+
+	.PSECT	CODE
+
+START:
+	MTPS	R1,R2
+	HALT
+
+DATA:	.WORD	0
+
+	.END

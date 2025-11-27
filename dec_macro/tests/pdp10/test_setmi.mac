@@ -1,0 +1,12 @@
+; Test SETMI - SETMI (PDP-10)
+; Expected: Operation SETMI
+
+	.PSECT	CODE
+
+START:
+	SETMI
+	HALT
+
+DATA:	.WORD	0
+
+	.END

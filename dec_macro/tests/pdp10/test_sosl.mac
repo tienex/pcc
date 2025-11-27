@@ -1,0 +1,14 @@
+; Test SOSL - Subtract One from memory and Skip if Less (PDP-10)
+; Expected: DATA--, skip if result < 0
+
+	.PSECT	CODE
+
+START:
+	MOVEI 1,0
+	MOVEM 1,DATA
+	SOSL	DATA
+	HALT
+
+DATA:	.WORD	0
+
+	.END

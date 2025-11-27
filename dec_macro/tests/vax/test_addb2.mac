@@ -1,0 +1,11 @@
+; Test ADDB2 - ADDB2 operation (VAX)
+
+	.PSECT	CODE
+
+START:
+	ADDB2	R1,R2
+	HALT
+
+DATA:	.WORD	0
+
+	.END

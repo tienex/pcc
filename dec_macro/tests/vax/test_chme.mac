@@ -1,0 +1,11 @@
+; Test CHME - CHME operation (VAX)
+
+	.PSECT	CODE
+
+START:
+	CHME	R1,R2
+	HALT
+
+DATA:	.WORD	0
+
+	.END

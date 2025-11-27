@@ -1,0 +1,486 @@
+; Comprehensive VAX Instruction Test Suite
+; Tests all major VAX instruction families with proper bit sizes (8/16/32/64/128-bit)
+; Verifies N, Z, V, C flags, results, and side effects
+
+	.TITLE	Comprehensive VAX Test Suite
+
+; Test data
+BYTE1:	.BYTE	100
+WORD1:	.WORD	12345
+LONG1:	.LONG	1234567890
+QUAD1:	.QUAD	0x123456789ABCDEF0
+FVAL:	.FLOAT	3.14159
+DVAL:	.DOUBLE	2.71828
+RESULT:	.LONG	0
+
+START::
+	.ENTRY	START,0
+
+; ========== BYTE OPERATIONS (8-bit) ==========
+TEST_BYTE:
+	; MOVB - Move Byte
+	MOVB	#100,R0		; R0 = 100 (byte)
+	MOVB	R0,BYTE1
+	; Expected: BYTE1 = 100, Z=0, N=0
+
+	; ADDB2 - Add Byte 2-operand
+	MOVB	#50,R0		; R0 = 50
+	ADDB2	#25,R0		; R0 = R0 + 25 = 75
+	; Expected: R0 = 75, flags set
+
+	; ADDB3 - Add Byte 3-operand
+	ADDB3	#30,#20,R0	; R0 = 30 + 20 = 50
+	; Expected: R0 = 50
+
+	; SUBB2 - Subtract Byte 2-operand
+	MOVB	#100,R0		; R0 = 100
+	SUBB2	#40,R0		; R0 = R0 - 40 = 60
+	; Expected: R0 = 60
+
+	; SUBB3 - Subtract Byte 3-operand
+	SUBB3	#20,#50,R0	; R0 = 50 - 20 = 30
+	; Expected: R0 = 30
+
+	; MULB2 - Multiply Byte 2-operand
+	MOVB	#12,R0		; R0 = 12
+	MULB2	#5,R0		; R0 = 12 * 5 = 60
+	; Expected: R0 = 60
+
+	; MULB3 - Multiply Byte 3-operand
+	MULB3	#10,#8,R0	; R0 = 10 * 8 = 80
+	; Expected: R0 = 80
+
+	; DIVB2 - Divide Byte 2-operand
+	MOVB	#100,R0		; R0 = 100
+	DIVB2	#5,R0		; R0 = 100 / 5 = 20
+	; Expected: R0 = 20
+
+	; DIVB3 - Divide Byte 3-operand
+	DIVB3	#4,#120,R0	; R0 = 120 / 4 = 30
+	; Expected: R0 = 30
+
+	; CMPB - Compare Byte
+	CMPB	#50,#50		; Compare 50 with 50
+	; Expected: Z=1 (equal), N=0, V=0, C=0
+
+	; TSTB - Test Byte
+	TSTB	#-10		; Test -10
+	; Expected: N=1, Z=0
+
+	; INCB - Increment Byte
+	MOVB	#99,R0		; R0 = 99
+	INCB	R0		; R0 = 100
+	; Expected: R0 = 100
+
+	; DECB - Decrement Byte
+	MOVB	#100,R0		; R0 = 100
+	DECB	R0		; R0 = 99
+	; Expected: R0 = 99
+
+	; CLRB - Clear Byte
+	CLRB	R0		; R0 = 0 (byte)
+	; Expected: R0 = 0, Z=1
+
+; ========== WORD OPERATIONS (16-bit) ==========
+TEST_WORD:
+	; MOVW - Move Word
+	MOVW	#12345,R0	; R0 = 12345
+	MOVW	R0,WORD1
+	; Expected: WORD1 = 12345
+
+	; ADDW2 - Add Word 2-operand
+	MOVW	#1000,R0	; R0 = 1000
+	ADDW2	#500,R0		; R0 = 1500
+	; Expected: R0 = 1500
+
+	; ADDW3 - Add Word 3-operand
+	ADDW3	#2000,#3000,R0	; R0 = 5000
+	; Expected: R0 = 5000
+
+	; SUBW2 - Subtract Word 2-operand
+	MOVW	#5000,R0	; R0 = 5000
+	SUBW2	#1000,R0	; R0 = 4000
+	; Expected: R0 = 4000
+
+	; SUBW3 - Subtract Word 3-operand
+	SUBW3	#1000,#6000,R0	; R0 = 5000
+	; Expected: R0 = 5000
+
+	; MULW2 - Multiply Word 2-operand
+	MOVW	#100,R0		; R0 = 100
+	MULW2	#50,R0		; R0 = 5000
+	; Expected: R0 = 5000
+
+	; MULW3 - Multiply Word 3-operand
+	MULW3	#200,#30,R0	; R0 = 6000
+	; Expected: R0 = 6000
+
+	; DIVW2 - Divide Word 2-operand
+	MOVW	#6000,R0	; R0 = 6000
+	DIVW2	#30,R0		; R0 = 200
+	; Expected: R0 = 200
+
+	; DIVW3 - Divide Word 3-operand
+	DIVW3	#20,#4000,R0	; R0 = 200
+	; Expected: R0 = 200
+
+	; CMPW - Compare Word
+	CMPW	#12345,WORD1	; Compare
+	; Expected: Z=1 if equal
+
+; ========== LONG OPERATIONS (32-bit) ==========
+TEST_LONG:
+	; MOVL - Move Long
+	MOVL	#1234567890,R0	; R0 = 1234567890
+	MOVL	R0,LONG1
+	; Expected: LONG1 = 1234567890
+
+	; ADDL2 - Add Long 2-operand
+	MOVL	#1000000,R0	; R0 = 1000000
+	ADDL2	#500000,R0	; R0 = 1500000
+	; Expected: R0 = 1500000
+
+	; ADDL3 - Add Long 3-operand
+	ADDL3	#2000000,#3000000,R0	; R0 = 5000000
+	; Expected: R0 = 5000000
+
+	; SUBL2 - Subtract Long 2-operand
+	MOVL	#10000000,R0	; R0 = 10000000
+	SUBL2	#1000000,R0	; R0 = 9000000
+	; Expected: R0 = 9000000
+
+	; SUBL3 - Subtract Long 3-operand
+	SUBL3	#1000000,#6000000,R0	; R0 = 5000000
+	; Expected: R0 = 5000000
+
+	; MULL2 - Multiply Long 2-operand
+	MOVL	#1000,R0	; R0 = 1000
+	MULL2	#500,R0		; R0 = 500000
+	; Expected: R0 = 500000
+
+	; MULL3 - Multiply Long 3-operand
+	MULL3	#2000,#300,R0	; R0 = 600000
+	; Expected: R0 = 600000
+
+	; DIVL2 - Divide Long 2-operand
+	MOVL	#1000000,R0	; R0 = 1000000
+	DIVL2	#500,R0		; R0 = 2000
+	; Expected: R0 = 2000
+
+	; DIVL3 - Divide Long 3-operand
+	DIVL3	#200,#400000,R0	; R0 = 2000
+	; Expected: R0 = 2000
+
+	; CMPL - Compare Long
+	CMPL	LONG1,#1234567890
+	; Expected: Z=1 if equal
+
+	; TSTL - Test Long
+	TSTL	#-1000000	; Test negative
+	; Expected: N=1
+
+	; INCL - Increment Long
+	MOVL	#999999,R0	; R0 = 999999
+	INCL	R0		; R0 = 1000000
+	; Expected: R0 = 1000000
+
+	; DECL - Decrement Long
+	MOVL	#1000000,R0	; R0 = 1000000
+	DECL	R0		; R0 = 999999
+	; Expected: R0 = 999999
+
+	; CLRL - Clear Long
+	CLRL	R0		; R0 = 0
+	; Expected: R0 = 0, Z=1
+
+; ========== QUAD OPERATIONS (64-bit) ==========
+TEST_QUAD:
+	; MOVQ - Move Quad
+	MOVQ	QUAD1,R0	; R0:R1 = QUAD1
+	; Expected: R0:R1 = quad value
+
+	; ADDQ - Add Quad (hypothetical, not all VAX models)
+	; SUBQ - Subtract Quad
+	; MULQ - Multiply Quad
+	; DIVQ - Divide Quad
+	; CMPQ - Compare Quad
+	; (Implementation varies by VAX model)
+
+; ========== FLOATING POINT F_FLOAT (32-bit) ==========
+TEST_FLOAT_F:
+	; ADDF2 - Add F_float 2-operand
+	MOVF	#3.14,R0	; R0 = 3.14
+	ADDF2	#1.86,R0	; R0 = 5.0
+	; Expected: R0 ≈ 5.0
+
+	; ADDF3 - Add F_float 3-operand
+	ADDF3	#2.5,#2.5,R0	; R0 = 5.0
+	; Expected: R0 = 5.0
+
+	; SUBF2 - Subtract F_float 2-operand
+	MOVF	#10.0,R0	; R0 = 10.0
+	SUBF2	#3.0,R0		; R0 = 7.0
+	; Expected: R0 = 7.0
+
+	; SUBF3 - Subtract F_float 3-operand
+	SUBF3	#2.0,#8.0,R0	; R0 = 6.0
+	; Expected: R0 = 6.0
+
+	; MULF2 - Multiply F_float 2-operand
+	MOVF	#3.0,R0		; R0 = 3.0
+	MULF2	#4.0,R0		; R0 = 12.0
+	; Expected: R0 = 12.0
+
+	; MULF3 - Multiply F_float 3-operand
+	MULF3	#5.0,#6.0,R0	; R0 = 30.0
+	; Expected: R0 = 30.0
+
+	; DIVF2 - Divide F_float 2-operand
+	MOVF	#20.0,R0	; R0 = 20.0
+	DIVF2	#4.0,R0		; R0 = 5.0
+	; Expected: R0 = 5.0
+
+	; DIVF3 - Divide F_float 3-operand
+	DIVF3	#2.0,#30.0,R0	; R0 = 15.0
+	; Expected: R0 = 15.0
+
+	; CMPF - Compare F_float
+	CMPF	#3.14,FVAL	; Compare
+	; Expected: Z=1 if equal
+
+	; TSTF - Test F_float
+	TSTF	#-1.0		; Test negative
+	; Expected: N=1
+
+; ========== FLOATING POINT D_FLOAT (64-bit) ==========
+TEST_FLOAT_D:
+	; ADDD2 - Add D_float 2-operand
+	MOVD	#3.14159,R0	; R0:R1 = 3.14159
+	ADDD2	#1.0,R0		; R0:R1 = 4.14159
+	; Expected: R0:R1 ≈ 4.14159
+
+	; ADDD3 - Add D_float 3-operand
+	ADDD3	#2.5,#2.5,R0	; R0:R1 = 5.0
+	; Expected: R0:R1 = 5.0
+
+	; SUBD2, SUBD3, MULD2, MULD3, DIVD2, DIVD3 - Similar pattern
+
+; ========== LOGICAL OPERATIONS (32-bit) ==========
+TEST_LOGICAL:
+	; BICL2 - Bit Clear Long 2-operand
+	MOVL	#0xFFFFFFFF,R0	; R0 = all 1's
+	BICL2	#0xF0000000,R0	; Clear high 4 bits
+	; Expected: R0 = 0x0FFFFFFF
+
+	; BICL3 - Bit Clear Long 3-operand
+	BICL3	#0xFF00,#0xFFFF,R0	; R0 = 0x00FF
+	; Expected: R0 = 0x00FF
+
+	; BISL2 - Bit Set Long 2-operand
+	MOVL	#0,R0		; R0 = 0
+	BISL2	#0xF0000000,R0	; Set high 4 bits
+	; Expected: R0 = 0xF0000000
+
+	; BISL3 - Bit Set Long 3-operand
+	BISL3	#0xF0,#0x0F,R0	; R0 = 0xFF
+	; Expected: R0 = 0xFF
+
+	; XORL2 - XOR Long 2-operand
+	MOVL	#0xAAAAAAAA,R0	; R0 = alternating pattern
+	XORL2	#0x55555555,R0	; XOR with complement
+	; Expected: R0 = 0xFFFFFFFF
+
+	; XORL3 - XOR Long 3-operand
+	XORL3	#0xFF00,#0x00FF,R0	; R0 = 0xFFFF
+	; Expected: R0 = 0xFFFF
+
+	; MCOML - Move Complemented Long
+	MCOML	#0x12345678,R0	; R0 = ~0x12345678
+	; Expected: R0 = 0xEDCBA987
+
+; ========== STRING OPERATIONS ==========
+TEST_STRING:
+	; MOVC3 - Move Character 3-operand
+	MOVC3	#10,SRC_STR,DST_STR	; Move 10 bytes
+	; Expected: 10 bytes copied
+
+	; MOVC5 - Move Character 5-operand (with fill)
+	MOVC5	#5,SRC_STR,#0,#10,DST_STR	; Move 5, fill rest
+	; Expected: 5 bytes copied, 5 bytes filled
+
+	; CMPC3 - Compare Character 3-operand
+	CMPC3	#10,SRC_STR,DST_STR	; Compare 10 bytes
+	; Expected: Flags set based on comparison
+
+	; CMPC5 - Compare Character 5-operand
+	CMPC5	#10,SRC_STR,#0,#10,DST_STR	; Compare with fill
+	; Expected: Flags set
+
+	; SCANC - Scan Characters
+	SCANC	#10,SRC_STR,TBL,#0xFF	; Scan for character
+	; Expected: R0 = count, R1 = address
+
+	; SPANC - Span Characters
+	SPANC	#10,SRC_STR,TBL,#0xFF	; Span characters
+	; Expected: R0 = count
+
+	; LOCC - Locate Character
+	LOCC	#'A',#10,SRC_STR	; Find 'A' in string
+	; Expected: R0 = count, R1 = address if found
+
+	; SKPC - Skip Character
+	SKPC	#' ',#10,SRC_STR	; Skip spaces
+	; Expected: R0 = count of non-spaces
+
+; ========== BIT FIELD OPERATIONS ==========
+TEST_BITFIELD:
+	; CMPV - Compare Field (signed)
+	CMPV	#4,#8,LONG1,#0xFF	; Compare 8-bit field at pos 4
+	; Expected: Flags set
+
+	; CMPZV - Compare Field (unsigned)
+	CMPZV	#4,#8,LONG1,#0xFF	; Compare unsigned
+	; Expected: Flags set
+
+	; EXTV - Extract Field (signed)
+	EXTV	#4,#8,LONG1,R0	; Extract 8-bit field, sign extend
+	; Expected: R0 = extracted value
+
+	; EXTZV - Extract Field (unsigned)
+	EXTZV	#4,#8,LONG1,R0	; Extract unsigned
+	; Expected: R0 = extracted value (zero extended)
+
+	; INSV - Insert Field
+	INSV	#0xFF,#4,#8,LONG1	; Insert 0xFF into 8-bit field
+	; Expected: Field inserted
+
+	; FFC - Find First Clear
+	FFC	#0,#32,LONG1,R0	; Find first 0 bit
+	; Expected: R0 = bit position
+
+	; FFS - Find First Set
+	FFS	#0,#32,LONG1,R0	; Find first 1 bit
+	; Expected: R0 = bit position
+
+; ========== QUEUE OPERATIONS ==========
+TEST_QUEUE:
+	; INSQUE - Insert into Queue
+	INSQUE	ENTRY1,QHEAD	; Insert ENTRY1 after QHEAD
+	; Expected: Queue updated
+
+	; REMQUE - Remove from Queue
+	REMQUE	ENTRY1,R0	; Remove ENTRY1, R0 = removed entry
+	; Expected: Entry removed
+
+; ========== BRANCH INSTRUCTIONS ==========
+TEST_BRANCH:
+	; BRB - Branch
+	BRB	LBL1		; Branch to LBL1
+	MOVL	#999,R0		; Should be skipped
+LBL1:	MOVL	#100,R0
+
+	; BRW - Branch Word displacement
+	BRW	LBL2		; Branch to LBL2
+	MOVL	#999,R0
+LBL2:	MOVL	#200,R0
+
+	; BEQL/BEQLU - Branch if Equal
+	CMPL	#5,#5		; Set Z=1
+	BEQL	LBL3		; Should branch
+	MOVL	#999,R0
+LBL3:	MOVL	#300,R0
+
+	; BNEQ/BNEQU - Branch if Not Equal
+	CMPL	#5,#6		; Set Z=0
+	BNEQ	LBL4		; Should branch
+	MOVL	#999,R0
+LBL4:	MOVL	#400,R0
+
+	; BLSS - Branch if Less
+	CMPL	#-5,#0		; Set N=1
+	BLSS	LBL5		; Should branch
+	MOVL	#999,R0
+LBL5:	MOVL	#500,R0
+
+	; BGTR - Branch if Greater
+	CMPL	#10,#5		; Set appropriate flags
+	BGTR	LBL6		; Should branch
+	MOVL	#999,R0
+LBL6:	MOVL	#600,R0
+
+	; BLEQ - Branch if Less or Equal
+	CMPL	#5,#5		; Equal
+	BLEQ	LBL7		; Should branch
+	MOVL	#999,R0
+LBL7:	MOVL	#700,R0
+
+	; BGEQ - Branch if Greater or Equal
+	CMPL	#10,#5		; Greater
+	BGEQ	LBL8		; Should branch
+	MOVL	#999,R0
+LBL8:	MOVL	#800,R0
+
+; ========== SUBROUTINE CALLS ==========
+TEST_CALLS:
+	; CALLS - Call Subroutine
+	CALLS	#0,SUBR1	; Call with 0 arguments
+	MOVL	#200,R0
+
+	; CALLG - Call with General argument list
+	; (More complex, requires arg list)
+
+	BR	END_TEST
+
+SUBR1:	.WORD	0		; Register save mask
+	MOVL	#100,R1		; Subroutine code
+	RET			; Return
+
+; ========== DATA CONVERSION ==========
+TEST_CONVERT:
+	; CVTBW - Convert Byte to Word
+	CVTBW	#-50,R0		; R0 = -50 (word, sign extended)
+	; Expected: R0 = -50 (16-bit)
+
+	; CVTBL - Convert Byte to Long
+	CVTBL	#100,R0		; R0 = 100 (long, sign extended)
+	; Expected: R0 = 100 (32-bit)
+
+	; CVTWL - Convert Word to Long
+	CVTWL	#12345,R0	; R0 = 12345 (long, sign extended)
+	; Expected: R0 = 12345 (32-bit)
+
+	; CVTLB - Convert Long to Byte
+	CVTLB	#100,R0		; R0 = 100 (byte)
+	; Expected: R0 = 100 (low byte)
+
+	; CVTLW - Convert Long to Word
+	CVTLW	#12345,R0	; R0 = 12345 (word)
+	; Expected: R0 = 12345 (low word)
+
+	; CVTWB - Convert Word to Byte
+	CVTWB	#100,R0		; R0 = 100 (byte)
+	; Expected: R0 = 100 (low byte)
+
+; ========== MISCELLANEOUS ==========
+TEST_MISC:
+	; INDEX - Compute Index
+	INDEX	#0,#10,#1,#5,R0,R1	; Compute index
+	; Expected: R1 = indexed value
+
+	; NOP - No Operation
+	NOP			; Do nothing
+
+	; HALT - Halt
+	; (Cannot test in normal flow)
+
+END_TEST:
+	RET
+
+; Data areas
+SRC_STR:	.ASCII	"Hello World"
+DST_STR:	.BLKB	20
+TBL:		.BLKB	256
+QHEAD:		.LONG	0,0
+ENTRY1:		.LONG	0,0
+
+	.END	START

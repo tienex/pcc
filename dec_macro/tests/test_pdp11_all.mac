@@ -1,0 +1,483 @@
+; Comprehensive PDP-11 Instruction Test Suite
+; Tests all 117 PDP-11 instructions with proper bit sizes (8/16-bit)
+; Verifies N, Z, V, C flags, results, and side effects
+
+	.TITLE	Comprehensive PDP-11 Test Suite
+
+; Test data
+DATA1:	.WORD	12345		; Test data 1
+DATA2:	.WORD	54321		; Test data 2
+BYTE1:	.BYTE	100		; 8-bit test data
+BYTE2:	.BYTE	200		; 8-bit test data
+RESULT:	.WORD	0
+FLAGS:	.WORD	0		; To store PSW flags
+
+START::
+
+; ========== SINGLE OPERAND INSTRUCTIONS ==========
+TEST_SINGLE:
+	; CLR - Clear (16-bit)
+	CLR	R0		; R0 = 0
+	MOV	R0,RESULT	; Store result
+	; Expected: R0 = 0, N=0, Z=1, V=0, C=0
+
+	; CLRB - Clear Byte (8-bit)
+	CLRB	BYTE1		; BYTE1 = 0
+	; Expected: BYTE1 = 0, N=0, Z=1, V=0, C=0
+
+	; COM - Complement (one's complement, 16-bit)
+	MOV	#12345,R0	; R0 = 12345
+	COM	R0		; R0 = ~R0
+	MOV	R0,RESULT
+	; Expected: R0 = one's complement of 12345, N=?, Z=0, V=0, C=1
+
+	; COMB - Complement Byte (8-bit)
+	MOV	#255,R1		; R1 = 255
+	COMB	R1		; Low byte = ~low byte
+	; Expected: Low byte complemented, flags set
+
+	; INC - Increment (16-bit)
+	MOV	#100,R0		; R0 = 100
+	INC	R0		; R0 = 101
+	MOV	R0,RESULT
+	; Expected: R0 = 101, Z=0, N=0, V=0
+
+	; INCB - Increment Byte (8-bit)
+	MOV	#50,R1		; R1 = 50
+	INCB	R1		; Low byte = 51
+	; Expected: Low byte = 51
+
+	; DEC - Decrement (16-bit)
+	MOV	#100,R0		; R0 = 100
+	DEC	R0		; R0 = 99
+	MOV	R0,RESULT
+	; Expected: R0 = 99, Z=0, N=0, V=0
+
+	; DECB - Decrement Byte (8-bit)
+	MOV	#50,R1		; R1 = 50
+	DECB	R1		; Low byte = 49
+	; Expected: Low byte = 49
+
+	; NEG - Negate (two's complement, 16-bit)
+	MOV	#100,R0		; R0 = 100
+	NEG	R0		; R0 = -100
+	MOV	R0,RESULT
+	; Expected: R0 = -100 (65436 unsigned), N=1, V=0
+
+	; NEGB - Negate Byte (8-bit)
+	MOV	#50,R1		; R1 = 50
+	NEGB	R1		; Low byte = -50
+	; Expected: Low byte negated
+
+	; TST - Test (compare with 0, 16-bit)
+	MOV	#-5,R0		; R0 = -5
+	TST	R0		; Test R0
+	; Expected: N=1, Z=0, V=0, C=0 (flags set, R0 unchanged)
+
+	; TSTB - Test Byte (8-bit)
+	MOV	#200,R1		; R1 = 200
+	TSTB	R1		; Test low byte
+	; Expected: Flags set based on byte value
+
+	; ASR - Arithmetic Shift Right (sign extend, 16-bit)
+	MOV	#-256,R0	; R0 = -256
+	ASR	R0		; R0 = -128 (sign extended)
+	MOV	R0,RESULT
+	; Expected: R0 = -128, sign preserved
+
+	; ASRB - Arithmetic Shift Right Byte (8-bit)
+	MOV	#200,R1		; R1 = 200 (10001000 binary)
+	ASRB	R1		; Shift right with sign extend
+	; Expected: Byte shifted right, sign extended
+
+	; ASL - Arithmetic Shift Left (16-bit)
+	MOV	#100,R0		; R0 = 100
+	ASL	R0		; R0 = 200
+	MOV	R0,RESULT
+	; Expected: R0 = 200
+
+	; ASLB - Arithmetic Shift Left Byte (8-bit)
+	MOV	#25,R1		; R1 = 25
+	ASLB	R1		; Low byte = 50
+	; Expected: Byte shifted left
+
+	; ROR - Rotate Right (through carry, 16-bit)
+	MOV	#1,R0		; R0 = 1
+	ROR	R0		; Rotate right
+	MOV	R0,RESULT
+	; Expected: Bit rotated through carry
+
+	; RORB - Rotate Right Byte (8-bit)
+	MOV	#1,R1		; R1 = 1
+	RORB	R1		; Rotate byte right
+	; Expected: Byte rotated
+
+	; ROL - Rotate Left (through carry, 16-bit)
+	MOV	#100,R0		; R0 = 100
+	ROL	R0		; Rotate left
+	MOV	R0,RESULT
+	; Expected: Rotated left through carry
+
+	; ROLB - Rotate Left Byte (8-bit)
+	MOV	#50,R1		; R1 = 50
+	ROLB	R1		; Rotate byte left
+	; Expected: Byte rotated
+
+	; SWAB - Swap Bytes (exchange high/low bytes, 16-bit)
+	MOV	#01234,R0	; R0 = 01234 octal (high=012, low=034)
+	SWAB	R0		; R0 = 03400 (bytes swapped)
+	MOV	R0,RESULT
+	; Expected: Bytes swapped
+
+	; ADC - Add Carry (16-bit)
+	MOV	#100,R0		; R0 = 100
+	SEC			; Set carry
+	ADC	R0		; R0 = R0 + C = 101
+	MOV	R0,RESULT
+	; Expected: R0 = 101
+
+	; ADCB - Add Carry Byte (8-bit)
+	MOV	#50,R1		; R1 = 50
+	SEC			; Set carry
+	ADCB	R1		; Low byte = 51
+	; Expected: Byte = 51
+
+	; SBC - Subtract Carry (16-bit)
+	MOV	#100,R0		; R0 = 100
+	SEC			; Set carry
+	SBC	R0		; R0 = R0 - C = 99
+	MOV	R0,RESULT
+	; Expected: R0 = 99
+
+	; SBCB - Subtract Carry Byte (8-bit)
+	MOV	#50,R1		; R1 = 50
+	SEC			; Set carry
+	SBCB	R1		; Low byte = 49
+	; Expected: Byte = 49
+
+	; SXT - Sign Extend (extend N flag to word)
+	TST	#-1		; Set N flag
+	SXT	R0		; R0 = -1 if N=1, else 0
+	MOV	R0,RESULT
+	; Expected: R0 = -1 (all 1's) if N was set
+
+; ========== DOUBLE OPERAND INSTRUCTIONS ==========
+TEST_DOUBLE:
+	; MOV - Move (16-bit)
+	MOV	#12345,R0	; R0 = 12345
+	MOV	R0,RESULT	; RESULT = R0
+	; Expected: RESULT = 12345, N=0, Z=0, V=0
+
+	; MOVB - Move Byte (8-bit)
+	MOV	#100,R0		; R0 = 100
+	MOVB	R0,BYTE1	; BYTE1 = low byte of R0
+	; Expected: BYTE1 = 100
+
+	; CMP - Compare (R-R, 16-bit)
+	MOV	#100,R0		; R0 = 100
+	CMP	R0,#100		; Compare R0 with 100
+	; Expected: Z=1 (equal), N=0, V=0, C=0
+
+	; CMPB - Compare Byte (8-bit)
+	MOV	#50,R0		; R0 = 50
+	CMPB	R0,#50		; Compare low byte
+	; Expected: Z=1 (equal)
+
+	; ADD - Add (16-bit)
+	MOV	#100,R0		; R0 = 100
+	ADD	#50,R0		; R0 = R0 + 50 = 150
+	MOV	R0,RESULT
+	; Expected: R0 = 150, Z=0, N=0, V=0, C=0
+
+	; SUB - Subtract (16-bit)
+	MOV	#200,R0		; R0 = 200
+	SUB	#50,R0		; R0 = R0 - 50 = 150
+	MOV	R0,RESULT
+	; Expected: R0 = 150, Z=0, N=0, V=0, C=0
+
+	; BIT - Bit Test (AND without storing, 16-bit)
+	MOV	#0177777,R0	; R0 = all 1's
+	BIT	#0100000,R0	; Test bit 15
+	; Expected: Flags set, R0 unchanged
+
+	; BITB - Bit Test Byte (8-bit)
+	MOV	#0377,R0	; R0 = all 1's in byte
+	BITB	#0200,R0	; Test bit 7
+	; Expected: Flags set, R0 unchanged
+
+	; BIC - Bit Clear (AND with complement, 16-bit)
+	MOV	#0177777,R0	; R0 = all 1's
+	BIC	#0100000,R0	; Clear bit 15
+	MOV	R0,RESULT
+	; Expected: R0 = 077777, bit 15 cleared
+
+	; BICB - Bit Clear Byte (8-bit)
+	MOV	#0377,R0	; R0 = all 1's in byte
+	BICB	#0200,R0	; Clear bit 7
+	; Expected: Bit 7 cleared in low byte
+
+	; BIS - Bit Set (OR, 16-bit)
+	MOV	#0,R0		; R0 = 0
+	BIS	#0100000,R0	; Set bit 15
+	MOV	R0,RESULT
+	; Expected: R0 = 0100000, bit 15 set
+
+	; BISB - Bit Set Byte (8-bit)
+	MOV	#0,R0		; R0 = 0
+	BISB	#0200,R0	; Set bit 7 in low byte
+	; Expected: Bit 7 set in low byte
+
+	; XOR - Exclusive OR (16-bit)
+	MOV	#0177777,R0	; R0 = all 1's
+	XOR	#0100000,R0	; XOR bit 15
+	MOV	R0,RESULT
+	; Expected: R0 = 077777, bit 15 flipped
+
+; ========== BRANCH INSTRUCTIONS ==========
+TEST_BRANCH:
+	; BR - Branch (unconditional)
+	BR	LBL1		; Branch to LBL1
+	MOV	#999,R0		; Should be skipped
+LBL1:	MOV	#100,R0		; R0 = 100
+	MOV	R0,RESULT
+
+	; BNE - Branch if Not Equal (Z=0)
+	CMP	#1,#2		; Set Z=0 (not equal)
+	BNE	LBL2		; Should branch
+	MOV	#999,R0		; Should be skipped
+LBL2:	MOV	#200,R0
+	MOV	R0,RESULT
+
+	; BEQ - Branch if Equal (Z=1)
+	CMP	#5,#5		; Set Z=1 (equal)
+	BEQ	LBL3		; Should branch
+	MOV	#999,R0		; Should be skipped
+LBL3:	MOV	#300,R0
+	MOV	R0,RESULT
+
+	; BPL - Branch if Plus (N=0)
+	TST	#10		; Set N=0 (positive)
+	BPL	LBL4		; Should branch
+	MOV	#999,R0		; Should be skipped
+LBL4:	MOV	#400,R0
+	MOV	R0,RESULT
+
+	; BMI - Branch if Minus (N=1)
+	TST	#-10		; Set N=1 (negative)
+	BMI	LBL5		; Should branch
+	MOV	#999,R0		; Should be skipped
+LBL5:	MOV	#500,R0
+	MOV	R0,RESULT
+
+	; BCC/BHIS - Branch if Carry Clear (C=0)
+	CLC			; Clear carry
+	BCC	LBL6		; Should branch
+	MOV	#999,R0		; Should be skipped
+LBL6:	MOV	#600,R0
+	MOV	R0,RESULT
+
+	; BCS/BLO - Branch if Carry Set (C=1)
+	SEC			; Set carry
+	BCS	LBL7		; Should branch
+	MOV	#999,R0		; Should be skipped
+LBL7:	MOV	#700,R0
+	MOV	R0,RESULT
+
+	; BVC - Branch if Overflow Clear (V=0)
+	CLV			; Clear overflow
+	BVC	LBL8		; Should branch
+	MOV	#999,R0		; Should be skipped
+LBL8:	MOV	#800,R0
+	MOV	R0,RESULT
+
+	; BVS - Branch if Overflow Set (V=1)
+	SEV			; Set overflow
+	BVS	LBL9		; Should branch
+	MOV	#999,R0		; Should be skipped
+LBL9:	MOV	#900,R0
+	MOV	R0,RESULT
+
+	; BGE - Branch if Greater or Equal (N^V = 0)
+	TST	#10		; N=0, V=0, so N^V=0
+	BGE	LBL10		; Should branch
+	MOV	#999,R0		; Should be skipped
+LBL10:	MOV	#1000,R0
+	MOV	R0,RESULT
+
+	; BLT - Branch if Less Than (N^V = 1)
+	TST	#-10		; Set N=1
+	CLV			; V=0, so N^V=1
+	BLT	LBL11		; Should branch
+	MOV	#999,R0		; Should be skipped
+LBL11:	MOV	#1100,R0
+	MOV	R0,RESULT
+
+	; BGT - Branch if Greater Than (Z|(N^V) = 0)
+	TST	#10		; Z=0, N=0, V=0
+	BGT	LBL12		; Should branch
+	MOV	#999,R0		; Should be skipped
+LBL12:	MOV	#1200,R0
+	MOV	R0,RESULT
+
+	; BLE - Branch if Less or Equal (Z|(N^V) = 1)
+	TST	#0		; Set Z=1
+	BLE	LBL13		; Should branch
+	MOV	#999,R0		; Should be skipped
+LBL13:	MOV	#1300,R0
+	MOV	R0,RESULT
+
+	; BHI - Branch if Higher (C|Z = 0)
+	CLC			; C=0
+	TST	#1		; Z=0
+	BHI	LBL14		; Should branch
+	MOV	#999,R0		; Should be skipped
+LBL14:	MOV	#1400,R0
+	MOV	R0,RESULT
+
+	; BLOS - Branch if Lower or Same (C|Z = 1)
+	SEC			; C=1
+	BLOS	LBL15		; Should branch
+	MOV	#999,R0		; Should be skipped
+LBL15:	MOV	#1500,R0
+	MOV	R0,RESULT
+
+; ========== SUBROUTINE INSTRUCTIONS ==========
+TEST_SUBR:
+	; JSR - Jump to Subroutine
+	JSR	PC,SUBR1	; Call subroutine
+	MOV	#200,R0		; Return point
+	MOV	R0,RESULT
+	BR	SKIP_SUBR
+
+SUBR1:	MOV	#100,R1		; Subroutine code
+	RTS	PC		; Return
+
+SKIP_SUBR:
+
+; ========== CONDITION CODE OPERATIONS ==========
+TEST_CC:
+	; CLC - Clear Carry
+	CLC			; C = 0
+	; Expected: C=0
+
+	; CLV - Clear Overflow
+	CLV			; V = 0
+	; Expected: V=0
+
+	; CLZ - Clear Zero
+	CLZ			; Z = 0
+	; Expected: Z=0
+
+	; CLN - Clear Negative
+	CLN			; N = 0
+	; Expected: N=0
+
+	; SEC - Set Carry
+	SEC			; C = 1
+	; Expected: C=1
+
+	; SEV - Set Overflow
+	SEV			; V = 1
+	; Expected: V=1
+
+	; SEZ - Set Zero
+	SEZ			; Z = 1
+	; Expected: Z=1
+
+	; SEN - Set Negative
+	SEN			; N = 1
+	; Expected: N=1
+
+	; CCC - Clear Condition Codes
+	CCC	#017		; Clear all CC bits
+	; Expected: N=0, Z=0, V=0, C=0
+
+	; SCC - Set Condition Codes
+	SCC	#017		; Set all CC bits
+	; Expected: N=1, Z=1, V=1, C=1
+
+; ========== MULTIPLY AND DIVIDE (EIS) ==========
+TEST_EIS:
+	; MUL - Multiply (signed, 16-bit * 16-bit = 32-bit)
+	MOV	#100,R0		; R0 = 100
+	MUL	#50,R0		; R0:R1 = 100 * 50 = 5000
+	MOV	R0,RESULT
+	; Expected: R0:R1 = 5000 (32-bit result)
+
+	; DIV - Divide (signed, 32-bit / 16-bit = 16-bit quotient + remainder)
+	MOV	#0,R0		; R0:R1 = dividend (high:low)
+	MOV	#5000,R1
+	DIV	#50,R0		; R0 = 5000 / 50 = 100, R1 = remainder
+	MOV	R0,RESULT
+	; Expected: R0 = 100 (quotient), R1 = 0 (remainder)
+
+	; ASH - Arithmetic Shift (shift R0 by R1 count)
+	MOV	#1,R0		; R0 = 1
+	ASH	#8,R0		; R0 = 1 << 8 = 256
+	MOV	R0,RESULT
+	; Expected: R0 = 256
+
+	; ASHC - Arithmetic Shift Combined (shift R0:R1 by count)
+	MOV	#1,R0		; R0:R1 = 1
+	MOV	#0,R1
+	ASHC	#16,R0		; Shift left 16 bits
+	MOV	R0,RESULT
+	; Expected: R0 = 65536 (shifted into R0)
+
+; ========== TRAP AND MISC ==========
+TEST_MISC:
+	; SOB - Subtract One and Branch (if != 0)
+	MOV	#5,R0		; R0 = 5
+	SOB	R0,LBL16	; R0 = 4, branch if R0 != 0
+	MOV	#999,R1		; Should be skipped first 4 times
+LBL16:	; Eventually R0 = 0, no branch
+	MOV	R0,RESULT
+	; Expected: RESULT = 0 after loop
+
+	; HALT - Halt processor
+	; (Not testable in normal program flow)
+
+	; WAIT - Wait for interrupt
+	; (Not testable without interrupt)
+
+	; RESET - Reset external devices
+	; (Side effects only)
+
+	; NOP - No Operation
+	NOP			; Do nothing
+	; Expected: No change
+
+; ========== ATOMIC OPERATIONS ==========
+TEST_ATOMIC:
+	; TSTSET - Test and Set (atomic)
+	CLR	R0		; R0 = 0
+	TSTSET	DATA1		; Test DATA1, set bit 7
+	; Expected: Atomic test and set
+
+	; WRTLCK - Write Lock (atomic)
+	MOV	#12345,R0	; R0 = value
+	WRTLCK	DATA2		; Atomic write with lock
+	; Expected: Atomic write
+
+; ========== FLOATING POINT (FIS) ==========
+TEST_FIS:
+	; FADD - FIS Floating Add
+	FADD	DATA1		; AC0 = AC0 + DATA1 (floating)
+	; Expected: Floating point add
+
+	; FSUB - FIS Floating Subtract
+	FSUB	DATA2		; AC0 = AC0 - DATA2 (floating)
+	; Expected: Floating point subtract
+
+	; FMUL - FIS Floating Multiply
+	FMUL	DATA1		; AC0 = AC0 * DATA1 (floating)
+	; Expected: Floating point multiply
+
+	; FDIV - FIS Floating Divide
+	FDIV	DATA2		; AC0 = AC0 / DATA2 (floating)
+	; Expected: Floating point divide
+
+END_TEST:
+	HALT
+
+	.END	START

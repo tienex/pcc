@@ -1,0 +1,11 @@
+; Test CLZ - CLZ operation (PDP-11)
+
+	.PSECT	CODE
+
+START:
+	CLZ	R1,R2
+	HALT
+
+DATA:	.WORD	0
+
+	.END

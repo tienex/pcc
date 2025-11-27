@@ -1,0 +1,11 @@
+; Test MOVZ - MOVZ operation (PDP-11)
+
+	.PSECT	CODE
+
+START:
+	MOVZ	R1,R2
+	HALT
+
+DATA:	.WORD	0
+
+	.END

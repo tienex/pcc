@@ -1,0 +1,12 @@
+; Test CONSO - CONSO (PDP-10)
+; Expected: Operation CONSO
+
+	.PSECT	CODE
+
+START:
+	CONSO
+	HALT
+
+DATA:	.WORD	0
+
+	.END

@@ -1,0 +1,60 @@
+; Test PDP-10 Half-word Operations (18-bit halves)
+; Tests HLL, HRL, HRR, HLR families and proper 18/36-bit operations
+
+	.TITLE	PDP10 Half-word Tests
+
+; Test data
+DATA1:	.WORD	0123456		; Source: left=012, right=3456 (octal)
+DATA2:	.WORD	0765432		; Source: left=076, right=5432 (octal)
+RESULT:	.WORD	0
+
+START::
+	; Test HLL - Half Left to Left
+	; Should copy left 18 bits from source to dest left half
+	MOVEI	1,0777777	; AC1 = all 1's in right half
+	HLL	1,DATA1		; AC1 left = DATA1 left, AC1 right unchanged
+	; Expected: AC1 = 0123777777 (left from DATA1, right unchanged)
+	MOVEM	1,RESULT
+
+	; Test HRL - Half Right to Left
+	; Should copy right 18 bits from source to dest left half
+	MOVEI	1,0		; AC1 = 0
+	HRL	1,DATA1		; AC1 left = DATA1 right
+	; Expected: AC1 = 0345600000 (right half of DATA1 in left half)
+	MOVEM	1,RESULT
+
+	; Test HRR - Half Right to Right
+	; Should copy right 18 bits from source to dest right half
+	MOVEI	1,0777777000000	; AC1 = all 1's in left half
+	HRR	1,DATA2		; AC1 right = DATA2 right, left unchanged
+	; Expected: AC1 = 0777777543200 (left unchanged, right from DATA2)
+	MOVEM	1,RESULT
+
+	; Test HLR - Half Left to Right
+	; Should copy left 18 bits from source to dest right half
+	MOVEI	1,0		; AC1 = 0
+	HLR	1,DATA2		; AC1 right = DATA2 left
+	; Expected: AC1 = 0000000076 (left half of DATA2 in right half)
+	MOVEM	1,RESULT
+
+	; Test HLLI - Half Left to Left Immediate
+	HLLI	1,0123		; AC1 left = immediate value 0123
+	MOVEM	1,RESULT
+
+	; Test HRRI - Half Right to Right Immediate
+	HRRI	1,0456		; AC1 right = immediate value 0456
+	MOVEM	1,RESULT
+
+	; Test HLLM - Half Left to Left to Memory
+	MOVEI	1,0111222	; AC1 = 0111222
+	HLLM	1,RESULT	; RESULT left = AC1 left
+	; Expected: RESULT = 0111xxx (left from AC1, right unchanged)
+
+	; Test HRLS - Half Right to Left to Self
+	MOVEI	1,0777444	; AC1 = 0777444
+	HRLS	1,DATA1		; AC1 = DATA1, AC1 left = AC1 right (before load)
+	MOVEM	1,RESULT
+
+	HALT
+
+	.END	START

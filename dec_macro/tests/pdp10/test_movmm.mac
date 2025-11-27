@@ -1,0 +1,13 @@
+; Test MOVMM - Move Magnitude to Memory (PDP-10)
+; Expected: AC1 = |AC2|
+
+	.PSECT	CODE
+
+START:
+	MOVEI 2,-100
+	MOVMM	1,2
+	HALT
+
+DATA:	.WORD	0
+
+	.END

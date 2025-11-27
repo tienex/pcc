@@ -1,0 +1,13 @@
+; Test HRLI - Half Right to Left Immediate (PDP-10)
+; Expected: AC1[0:17] = immediate, AC1[18:35] unchanged
+
+	.PSECT	CODE
+
+START:
+	MOVEI 1,0123456
+	HRLI	1,0777
+	HALT
+
+DATA:	.WORD	0
+
+	.END

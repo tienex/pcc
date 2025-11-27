@@ -1,0 +1,13 @@
+; Test MOVMI - Move Magnitude Immediate (PDP-10)
+; Expected: AC1 = |AC2|
+
+	.PSECT	CODE
+
+START:
+	MOVEI 2,-100
+	MOVMI	1,2
+	HALT
+
+DATA:	.WORD	0
+
+	.END

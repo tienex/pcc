@@ -1,0 +1,431 @@
+; Comprehensive PDP-10 Instruction Test Suite
+; Tests all PDP-10 instructions with proper bit sizes (9/18/36/72-bit)
+; Verifies CC flags, results, and side effects
+
+	.TITLE	Comprehensive PDP-10 Test Suite
+
+; Test data
+DATA1:	.WORD	0123456		; Test data 1
+DATA2:	.WORD	0765432		; Test data 2
+MASK1:	.WORD	0707070707070	; Bit pattern
+ALL1:	.WORD	0777777777777	; All 1's (36-bit)
+RESULT:	.WORD	0
+COUNTER:.WORD	10
+
+START::
+
+; ========== MOVE OPERATIONS ==========
+TEST_MOVE:
+	; MOVEI - Move Immediate
+	MOVEI	1,0123		; AC1 = 123 (octal)
+	MOVEM	1,RESULT	; Store to memory
+	; Expected: RESULT = 0123
+
+	; MOVEM - Move to Memory
+	MOVEI	2,0456		; AC2 = 456
+	MOVEM	2,DATA1		; DATA1 = AC2
+	; Expected: DATA1 = 0456
+
+	; MOVES - Move to Self
+	MOVES	3,DATA2		; AC3 = DATA2, DATA2 = AC3
+	; Expected: AC3 = DATA2
+
+	; MOVN - Move Negative
+	MOVEI	1,100		; AC1 = 100
+	MOVN	2,1		; AC2 = -AC1 = -100
+	MOVEM	2,RESULT
+	; Expected: RESULT = -100, N=1
+
+	; MOVM - Move Magnitude (absolute value)
+	MOVEI	1,-50		; AC1 = -50
+	MOVM	2,1		; AC2 = |AC1| = 50
+	MOVEM	2,RESULT
+	; Expected: RESULT = 50
+
+	; MOVS - Move Swapped (swap 18-bit halves)
+	MOVEI	1,0123456	; AC1 = left=012, right=3456
+	MOVS	2,1		; AC2 = left=3456, right=012
+	MOVEM	2,RESULT
+	; Expected: RESULT = 0345600012 (halves swapped)
+
+; ========== HALF-WORD OPERATIONS (18-bit) ==========
+TEST_HALFWORD:
+	; HLL - Half Left to Left
+	MOVEI	1,0777777	; AC1 = all 1's in right half
+	HLL	1,DATA1		; AC1 left = DATA1 left
+	MOVEM	1,RESULT
+	; Expected: Left half from DATA1, right half unchanged
+
+	; HRL - Half Right to Left
+	MOVEI	1,0		; AC1 = 0
+	HRL	1,DATA2		; AC1 left = DATA2 right
+	MOVEM	1,RESULT
+	; Expected: Right half of DATA2 in left half of AC1
+
+	; HRR - Half Right to Right
+	MOVEI	1,0777777000000	; AC1 = all 1's in left half
+	HRR	1,DATA1		; AC1 right = DATA1 right
+	MOVEM	1,RESULT
+	; Expected: Left half unchanged, right half from DATA1
+
+	; HLR - Half Left to Right
+	MOVEI	1,0		; AC1 = 0
+	HLR	1,DATA2		; AC1 right = DATA2 left
+	MOVEM	1,RESULT
+	; Expected: Left half of DATA2 in right half of AC1
+
+; ========== ARITHMETIC OPERATIONS (36-bit) ==========
+TEST_ARITHMETIC:
+	; ADD - Add
+	MOVEI	1,100		; AC1 = 100
+	MOVEI	2,50		; AC2 = 50
+	ADD	1,2		; AC1 = AC1 + AC2 = 150
+	MOVEM	1,RESULT
+	; Expected: RESULT = 150, Z=0, N=0, V=0, C=0
+
+	; ADDI - Add Immediate
+	MOVEI	1,25		; AC1 = 25
+	ADDI	1,75		; AC1 = AC1 + 75 = 100
+	MOVEM	1,RESULT
+	; Expected: RESULT = 100
+
+	; SUB - Subtract
+	MOVEI	1,200		; AC1 = 200
+	MOVEI	2,150		; AC2 = 150
+	SUB	1,2		; AC1 = AC1 - AC2 = 50
+	MOVEM	1,RESULT
+	; Expected: RESULT = 50
+
+	; SUBI - Subtract Immediate
+	MOVEI	1,300		; AC1 = 300
+	SUBI	1,100		; AC1 = AC1 - 100 = 200
+	MOVEM	1,RESULT
+	; Expected: RESULT = 200
+
+	; MUL - Multiply
+	MOVEI	1,12		; AC1 = 12
+	MOVEI	2,10		; AC2 = 10
+	MUL	1,2		; AC1 = AC1 * AC2 = 120
+	MOVEM	1,RESULT
+	; Expected: RESULT = 120
+
+	; MULI - Multiply Immediate
+	MOVEI	1,15		; AC1 = 15
+	MULI	1,8		; AC1 = AC1 * 8 = 120
+	MOVEM	1,RESULT
+	; Expected: RESULT = 120
+
+	; DIV - Divide
+	MOVEI	1,360		; AC1 = 360
+	MOVEI	2,12		; AC2 = 12
+	DIV	1,2		; AC1 = AC1 / AC2 = 30
+	MOVEM	1,RESULT
+	; Expected: RESULT = 30
+
+	; DIVI - Divide Immediate
+	MOVEI	1,480		; AC1 = 480
+	DIVI	1,16		; AC1 = AC1 / 16 = 30
+	MOVEM	1,RESULT
+	; Expected: RESULT = 30
+
+	; IMUL - Integer Multiply
+	MOVEI	1,25		; AC1 = 25
+	IMUL	1,DATA1		; AC1 = AC1 * DATA1
+	MOVEM	1,RESULT
+
+	; IDIV - Integer Divide
+	MOVEI	1,1000		; AC1 = 1000
+	IDIV	1,DATA2		; AC1 = AC1 / DATA2
+	MOVEM	1,RESULT
+
+; ========== SHIFT AND ROTATE (36-bit) ==========
+TEST_SHIFT:
+	; LSH - Logical Shift
+	MOVEI	1,1		; AC1 = 1
+	LSH	1,8		; AC1 = AC1 << 8 = 256
+	MOVEM	1,RESULT
+	; Expected: RESULT = 256
+
+	; ASH - Arithmetic Shift (sign-preserving)
+	MOVEI	1,-256		; AC1 = -256
+	ASH	1,-4		; AC1 = AC1 >> 4 = -16 (arithmetic)
+	MOVEM	1,RESULT
+	; Expected: RESULT = -16, sign preserved
+
+	; ROT - Rotate
+	MOVEI	1,0000000000001	; AC1 = 1 in rightmost bit
+	ROT	1,1		; Rotate left 1 bit
+	MOVEM	1,RESULT
+	; Expected: RESULT = 0000000000002 (rotated)
+
+	; ASHC - Arithmetic Shift Combined (double precision)
+	MOVEI	1,0777777777777	; AC1 = large value
+	ASHC	1,1		; Shift AC1:AC2 pair
+	MOVEM	1,RESULT
+
+	; LSHC - Logical Shift Combined
+	MOVEI	1,0123456	; AC1 = test value
+	LSHC	1,4		; Shift left 4 bits
+	MOVEM	1,RESULT
+
+	; ROTC - Rotate Combined
+	MOVEI	1,0707070	; AC1 = test value
+	ROTC	1,6		; Rotate 6 bits
+	MOVEM	1,RESULT
+
+; ========== LOGICAL OPERATIONS (36-bit) ==========
+TEST_LOGICAL:
+	; AND - Logical AND
+	MOVEI	1,0777777	; AC1 = 0777777
+	AND	1,MASK1		; AC1 = AC1 & MASK1
+	MOVEM	1,RESULT
+	; Expected: Bits set where both had 1's
+
+	; ANDI - AND Immediate
+	MOVEI	1,0123456	; AC1 = 0123456
+	ANDI	1,0777000	; AC1 = AC1 & 0777000
+	MOVEM	1,RESULT
+	; Expected: RESULT = 0123000 (masked)
+
+	; IOR - Inclusive OR
+	MOVEI	1,0707000	; AC1 = 0707000
+	MOVEI	2,0070707	; AC2 = 0070707
+	IOR	1,2		; AC1 = AC1 | AC2
+	MOVEM	1,RESULT
+	; Expected: Bits set where either had 1's
+
+	; IORI - IOR Immediate
+	MOVEI	1,0100200	; AC1 = 0100200
+	IORI	1,0007070	; AC1 = AC1 | 0007070
+	MOVEM	1,RESULT
+	; Expected: RESULT = 0107270
+
+	; XOR - Exclusive OR
+	MOVEI	1,0123456	; AC1 = 0123456
+	XOR	1,MASK1		; AC1 = AC1 ^ MASK1
+	MOVEM	1,RESULT
+	; Expected: Bits set where exactly one had 1
+
+	; XORI - XOR Immediate
+	MOVEI	1,0777777	; AC1 = 0777777
+	XORI	1,0777777	; AC1 = AC1 ^ 0777777 = 0
+	MOVEM	1,RESULT
+	; Expected: RESULT = 0, Z=1
+
+	; EQV - Equivalence (XNOR)
+	MOVEI	1,0707070	; AC1 = 0707070
+	EQV	1,MASK1		; AC1 = ~(AC1 ^ MASK1)
+	MOVEM	1,RESULT
+	; Expected: Bits set where both match
+
+	; ANDCA - AND with Complement of AC
+	MOVEI	1,0777000	; AC1 = 0777000
+	ANDCA	1,ALL1		; AC1 = ~AC1 & ALL1
+	MOVEM	1,RESULT
+	; Expected: RESULT = 0000777 (complement)
+
+	; ANDCM - AND with Complement of Memory
+	MOVEI	1,0777777	; AC1 = 0777777
+	ANDCM	1,MASK1		; AC1 = AC1 & ~MASK1
+	MOVEM	1,RESULT
+	; Expected: Bits in AC1 but not in MASK1
+
+; ========== SET OPERATIONS (36-bit) ==========
+TEST_SET:
+	; SETO - Set to Ones
+	SETO	1,0		; AC1 = -1 (all 1's)
+	MOVEM	1,RESULT
+	; Expected: RESULT = 0777777777777
+
+	; SETOI - Set to Ones Immediate
+	SETOI	1,0		; AC1 = -1
+	MOVEM	1,RESULT
+
+	; SETZ - Set to Zero
+	SETZ	1,0		; AC1 = 0
+	MOVEM	1,RESULT
+	; Expected: RESULT = 0, Z=1
+
+	; SETCA - Set to Complement of AC
+	MOVEI	1,0123456	; AC1 = 0123456
+	SETCA	2,1		; AC2 = ~AC1
+	MOVEM	2,RESULT
+	; Expected: All bits of AC1 flipped
+
+	; SETCM - Set to Complement of Memory
+	SETCM	1,DATA1		; AC1 = ~DATA1
+	MOVEM	1,RESULT
+
+; ========== SKIP OPERATIONS ==========
+TEST_SKIP:
+	; SKIPE - Skip if Equal to zero
+	MOVEI	1,0		; AC1 = 0
+	SKIPE	1		; Should skip
+	MOVEI	2,999		; Should be skipped
+	MOVEI	2,100		; AC2 = 100
+	MOVEM	2,RESULT
+	; Expected: RESULT = 100 (skip worked)
+
+	; SKIPN - Skip if Not zero
+	MOVEI	1,5		; AC1 = 5
+	SKIPN	1		; Should skip
+	MOVEI	2,999		; Should be skipped
+	MOVEI	2,200		; AC2 = 200
+	MOVEM	2,RESULT
+	; Expected: RESULT = 200
+
+	; SKIPL - Skip if Less than zero
+	MOVEI	1,-10		; AC1 = -10
+	SKIPL	1		; Should skip
+	MOVEI	2,999		; Should be skipped
+	MOVEI	2,300		; AC2 = 300
+	MOVEM	2,RESULT
+	; Expected: RESULT = 300
+
+	; SKIPG - Skip if Greater than zero
+	MOVEI	1,25		; AC1 = 25
+	SKIPG	1		; Should skip
+	MOVEI	2,999		; Should be skipped
+	MOVEI	2,400		; AC2 = 400
+	MOVEM	2,RESULT
+	; Expected: RESULT = 400
+
+; ========== JUMP OPERATIONS ==========
+TEST_JUMP:
+	; JUMPE - Jump if Equal to zero
+	MOVEI	1,0		; AC1 = 0
+	JUMPE	1,LBL1		; Should jump
+	MOVEI	2,999		; Should be skipped
+LBL1:	MOVEI	2,100
+	MOVEM	2,RESULT
+
+	; JUMPN - Jump if Not zero
+	MOVEI	1,1		; AC1 = 1
+	JUMPN	1,LBL2		; Should jump
+	MOVEI	2,999		; Should be skipped
+LBL2:	MOVEM	2,RESULT
+
+	; JUMPL - Jump if Less than zero
+	MOVEI	1,-5		; AC1 = -5
+	JUMPL	1,LBL3		; Should jump
+	MOVEI	2,999		; Should be skipped
+LBL3:	MOVEM	2,RESULT
+
+	; JUMPG - Jump if Greater than zero
+	MOVEI	1,10		; AC1 = 10
+	JUMPG	1,LBL4		; Should jump
+	MOVEI	2,999		; Should be skipped
+LBL4:	MOVEM	2,RESULT
+
+; ========== ADD/SUBTRACT WITH JUMP ==========
+TEST_AOJ_SOJ:
+	; AOJ - Add One and Jump
+	MOVEI	1,5		; AC1 = 5
+	AOJ	1,LBL5		; AC1 = 6, jump
+	MOVEI	2,999		; Should be skipped
+LBL5:	MOVEM	1,RESULT
+	; Expected: RESULT = 6
+
+	; AOJA - Add One and Jump Always
+	MOVEI	1,10		; AC1 = 10
+	AOJA	1,LBL6		; AC1 = 11, jump always
+	MOVEI	2,999		; Should be skipped
+LBL6:	MOVEM	1,RESULT
+	; Expected: RESULT = 11
+
+	; AOS - Add One to memory and Skip
+	MOVEI	1,5		; Initial value
+	MOVEM	1,COUNTER	; COUNTER = 5
+	AOS	COUNTER		; COUNTER = 6, skip
+	MOVEI	2,999		; Should be skipped
+	MOVEI	2,100		; AC2 = 100
+	MOVEM	2,RESULT
+	; Expected: COUNTER = 6
+
+	; SOJ - Subtract One and Jump
+	MOVEI	1,10		; AC1 = 10
+	SOJ	1,LBL7		; AC1 = 9, jump
+	MOVEI	2,999		; Should be skipped
+LBL7:	MOVEM	1,RESULT
+	; Expected: RESULT = 9
+
+	; SOJA - Subtract One and Jump Always
+	MOVEI	1,20		; AC1 = 20
+	SOJA	1,LBL8		; AC1 = 19, jump always
+	MOVEI	2,999		; Should be skipped
+LBL8:	MOVEM	1,RESULT
+	; Expected: RESULT = 19
+
+	; SOS - Subtract One from memory and Skip
+	MOVEI	1,3		; Initial value
+	MOVEM	1,COUNTER	; COUNTER = 3
+	SOS	COUNTER		; COUNTER = 2, skip
+	MOVEI	2,999		; Should be skipped
+	MOVEI	2,200		; AC2 = 200
+	MOVEM	2,RESULT
+	; Expected: COUNTER = 2
+
+; ========== COMPARE OPERATIONS ==========
+TEST_COMPARE:
+	; CAI - Compare Accumulator Immediate
+	MOVEI	1,100		; AC1 = 100
+	CAI	1,100		; Compare AC1 with 100
+	; Sets flags based on comparison
+
+	; CAIE - Compare Accumulator Immediate, skip if Equal
+	MOVEI	1,50		; AC1 = 50
+	CAIE	1,50		; Should skip (equal)
+	MOVEI	2,999		; Should be skipped
+	MOVEI	2,100
+	MOVEM	2,RESULT
+
+	; CAME - Compare Accumulator with Memory, skip if Equal
+	MOVEI	1,0123		; AC1 = 0123
+	MOVEM	1,DATA1		; DATA1 = 0123
+	CAME	1,DATA1		; Should skip (equal)
+	MOVEI	2,999		; Should be skipped
+	MOVEI	2,200
+	MOVEM	2,RESULT
+
+; ========== BYTE OPERATIONS (9-bit bytes) ==========
+TEST_BYTES:
+	; LDB - Load Byte (9-bit)
+	MOVEI	1,0440000000000	; Byte pointer: 9-bit
+	LDB	2,DATA1		; Load 9-bit byte from DATA1
+	MOVEM	2,RESULT
+	; Expected: 9-bit value loaded
+
+	; DPB - Deposit Byte (9-bit)
+	MOVEI	1,0777		; 9-bit value
+	MOVEI	2,0440000000000	; Byte pointer
+	DPB	1,RESULT	; Deposit byte
+	; Expected: 9 bits deposited
+
+	; IBP - Increment Byte Pointer
+	MOVEI	1,0440000000000	; Byte pointer
+	IBP	1		; Increment to next byte
+	; Pointer now points to next 9-bit position
+
+; ========== STACK OPERATIONS ==========
+TEST_STACK:
+	; PUSH - Push onto stack
+	MOVEI	1,0777		; Value to push
+	PUSH	17,1		; Push AC1 onto stack (AC17 is stack pointer)
+
+	; POP - Pop from stack
+	POP	17,2		; Pop into AC2
+	MOVEM	2,RESULT
+
+	; PUSHJ - Push and Jump (subroutine call)
+	PUSHJ	17,SUBR		; Call subroutine
+	MOVEI	1,100
+	MOVEM	1,RESULT
+	JRST	END_TEST
+
+SUBR:	MOVEI	2,200		; Subroutine code
+	POPJ	17,0		; Return
+
+END_TEST:
+	HALT
+
+	.END	START

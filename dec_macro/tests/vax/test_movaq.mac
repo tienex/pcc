@@ -1,0 +1,11 @@
+; Test MOVAQ - MOVAQ operation (VAX)
+
+	.PSECT	CODE
+
+START:
+	MOVAQ	R1,R2
+	HALT
+
+DATA:	.WORD	0
+
+	.END

@@ -1,0 +1,13 @@
+; Test ILDB - Increment and Load Byte (PDP-10)
+; Expected: Increment byte pointer, AC2 = byte, CC updated
+
+	.PSECT	CODE
+
+START:
+	MOVEI 1,BYTEPTR
+	ILDB	2,STRING
+	HALT
+
+DATA:	.WORD	0
+
+	.END

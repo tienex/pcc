@@ -1,0 +1,12 @@
+; Test SETZI - Set to Zero Immediate (PDP-10)
+; Expected: AC1 = 0, Z=1
+
+	.PSECT	CODE
+
+START:
+	SETZI	1,0
+	HALT
+
+DATA:	.WORD	0
+
+	.END

@@ -1,0 +1,15 @@
+; Test JUMPGE - Jump if Greater or Equal (PDP-10)
+; Expected: Jump if AC1 >= 0
+
+	.PSECT	CODE
+
+START:
+	MOVEI 1,1
+	JUMPGE	1,LABEL
+	MOVEI	1,999
+LABEL:	MOVEI	1,200
+	HALT
+
+DATA:	.WORD	0
+
+	.END

@@ -1,0 +1,12 @@
+; Test CONSZ - CONSZ (PDP-10)
+; Expected: Operation CONSZ
+
+	.PSECT	CODE
+
+START:
+	CONSZ
+	HALT
+
+DATA:	.WORD	0
+
+	.END

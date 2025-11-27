@@ -1,0 +1,11 @@
+; Test BITL - BITL operation (VAX)
+
+	.PSECT	CODE
+
+START:
+	BITL	R1,R2
+	HALT
+
+DATA:	.WORD	0
+
+	.END

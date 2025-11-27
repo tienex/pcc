@@ -1,0 +1,11 @@
+; Test INCB - INCB operation (PDP-11)
+
+	.PSECT	CODE
+
+START:
+	INCB	R1,R2
+	HALT
+
+DATA:	.WORD	0
+
+	.END

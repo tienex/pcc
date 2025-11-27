@@ -1,0 +1,11 @@
+; Test BISL3 - BISL3 operation (VAX)
+
+	.PSECT	CODE
+
+START:
+	BISL3	R1,R2,R3
+	HALT
+
+DATA:	.WORD	0
+
+	.END

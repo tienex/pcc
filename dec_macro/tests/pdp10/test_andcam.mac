@@ -1,0 +1,15 @@
+; Test ANDCAM - AND Complement AC to Memory (PDP-10)
+; Expected: DATA = ~AC1 & DATA, CC updated
+
+	.PSECT	CODE
+
+START:
+	MOVEI 1,0777000
+	MOVEI 2,0777777
+	MOVEM 2,DATA
+	ANDCAM	1,DATA
+	HALT
+
+DATA:	.WORD	0
+
+	.END
