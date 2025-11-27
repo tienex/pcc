@@ -38,6 +38,7 @@ bindir = @bindir@
 libdir = @libdir@
 libexecdir = @libexecdir@
 
+<<<<<<< HEAD
 # Base directories (always built)
 BASE_SUBDIRS=	common/abi libx86asm include
 
@@ -50,6 +51,7 @@ BASIC_SUBDIR=	basic
 BLISS_SUBDIR=	bliss
 PXC_SUBDIR=	pxc
 PLI_SUBDIR=	pli
+ALGOL_SUBDIR=	algol60
 
 # Build subdirectory list based on enabled languages
 # Note: C is always built first for bootstrap
@@ -72,9 +74,12 @@ endif
 ifeq ($(ENABLE_PLI),yes)
 LANG_SUBDIRS+=	$(PLI_SUBDIR)
 endif
+ifeq ($(ENABLE_ALGOL),yes)
+LANG_SUBDIRS+=	$(ALGOL_SUBDIR)
+endif
 
 ALL_SUBDIRS=	$(PORTABLE_LIBS) $(BASE_SUBDIRS) $(LANG_SUBDIRS)
-DIST_SUBDIRS=	$(BASE_SUBDIRS) $(C_SUBDIR) pascal f90 basic bliss pxc pli libunicode libthread libstdbit libckdint libdecimal libmetaware libblocks libpascal libwirth libbliss libmangle libgc libexcept libustring libgthread libnet libpccir libunwind libxmath libvtable libcrt libbgi libvm libfs
+DIST_SUBDIRS=	$(BASE_SUBDIRS) $(C_SUBDIR) pascal f90 basic bliss pxc pli algol60 libunicode libthread libstdbit libckdint libdecimal libmetaware libblocks libpascal libwirth libbliss libmangle libgc libexcept libustring libgthread libnet libpccir libunwind libxmath libvtable libcrt libbgi libvm libfs libalgol60
 
 # Default targets - conditional on bootstrap
 all:

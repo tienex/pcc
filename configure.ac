@@ -1251,7 +1251,8 @@ CONFIG_MAKEFILES="Makefile
 		libcrt/Makefile
 		libbgi/Makefile
 		libvm/Makefile
-		libfs/Makefile"
+		libfs/Makefile
+		libalgol60/Makefile"
 
 # C language is always included (required for bootstrap)
 CONFIG_MAKEFILES="$CONFIG_MAKEFILES
@@ -1319,6 +1320,14 @@ if test "$enable_ocaml" = "yes"; then
 		libocaml/Makefile"
 fi
 
+# Add ALGOL 60+ if enabled
+if test "$enable_algol" = "yes"; then
+	CONFIG_MAKEFILES="$CONFIG_MAKEFILES
+		algol60/Makefile
+		algol60/algol/Makefile
+		algol60/acom/Makefile"
+fi
+
 AC_CONFIG_FILES([$CONFIG_MAKEFILES])
 AC_OUTPUT
 
@@ -1336,6 +1345,7 @@ test "$enable_basic" = "yes" && ENABLED_LANGUAGES="$ENABLED_LANGUAGES basic"
 test "$enable_bliss" = "yes" && ENABLED_LANGUAGES="$ENABLED_LANGUAGES bliss"
 test "$enable_pxc" = "yes" && ENABLED_LANGUAGES="$ENABLED_LANGUAGES pxc"
 test "$enable_ocaml" = "yes" && ENABLED_LANGUAGES="$ENABLED_LANGUAGES ocaml"
+test "$enable_algol" = "yes" && ENABLED_LANGUAGES="$ENABLED_LANGUAGES algol60"
 ENABLED_LANGUAGES=`echo $ENABLED_LANGUAGES | sed 's/^ *//'`
 
 echo
