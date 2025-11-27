@@ -44,7 +44,7 @@ BASE_SUBDIRS=	common/abi libx86asm include
 C_SUBDIR=	cc
 CXX_SUBDIR=	# C++ is part of cc/cxxcom
 PASCAL_SUBDIR=	pascal
-F77_SUBDIR=	f77
+F77_SUBDIR=	f90
 BASIC_SUBDIR=	basic
 BLISS_SUBDIR=	bliss
 PXC_SUBDIR=	pxc
@@ -69,7 +69,7 @@ LANG_SUBDIRS+=	$(PXC_SUBDIR)
 endif
 
 ALL_SUBDIRS=	$(PORTABLE_LIBS) $(BASE_SUBDIRS) $(LANG_SUBDIRS)
-DIST_SUBDIRS=	$(BASE_SUBDIRS) $(C_SUBDIR) pascal f77 basic bliss pxc libunicode libthread libstdbit libckdint libdecimal libmetaware libblocks libpascal libwirth libbliss libmangle libgc libexcept libustring libgthread libnet libpccir libunwind libxmath libvtable libcrt libbgi libvm libfs
+DIST_SUBDIRS=	$(BASE_SUBDIRS) $(C_SUBDIR) pascal f90 basic bliss pxc libunicode libthread libstdbit libckdint libdecimal libmetaware libblocks libpascal libwirth libbliss libmangle libgc libexcept libustring libgthread libnet libpccir libunwind libxmath libvtable libcrt libbgi libvm libfs
 
 # Default targets - conditional on bootstrap
 all:
@@ -112,10 +112,10 @@ all-standard install-standard clean:
 		echo "<=== $$_nextdir_"; \
 	done
 
-# Full build with all languages (C, C++, Pascal, F77)
+# Full build with all languages (C, C++, Pascal, F90)
 all-full install-full clean-full:
 	@target=`echo $@ | sed 's/-full//'`; \
-	for subdir in $(C_SUBDIRS) $(CC_SUBDIR) $(EXTRA_SUBDIRS); do \
+	for subdir in $(BASE_SUBDIRS) $(ALL_SUBDIRS); do \
 		_nextdir_=$${_thisdir_+$$_thisdir_/}$$subdir; \
 		echo "===> $$_nextdir_"; \
 		(_thisdir_=$$_nextdir_; export _thisdir_; cd $$subdir && \

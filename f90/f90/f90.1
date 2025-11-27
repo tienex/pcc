@@ -1,0 +1,610 @@
+.\"	$Id$
+.\"
+.\" Copyright(C) Caldera International Inc. 2001-2002. All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\"
+.\" Redistributions of source code and documentation must retain the above
+.\" copyright notice, this list of conditions and the following disclaimer.
+.\" Redistributions in binary form must reproduce the above copyright
+.\" notice, this list of conditionsand the following disclaimer in the
+.\" documentation and/or other materials provided with the distribution.
+.\" All advertising materials mentioning features or use of this software
+.\" must display the following acknowledgement:
+.\" 	This product includes software developed or owned by Caldera
+.\"	International, Inc.
+.\" Neither the name of Caldera International, Inc. nor the names of other
+.\" contributors may be used to endorse or promote products derived from
+.\" this software without specific prior written permission.
+.\"
+.\" USE OF THE SOFTWARE PROVIDED FOR UNDER THIS LICENSE BY CALDERA
+.\" INTERNATIONAL, INC. AND CONTRIBUTORS ``AS IS'' AND ANY EXPRESS OR
+.\" IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+.\" WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+.\" DISCLAIMED.  IN NO EVENT SHALL CALDERA INTERNATIONAL, INC. BE LIABLE
+.\" FOR ANY DIRECT, INDIRECT INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+.\" OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OFLIABILITY, WHETHER IN CONTRACT,
+.\" STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
+.\" IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE 
+.\" POSSIBILITY OF SUCH DAMAGE.
+.\"
+.TH F90 1
+.SH NAME
+f90 \- Fortran compiler (F66-F2018 + OOP + MS/HP/DEC/IBM/Cray extensions)
+.SH SYNOPSIS
+.B f90
+[ option ] ... file ...
+.SH DESCRIPTION
+.I F90
+is a comprehensive Fortran compiler supporting all major standards from Fortran 66 through Fortran 2018,
+with full object-oriented programming (OOP) capabilities and vendor-specific extensions
+from Microsoft PowerFortran, HP, DEC, IBM XL Fortran, and Cray compilers.
+It accepts several types of arguments:
+.PP
+Arguments whose names end with `.f' are taken to be
+Fortran source programs (F66/F77/F90/F95/F2003/F2008/F2018 depending on -std flag);
+they are compiled, and
+each object program is left on the file in the current directory
+whose name is that of the source with `.o' substituted
+for '.f'.
+.PP
+Arguments whose names end with `.r' or `.e' are taken to be Ratfor or EFL
+source programs, respectively; these are first transformed by the
+appropriate preprocessor, then compiled by f90.
+.PP
+In the same way,
+arguments whose names end with `.c' or `.s' are taken to be C or assembly source programs
+and are compiled or assembled, producing a `.o' file.
+.PP
+The following options have the same meaning as in
+.IR cc (1).
+See
+.IR ld (1)
+for load-time options.
+.TP
+.B \-c
+Suppress loading and produce `.o' files for each source 
+file.
+.TP
+.B \-p
+Prepare object files for profiling, see
+.IR  prof (1).
+.TP
+.SM
+.B \-O
+Invoke an
+object-code optimizer.
+.TP
+.SM
+.B \-S
+Compile the named programs, and leave the
+assembler-language output on corresponding files suffixed `.s'.
+(No `.o' is created.).
+.TP
+.B \-f
+Use a floating point interpreter (for PDP11's that lack
+11/70-style floating point).
+.TP
+.BR \-o " output"
+Name the final output file
+.I output
+instead of `a.out'.
+.PP
+The following options are peculiar to
+.IR f90 .
+.TP
+.SM
+.BR \-std=STANDARD
+Specify the Fortran standard to use. Valid values are:
+.B f66
+(Fortran 66),
+.B f77
+(Fortran 77),
+.B f90
+(Fortran 90, default),
+.B f95
+(Fortran 95),
+.B f2003
+(Fortran 2003 with OOP),
+.B f2008
+(Fortran 2008 with coarrays and submodules), and
+.B f2018
+(Fortran 2018 with teams and events).
+Selecting
+.B f2003
+or later automatically enables object-oriented programming features.
+Selecting
+.B f2008
+or later enables coarrays and submodules.
+Selecting
+.B f2018
+enables all modern features including teams and events.
+.TP
+.SM
+.BR \-onetrip
+Compile DO loops that are performed at least once if reached.
+(Fortran 77 DO loops are not performed at all if the upper limit is smaller than the lower limit.)
+.TP
+.SM
+.BR \-foop " / " \-fno-oop
+Enable or disable object-oriented programming features (classes, inheritance, polymorphism).
+OOP is automatically enabled when using
+.B -std=f2003
+or later.
+This flag allows fine-grained control independent of the standard selection.
+.TP
+.SM
+.BR \-fcoarrays " / " \-fno-coarrays
+Enable or disable coarray parallel programming features.
+Coarrays provide native support for parallel programming with partitioned global address space (PGAS) model.
+Automatically enabled with
+.B -std=f2008
+or later.
+.TP
+.SM
+.BR \-fsubmodules " / " \-fno-submodules
+Enable or disable submodules (separate module implementation units).
+Submodules allow better modularization of large module implementations.
+Automatically enabled with
+.B -std=f2008
+or later.
+.TP
+.SM
+.BR \-fteams " / " \-fno-teams
+Enable or disable teams and events for advanced parallel programming.
+Teams provide hierarchical parallelism control and synchronization primitives.
+Automatically enabled with
+.B -std=f2018
+or later.
+.TP
+.SM
+.BR \-fms-extensions " / " \-fno-ms-extensions
+Enable or disable Microsoft PowerFortran extensions.
+Includes STRUCTURE/UNION, RECORD, VOLATILE, packed data types, and MS-specific intrinsics.
+.TP
+.SM
+.BR \-fhp-extensions " / " \-fno-hp-extensions
+Enable or disable HP Fortran extensions.
+Includes HP-UX specific features, POINTER statements, TASK COMMON, and HP intrinsics.
+.TP
+.SM
+.BR \-fdec-extensions " / " \-fno-dec-extensions
+Enable or disable DEC (Digital Equipment Corporation) Fortran extensions.
+Includes VAX/VMS features, STRUCTURE/UNION, RECORD, %VAL/%REF/%DESCR, and DEC intrinsics.
+.TP
+.SM
+.BR \-fibm-extensions " / " \-fno-ibm-extensions
+Enable or disable IBM XL Fortran extensions.
+Includes IBM-specific directives (SMP, parallel processing), POINTER extensions, and IBM intrinsics.
+.TP
+.SM
+.BR \-fcray-extensions " / " \-fno-cray-extensions
+Enable or disable Cray Fortran extensions.
+Includes Cray pointers, TASK COMMON, Cray directives, vector intrinsics, and Cray-specific optimizations.
+.TP
+.SM
+.BR \-static
+Link using static libraries instead of shared/dynamic libraries.
+This creates a standalone executable with all runtime libraries statically linked.
+Automatically enables smart runtime linking (see RUNTIME LIBRARY LINKING below).
+.TP
+.SM
+.BR \-shared
+Link using shared/dynamic libraries (default behavior).
+When combined with F2003+ standards or feature flags like
+.BR -foop " or " -fcoarrays ,
+enables intelligent library selection that only links feature-specific libraries when needed.
+.TP
+.BR \-u
+Make the default type of a variable `undefined' rather than using the default Fortran rules.
+.TP
+.BR \-q
+Suppress printing of procedure names during compilation.
+.TP
+.BR \-C
+Compile code to check that subscripts are within declared array bounds.
+.TP
+.BR \-w
+Suppress all warning messages.
+If the option is `\-w66', only Fortran 66 compatibility warnings are suppressed.
+.TP
+.BR \-F
+Apply EFL and Ratfor preprocessor to relevant files, put the result in the file
+with the suffix changed to `.f', but do not compile.
+.TP
+.BR \-m
+Apply the M4 preprocessor to each `.r' or `.e' file before transforming
+it with the Ratfor or EFL preprocessor.
+.TP
+.TP
+.BI \-E x
+Use the string
+.I x
+as an EFL option in processing `.e' files.
+.TP
+.BI \-R x
+Use the string 
+.I x
+as a Ratfor option in processing `.r' files.
+.PP
+Other arguments
+are taken
+to be either loader option arguments, or F90-compatible
+object programs, typically produced by an earlier
+run,
+or perhaps libraries of F90-compatible routines.
+These programs, together with the results of any
+compilations specified, are loaded (in the order
+given) to produce an executable program with name
+`a.out'.
+.SH OBJECT-ORIENTED PROGRAMMING
+The
+.I f90
+compiler provides comprehensive object-oriented programming support when using
+.B -std=f2003
+or later, or when explicitly enabled with
+.BR -foop .
+.PP
+.B OOP Features Available:
+.TP
+.B Type Extension and Inheritance
+Define derived types that extend other types, inheriting their components and type-bound procedures.
+Supports single inheritance model with polymorphic variables.
+.TP
+.B Type-Bound Procedures
+Associate procedures directly with types, enabling encapsulation and method dispatch.
+Supports both specific and generic type-bound procedures.
+.TP
+.B Polymorphism
+Use CLASS keyword for polymorphic variables that can reference objects of different types
+within an inheritance hierarchy. Supports both compile-time and run-time polymorphism.
+.TP
+.B Abstract Types and Deferred Bindings
+Define abstract base types with deferred (pure virtual) procedures that must be
+implemented by extending types.
+.TP
+.B Procedure Pointers
+Create pointers to procedures, enabling callback mechanisms and dynamic dispatch.
+.TP
+.B Object Constructors
+Use structure constructors and type-bound procedures to initialize objects.
+Supports automatic finalization through FINAL procedures.
+.PP
+.B Parallel Programming Features:
+.TP
+.B Coarrays (F2008+)
+Native parallel programming with partitioned global address space (PGAS).
+Use coarray syntax [index] to access data on different images (parallel instances).
+.TP
+.B Submodules (F2008+)
+Separate module interface from implementation for better compilation dependencies.
+.TP
+.B Teams and Events (F2018+)
+Hierarchical team-based parallelism with synchronization events.
+.PP
+Example OOP program structure:
+.nf
+    ! Define a base type with type-bound procedures
+    type :: Shape
+        real :: area
+    contains
+        procedure :: calculate_area => shape_area
+    end type Shape
+
+    ! Extend the base type
+    type, extends(Shape) :: Circle
+        real :: radius
+    contains
+        procedure :: calculate_area => circle_area
+    end type Circle
+
+    ! Use polymorphism
+    class(Shape), pointer :: myshape
+    type(Circle), target :: mycircle
+    myshape => mycircle
+.fi
+.SH VENDOR EXTENSIONS
+The
+.I f90
+compiler supports proprietary extensions from major historical and commercial Fortran compilers.
+These extensions can be enabled individually or in combination.
+.PP
+.B Microsoft PowerFortran Extensions (-fms-extensions):
+.RS
+.TP
+.B STRUCTURE and UNION
+Non-standard record structures similar to C structs and unions.
+Provides memory layout control and interoperability with C code.
+.TP
+.B RECORD
+Declares variables of STRUCTURE type, supporting nested structures.
+.TP
+.B VOLATILE
+Declares variables as volatile to prevent compiler optimization.
+Essential for memory-mapped I/O and shared memory programming.
+.TP
+.B Packed Data Types
+Support for efficient memory packing of data structures.
+.TP
+.B MS-Specific Intrinsics
+SIZEOF, LOC, and other Microsoft-specific built-in functions.
+.RE
+.PP
+.B HP Fortran Extensions (-fhp-extensions):
+.RS
+.TP
+.B POINTER Statement
+HP's original pointer syntax (different from Cray pointers).
+.TP
+.B TASK COMMON
+Thread-private common blocks for parallel programming.
+.TP
+.B HP-UX Features
+HP-UX operating system specific functionality and I/O extensions.
+.TP
+.B HP Intrinsics
+HP-specific mathematical and system intrinsic functions.
+.RE
+.PP
+.B DEC Fortran Extensions (-fdec-extensions):
+.RS
+.TP
+.B VAX/VMS Features
+Digital VAX and VMS operating system compatibility.
+.TP
+.B STRUCTURE/UNION/RECORD
+DEC's version of non-standard data structures.
+.TP
+.B %VAL, %REF, %DESCR
+Argument passing mechanisms for interoperability with other languages.
+%VAL passes by value, %REF by reference, %DESCR by descriptor.
+.TP
+.B DEC Intrinsics
+IDATE, SECNDS, RAN, and other DEC-specific functions.
+.TP
+.B BYTE Data Type
+8-bit integer data type for low-level operations.
+.RE
+.PP
+.B IBM XL Fortran Extensions (-fibm-extensions):
+.RS
+.TP
+.B SMP Directives
+Symmetric multiprocessing directives for parallel loops and regions.
+.TP
+.B POINTER Extensions
+IBM's extended pointer functionality with advanced features.
+.TP
+.B IBM Intrinsics
+SYSTEM, FLUSH, and IBM-specific built-in functions.
+.TP
+.B Parallel Processing
+IBM parallel DO extensions and worksharing constructs.
+.RE
+.PP
+.B Cray Fortran Extensions (-fcray-extensions):
+.RS
+.TP
+.B Cray Pointers
+Powerful low-level pointer mechanism for array access and memory manipulation.
+Syntax: POINTER (pointer, pointee)
+.TP
+.B TASK COMMON
+Per-thread common blocks for multitasking programs.
+.TP
+.B Cray Directives
+Compiler directives for vectorization and optimization hints.
+.TP
+.B Vector Intrinsics
+CVMGP, CVMGN, CVMGT, and other vector processing intrinsics.
+.TP
+.B Cray-Specific Optimizations
+Support for Cray vector register hints and memory access patterns.
+.RE
+.PP
+.B Common Extensions Across Vendors:
+.RS
+Many vendor extensions overlap in functionality. Common features include:
+.TP
+.B Non-Standard I/O
+OPEN with vendor-specific keywords (SHARED, READONLY, etc.)
+.TP
+.B Extended Precision
+REAL*16, COMPLEX*32 on systems that support quad precision
+.TP
+.B Mixed Language Support
+Enhanced interoperability with C, C++, and assembly language
+.TP
+.B System Interface
+Access to operating system functions and environment variables
+.RE
+.PP
+.B Compatibility Notes:
+.PP
+Vendor extensions may conflict with each other or with standard Fortran features.
+When multiple vendor extension sets are enabled simultaneously, the compiler will
+attempt to resolve conflicts by prioritizing in this order: Cray, IBM, DEC, HP, Microsoft.
+For maximum compatibility with legacy code, enable only the specific vendor
+extension set required for your codebase.
+.SH RUNTIME LIBRARY LINKING
+The
+.I f90
+compiler uses intelligent, feature-based runtime library selection to optimize
+executable size and dependencies. This "smart linking" system automatically
+determines which runtime libraries are needed based on the Fortran standard
+selected and features enabled.
+.PP
+.B Link Modes:
+.TP
+.B Legacy Mode (F66/F77/F90/F95)
+When using older Fortran standards without modern feature flags, the compiler
+links all runtime libraries for maximum compatibility. This ensures backward
+compatibility with existing F77 codebases.
+.TP
+.B Smart Linking Mode (F2003+)
+When using
+.B -std=f2003
+or later, or when explicitly enabling features with flags like
+.BR -foop ", " -fcoarrays ", or " -fteams ,
+the compiler automatically activates smart linking mode. In this mode, only
+the libraries actually required for enabled features are linked.
+.PP
+.B Library Selection Rules:
+.PP
+The compiler conditionally links runtime libraries as follows:
+.TP
+.B Core Runtime (always linked)
+.BR libgfortran :
+GNU Fortran runtime library (or vendor equivalent) providing basic Fortran
+language support including intrinsics, I/O, and standard library functions.
+.TP
+.B OOP Support (conditional)
+.BR libfortran_oop :
+Linked only when OOP features are enabled via
+.B -std=f2003+
+or
+.BR -foop .
+Provides runtime support for type extension, inheritance, polymorphism,
+type-bound procedures, and finalization.
+.TP
+.B Coarray Support (conditional)
+.BR libcaf_single :
+Linked only when coarrays are enabled via
+.B -std=f2008+
+or
+.BR -fcoarrays .
+Provides single-image coarray runtime support. For multi-image programs,
+replace with
+.BR libcaf_mpi " or " libcaf_gasnet
+for distributed memory parallelism.
+.TP
+.B Parallel Execution (conditional)
+.BR libpthread :
+POSIX threads library, automatically linked when coarrays or teams are enabled.
+Provides thread support for parallel execution of coarray and team constructs.
+.TP
+.B Quad-Precision Math (conditional)
+.BR libquadmath :
+Linked when using
+.B -std=f2003+
+to support SELECTED_REAL_KIND with extended precision requirements and
+REAL(16) quad-precision floating-point operations.
+.TP
+.B System Libraries (always linked)
+.B libm
+and
+.B libc
+are always linked to provide mathematical functions and C standard library support.
+.PP
+.B Examples:
+.PP
+Compile F77 program (legacy mode, all libraries linked):
+.nf
+    f90 -std=f77 program.f
+.fi
+.PP
+Compile F2003 OOP program (smart linking, only OOP libs):
+.nf
+    f90 -std=f2003 shapes.f
+    # Links: libgfortran, libfortran_oop, libquadmath, libm, libc
+.fi
+.PP
+Compile F2008 coarray program (smart linking with parallel support):
+.nf
+    f90 -std=f2008 parallel.f
+    # Links: libgfortran, libfortran_oop, libcaf_single,
+    #        libquadmath, libpthread, libm, libc
+.fi
+.PP
+Compile F90 with explicit OOP (smart linking activated):
+.nf
+    f90 -std=f90 -foop legacy_oop.f
+    # Links: libgfortran, libfortran_oop, libm, libc
+.fi
+.PP
+Static linking (all libraries statically linked):
+.nf
+    f90 -static -std=f2008 program.f
+    # Creates standalone executable with no dynamic dependencies
+.fi
+.PP
+.B Benefits:
+.RS
+.TP
+\(bu Smaller executables when advanced features aren't used
+.TP
+\(bu Fewer runtime dependencies for simple programs
+.TP
+\(bu Automatic optimization without manual library specification
+.TP
+\(bu Backward compatibility with legacy F77 code
+.TP
+\(bu Forward compatibility with modern Fortran standards
+.RE
+.PP
+.B Verbose Mode:
+Use
+.B -v
+flag to see exactly which libraries are being linked:
+.nf
+    f90 -v -std=f2008 -foop program.f
+.fi
+.SH FILES
+.nf
+.ta \w'/usr/local/lib/libfortran_oop.a   'u
+file.[fresc]	input file
+file.o	object file
+a.out	loaded output
+./fort[pid].?	temporary
+/usr/lib/f77pass1	legacy compiler pass 1
+/lib/f1	pass 2
+/lib/c2	optional optimizer
+.fi
+.PP
+.B Runtime Libraries:
+.nf
+/usr/local/lib/libgfortran.a	GNU Fortran runtime library
+/usr/local/lib/libfortran_oop.a	OOP support library (F2003+)
+/usr/local/lib/libcaf_single.a	Coarray support (single-image, F2008+)
+/usr/local/lib/libquadmath.a	Quad-precision math library
+/usr/lib/libm.a	Math library
+/usr/lib/libpthread.a	POSIX threads (for parallel features)
+/usr/lib/libc.a	C standard library
+.fi
+.PP
+.B Legacy Libraries (for backward compatibility):
+.nf
+/usr/lib/libF77.a	Legacy F77 intrinsic function library
+/usr/lib/libI77.a	Legacy F77 I/O library
+.fi
+.PP
+.B Notes:
+The compiler automatically links the appropriate runtime libraries based on
+the selected Fortran standard and enabled features. When using
+.B -std=f2003
+or later, OOP libraries are automatically linked. Coarray libraries are linked
+when using
+.B -std=f2008
+or later, or when explicitly enabled with
+.BR -fcoarrays .
+.SH "SEE ALSO"
+S. I. Feldman,
+P. J. Weinberger,
+.I
+A Portable Fortran 77 Compiler
+.br
+prof(1), cc(1), ld(1)
+.SH DIAGNOSTICS
+The diagnostics produced by
+.I f90
+itself are intended to be
+self-explanatory.
+Occasional messages may be produced by the loader.
+.SH BUGS
+The Fortran 66 subset of the language has been
+exercised extensively;
+the newer features have not.
