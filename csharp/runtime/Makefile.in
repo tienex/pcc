@@ -1,0 +1,70 @@
+# Makefile for C# Runtime Library
+
+VPATH = @srcdir@
+srcdir = @srcdir@
+top_srcdir = @top_srcdir@
+top_builddir = @top_builddir@
+prefix = @prefix@
+exec_prefix = @exec_prefix@
+libdir = @libdir@
+includedir = @includedir@
+CC = @CC@
+CFLAGS = @CFLAGS@ -I$(srcdir)/include -fPIC
+LDFLAGS = @LDFLAGS@
+AR = ar
+RANLIB = @RANLIB@
+INSTALL = @INSTALL@
+INSTALL_DATA = @INSTALL_DATA@
+
+# Source files
+SRCS = src/csruntime.c \
+       src/csruntime_arc.c \
+       src/csruntime_types.c \
+       src/csruntime_memory.c \
+       src/csruntime_string.c \
+       src/csruntime_collections.c \
+       src/csruntime_linq.c \
+       src/csruntime_async.c
+
+OBJS = $(SRCS:.c=.o)
+
+# Headers
+HEADERS = include/csruntime.h \
+          include/csruntime_arc.h \
+          include/csruntime_types.h \
+          include/csruntime_string.h \
+          include/csruntime_collections.h \
+          include/csruntime_linq.h \
+          include/csruntime_async.h \
+          include/csruntime_memory.h
+
+# Library name
+LIBNAME = libcsruntime.a
+SONAME = libcsruntime.so.2.0
+
+all: $(LIBNAME) $(SONAME)
+
+$(LIBNAME): $(OBJS)
+	$(AR) rcs $@ $(OBJS)
+	$(RANLIB) $@
+
+$(SONAME): $(OBJS)
+	$(CC) -shared -Wl,-soname,$(SONAME) -o $@ $(OBJS) $(LDFLAGS) -lpthread
+
+%.o: %.c
+	$(CC) $(CFLAGS) -c -o $@ $<
+
+clean:
+	rm -f $(OBJS) $(LIBNAME) $(SONAME)
+
+install: all
+	test -z "$(DESTDIR)$(libdir)" || mkdir -p "$(DESTDIR)$(libdir)"
+	test -z "$(DESTDIR)$(includedir)/csruntime" || mkdir -p "$(DESTDIR)$(includedir)/csruntime"
+	$(INSTALL_DATA) $(LIBNAME) $(DESTDIR)$(libdir)/
+	$(INSTALL_DATA) $(SONAME) $(DESTDIR)$(libdir)/
+	cd $(DESTDIR)$(libdir) && ln -sf $(SONAME) libcsruntime.so
+	for header in $(HEADERS); do \
+		$(INSTALL_DATA) $$header $(DESTDIR)$(includedir)/csruntime/; \
+	done
+
+.PHONY: all clean install

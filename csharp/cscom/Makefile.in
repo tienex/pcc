@@ -1,0 +1,52 @@
+# Makefile for C# 3.0 Compiler (cscom)
+
+VPATH = @srcdir@
+srcdir = @srcdir@
+top_srcdir = @top_srcdir@
+top_builddir = @top_builddir@
+prefix = @prefix@
+exec_prefix = @exec_prefix@
+bindir = @bindir@
+libexecdir = @libexecdir@
+CC = @CC@
+CFLAGS = @CFLAGS@ -I$(srcdir) -I$(top_srcdir)/common -I$(top_srcdir)/mip -I$(top_srcdir)/cc/ccom
+LDFLAGS = @LDFLAGS@
+INSTALL = @INSTALL@
+INSTALL_PROGRAM = @INSTALL_PROGRAM@
+
+OBJS = cs_main.o cs_types.o cs_arc.o cs_version.o cs_features.o
+COMMON_OBJS = $(top_builddir)/common/cs_module.o
+
+CSCOM = cscom
+
+all: $(CSCOM)
+
+$(CSCOM): $(OBJS) $(COMMON_OBJS)
+	$(CC) $(CFLAGS) -o $@ $(OBJS) $(COMMON_OBJS) $(LDFLAGS)
+
+cs_main.o: cs_main.c cs_pass1.h cs_version.h $(top_srcdir)/common/cs_module.h
+	$(CC) $(CFLAGS) -c -o $@ $<
+
+cs_types.o: cs_types.c cs_pass1.h cs_version.h
+	$(CC) $(CFLAGS) -c -o $@ $<
+
+cs_arc.o: cs_arc.c cs_pass1.h
+	$(CC) $(CFLAGS) -c -o $@ $<
+
+cs_version.o: cs_version.c cs_version.h
+	$(CC) $(CFLAGS) -c -o $@ $<
+
+cs_features.o: cs_features.c cs_pass1.h cs_version.h
+	$(CC) $(CFLAGS) -c -o $@ $<
+
+$(top_builddir)/common/cs_module.o: $(top_srcdir)/common/cs_module.c $(top_srcdir)/common/cs_module.h
+	cd $(top_builddir)/common && $(MAKE) cs_module.o
+
+clean:
+	rm -f $(OBJS) $(CSCOM)
+
+install: all
+	test -z "$(DESTDIR)$(libexecdir)" || mkdir -p "$(DESTDIR)$(libexecdir)"
+	$(INSTALL_PROGRAM) $(CSCOM) $(DESTDIR)$(libexecdir)/
+
+.PHONY: all clean install

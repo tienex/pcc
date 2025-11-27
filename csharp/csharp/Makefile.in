@@ -1,0 +1,35 @@
+# Makefile for PCSC (Portable C# Compiler) Driver
+
+VPATH = @srcdir@
+srcdir = @srcdir@
+top_srcdir = @top_srcdir@
+top_builddir = @top_builddir@
+prefix = @prefix@
+exec_prefix = @exec_prefix@
+bindir = @bindir@
+CC = @CC@
+CFLAGS = @CFLAGS@ -I$(srcdir) -I$(top_srcdir)/common
+LDFLAGS = @LDFLAGS@
+INSTALL = @INSTALL@
+INSTALL_PROGRAM = @INSTALL_PROGRAM@
+
+OBJS = pcsc.o
+
+PCSC = pcsc
+
+all: $(PCSC)
+
+$(PCSC): $(OBJS)
+	$(CC) $(CFLAGS) -o $@ $(OBJS) $(LDFLAGS)
+
+pcsc.o: pcsc.c
+	$(CC) $(CFLAGS) -c -o $@ $<
+
+clean:
+	rm -f $(OBJS) $(PCSC)
+
+install: all
+	test -z "$(DESTDIR)$(bindir)" || mkdir -p "$(DESTDIR)$(bindir)"
+	$(INSTALL_PROGRAM) $(PCSC) $(DESTDIR)$(bindir)/
+
+.PHONY: all clean install
