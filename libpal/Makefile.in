@@ -1,0 +1,104 @@
+#	$Id$
+#
+# Makefile.in for PAL Runtime Library (libpal)
+#
+
+VPATH=@srcdir@
+srcdir=@srcdir@
+top_srcdir=@top_srcdir@
+top_builddir=@top_builddir@
+prefix = @prefix@
+exec_prefix = @exec_prefix@
+bindir = @bindir@
+libdir = @libdir@
+includedir = @includedir@
+datarootdir = @datarootdir@
+CC = @CC@
+AR = ar
+RANLIB = @RANLIB@
+EXEEXT = @EXEEXT@
+TARGOS = @targos@
+TARGMACH = @targmach@
+CFLAGS = @CFLAGS@ @ADD_CFLAGS@
+CPPFLAGS = @CPPFLAGS@ @ADD_CPPFLAGS@ \
+	-I$(srcdir)/include -I$(top_builddir) \
+	-Dmach_$(TARGMACH) -Dos_$(TARGOS)
+LDFLAGS = @LDFLAGS@
+INSTALL = @INSTALL@
+INSTALL_DATA = @INSTALL_DATA@
+
+# Library name
+LIBNAME = libpal.a
+
+# Source files
+SRCS = src/string.c \
+       src/math.c \
+       src/datetime.c \
+       src/convert.c \
+       src/array.c \
+       src/ui.c \
+       src/database.c \
+       src/system.c \
+       src/exception.c \
+       src/runtime.c
+
+# Object files
+OBJS = $(SRCS:.c=.o)
+
+# Test programs
+TESTS = tests/test_string$(EXEEXT) \
+        tests/test_math$(EXEEXT) \
+        tests/test_datetime$(EXEEXT) \
+        tests/test_array$(EXEEXT)
+
+all: $(LIBNAME)
+
+$(LIBNAME): $(OBJS)
+	$(AR) rcs $@ $(OBJS)
+	$(RANLIB) $@
+
+.c.o:
+	$(CC) $(CPPFLAGS) $(CFLAGS) -c $< -o $@
+
+# Build test programs
+tests: $(TESTS)
+
+tests/test_string$(EXEEXT): tests/test_string.o $(LIBNAME)
+	$(CC) $(LDFLAGS) -o $@ tests/test_string.o $(LIBNAME) -lm
+
+tests/test_math$(EXEEXT): tests/test_math.o $(LIBNAME)
+	$(CC) $(LDFLAGS) -o $@ tests/test_math.o $(LIBNAME) -lm
+
+tests/test_datetime$(EXEEXT): tests/test_datetime.o $(LIBNAME)
+	$(CC) $(LDFLAGS) -o $@ tests/test_datetime.o $(LIBNAME) -lm
+
+tests/test_array$(EXEEXT): tests/test_array.o $(LIBNAME)
+	$(CC) $(LDFLAGS) -o $@ tests/test_array.o $(LIBNAME) -lm
+
+tests/%.o: tests/%.c
+	$(CC) $(CPPFLAGS) $(CFLAGS) -c $< -o $@
+
+# Run tests
+check: tests
+	@echo "Running PAL runtime library tests..."
+	@for test in $(TESTS); do \
+		echo "Running $$test..."; \
+		./$$test || exit 1; \
+		echo ""; \
+	done
+	@echo "All tests passed!"
+
+install: $(LIBNAME)
+	test -z "$(DESTDIR)$(libdir)" || mkdir -p "$(DESTDIR)$(libdir)"
+	$(INSTALL_DATA) $(LIBNAME) $(DESTDIR)$(libdir)
+	test -z "$(DESTDIR)$(includedir)/pal" || mkdir -p "$(DESTDIR)$(includedir)/pal"
+	$(INSTALL_DATA) $(srcdir)/include/palrt.h $(DESTDIR)$(includedir)/pal
+
+clean:
+	rm -f $(OBJS) $(LIBNAME)
+	rm -f tests/*.o $(TESTS)
+
+distclean: clean
+	rm -f Makefile
+
+.PHONY: all tests check install clean distclean

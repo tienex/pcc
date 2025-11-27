@@ -67,6 +67,17 @@ See [libx86asm/README.md](libx86asm/README.md) for details.
 - Watcom ABI
 - Cross-language interoperability (C++ ↔ Pascal)
 
+### Language Frontends
+
+PCC supports multiple programming language frontends, all targeting a unified intermediate representation:
+
+- **C/C++**: Full C11, C17, C23 support with C++ extensions
+- **Pascal**: ISO Pascal, Borland Pascal, Delphi Object Pascal, Free Pascal
+- **Fortran 77**: Classic FORTRAN 77 with extensions
+- **Paradox PAL/ObjectPAL**: Paradox Application Language and ObjectPAL (database scripting)
+
+Each frontend compiler is located in its respective directory (cc/, pascal/, f77/, paradox/)
+
 ### Watcom Pragma Support
 
 - Full Watcom C/C++ pragma compatibility
@@ -89,5 +100,6 @@ make install
 - [README_SEH.md](README_SEH.md) - Structured Exception Handling
 - [SEH_IMPLEMENTATION.md](SEH_IMPLEMENTATION.md) - SEH implementation details
 - [WATCOM_PRAGMAS.md](WATCOM_PRAGMAS.md) - Watcom pragma compatibility
+- [paradox/README.md](paradox/README.md) - Paradox PAL/ObjectPAL compiler frontend
 
 
