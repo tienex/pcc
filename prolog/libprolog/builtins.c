@@ -16,7 +16,6 @@ static void register_builtin(prolog_engine_t *eng, const char *name, int arity,
 	functor_t *f = functor_create(eng, name, arity);
 	predicate_t *pred = predicate_define(eng, f);
 	pred->builtin = func;
-	pred->is_builtin = 1;
 }
 
 /* true/0 - Always succeeds */

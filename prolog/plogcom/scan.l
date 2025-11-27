@@ -63,7 +63,7 @@ WHITESPACE      [ \t\r]
 	/* Ignore comment content */
 }
 
-    /* Block comments - /* ... */ style (both dialects) */
+    /* Block comments - C-style (both dialects) */
 "/*" {
 	comment_depth = 1;
 	BEGIN(COMMENT);

@@ -107,7 +107,7 @@ typedef struct environment {
 /* Predicate definition */
 typedef struct predicate {
 	functor_t *functor;
-	int (*builtin)(word_t *args);  /* NULL if not builtin */
+	int (*builtin)(struct prolog_engine *eng, word_t *args);  /* NULL if not builtin */
 	word_t *clauses;               /* Pointer to clause chain */
 	int clause_count;
 	int is_dynamic;
