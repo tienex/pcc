@@ -1,0 +1,74 @@
+#	$Id$
+#
+# Makefile.in for Python Frontend Compiler (pycom)
+#
+VPATH=@srcdir@
+srcdir=@srcdir@
+top_srcdir=@top_srcdir@
+builddir=@builddir@
+top_builddir=@top_builddir@
+CC = @CC@
+EXEEXT = @EXEEXT@
+BINPREFIX = @BINPREFIX@
+CFLAGS = @CFLAGS@ @ADD_CFLAGS@
+CPPFLAGS = @CPPFLAGS@ @ADD_CPPFLAGS@ -D_ISOC99_SOURCE \
+	-I$(srcdir) -I$(builddir) -I$(top_builddir) -I$(MIPDIR) -I$(COMMONDIR)
+LIBS = @LIBS@
+LDFLAGS = @LDFLAGS@
+prefix = @prefix@
+exec_prefix = @exec_prefix@
+libexecdir = @libexecdir@
+bindir = @bindir@
+INSTALL = @INSTALL@
+INSTALL_PROGRAM = @INSTALL_PROGRAM@
+
+MIPDIR=$(top_srcdir)/mip
+COMMONDIR=$(top_srcdir)/common
+
+# Source files
+SRCS = main.c lexer.c parser.c symtab.c codegen.c util.c
+OBJS = $(SRCS:.c=.o)
+
+# Target executable
+TARGET = $(BINPREFIX)pycom$(EXEEXT)
+
+# Build rules
+all: $(TARGET)
+
+$(TARGET): $(OBJS)
+	$(CC) $(LDFLAGS) -o $@ $(OBJS) $(LIBS)
+
+%.o: %.c pycom.h
+	$(CC) $(CFLAGS) $(CPPFLAGS) -c $< -o $@
+
+# Clean build artifacts
+clean:
+	rm -f $(OBJS) $(TARGET)
+
+# Clean everything including dependencies
+distclean: clean
+	rm -f Makefile *~ core
+
+# Install
+install: $(TARGET)
+	test -z "$(DESTDIR)$(libexecdir)" || mkdir -p "$(DESTDIR)$(libexecdir)"
+	$(INSTALL_PROGRAM) $(TARGET) $(DESTDIR)$(libexecdir)/$(TARGET)
+
+# Uninstall
+uninstall:
+	rm -f $(DESTDIR)$(libexecdir)/$(TARGET)
+
+# Run tests
+test: $(TARGET)
+	@echo "Running pycom tests..."
+	@if [ -f examples/hello.py ]; then \
+		./$(TARGET) -v examples/hello.py || true; \
+	fi
+	@if [ -f examples/factorial.py ]; then \
+		./$(TARGET) -v examples/factorial.py || true; \
+	fi
+	@if [ -f examples/fibonacci.py ]; then \
+		./$(TARGET) -v examples/fibonacci.py || true; \
+	fi
+
+.PHONY: all clean distclean install uninstall test
