@@ -118,3 +118,4 @@ test_gc_statistics
 test_ocaml_compiler.sh
 run_all_gc_tests.sh
 ocaml_tests/
+test_simple_debug
