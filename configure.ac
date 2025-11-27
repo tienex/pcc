@@ -3,7 +3,7 @@
 
 AC_PREREQ(2.59)
 AC_INIT([Portable C Compiler], [1.2.0.DEVEL], [pcc@lists.ludd.ltu.se], [pcc], [http://pcc.ludd.ltu.se/])
-AC_CONFIG_HEADER([config.h])
+AC_CONFIG_HEADERS([config.h])
 
 AC_CANONICAL_TARGET
 
@@ -21,6 +21,8 @@ stabs=no
 dwarf=no
 # allowed: UNSIGNED (4-char u_int), INT (4-char int), SHORT (2-char u_short)
 wchar_type=INT
+# Default assembler format (gnu-as, nasm, yasm, fasm, apple-as, masm, jwasm, uasm, tasm, wasm)
+asm_format=gnu-as
 
 case "$target_os" in
 
@@ -47,6 +49,7 @@ case "$target_os" in
 	targos=darwin
 	abi=macho
 	stabs=yes
+	asm_format=apple-as
 	case "$target_os" in
 	    *10.*) targosver=10 ;;
 	    *9.*) targosver=9 ;;
@@ -119,6 +122,8 @@ case "$target_os" in
 	    mips64) targmach=mips64 endian=big ;;
 	    mipseb) targmach=mips endian=big ;;
 	    mips*) targmach=mips ;;
+	    wasm32) targmach=wasm ;;
+	    wasm64) targmach=wasm ;;
 	esac
 	case "$target_os" in
 	    *-musl*) ADD_CPPFLAGS="$ADD_CPPFLAGS -DUSE_MUSL" ;;
@@ -267,6 +272,15 @@ case "$target_os" in
         esac
         ;;
 
+    wasm*)
+	targos=wasm
+	abi=elf
+	case "$target_cpu" in
+	    wasm32) targmach=wasm ;;
+	    wasm64) targmach=wasm ;;
+	esac
+	;;
+
     windows*|pe*)
 	target_alias=i386-pe
 	targos=win32
@@ -282,6 +296,8 @@ case "$target_os" in
 	    nova) targmach=nova ;;
 	    i86) targmach=i86 ;;
 	    pdp7) targmach=pdp7 ;;
+	    wasm32) targmach=wasm ;;
+	    wasm64) targmach=wasm ;;
 	esac
 	;;
 esac
@@ -312,7 +328,7 @@ case "$host_os" in
         hostos=freebsd
 	;;
     linux*)
-	ADD_CPPFLAGS="$ADD_CPPFLAGS -D_BSD_SOURCE"
+	ADD_CPPFLAGS="$ADD_CPPFLAGS -D_DEFAULT_SOURCE"
         hostos=linux
 	;;
     litebsd*)
@@ -484,10 +500,153 @@ if test "$useyasm" = "yes"; then
 	assembler="yasm"
 	ADD_CPPFLAGS="$ADD_CPPFLAGS -DUSE_YASM"
 fi
+AC_ARG_WITH(asm-format,
+	AS_HELP_STRING([--with-asm-format=<format>],
+		[Specify assembly output format: gnu-as (default), nasm, yasm, fasm, apple-as, masm, jwasm, uasm, tasm, wasm]),
+	asm_format=$withval,
+	[])
 AC_ARG_ENABLE(native,
 	AS_HELP_STRING([--enable-native],
 		[Build the compiler as a native rather than cross-build compiler]),
 	[native=$enableval], [])
+
+# Language selection options
+AC_ARG_ENABLE(languages,
+	AS_HELP_STRING([--enable-languages=LANGLIST],
+		[Comma-separated list of languages to build: c,c++,pascal,f77,bliss (default: c,c++)]),
+	[enable_languages=$enableval], [enable_languages=c,c++])
+
+# Architecture selection options
+AC_ARG_ENABLE(archs,
+	AS_HELP_STRING([--enable-archs=ARCHLIST],
+		[Comma-separated list of target architectures (default: host architecture)]),
+	[enable_archs=$enableval], [enable_archs=auto])
+
+# OS target selection options
+AC_ARG_ENABLE(targets,
+	AS_HELP_STRING([--enable-targets=OSLIST],
+		[Comma-separated list of target operating systems (default: host OS)]),
+	[enable_targets=$enableval], [enable_targets=auto])
+
+# Bootstrap options
+bootstrap_stage=0
+AC_ARG_ENABLE(bootstrap,
+	AS_HELP_STRING([--enable-bootstrap@<:@=ARG@:>@],
+		[Enable multi-stage bootstrap build (yes/no/lean, default: no)
+		 - yes: 3-stage bootstrap with stage2/stage3 comparison
+		 - lean: 2-stage bootstrap without comparison
+		 - no: single-stage build (default)]),
+	[bootstrap=$enableval], [bootstrap=no])
+AC_ARG_WITH(bootstrap-stage,
+	AS_HELP_STRING([--with-bootstrap-stage=N],
+		[Set bootstrap stage number (default: 0)]),
+	[bootstrap_stage=$withval], [])
+
+# Normalize bootstrap values
+case "$bootstrap" in
+yes|"")
+	bootstrap=yes
+	bootstrap_stages=3
+	bootstrap_compare=yes
+	;;
+lean)
+	bootstrap=yes
+	bootstrap_stages=2
+	bootstrap_compare=no
+	;;
+no)
+	bootstrap=no
+	bootstrap_stages=1
+	bootstrap_compare=no
+	;;
+*)
+	AC_MSG_ERROR([Invalid --enable-bootstrap argument '$bootstrap'. Use yes, lean, or no.])
+	;;
+esac
+
+if test "$bootstrap" = "yes" -o "$bootstrap_stage" != "0"; then
+	AC_DEFINE_UNQUOTED(BOOTSTRAP_STAGE, $bootstrap_stage,
+		[Bootstrap stage number])
+fi
+AC_SUBST(bootstrap)
+AC_SUBST(bootstrap_stage)
+AC_SUBST(bootstrap_stages)
+AC_SUBST(bootstrap_compare)
+AC_SUBST(asm_format)
+
+# Process language selection
+enable_c=no
+enable_cxx=no
+enable_pascal=no
+enable_f77=no
+enable_bliss=no
+
+# Normalize language list (replace spaces with commas)
+enable_languages=`echo "$enable_languages" | tr ' ' ',' | tr -d ' '`
+
+# Parse comma-separated language list using portable shell syntax
+old_IFS=$IFS
+IFS=','
+for lang in $enable_languages; do
+	case "$lang" in
+	c|C)
+		enable_c=yes
+		;;
+	c++|C++|cxx|CXX)
+		enable_cxx=yes
+		;;
+	pascal|Pascal|PASCAL)
+		enable_pascal=yes
+		;;
+	f77|F77|fortran|FORTRAN)
+		enable_f77=yes
+		;;
+	bliss|BLISS)
+		enable_bliss=yes
+		;;
+	all|ALL)
+		enable_c=yes
+		enable_cxx=yes
+		enable_pascal=yes
+		enable_f77=yes
+		enable_bliss=yes
+		;;
+	"")
+		# Skip empty entries
+		;;
+	*)
+		AC_MSG_ERROR([Unknown language '$lang'. Supported: c, c++, pascal, f77, bliss, all])
+		;;
+	esac
+done
+IFS=$old_IFS
+
+# C is always required for bootstrap
+if test "$enable_c" = "no"; then
+	AC_MSG_WARN([C language is required and will be enabled])
+	enable_c=yes
+fi
+
+AC_SUBST(enable_c)
+AC_SUBST(enable_cxx)
+AC_SUBST(enable_pascal)
+AC_SUBST(enable_f77)
+AC_SUBST(enable_bliss)
+
+# Process architecture selection
+if test "$enable_archs" = "auto" -o "$enable_archs" = ""; then
+	# Default to target machine
+	enable_archs="$targmach"
+fi
+
+# Process OS target selection
+if test "$enable_targets" = "auto" -o "$enable_targets" = ""; then
+	# Default to target OS
+	enable_targets="$targos"
+fi
+
+AC_SUBST(enable_archs)
+AC_SUBST(enable_targets)
 
 # Setup for ubuntu multiarch
 multiarch_path=
@@ -563,6 +722,10 @@ fi
 if test -n "$assembler"; then
 	AC_DEFINE_UNQUOTED(ASSEMBLER, "$assembler",
 		[Define path to alternate assembler])
+fi
+if test -n "$asm_format"; then
+	AC_DEFINE_UNQUOTED(ASM_FORMAT, "$asm_format",
+		[Define default assembly output format])
 fi
 if test -n "$linker"; then
 	AC_DEFINE_UNQUOTED(LINKER, "$linker",
@@ -648,8 +811,10 @@ AC_C_BIGENDIAN([AC_DEFINE(HOST_BIG_ENDIAN, 1, [Define if host is BIG endian])],
 # Checks for programs.
 AC_PROG_MAKE_SET
 AC_PROG_INSTALL
+AC_PROG_RANLIB
 AC_PROG_YACC
-AC_PROG_LEX
+AC_PROG_LEX([noyywrap])
+AC_PROG_RANLIB
 
 # Checks for libraries.
 if test $libvmf != no ; then
@@ -660,10 +825,147 @@ if test $libvmf != yes ; then
 fi
 fi
 
+# Check for C11 standard support
+AC_MSG_CHECKING([for C11 support])
+save_CFLAGS="$CFLAGS"
+CFLAGS="$CFLAGS -std=c11"
+AC_COMPILE_IFELSE([
+    AC_LANG_PROGRAM([[
+        #if __STDC_VERSION__ < 201112L
+        #error C11 not supported
+        #endif
+    ]], [[]])
+  ], [
+    have_c11=yes
+    C11_CFLAGS="-std=c11"
+  ], [
+    have_c11=no
+    C11_CFLAGS=""
+])
+CFLAGS="$save_CFLAGS"
+AC_MSG_RESULT([$have_c11])
+AC_SUBST(C11_CFLAGS)
+
+# Check for C23 standard support
+AC_MSG_CHECKING([for C23 support])
+save_CFLAGS="$CFLAGS"
+CFLAGS="$CFLAGS -std=c2x"
+AC_COMPILE_IFELSE([
+    AC_LANG_PROGRAM([[
+        #if __STDC_VERSION__ < 202000L
+        #error C23 not supported
+        #endif
+    ]], [[]])
+  ], [
+    have_c23=yes
+    C23_CFLAGS="-std=c2x"
+  ], [
+    have_c23=no
+    C23_CFLAGS=""
+])
+CFLAGS="$save_CFLAGS"
+AC_MSG_RESULT([$have_c23])
+AC_SUBST(C23_CFLAGS)
+
 # Checks for header files.
 # AC_CHECK_HEADERS([fcntl.h stdlib.h string.h unistd.h])
 AC_CHECK_HEADERS([string.h malloc.h libgen.h])
 AC_HEADER_SYS_WAIT
+
+# Check for C11 Unicode support (uchar.h)
+AC_CHECK_HEADERS([uchar.h], [have_uchar=yes], [have_uchar=no])
+
+# Check for C11 threads support (threads.h)
+AC_CHECK_HEADERS([threads.h], [have_threads=yes], [have_threads=no])
+
+# Check for C23 bit utilities (stdbit.h)
+AC_CHECK_HEADERS([stdbit.h], [have_stdbit=yes], [have_stdbit=no])
+
+# Check for C23 checked integer arithmetic (stdckdint.h)
+AC_CHECK_HEADERS([stdckdint.h], [have_stdckdint=yes], [have_stdckdint=no])
+
+# Check for IEEE 754-2008 decimal floating point support
+AC_MSG_CHECKING([for _Decimal64 support])
+AC_COMPILE_IFELSE([
+    AC_LANG_PROGRAM([[
+        #ifndef __STDC_DEC_FP__
+        /* Try to use _Decimal64 anyway */
+        _Decimal64 x;
+        #endif
+    ]], [[
+        _Decimal64 x = 1.0DD;
+        x = x + 1.0DD;
+    ]])
+  ], [have_decimal=yes], [have_decimal=no])
+AC_MSG_RESULT([$have_decimal])
+
+# Check for POSIX threads if C11 threads not available
+PTHREAD_LIBS=""
+if test "$have_threads" = "no"; then
+    AC_SEARCH_LIBS([pthread_create], [pthread], [
+        if test "$ac_cv_search_pthread_create" != "none required"; then
+            PTHREAD_LIBS="$ac_cv_search_pthread_create"
+        fi
+        have_pthreads=yes
+    ], [have_pthreads=no])
+fi
+AC_SUBST(PTHREAD_LIBS)
+
+# Determine which libraries to build
+BUILD_LIBUNICODE=no
+BUILD_LIBTHREAD=no
+BUILD_LIBSTDBIT=no
+BUILD_LIBCKDINT=no
+BUILD_LIBDECIMAL=no
+BUILD_LIBMETAWARE=yes  # Always build MetaWare extensions
+PORTABLE_LIBS=""
+
+if test "$have_uchar" = "no"; then
+    BUILD_LIBUNICODE=yes
+    PORTABLE_LIBS="$PORTABLE_LIBS libunicode"
+    AC_DEFINE(NEED_LIBUNICODE, 1, [Define if portable libunicode should be linked])
+    AC_MSG_NOTICE([Will build portable libunicode (C11 Unicode support)])
+fi
+
+if test "$have_threads" = "no"; then
+    BUILD_LIBTHREAD=yes
+    PORTABLE_LIBS="$PORTABLE_LIBS libthread"
+    AC_DEFINE(NEED_LIBTHREAD, 1, [Define if portable libthread should be linked])
+    AC_MSG_NOTICE([Will build portable libthread (C11 threading support)])
+fi
+
+if test "$have_stdbit" = "no"; then
+    BUILD_LIBSTDBIT=yes
+    PORTABLE_LIBS="$PORTABLE_LIBS libstdbit"
+    AC_DEFINE(NEED_LIBSTDBIT, 1, [Define if portable libstdbit should be linked])
+    AC_MSG_NOTICE([Will build portable libstdbit (C23 bit utilities)])
+fi
+
+if test "$have_stdckdint" = "no"; then
+    BUILD_LIBCKDINT=yes
+    PORTABLE_LIBS="$PORTABLE_LIBS libckdint"
+    AC_DEFINE(NEED_LIBCKDINT, 1, [Define if portable libckdint should be linked])
+    AC_MSG_NOTICE([Will build portable libckdint (C23 checked arithmetic)])
+fi
+
+if test "$have_decimal" = "no"; then
+    BUILD_LIBDECIMAL=yes
+    PORTABLE_LIBS="$PORTABLE_LIBS libdecimal"
+    AC_DEFINE(NEED_LIBDECIMAL, 1, [Define if portable libdecimal should be linked])
+    AC_MSG_NOTICE([Will build portable libdecimal (IEEE 754-2008 decimal FP)])
+fi
+
+# Always build MetaWare extensions library (it's opt-in via header)
+PORTABLE_LIBS="$PORTABLE_LIBS libmetaware"
+AC_MSG_NOTICE([Will build MetaWare High C extensions library (libmetaware)])
+
+AC_SUBST(BUILD_LIBUNICODE)
+AC_SUBST(BUILD_LIBTHREAD)
+AC_SUBST(BUILD_LIBSTDBIT)
+AC_SUBST(BUILD_LIBCKDINT)
+AC_SUBST(BUILD_LIBDECIMAL)
+AC_SUBST(BUILD_LIBMETAWARE)
+AC_SUBST(PORTABLE_LIBS)
 
 # Checks for library functions.
 ##  AC_FUNC_STRTOD
@@ -705,27 +1007,253 @@ AC_DEFINE_UNQUOTED(PCC_MINORMINOR, $pcc_minorminor, [Minor minor version no])
 AC_DEFINE_UNQUOTED(VERSSTR, $versstr, [Version string])
 AC_DEFINE_UNQUOTED(TARGSTR, $targstr, [Target string])
 
-AC_CONFIG_FILES([Makefile
+# Find compiler runtime library directory for crtbegin.o/crtend.o (or MSVC equivalent)
+# Supports GCC, Clang, and MSVC
+gcclibdir=""
+
+# Detect compiler type
+cc_type=""
+if test -n "$CC" ; then
+	cc_type=`$CC --version 2>/dev/null | head -1`
+	case "$cc_type" in
+	*clang*|*Clang*|*CLANG*)
+		cc_type="clang"
+		;;
+	*gcc*|*GCC*|*GNU*)
+		cc_type="gcc"
+		;;
+	*Microsoft*|*MSVC*|*msvc*)
+		cc_type="msvc"
+		;;
+	*)
+		# Default: try gcc if CC not set or unrecognized
+		cc_type="gcc"
+		;;
+	esac
+else
+	# No CC set, try to auto-detect
+	if command -v gcc >/dev/null 2>&1; then
+		cc_type="gcc"
+	elif command -v clang >/dev/null 2>&1; then
+		cc_type="clang"
+	elif command -v cl.exe >/dev/null 2>&1; then
+		cc_type="msvc"
+	else
+		cc_type="gcc"  # fallback
+	fi
+fi
+
+# Find library directory based on compiler type
+case "$cc_type" in
+gcc)
+	# GCC: Find version and library directory
+	gccver=`$CC -dumpversion 2>/dev/null || gcc -dumpversion 2>/dev/null | cut -d. -f1`
+	if test -n "$gccver" ; then
+		case "$target_cpu" in
+		x86_64|amd64)
+			gcclibdir="/usr/lib/gcc/x86_64-linux-gnu/$gccver"
+			;;
+		i?86)
+			gcclibdir="/usr/lib/gcc/i686-linux-gnu/$gccver"
+			;;
+		aarch64|arm64)
+			gcclibdir="/usr/lib/gcc/aarch64-linux-gnu/$gccver"
+			;;
+		arm*)
+			gcclibdir="/usr/lib/gcc/arm-linux-gnueabihf/$gccver"
+			;;
+		esac
+	fi
+	# Fallback for GCC
+	if test -z "$gcclibdir" ; then
+		gcclibdir="/usr/lib/gcc/x86_64-linux-gnu/4.4"
+	fi
+	;;
+
+clang)
+	# Clang: Find version and library directory
+	clangver=`$CC --version 2>/dev/null | head -1 | sed 's/.*version \([[0-9]]*\)\..*/\1/'`
+	if test -z "$clangver" ; then
+		clangver=`clang --version 2>/dev/null | head -1 | sed 's/.*version \([[0-9]]*\)\..*/\1/'`
+	fi
+
+	# Try to find Clang's resource directory
+	if test -n "$clangver" ; then
+		case "$target_os" in
+		*darwin*|*macos*)
+			# macOS: Clang uses Xcode or CommandLineTools paths
+			if test -d "/Library/Developer/CommandLineTools/usr/lib/clang/$clangver" ; then
+				gcclibdir="/Library/Developer/CommandLineTools/usr/lib/clang/$clangver/lib/darwin"
+			elif test -d "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/$clangver" ; then
+				gcclibdir="/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/$clangver/lib/darwin"
+			fi
+			;;
+		*linux*)
+			# Linux: Clang often uses GCC's libraries for compatibility
+			# First try clang's own runtime
+			if test -d "/usr/lib/clang/$clangver/lib/linux" ; then
+				gcclibdir="/usr/lib/clang/$clangver/lib/linux"
+			elif test -d "/usr/lib/llvm-$clangver/lib/clang/$clangver/lib/linux" ; then
+				gcclibdir="/usr/lib/llvm-$clangver/lib/clang/$clangver/lib/linux"
+			else
+				# Fall back to GCC's crtbegin.o for Clang on Linux
+				gccver=`gcc -dumpversion 2>/dev/null | cut -d. -f1`
+				if test -n "$gccver" ; then
+					case "$target_cpu" in
+					x86_64|amd64)
+						gcclibdir="/usr/lib/gcc/x86_64-linux-gnu/$gccver"
+						;;
+					i?86)
+						gcclibdir="/usr/lib/gcc/i686-linux-gnu/$gccver"
+						;;
+					esac
+				fi
+			fi
+			;;
+		*bsd*)
+			# BSD: Check /usr/lib/clang
+			if test -d "/usr/lib/clang/$clangver" ; then
+				gcclibdir="/usr/lib/clang/$clangver/lib"
+			fi
+			;;
+		esac
+	fi
+
+	# Fallback for Clang (use GCC's on Linux)
+	if test -z "$gcclibdir" ; then
+		case "$target_os" in
+		*linux*)
+			gcclibdir="/usr/lib/gcc/x86_64-linux-gnu/4.4"
+			;;
+		*darwin*)
+			gcclibdir="/Library/Developer/CommandLineTools/usr/lib/clang/13/lib/darwin"
+			;;
+		*)
+			gcclibdir="/usr/lib"
+			;;
+		esac
+	fi
+	;;
+
+msvc)
+	# MSVC: Find Visual Studio installation
+	# Check common Visual Studio paths
+	if test -d "C:/Program Files (x86)/Microsoft Visual Studio/2022/Community/VC/Tools/MSVC" ; then
+		msvcver=`ls "C:/Program Files (x86)/Microsoft Visual Studio/2022/Community/VC/Tools/MSVC" | tail -1`
+		case "$target_cpu" in
+		x86_64|amd64)
+			gcclibdir="C:/Program Files (x86)/Microsoft Visual Studio/2022/Community/VC/Tools/MSVC/$msvcver/lib/x64"
+			;;
+		i?86)
+			gcclibdir="C:/Program Files (x86)/Microsoft Visual Studio/2022/Community/VC/Tools/MSVC/$msvcver/lib/x86"
+			;;
+		esac
+	elif test -d "C:/Program Files (x86)/Microsoft Visual Studio/2019/Community/VC/Tools/MSVC" ; then
+		msvcver=`ls "C:/Program Files (x86)/Microsoft Visual Studio/2019/Community/VC/Tools/MSVC" | tail -1`
+		case "$target_cpu" in
+		x86_64|amd64)
+			gcclibdir="C:/Program Files (x86)/Microsoft Visual Studio/2019/Community/VC/Tools/MSVC/$msvcver/lib/x64"
+			;;
+		i?86)
+			gcclibdir="C:/Program Files (x86)/Microsoft Visual Studio/2019/Community/VC/Tools/MSVC/$msvcver/lib/x86"
+			;;
+		esac
+	elif test -d "C:/Program Files/Microsoft Visual Studio/2022/Community/VC/Tools/MSVC" ; then
+		msvcver=`ls "C:/Program Files/Microsoft Visual Studio/2022/Community/VC/Tools/MSVC" | tail -1`
+		case "$target_cpu" in
+		x86_64|amd64)
+			gcclibdir="C:/Program Files/Microsoft Visual Studio/2022/Community/VC/Tools/MSVC/$msvcver/lib/x64"
+			;;
+		i?86)
+			gcclibdir="C:/Program Files/Microsoft Visual Studio/2022/Community/VC/Tools/MSVC/$msvcver/lib/x86"
+			;;
+		esac
+	fi
+
+	# Fallback for MSVC
+	if test -z "$gcclibdir" ; then
+		gcclibdir="C:/Program Files (x86)/Microsoft Visual Studio/14.0/VC/lib"
+	fi
+	;;
+esac
+
+AC_SUBST(gcclibdir)
+
+# Build list of Makefiles to configure based on enabled languages
+CONFIG_MAKEFILES="Makefile
+		common/abi/Makefile
+		include/Makefile
+		libunicode/Makefile
+		libthread/Makefile
+		libstdbit/Makefile
+		libckdint/Makefile
+		libdecimal/Makefile
+		libmetaware/Makefile
+		libblocks/Makefile"
+
+# C language is always included (required for bootstrap)
+CONFIG_MAKEFILES="$CONFIG_MAKEFILES
 		cc/Makefile
 		cc/cc/Makefile
 		cc/cpp/Makefile
 		cc/ccom/Makefile
-		cc/cxxcom/Makefile
-		cc/driver/Makefile
+		cc/driver/Makefile"
+
+# Add C++ if enabled
+if test "$enable_cxx" = "yes"; then
+	CONFIG_MAKEFILES="$CONFIG_MAKEFILES
+		cc/cxxcom/Makefile"
+fi
+
+# Add Fortran 77 if enabled
+if test "$enable_f77" = "yes"; then
+	CONFIG_MAKEFILES="$CONFIG_MAKEFILES
 		f77/Makefile
 		f77/f77/Makefile
-		f77/fcom/Makefile
-])
+		f77/fcom/Makefile"
+fi
+
+# Add Pascal if enabled
+if test "$enable_pascal" = "yes"; then
+	CONFIG_MAKEFILES="$CONFIG_MAKEFILES
+		pascal/Makefile
+		pascal/pascal/Makefile
+		pascal/pcom/Makefile"
+fi
+
+# Add BLISS if enabled
+if test "$enable_bliss" = "yes"; then
+	CONFIG_MAKEFILES="$CONFIG_MAKEFILES
+		bliss/Makefile
+		bliss/bliss/Makefile
+		bliss/bcom/Makefile
+		libbliss/Makefile"
+fi
+
+AC_CONFIG_FILES([$CONFIG_MAKEFILES])
 AC_OUTPUT
 
 eval "exec_prefix=$exec_prefix"
 eval "bindir=$bindir"
 eval "libexecdir=$libexecdir"
 
+# Build language list for display
+ENABLED_LANGUAGES=""
+test "$enable_c" = "yes" && ENABLED_LANGUAGES="$ENABLED_LANGUAGES c"
+test "$enable_cxx" = "yes" && ENABLED_LANGUAGES="$ENABLED_LANGUAGES c++"
+test "$enable_pascal" = "yes" && ENABLED_LANGUAGES="$ENABLED_LANGUAGES pascal"
+test "$enable_f77" = "yes" && ENABLED_LANGUAGES="$ENABLED_LANGUAGES f77"
+test "$enable_bliss" = "yes" && ENABLED_LANGUAGES="$ENABLED_LANGUAGES bliss"
+ENABLED_LANGUAGES=`echo $ENABLED_LANGUAGES | sed 's/^ *//'`
+
 echo
 echo "Target CPU is .................... ${targmach}"
 echo "Target ABI is .................... ${abi}"
 echo "Target OS is ..................... ${targos}"
+echo "Enabled languages ................ ${ENABLED_LANGUAGES}"
+echo "Enabled architectures ............ ${enable_archs}"
+echo "Enabled OS targets ............... ${enable_targets}"
+echo "Bootstrap build .................. ${bootstrap} (${bootstrap_stages} stage(s))"
 echo "Compiler is called ............... ${BINPREFIX}pcc${EXEEXT}"
 echo "Installing compiler into ......... ${bindir}"
 echo "Installing pre-processor into .... ${libexecdir}"
@@ -740,6 +1268,14 @@ echo "Has native floating point ........ $nativefp"
 echo "Has GCC compatibility ............ $gcccompat"
 echo "Has PCC debugging ................ $pccdebug"
 echo "Type of wchar_t is ............... ${wchar_type} (${wchar_size} chars)"
+echo "C11 support ...................... ${have_c11:-no}"
+echo "C23 support ...................... ${have_c23:-no}"
+echo "Build portable Unicode library ... ${BUILD_LIBUNICODE}"
+echo "Build portable Threading library . ${BUILD_LIBTHREAD}"
+echo "Build portable Bit utils library . ${BUILD_LIBSTDBIT}"
+echo "Build portable Checked int library ${BUILD_LIBCKDINT}"
+echo "Build portable Decimal FP library  ${BUILD_LIBDECIMAL}"
+echo "Build MetaWare extensions library  ${BUILD_LIBMETAWARE}"
 echo
 echo "Configure finished.  Do 'make && make install' to compile and install.
 "

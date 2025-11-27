@@ -105,13 +105,17 @@
 %token	C_SWITCH
 %token	C_BREAK
 %token	C_CONTINUE
-%token	C_WHILE	
+%token	C_WHILE
 %token	C_DO
 %token	C_FOR
 %token	C_DEFAULT
 %token	C_CASE
 %token	C_SIZEOF
 %token	C_ENUM
+%token	C_TRY
+%token	C_EXCEPT
+%token	C_FINALLY
+%token	C_LEAVE
 %token	C_ELLIPSIS
 %token	C_QUALIFIER
 %token	C_FUNSPEC
@@ -128,6 +132,43 @@
 %token	C_ALIGNOF
 %token	C_GENERIC
 %token	C_ATOMIC
+
+/* Objective-C keywords */
+%token	OBJC_AT
+%token	OBJC_INTERFACE
+%token	OBJC_IMPLEMENTATION
+%token	OBJC_PROTOCOL
+%token	OBJC_END
+%token	OBJC_CLASS
+%token	OBJC_PUBLIC
+%token	OBJC_PRIVATE
+%token	OBJC_PROTECTED
+%token	OBJC_PACKAGE
+%token	OBJC_SELECTOR
+%token	OBJC_ENCODE
+%token	OBJC_PROPERTY
+%token	OBJC_SYNTHESIZE
+%token	OBJC_DYNAMIC
+%token	OBJC_OPTIONAL
+%token	OBJC_REQUIRED
+%token	OBJC_TRY
+%token	OBJC_CATCH
+%token	OBJC_FINALLY
+%token	OBJC_THROW
+%token	OBJC_SYNCHRONIZED
+%token	OBJC_STRING
+
+/* ARC and bridging tokens */
+%token	ARC_BRIDGE
+%token	ARC_BRIDGE_RETAINED
+%token	ARC_BRIDGE_TRANSFER
+
+/* Objective-C literal tokens */
+%token	OBJC_BOXED        /* @(expression) */
+%token	OBJC_ARRAY_START  /* @[ */
+%token	OBJC_DICT_START   /* @{ */
+%token	OBJC_YES          /* @YES */
+%token	OBJC_NO           /* @NO */
 
 /*
  * Precedence
@@ -186,6 +227,8 @@ static void gcccase(P1ND *p, P1ND *);
 static struct attr *gcc_attr_wrapper(P1ND *p);
 static void adddef(void);
 static void savebc(void);
+static void saveseh(void);
+static void resetseh(void);
 static void swstart(int, TWORD);
 static void genswitch(int, TWORD, struct swents **, int);
 static char *mkpstr(char *str);
@@ -246,6 +289,17 @@ struct savbc {
 	int numnode;
 } *savbc, *savctx;
 
+/* SEH label save/restore stack */
+struct savseh {
+	struct savseh *next;
+	int sehleavlab;
+	int sehexcept;
+	int sehfinally;
+	int sehendlab;
+	int sehtrylab;
+	P1ND *sehfilter;
+} *savseh;
+
 %}
 
 %union {
@@ -300,6 +354,10 @@ ext_def_list:	   ext_def_list external_def
 external_def:	   funtype kr_args compoundstmt { fend(); }
 		|  declaration  { blevel = 0; symclear(0); }
 		|  asmstatement ';'
+		|  objc_class_interface
+		|  objc_class_implementation
+		|  objc_protocol_declaration
+		|  objc_class_declaration
 		|  ';'
 		|  error { blevel = 0; }
 		;
@@ -992,6 +1050,19 @@ statement:	   e ';' { ecomp(eve($1)); symclear(blevel); }
 		|  C_GOTO C_NAME ';' { gotolabel($2); goto rch; }
 		|  C_GOTO '*' e ';' { ecomp(biop(GOTO, eve($3), NULL)); }
 		|  asmstatement ';'
+		|  tryexceptstmt
+		|  tryfinallystmt
+		|  C_LEAVE ';' {
+			if (sehleavlab == NOLAB)
+				uerror("__leave statement not in __try block");
+			else if (reached)
+				branch(sehleavlab);
+			flostat |= FBRK;
+			reached = 0;
+		}
+		|  objc_try_statement
+		|  objc_throw_statement
+		|  objc_synchronized_statement
 		|   ';'
 		|  error  ';'
 		|  error '}'
@@ -1127,6 +1198,41 @@ switchpart:	   C_SWITCH  '('  e ')' {
 			reached = 0;
 		}
 		;
+
+tryexceptstmt:	tryprefix compoundstmt C_EXCEPT '(' e ')' {
+			/* Generate exception filter expression */
+			sehfilter = eve($5);
+			plabel(sehexcept);
+		} compoundstmt {
+			/* End of __except handler */
+			plabel(sehendlab);
+			resetseh();
+			reached = 1;
+		}
+		;
+
+tryfinallystmt:	tryprefix compoundstmt C_FINALLY {
+			plabel(sehfinally);
+		} compoundstmt {
+			/* End of __finally handler */
+			plabel(sehendlab);
+			resetseh();
+			reached = 1;
+		}
+		;
+
+tryprefix:	C_TRY {
+			/* Setup SEH labels */
+			saveseh();
+			sehleavlab = getlab();
+			sehexcept = getlab();
+			sehfinally = getlab();
+			sehendlab = getlab();
+			sehtrylab = getlab();
+			plabel(sehtrylab);
+			reached = 1;
+		}
+		;
 /*	EXPRESSIONS	*/
 .e:		   e { $$ = eve($1); }
 		| 	{ $$=0; }
@@ -1239,6 +1345,17 @@ term:		   term C_INCOP {  $$ = biop($2, $1, bcon(1)); }
 		|  C_ICON { $$ = $1; }
 		|  C_FCON { $$ = bdty(FCON, $1); }
 		|  svstr { $$ = bdty(STRING, $1, styp()); }
+		|  OBJC_STRING { $$ = bdty(STRING, $1, styp()); }
+		|  OBJC_BOXED e ')' { $$ = bcon(0); /* TODO: implement @(expr) */ }
+		|  OBJC_ARRAY_START objc_array_elements ']' { $$ = bcon(0); /* TODO: implement @[...] */ }
+		|  OBJC_ARRAY_START ']' { $$ = bcon(0); /* TODO: implement @[] */ }
+		|  OBJC_DICT_START objc_dict_elements '}' { $$ = bcon(0); /* TODO: implement @{...} */ }
+		|  OBJC_DICT_START '}' { $$ = bcon(0); /* TODO: implement @{} */ }
+		|  OBJC_AT OBJC_YES { $$ = bcon(1); /* TODO: create NSNumber */ }
+		|  OBJC_AT OBJC_NO { $$ = bcon(0); /* TODO: create NSNumber */ }
+		|  '[' objc_receiver objc_message_args ']' { $$ = bcon(0); /* TODO: implement message send */ }
+		|  OBJC_AT OBJC_SELECTOR '(' objc_selector ')' { $$ = bcon(0); /* TODO: implement @selector */ }
+		|  OBJC_AT OBJC_ENCODE '(' cast_type ')' { $$ = bcon(0); /* TODO: implement @encode */ }
 		|  '(' e ')' { $$=$2; }
 		|  '(' xbegin e ';' '}' ')' { $$ = gccexpr($2, eve($3)); }
 		|  '(' xbegin block_item_list e ';' '}' ')' {
@@ -1283,6 +1400,247 @@ cast_type:	   specifier_qualifier_list {
 		|  specifier_qualifier_list abstract_declarator {
 			$$ = biop(TYMERGE, $1, aryfix($2));
 		}
+		;
+
+/* Objective-C grammar rules */
+objc_class_declaration:
+		   OBJC_AT OBJC_CLASS objc_class_list ';'
+		;
+
+objc_class_list:   C_NAME
+		|  objc_class_list ',' C_NAME
+		;
+
+objc_class_interface:
+		   OBJC_AT OBJC_INTERFACE C_NAME objc_superclass_opt objc_protocol_refs_opt
+		   objc_interface_decl_list_opt
+		   OBJC_AT OBJC_END
+		;
+
+objc_superclass_opt:
+		   /* empty */
+		|  ':' C_NAME
+		;
+
+objc_protocol_refs_opt:
+		   /* empty */
+		|  '<' objc_protocol_list '>'
+		;
+
+objc_protocol_list:
+		   C_NAME
+		|  objc_protocol_list ',' C_NAME
+		;
+
+objc_interface_decl_list_opt:
+		   /* empty */
+		|  objc_interface_decl_list
+		;
+
+objc_interface_decl_list:
+		   objc_interface_decl
+		|  objc_interface_decl_list objc_interface_decl
+		;
+
+objc_interface_decl:
+		   objc_visibility_spec
+		|  objc_property_declaration
+		|  objc_method_declaration
+		|  struct_dcl
+		;
+
+objc_visibility_spec:
+		   OBJC_AT OBJC_PUBLIC
+		|  OBJC_AT OBJC_PRIVATE
+		|  OBJC_AT OBJC_PROTECTED
+		|  OBJC_AT OBJC_PACKAGE
+		;
+
+objc_property_declaration:
+		   OBJC_AT OBJC_PROPERTY objc_property_attributes_opt declaration_specifiers declarator ';'
+		;
+
+objc_property_attributes_opt:
+		   /* empty */
+		|  '(' objc_property_attribute_list ')'
+		;
+
+objc_property_attribute_list:
+		   C_NAME
+		|  objc_property_attribute_list ',' C_NAME
+		;
+
+objc_method_declaration:
+		   objc_method_type objc_method_selector ';'
+		;
+
+objc_method_type:
+		   '+'
+		|  '-'
+		;
+
+objc_method_selector:
+		   objc_selector
+		|  objc_keyword_selector objc_parameter_list_opt
+		;
+
+objc_selector:
+		   C_NAME
+		;
+
+objc_keyword_selector:
+		   objc_keyword_decl
+		|  objc_keyword_selector objc_keyword_decl
+		;
+
+objc_keyword_decl:
+		   C_NAME ':' declaration_specifiers declarator
+		|  ':' declaration_specifiers declarator
+		;
+
+objc_parameter_list_opt:
+		   /* empty */
+		|  ',' C_ELLIPSIS
+		;
+
+objc_class_implementation:
+		   OBJC_AT OBJC_IMPLEMENTATION C_NAME objc_superclass_opt
+		   objc_implementation_def_list_opt
+		   OBJC_AT OBJC_END
+		;
+
+objc_implementation_def_list_opt:
+		   /* empty */
+		|  objc_implementation_def_list
+		;
+
+objc_implementation_def_list:
+		   objc_implementation_def
+		|  objc_implementation_def_list objc_implementation_def
+		;
+
+objc_implementation_def:
+		   funtype kr_args compoundstmt { fend(); }
+		|  objc_method_definition
+		|  objc_synthesize_declaration
+		|  objc_dynamic_declaration
+		|  declaration
+		;
+
+objc_method_definition:
+		   objc_method_type objc_method_selector compoundstmt
+		;
+
+objc_synthesize_declaration:
+		   OBJC_AT OBJC_SYNTHESIZE objc_synthesize_list ';'
+		;
+
+objc_synthesize_list:
+		   C_NAME
+		|  C_NAME '=' C_NAME
+		|  objc_synthesize_list ',' C_NAME
+		|  objc_synthesize_list ',' C_NAME '=' C_NAME
+		;
+
+objc_dynamic_declaration:
+		   OBJC_AT OBJC_DYNAMIC objc_dynamic_list ';'
+		;
+
+objc_dynamic_list:
+		   C_NAME
+		|  objc_dynamic_list ',' C_NAME
+		;
+
+objc_protocol_declaration:
+		   OBJC_AT OBJC_PROTOCOL C_NAME objc_protocol_refs_opt
+		   objc_protocol_decl_list_opt
+		   OBJC_AT OBJC_END
+		;
+
+objc_protocol_decl_list_opt:
+		   /* empty */
+		|  objc_protocol_decl_list
+		;
+
+objc_protocol_decl_list:
+		   objc_protocol_decl
+		|  objc_protocol_decl_list objc_protocol_decl
+		;
+
+objc_protocol_decl:
+		   objc_method_declaration
+		|  objc_property_declaration
+		|  OBJC_AT OBJC_REQUIRED
+		|  OBJC_AT OBJC_OPTIONAL
+		;
+
+/* Objective-C message expressions */
+objc_receiver:
+		   e
+		|  C_NAME
+		;
+
+objc_message_args:
+		   objc_selector
+		|  objc_keyword_arg_list
+		;
+
+objc_keyword_arg_list:
+		   objc_keyword_arg
+		|  objc_keyword_arg_list objc_keyword_arg
+		;
+
+objc_keyword_arg:
+		   C_NAME ':' e
+		|  ':' e
+		;
+
+/* Objective-C exception handling statements */
+objc_try_statement:
+		   OBJC_AT OBJC_TRY compoundstmt objc_catch_list_opt objc_finally_opt
+		;
+
+objc_catch_list_opt:
+		   /* empty */
+		|  objc_catch_list
+		;
+
+objc_catch_list:
+		   objc_catch_clause
+		|  objc_catch_list objc_catch_clause
+		;
+
+objc_catch_clause:
+		   OBJC_AT OBJC_CATCH '(' declaration_specifiers declarator ')' compoundstmt
+		;
+
+objc_finally_opt:
+		   /* empty */
+		|  OBJC_AT OBJC_FINALLY compoundstmt
+		;
+
+objc_throw_statement:
+		   OBJC_AT OBJC_THROW e ';'
+		|  OBJC_AT OBJC_THROW ';'
+		;
+
+objc_synchronized_statement:
+		   OBJC_AT OBJC_SYNCHRONIZED '(' e ')' compoundstmt
+		;
+
+/* Objective-C array and dictionary literals */
+objc_array_elements:
+		   e
+		|  objc_array_elements ',' e
+		;
+
+objc_dict_elements:
+		   objc_dict_element
+		|  objc_dict_elements ',' objc_dict_element
+		;
+
+objc_dict_element:
+		   e ':' e
 		;
 
 %%
@@ -1466,6 +1824,46 @@ resetbc(int mask)
 	bc = savbc->next;
 	free(savbc);
 	savbc = bc;
+}
+
+/*
+ * Save SEH (Structured Exception Handling) state for nested __try blocks.
+ */
+static void
+saveseh(void)
+{
+	struct savseh *seh = malloc(sizeof(struct savseh));
+
+	seh->sehleavlab = sehleavlab;
+	seh->sehexcept = sehexcept;
+	seh->sehfinally = sehfinally;
+	seh->sehendlab = sehendlab;
+	seh->sehtrylab = sehtrylab;
+	seh->sehfilter = sehfilter;
+	seh->next = savseh;
+	savseh = seh;
+}
+
+/*
+ * Restore SEH state after exiting a __try block.
+ */
+static void
+resetseh(void)
+{
+	struct savseh *seh;
+
+	if (savseh == NULL)
+		return;
+
+	sehleavlab = savseh->sehleavlab;
+	sehexcept = savseh->sehexcept;
+	sehfinally = savseh->sehfinally;
+	sehendlab = savseh->sehendlab;
+	sehtrylab = savseh->sehtrylab;
+	sehfilter = savseh->sehfilter;
+	seh = savseh->next;
+	free(savseh);
+	savseh = seh;
 }
 
 struct swdef {

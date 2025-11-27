@@ -1178,6 +1178,13 @@ fixdef(struct symtab *sp)
 		constructor = destructor = 0;
 #endif
 	}
+
+	/* Handle Watcom pragma aux */
+	if (pragma_aux_pending.symbol != NULL &&
+	    strcmp(pragma_aux_pending.symbol, sp->sname) == 0 &&
+	    (sp->sclass != PARAM)) {
+		pragma_aux_pending.symbol = NULL;
+	}
 }
 
 /*

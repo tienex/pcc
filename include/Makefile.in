@@ -1,0 +1,33 @@
+#	$Id$
+#
+# Makefile.in for PCC compiler-provided headers
+#
+VPATH=@srcdir@
+srcdir=@srcdir@
+top_srcdir=@top_srcdir@
+top_builddir=@top_builddir@
+INSTALL = @INSTALL@
+INSTALL_DATA = @INSTALL_DATA@
+
+prefix = @prefix@
+exec_prefix = @exec_prefix@
+libdir = @libdir@
+includedir = @includedir@
+TARGET = @target@
+VERSION = @PACKAGE_VERSION@
+PCCINCDIR = $(libdir)/pcc/$(TARGET)/$(VERSION)/include
+
+HEADERS = stddef.h stdarg.h stdbool.h stdint.h limits.h float.h
+
+all:
+
+install:
+	test -z "$(DESTDIR)$(PCCINCDIR)" || mkdir -p "$(DESTDIR)$(PCCINCDIR)"
+	for header in $(HEADERS); do \
+		$(INSTALL_DATA) $(srcdir)/$$header $(DESTDIR)$(PCCINCDIR)/$$header; \
+	done
+
+clean:
+
+distclean: clean
+	rm -f Makefile

@@ -1,0 +1,11 @@
+; Test MOVH - MOVH operation (VAX)
+
+	.PSECT	CODE
+
+START:
+	MOVH	R1,R2
+	HALT
+
+DATA:	.WORD	0
+
+	.END

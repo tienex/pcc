@@ -129,10 +129,13 @@
 %token	CXX_TYPENAME
 %token	CXX_CASTS
 %token	CXX_THROW
+%token	CXX_TRY
+%token	CXX_CATCH
 %token	CXX_MORENM
 %token	CXX_NEW
 %token	CXX_DELETE
 %token	CXX_CLASS
+%token	CXX_THIS
 
 /*
  * Precedence
@@ -248,6 +251,7 @@ struct savbc {
 		designator_list designator xasm oplist oper cnstr 
 		typeof attribute attribute_specifier /* COMPAT_GCC */
 		attribute_list attr_spec_list attr_var /* COMPAT_GCC */
+		try_block handler_seq handler exception_declaration /* C++ exceptions */
 		new_ma new_type_sq new_ds nmrec
 %type <strp>	string C_STRING GCC_DESIG nsname CXX_MORENM
 %type <rp>	str_head
@@ -701,7 +705,7 @@ struct_declaration:
 		   declaration_specifiers struct_declarator_list optsemi {
 			tfree($1);
 		}
-		|  C_NAME ':' { /* cxxaccess($1); */ }
+		|  C_NAME ':' { cxxaccess($1); }
 		;
 
 optsemi:	   ';' { }
@@ -1000,6 +1004,7 @@ statement:	   e ';' { /* fwalk($1, eprint, 0); */ ecomp(eve($1)); symclear(bleve
 		|  C_GOTO C_NAME ';' { gotolabel($2); goto rch; }
 		|  C_GOTO '*' e ';' { ecomp(biop(GOTO, eve($3), NIL)); }
 		|  asmstatement ';'
+		|  try_block
 		|   ';'
 		|  error  ';'
 		|  error '}'
@@ -1042,6 +1047,50 @@ label:		   C_NAME ':' attr_var { deflabel($1, $3); reached = 1; }
 #endif
 		}
 		|  C_DEFAULT ':' { reached = 1; adddef(); flostat |= FDEF; }
+		;
+
+/* C++ exception handling */
+try_block:	   CXX_TRY compoundstmt handler_seq {
+			/* For now, just emit a warning - full implementation later */
+			/* compoundstmt already emitted its code */
+			/* TODO: Add exception frame setup before compoundstmt */
+			/* TODO: Add exception frame teardown after handlers */
+			cxxtry(NIL, $3);  /* Pass handler_seq for future use */
+		}
+		;
+
+handler_seq:	   handler {
+			$$ = $1;
+		}
+		|  handler_seq handler {
+			/* Chain multiple catch blocks */
+			$$ = cmop($1, $2);
+		}
+		;
+
+handler:	   CXX_CATCH '(' exception_declaration ')' compoundstmt {
+			/* compoundstmt already emitted its code */
+			$$ = cxxcatch($3, NIL);
+		}
+		;
+
+exception_declaration:
+		   specifier_qualifier_list declarator {
+			/* catch (Type varname) */
+			$$ = cxxexception_decl($1, $2);
+		}
+		|  specifier_qualifier_list abstract_declarator {
+			/* catch (Type) */
+			$$ = cxxexception_decl($1, $2);
+		}
+		|  specifier_qualifier_list {
+			/* catch (Type) */
+			$$ = cxxexception_decl($1, NIL);
+		}
+		|  C_ELLIPSIS {
+			/* catch (...) */
+			$$ = NIL;
+		}
 		;
 
 doprefix:	C_DO {
@@ -1254,6 +1303,16 @@ term:		   term C_INCOP {  $$ = biop($2, $1, bcon(1)); }
 		|  term C_STROP C_NAME { $$ = biop($2, $1, bdty(NAME, $3)); }
 		|  term C_STROP C_TYPENAME { $$ = biop($2, $1, bdty(NAME, $3));}
 		|  C_NAME %prec C_SIZEOF /* below ( */{ $$ = bdty(NAME, $1); }
+		|  CXX_THIS %prec C_SIZEOF {
+			/* 'this' keyword - resolve to __%THIS hidden parameter */
+			struct symtab *sp = lookup("__%THIS", 0);
+			if (sp == NULL || sp->stype == FARG) {
+				uerror("'this' used outside member function");
+				sp = lookup("__%THIS", STEMP);
+				sp->stype = VOID;
+			}
+			$$ = nametree(sp);
+		}
 		|  nmrec C_NAME %prec C_SIZEOF {
 			$$ = biop(NMLIST, $1, bdty(NAME, $2));
 		}
@@ -1302,6 +1361,14 @@ term:		   term C_INCOP {  $$ = biop($2, $1, bcon(1)); }
 		|  CXX_DELETE '[' ']' term %prec '-' {
 			$$ = biop(DELETE, $4, bcon(NM_DLA));
 		}
+	|  CXX_THROW {
+		/* throw; - re-throw current exception */
+		$$ = cxxthrow(NIL);
+	}
+	|  CXX_THROW e %prec C_UNOP {
+		/* throw expr; - throw new exception */
+		$$ = cxxthrow($2);
+	}
 		;
 
 nmrec:		  CXX_MORENM { $$ = bdty(NAME, $1); }

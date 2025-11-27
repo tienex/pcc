@@ -1,0 +1,11 @@
+; Test SXT - SXT operation (PDP-11)
+
+	.PSECT	CODE
+
+START:
+	SXT	R1,R2
+	HALT
+
+DATA:	.WORD	0
+
+	.END

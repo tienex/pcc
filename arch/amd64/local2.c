@@ -44,6 +44,7 @@ static TWORD ftype;
 char *rbyte[], *rshort[], *rlong[];
 static int needframe;
 int mcmodel = MCSMALL;
+int apx_enabled = 0;
 
 /*
  * Print out the prolog assembler.
@@ -933,25 +934,46 @@ COLORMAP(int c, int *r)
 }
 
 char *rnames[MAXREGS] = {
+	/* Standard x86-64 GPRs (RAX-R15) */
 	"%rax", "%rdx", "%rcx", "%rbx", "%rsi", "%rdi", "%rbp", "%rsp",
 	"%r8", "%r9", "%r10", "%r11", "%r12", "%r13", "%r14", "%r15",
+	/* Standard x86-64 XMMs (XMM0-XMM15) */
 	"%xmm0", "%xmm1", "%xmm2", "%xmm3", "%xmm4", "%xmm5", "%xmm6", "%xmm7",
-	"%xmm8", "%xmm9", "%xmm10", "%xmm11", "%xmm12", "%xmm13", "%xmm14",
-	"%xmm15",
+	"%xmm8", "%xmm9", "%xmm10", "%xmm11", "%xmm12", "%xmm13", "%xmm14", "%xmm15",
+	/* x87 FPU registers (ST0-ST7) */
+	"%st(0)", "%st(1)", "%st(2)", "%st(3)", "%st(4)", "%st(5)", "%st(6)", "%st(7)",
+	/* APX extended GPRs (R16-R31) */
+	"%r16", "%r17", "%r18", "%r19", "%r20", "%r21", "%r22", "%r23",
+	"%r24", "%r25", "%r26", "%r27", "%r28", "%r29", "%r30", "%r31",
+	/* APX extended XMMs (XMM16-XMM31) */
+	"%xmm16", "%xmm17", "%xmm18", "%xmm19", "%xmm20", "%xmm21", "%xmm22", "%xmm23",
+	"%xmm24", "%xmm25", "%xmm26", "%xmm27", "%xmm28", "%xmm29", "%xmm30", "%xmm31",
 };
 
 /* register names for shorter sizes */
 char *rbyte[] = {
+	/* Standard GPRs (RAX-R15) */
 	"%al", "%dl", "%cl", "%bl", "%sil", "%dil", "%bpl", "%spl",
-	"%r8b", "%r9b", "%r10b", "%r11b", "%r12b", "%r13b", "%r14b", "%r15b", 
+	"%r8b", "%r9b", "%r10b", "%r11b", "%r12b", "%r13b", "%r14b", "%r15b",
+	/* APX extended GPRs (R16-R31) */
+	"%r16b", "%r17b", "%r18b", "%r19b", "%r20b", "%r21b", "%r22b", "%r23b",
+	"%r24b", "%r25b", "%r26b", "%r27b", "%r28b", "%r29b", "%r30b", "%r31b",
 };
 char *rshort[] = {
+	/* Standard GPRs (RAX-R15) */
 	"%ax", "%dx", "%cx", "%bx", "%si", "%di", "%bp", "%sp",
-	"%r8w", "%r9w", "%r10w", "%r11w", "%r12w", "%r13w", "%r14w", "%r15w", 
+	"%r8w", "%r9w", "%r10w", "%r11w", "%r12w", "%r13w", "%r14w", "%r15w",
+	/* APX extended GPRs (R16-R31) */
+	"%r16w", "%r17w", "%r18w", "%r19w", "%r20w", "%r21w", "%r22w", "%r23w",
+	"%r24w", "%r25w", "%r26w", "%r27w", "%r28w", "%r29w", "%r30w", "%r31w",
 };
 char *rlong[] = {
+	/* Standard GPRs (RAX-R15) */
 	"%eax", "%edx", "%ecx", "%ebx", "%esi", "%edi", "%ebp", "%esp",
-	"%r8d", "%r9d", "%r10d", "%r11d", "%r12d", "%r13d", "%r14d", "%r15d", 
+	"%r8d", "%r9d", "%r10d", "%r11d", "%r12d", "%r13d", "%r14d", "%r15d",
+	/* APX extended GPRs (R16-R31) */
+	"%r16d", "%r17d", "%r18d", "%r19d", "%r20d", "%r21d", "%r22d", "%r23d",
+	"%r24d", "%r25d", "%r26d", "%r27d", "%r28d", "%r29d", "%r30d", "%r31d",
 };
 
 
@@ -1059,6 +1081,8 @@ mflags(char *str)
 		mcmodel = MCMEDIUM;
 	else if (S("cmodel=large"))
 		mcmodel = MCLARGE;
+	else if (S("apx"))
+		apx_enabled = 1;
 	else
 		comperr("bad -m arg");
 }

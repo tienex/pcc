@@ -1,0 +1,11 @@
+; Test CVTRDL - CVTRDL operation (VAX)
+
+	.PSECT	CODE
+
+START:
+	CVTRDL	R1,R2
+	HALT
+
+DATA:	.WORD	0
+
+	.END

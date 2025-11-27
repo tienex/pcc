@@ -1,0 +1,13 @@
+; Test MOVMS - Move Magnitude to Self (PDP-10)
+; Expected: AC1 = |AC2|
+
+	.PSECT	CODE
+
+START:
+	MOVEI 2,-100
+	MOVMS	1,2
+	HALT
+
+DATA:	.WORD	0
+
+	.END

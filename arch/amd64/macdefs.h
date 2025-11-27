@@ -189,22 +189,84 @@ typedef long long OFFSZ;
 #define	XMM14	036
 #define	XMM15	037
 
-#define	MAXREGS	050	/* 40 registers */
+/* x87 floating point registers */
+#define	ST0	040
+#define	ST1	041
+#define	ST2	042
+#define	ST3	043
+#define	ST4	044
+#define	ST5	045
+#define	ST6	046
+#define	ST7	047
+
+/* APX extended registers (only available with -mapx) */
+#define	R16	050
+#define	R17	051
+#define	R18	052
+#define	R19	053
+#define	R20	054
+#define	R21	055
+#define	R22	056
+#define	R23	057
+#define	R24	060
+#define	R25	061
+#define	R26	062
+#define	R27	063
+#define	R28	064
+#define	R29	065
+#define	R30	066
+#define	R31	067
+
+#define	XMM16	070
+#define	XMM17	071
+#define	XMM18	072
+#define	XMM19	073
+#define	XMM20	074
+#define	XMM21	075
+#define	XMM22	076
+#define	XMM23	077
+#define	XMM24	0100
+#define	XMM25	0101
+#define	XMM26	0102
+#define	XMM27	0103
+#define	XMM28	0104
+#define	XMM29	0105
+#define	XMM30	0106
+#define	XMM31	0107
+
+#define	MAXREGS	0110	/* 72 registers (16 GPR + 16 XMM + 8 x87 + 16 APX GPR + 16 APX XMM) */
 
 #define	RSTATUS	\
+	/* Standard x86-64 GPRs (RAX-R15) */ \
 	SAREG|TEMPREG, SAREG|TEMPREG, SAREG|TEMPREG, SAREG|PERMREG,	\
 	SAREG|TEMPREG, SAREG|TEMPREG, 0, 0,	 			\
 	SAREG|TEMPREG, SAREG|TEMPREG, SAREG|TEMPREG, SAREG|TEMPREG,	\
 	SAREG|PERMREG, SAREG|PERMREG, SAREG|PERMREG, SAREG|PERMREG, 	\
+	/* Standard x86-64 XMMs (XMM0-XMM15) */ \
 	SBREG|TEMPREG, SBREG|TEMPREG, SBREG|TEMPREG, SBREG|TEMPREG,	\
 	SBREG|TEMPREG, SBREG|TEMPREG, SBREG|TEMPREG, SBREG|TEMPREG,	\
 	SBREG|TEMPREG, SBREG|TEMPREG, SBREG|TEMPREG, SBREG|TEMPREG,	\
 	SBREG|TEMPREG, SBREG|TEMPREG, SBREG|TEMPREG, SBREG|TEMPREG,	\
-	SCREG, SCREG, SCREG, SCREG,  SCREG, SCREG, SCREG, SCREG,
+	/* x87 FPU registers (ST0-ST7) */ \
+	SCREG, SCREG, SCREG, SCREG,  SCREG, SCREG, SCREG, SCREG, \
+	/* APX extended GPRs (R16-R31) */ \
+	SAREG|TEMPREG, SAREG|TEMPREG, SAREG|TEMPREG, SAREG|TEMPREG,	\
+	SAREG|TEMPREG, SAREG|TEMPREG, SAREG|TEMPREG, SAREG|TEMPREG,	\
+	SAREG|TEMPREG, SAREG|TEMPREG, SAREG|TEMPREG, SAREG|TEMPREG,	\
+	SAREG|TEMPREG, SAREG|TEMPREG, SAREG|TEMPREG, SAREG|TEMPREG, 	\
+	/* APX extended XMMs (XMM16-XMM31) */ \
+	SBREG|TEMPREG, SBREG|TEMPREG, SBREG|TEMPREG, SBREG|TEMPREG,	\
+	SBREG|TEMPREG, SBREG|TEMPREG, SBREG|TEMPREG, SBREG|TEMPREG,	\
+	SBREG|TEMPREG, SBREG|TEMPREG, SBREG|TEMPREG, SBREG|TEMPREG,	\
+	SBREG|TEMPREG, SBREG|TEMPREG, SBREG|TEMPREG, SBREG|TEMPREG,
 
 
 /* no overlapping registers at all */
 #define	ROVERLAP \
+	{ -1 }, { -1 }, { -1 }, { -1 }, { -1 }, { -1 }, { -1 }, { -1 }, \
+	{ -1 }, { -1 }, { -1 }, { -1 }, { -1 }, { -1 }, { -1 }, { -1 }, \
+	{ -1 }, { -1 }, { -1 }, { -1 }, { -1 }, { -1 }, { -1 }, { -1 }, \
+	{ -1 }, { -1 }, { -1 }, { -1 }, { -1 }, { -1 }, { -1 }, { -1 }, \
 	{ -1 }, { -1 }, { -1 }, { -1 }, { -1 }, { -1 }, { -1 }, { -1 }, \
 	{ -1 }, { -1 }, { -1 }, { -1 }, { -1 }, { -1 }, { -1 }, { -1 }, \
 	{ -1 }, { -1 }, { -1 }, { -1 }, { -1 }, { -1 }, { -1 }, { -1 }, \
@@ -301,6 +363,12 @@ P1ND *amd64_builtin_va_copy(const struct bitable *, P1ND *a);
 #define	MCLARGE		01000
 #define	MCALL		(MCSMALL|MCMEDIUM|MCLARGE)
 extern int mcmodel;
+extern int apx_enabled;
+
+/* libx86asm context for assembly generation */
+struct x86asm_ctx;
+typedef struct x86asm_ctx x86asm_ctx_t;
+extern x86asm_ctx_t *asm_ctx;
 
 /* floating point definitions */
 #define USE_IEEEFP_32

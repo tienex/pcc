@@ -1,0 +1,89 @@
+#	$Id$
+#
+# Makefile.in for ABI library
+#
+VPATH=@srcdir@
+srcdir=@srcdir@
+top_srcdir=@top_srcdir@
+top_builddir=@top_builddir@
+CC = @CC@
+AR = ar
+RANLIB = @RANLIB@
+CFLAGS = @CFLAGS@ @ADD_CFLAGS@
+CPPFLAGS = @CPPFLAGS@ @ADD_CPPFLAGS@ -I$(srcdir) -I$(top_builddir)
+INSTALL = @INSTALL@
+INSTALL_DATA = @INSTALL_DATA@
+
+prefix = @prefix@
+exec_prefix = @exec_prefix@
+libdir = @libdir@
+includedir = @includedir@
+TARGET = @target@
+VERSION = @PACKAGE_VERSION@
+PCCLIBDIR = $(libdir)/pcc/$(TARGET)/$(VERSION)/lib
+
+OBJS=	abi.o \
+	itanium.o msvc.o watcom.o borland.o gnu_old.o dmc.o cfront.o edg.o \
+	apple_objc1.o apple_objc2.o gnu_objc.o corefoundation.o \
+	dlang.o swift.o rust.o go.o zig.o crystal.o nim.o vlang.o julia.o \
+	java.o clr.o dart.o kotlin.o \
+	ghc.o ocaml.o fsharp.o \
+	freepascal.o gnu_pascal.o \
+	gfortran.o ifort.o nag_fortran.o \
+	gnat.o ecere.o \
+	llvm_ir.o wasm.o \
+	demangle_itanium.o demangle_msvc.o \
+	template_renamer.o universal_demangle.o
+
+LIB=libpccabi.a
+
+all: $(LIB)
+
+$(LIB): $(OBJS)
+	$(AR) rv $@ $(OBJS)
+	$(RANLIB) $@
+
+abi.o: $(srcdir)/abi.c $(srcdir)/abi.h
+	$(CC) $(CFLAGS) $(CPPFLAGS) -c $(srcdir)/abi.c
+
+itanium.o: $(srcdir)/itanium.c $(srcdir)/abi.h
+	$(CC) $(CFLAGS) $(CPPFLAGS) -c $(srcdir)/itanium.c
+
+msvc.o: $(srcdir)/msvc.c $(srcdir)/abi.h
+	$(CC) $(CFLAGS) $(CPPFLAGS) -c $(srcdir)/msvc.c
+
+watcom.o: $(srcdir)/watcom.c $(srcdir)/abi.h
+	$(CC) $(CFLAGS) $(CPPFLAGS) -c $(srcdir)/watcom.c
+
+borland.o: $(srcdir)/borland.c $(srcdir)/abi.h
+	$(CC) $(CFLAGS) $(CPPFLAGS) -c $(srcdir)/borland.c
+
+gnu_old.o: $(srcdir)/gnu_old.c $(srcdir)/abi.h
+	$(CC) $(CFLAGS) $(CPPFLAGS) -c $(srcdir)/gnu_old.c
+
+demangle_itanium.o: $(srcdir)/demangle_itanium.c $(srcdir)/demangle.h $(srcdir)/abi.h
+	$(CC) $(CFLAGS) $(CPPFLAGS) -c $(srcdir)/demangle_itanium.c
+
+demangle_msvc.o: $(srcdir)/demangle_msvc.c $(srcdir)/demangle.h $(srcdir)/abi.h
+	$(CC) $(CFLAGS) $(CPPFLAGS) -c $(srcdir)/demangle_msvc.c
+
+# Generic rule for all other .o files
+%.o: $(srcdir)/%.c $(srcdir)/abi.h
+	$(CC) $(CFLAGS) $(CPPFLAGS) -c $(srcdir)/$*.c
+
+install: $(LIB)
+	test -z "$(DESTDIR)$(libdir)" || mkdir -p "$(DESTDIR)$(libdir)"
+	test -z "$(DESTDIR)$(includedir)" || mkdir -p "$(DESTDIR)$(includedir)"
+	test -z "$(DESTDIR)$(PCCLIBDIR)" || mkdir -p "$(DESTDIR)$(PCCLIBDIR)"
+	$(INSTALL_DATA) $(LIB) $(DESTDIR)$(libdir)
+	$(INSTALL_DATA) $(srcdir)/abi.h $(DESTDIR)$(includedir)
+	$(INSTALL_DATA) $(srcdir)/demangle.h $(DESTDIR)$(includedir)
+	$(INSTALL_DATA) $(srcdir)/template_renamer.h $(DESTDIR)$(includedir)
+	$(INSTALL_DATA) $(srcdir)/universal_demangle.h $(DESTDIR)$(includedir)
+	ln -sf $(DESTDIR)$(libdir)/$(LIB) $(DESTDIR)$(PCCLIBDIR)/libpcc.a
+
+clean:
+	rm -f $(OBJS) $(LIB)
+
+distclean: clean
+	rm -f Makefile

@@ -1,0 +1,13 @@
+; Test IORI - IOR Immediate (PDP-10)
+; Expected: AC1 = AC1 | immediate, CC updated
+
+	.PSECT	CODE
+
+START:
+	MOVEI 1,0100200
+	IORI	1,0007070
+	HALT
+
+DATA:	.WORD	0
+
+	.END

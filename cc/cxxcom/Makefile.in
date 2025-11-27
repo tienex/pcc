@@ -14,7 +14,7 @@ CFLAGS = @CFLAGS@ @ADD_CFLAGS@
 CPPFLAGS = @CPPFLAGS@ @ADD_CPPFLAGS@ -D_ISOC99_SOURCE -DLANG_CXX \
 	-Dos_$(TARGOS) -Dmach_$(TARGMACH) \
 	-I$(srcdir) -I$(builddir) -I$(top_builddir) -I$(MIPDIR) -I$(MDIR) \
-	-I$(top_srcdir)/os/$(TARGOS) -I$(COMMONDIR)
+	-I$(top_srcdir)/os/$(TARGOS) -I$(COMMONDIR) -I$(top_srcdir)/libseh
 LIBS = @LIBS@
 LDFLAGS = @LDFLAGS@
 LEX = @LEX@
@@ -171,7 +171,7 @@ trees.o: $(srcdir)/trees.c
 #
 
 $(DEST): $(OBJS)
-	$(CC) $(LDFLAGS) $(OBJS) -o $@ $(LIBS)
+	$(CC) $(LDFLAGS) $(OBJS) -o $@ $(top_builddir)/libseh/libseh.a $(LIBS)
 
 install: $(DEST)
 	test -z "$(DESTDIR)$(libexecdir)" || mkdir -p "$(DESTDIR)$(libexecdir)"

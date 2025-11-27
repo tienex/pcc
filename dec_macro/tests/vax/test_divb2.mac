@@ -1,0 +1,11 @@
+; Test DIVB2 - DIVB2 operation (VAX)
+
+	.PSECT	CODE
+
+START:
+	DIVB2	R1,R2
+	HALT
+
+DATA:	.WORD	0
+
+	.END

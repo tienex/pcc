@@ -103,6 +103,8 @@ extern	char *scnames(int);
 #define	SLOCAL1		010000
 #define	SLOCAL2		020000
 #define	SLOCAL3		040000
+#define	SCTOR		0100000	/* C++ constructor function */
+#define	SDTOR		0200000	/* C++ destructor function */
 
 	/* alignment of initialized quantities */
 #ifndef AL_INIT
@@ -202,6 +204,16 @@ extern	char *astypnames[];
 /* pragma globals */
 extern int pragma_allpacked, pragma_packed, pragma_aligned;
 extern char *pragma_renamed;
+
+/* Watcom pragma aux support */
+struct pragma_aux_info {
+	char *symbol;      /* Symbol name this pragma applies to */
+	char *parm_regs;   /* Parameter register list */
+	char *value_reg;   /* Return value register */
+	char *modify_regs; /* Modified register list */
+	int is_caller;     /* Caller cleans stack */
+};
+extern struct pragma_aux_info pragma_aux_pending;
 
 /*
  * Flags used in the (elementary) flow analysis ...

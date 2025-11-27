@@ -1,0 +1,14 @@
+; Test IOR - Inclusive OR (PDP-10)
+; Expected: AC1 = AC1 | AC2, CC updated
+
+	.PSECT	CODE
+
+START:
+	MOVEI 1,0707070
+	MOVEI 2,0070707
+	IOR	1,2
+	HALT
+
+DATA:	.WORD	0
+
+	.END

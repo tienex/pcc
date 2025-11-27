@@ -1,0 +1,26 @@
+; hello.mac - Hello World program for DEC MACRO
+; Simple demonstration of the DEC MACRO compiler
+
+	.PSECT	DATA
+
+MSG:	.ASCII	"Hello, World!"
+MSGLEN:	.WORD	13
+
+	.PSECT	CODE
+
+; Program entry point
+START:	.ENTRY	START
+
+	; Print hello world message
+	; (Simplified - actual system calls would vary by target)
+	MOV	MSG, R0		; Load message address
+	MOV	MSGLEN, R1	; Load message length
+
+	; Simulate output operation
+	MOV	#1, R2		; Output operation
+
+	; Exit with success
+	CLR	R0		; Exit code 0
+	HALT
+
+	.END

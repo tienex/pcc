@@ -1,0 +1,14 @@
+; Test HRR - Half Right to Right (PDP-10)
+; Expected: AC1[18:35] = AC2[18:35], AC1[0:17] unchanged
+
+	.PSECT	CODE
+
+START:
+	MOVEI 1,0777000
+	MOVEI 2,0123
+	HRR	1,2
+	HALT
+
+DATA:	.WORD	0
+
+	.END

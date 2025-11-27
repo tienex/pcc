@@ -1,0 +1,45 @@
+#	$Id$
+#
+# Makefile.in for libmetaware - MetaWare High C extensions runtime
+#
+VPATH=@srcdir@
+srcdir=@srcdir@
+top_srcdir=@top_srcdir@
+top_builddir=@top_builddir@
+CC = @CC@
+AR = ar
+RANLIB = @RANLIB@
+CFLAGS = @CFLAGS@ @ADD_CFLAGS@
+CPPFLAGS = @CPPFLAGS@ @ADD_CPPFLAGS@ -I$(srcdir) -I$(top_builddir)
+INSTALL = @INSTALL@
+INSTALL_DATA = @INSTALL_DATA@
+
+prefix = @prefix@
+exec_prefix = @exec_prefix@
+libdir = @libdir@
+includedir = @includedir@
+
+OBJS=	metaware.o
+
+LIB=libmetaware.a
+
+all: $(LIB)
+
+$(LIB): $(OBJS)
+	$(AR) rv $@ $(OBJS)
+	$(RANLIB) $@
+
+metaware.o: $(srcdir)/metaware.c $(srcdir)/metaware.h
+	$(CC) $(CFLAGS) $(CPPFLAGS) -c $(srcdir)/metaware.c
+
+install: $(LIB)
+	test -z "$(DESTDIR)$(libdir)" || mkdir -p "$(DESTDIR)$(libdir)"
+	test -z "$(DESTDIR)$(includedir)" || mkdir -p "$(DESTDIR)$(includedir)"
+	$(INSTALL_DATA) $(LIB) $(DESTDIR)$(libdir)
+	$(INSTALL_DATA) $(srcdir)/metaware.h $(DESTDIR)$(includedir)
+
+clean:
+	rm -f $(OBJS) $(LIB)
+
+distclean: clean
+	rm -f Makefile

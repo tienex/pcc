@@ -215,11 +215,14 @@ char *cppmdadd[] = CPPMDADD;
 #ifndef LIBDIR
 #define LIBDIR		"/usr/lib/"
 #endif
+#ifndef GCCLIBDIR
+#define GCCLIBDIR	"/usr/lib/gcc/x86_64-linux-gnu/4.4/"
+#endif
 #ifndef DEFLIBDIRS	/* default library search paths */
 #ifdef MULTIARCH_PATH
-#define DEFLIBDIRS	{ LIBDIR, LIBDIR MULTIARCH_PATH "/", 0 }
+#define DEFLIBDIRS	{ LIBDIR, LIBDIR MULTIARCH_PATH "/", GCCLIBDIR, 0 }
 #else
-#define DEFLIBDIRS	{ LIBDIR, 0 }
+#define DEFLIBDIRS	{ LIBDIR, GCCLIBDIR, 0 }
 #endif
 #endif
 #ifndef DEFLIBS		/* default libraries included */
@@ -262,6 +265,7 @@ static int strlist_exec(struct strlist *l);
 char *cat(const char *, const char *);
 char *setsuf(char *, char);
 int cxxsuf(char *);
+int objcsuf(char *);
 int getsuf(char *);
 char *getsufp(char *s);
 int main(int, char *[]);
@@ -284,6 +288,7 @@ char *win32pathsubst(char *);
 char *win32commandline(struct strlist *l);
 #endif
 int	sspflag;
+int	sehflag;
 int	freestanding;
 int	Sflag;
 int	cflag;
@@ -312,6 +317,8 @@ int	xuchar = 1;
 int	xuchar = 0;
 #endif
 int	cxxflag;
+int	objcflag;
+int	arcflag;	/* Objective-C ARC enabled */
 int	cppflag;
 int	printprogname, printfilename;
 enum { SC11, STRAD, SC89, SGNU89, SC99, SGNU99 } cstd;
@@ -476,13 +483,9 @@ main(int argc, char *argv[])
 
 #ifdef _WIN32
 	/* have to prefix path early.  -B may override */
-	incdir = win32pathsubst(incdir);
-	altincdir = win32pathsubst(altincdir);
-	libdir = win32pathsubst(libdir);
-#ifdef PCCINCDIR
-	pccincdir = win32pathsubst(pccincdir);
-	pxxincdir = win32pathsubst(pxxincdir);
-#endif
+	/* Note: incdir, altincdir, libdir, pccincdir, pxxincdir are now strlists,
+	 * not scalar variables. Path substitution for strlist entries happens
+	 * elsewhere if needed. */
 #ifdef PCCLIBDIR
 	pcclibdir = win32pathsubst(pcclibdir);
 #endif
@@ -626,6 +629,10 @@ main(int argc, char *argv[])
 			} else if (match(u, "stack-protector") ||
 			    match(u, "stack-protector-all")) {
 				sspflag = j ? 0 : 1;
+			} else if (match(u, "objc-arc")) {
+				arcflag = j ? 0 : 1;
+			} else if (match(u, "objc-weak")) {
+				/* Enable weak references - enabled by default with ARC */
 			}
 			/* silently ignore the rest */
 			break;
@@ -688,10 +695,26 @@ main(int argc, char *argv[])
 				strlist_append(&compiler_flags, argp);
 				break;
 			}
+			if (strcmp(argp, "-mapx") == 0) {
+				strlist_append(&compiler_flags, argp);
+				break;
+			}
 			/* need to call i386 ccom for this */
 			if (strcmp(argp, "-melf_i386") == 0) {
 				pass0 = LIBEXECDIR "/ccom_i386";
 				amd64_i386 = 1;
+				break;
+			}
+#endif
+#ifdef mach_i86
+			if (strncmp(argp, "-mcmodel=", 9) == 0) {
+				strlist_append(&compiler_flags, argp);
+				break;
+			}
+#endif
+#ifdef mach_i386
+			if (strncmp(argp, "-mcmodel=", 9) == 0) {
+				strlist_append(&compiler_flags, argp);
 				break;
 			}
 #endif
@@ -1064,7 +1087,9 @@ main(int argc, char *argv[])
 		 * C preprocessor
 		 */
 		ascpp = match(suffix, "S");
-		if (ascpp || cppflag || match(suffix, "c") || cxxsuf(suffix)) {
+		if (ascpp || cppflag || match(suffix, "c") || cxxsuf(suffix) || objcsuf(suffix)) {
+			if (objcsuf(suffix))
+				objcflag = 1;
 			/* find out next output file */
 			if (Mflag || MDflag || MMDflag) {
 				char *Mofile = NULL;
@@ -1396,6 +1421,17 @@ cxxsuf(char *s)
 	return 0;
 }
 
+static char *objct[] = { "m" };
+int
+objcsuf(char *s)
+{
+	unsigned i;
+	for (i = 0; i < sizeof(objct)/sizeof(objct[0]); i++)
+		if (strcmp(s, objct[i]) == 0)
+			return 1;
+	return 0;
+}
+
 char *
 getsufp(char *s)
 {
@@ -1671,6 +1707,8 @@ struct flgcheck {
 	{ &freestanding, 1, "-D__STDC_HOSTED__=0" },
 	{ &freestanding, 0, "-D__STDC_HOSTED__=1" },
 	{ &cxxflag, 1, "-D__cplusplus" },
+	{ &objcflag, 1, "-D__OBJC__" },
+	{ &arcflag, 1, "-D__OBJC_ARC__" },
 	{ &xuchar, 1, "-D__CHAR_UNSIGNED__" },
 	{ &sspflag, 1, "-D__SSP__" },
 	{ &pthreads, 1, "-D_PTHREADS" },
@@ -1861,6 +1899,10 @@ setup_cpp_flags(void)
 	strlist_append(&sysincdirs, "=" STDINC_MA);
 #endif
 	strlist_append(&sysincdirs, "=" STDINC);
+#ifdef GCCLIBDIR
+	/* Add GCC's include directory for compiler-provided headers like stddef.h */
+	strlist_append(&sysincdirs, GCCLIBDIR "include");
+#endif
 #ifdef PCCINCDIR
 	if (cxxflag)
 		strlist_append(&sysincdirs, "=" PCCINCDIR "/c++");
@@ -1880,6 +1922,8 @@ struct flgcheck ccomflgcheck[] = {
 	{ &xgnu89, 1, "-xgnu89" },
 	{ &xgnu99, 1, "-xgnu99" },
 	{ &xuchar, 1, "-xuchar" },
+	{ &objcflag, 1, "-xobjc" },
+	{ &arcflag, 1, "-xobjc-arc" },
 #if !defined(os_sunos) && !defined(mach_i386)
 	{ &vflag, 1, "-v" },
 #endif
@@ -1892,6 +1936,7 @@ struct flgcheck ccomflgcheck[] = {
 	{ &kflag, 1, "-k" },
 #endif
 	{ &sspflag, 1, "-fstack-protector" },
+	{ &sehflag, 1, "-fseh" },
 	{ 0 }
 };
 
@@ -2049,6 +2094,16 @@ setup_ld_flags(void)
 		} else {
 			for (i = 0; deflibs[i]; i++)
 				strlist_append(&late_linker_flags, deflibs[i]);
+		}
+		/* SEH runtime library (non-Windows platforms) */
+		if (sehflag) {
+#ifndef _WIN32
+			strlist_append(&late_linker_flags, "-lseh");
+#endif
+		}
+		/* Add Objective-C runtime library if needed */
+		if (objcflag) {
+			strlist_append(&late_linker_flags, "-lobjc");
 		}
 	}
 	if (!nostartfiles) {

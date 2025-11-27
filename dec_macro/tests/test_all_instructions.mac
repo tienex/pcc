@@ -1,0 +1,94 @@
+; test_all_instructions.mac - Comprehensive DEC MACRO instruction test
+; Tests ALL implemented instructions using table-driven codegen
+
+	.PSECT	CODE
+
+START:	.ENTRY	START
+
+	; ========== Data Movement ==========
+	MOV	R0, R1
+	MOV	#100, R0
+	MOVB	R2, R3
+
+	; ========== Arithmetic ==========
+	ADD	R1, R0
+	SUB	R2, R1
+	MUL	R0, R1
+	DIV	R0, R2
+	INC	R0
+	INCB	R1
+	DEC	R2
+	DECB	R3
+	NEG	R0
+	NEGB	R1
+	ADC	R2
+	SBC	R3
+
+	; ========== Logical ==========
+	AND	#255, R0
+	OR	#128, R1
+	XOR	R0, R1
+	BIC	#15, R2
+	BIS	#240, R3
+	BIT	#1, R0
+	COM	R1
+	COMB	R2
+
+	; ========== Shift/Rotate ==========
+	ASL	R0
+	ASLB	R1
+	ASR	R2
+	ASRB	R3
+	ROL	R0
+	ROLB	R1
+	ROR	R2
+	RORB	R3
+	SWAB	R0
+	SXT	R1
+
+	; ========== Compare/Test ==========
+	CMP	R0, R1
+	CMPB	R2, R3
+	TST	R0
+	TSTB	R1
+
+	; ========== Branches ==========
+LOOP:	BR	LOOP
+	BNE	SKIP
+	BEQ	DONE
+	BPL	POSITIVE
+	BMI	NEGATIVE
+	BVC	NOOVF
+	BVS	OVFLOW
+	BCC	NOCARRY
+	BCS	CARRY
+	BGE	GE_LABEL
+	BLT	LT_LABEL
+	BGT	GT_LABEL
+	BLE	LE_LABEL
+	BHI	HI_LABEL
+	BLOS	LOS_LABEL
+
+	; ========== Jump/Call/Return ==========
+SKIP:	JMP	TARGET
+TARGET:	JSR	R5, SUBR
+SUBR:	RTS
+
+	; ========== Special ==========
+POSITIVE:
+NEGATIVE:
+NOOVF:
+OVFLOW:
+NOCARRY:
+CARRY:
+GE_LABEL:
+LT_LABEL:
+GT_LABEL:
+LE_LABEL:
+HI_LABEL:
+LOS_LABEL:
+	NOP
+	HALT
+DONE:	HALT
+
+	.END	START

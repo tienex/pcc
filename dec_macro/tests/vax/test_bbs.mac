@@ -1,0 +1,11 @@
+; Test BBS - BBS operation (VAX)
+
+	.PSECT	CODE
+
+START:
+	BBS	R1,R2
+	HALT
+
+DATA:	.WORD	0
+
+	.END

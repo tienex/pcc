@@ -1,0 +1,13 @@
+; Test MOVSM - Move Swapped to Memory (PDP-10)
+; Expected: AC1 = swapped halves of AC2
+
+	.PSECT	CODE
+
+START:
+	MOVEI 2,0123456
+	MOVSM	1,2
+	HALT
+
+DATA:	.WORD	0
+
+	.END

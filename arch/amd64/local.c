@@ -27,6 +27,7 @@
 
 
 #include "pass1.h"
+#include "x86asm.h"
 
 #ifndef LANG_CXX
 #define	NODE P1ND
@@ -578,9 +579,19 @@ myp2tree(NODE *p)
 			sps.soffset = dblxor;
 			locctr(DATA, &sps);
 			defloc(&sps);
-			printf("\t.long 0,0x80000000,0,0\n");
-			printf(LABFMT ":\n", fltxor);
-			printf("\t.long 0x80000000,0,0,0\n");
+			{
+				uint32_t data1[4] = { 0, 0x80000000, 0, 0 };
+				x86asm_data(asm_ctx, DATA_DWORD, data1, 4);
+			}
+			{
+				char label[32];
+				snprintf(label, sizeof(label), LABFMT, fltxor);
+				x86asm_label(asm_ctx, label, 0);  /* Emit label for fltxor */
+			}
+			{
+				uint32_t data2[4] = { 0x80000000, 0, 0, 0 };
+				x86asm_data(asm_ctx, DATA_DWORD, data2, 4);
+			}
 		}
 		p->n_ap = attr_add(p->n_ap,
 		    ap = attr_new(ATTR_AMD64_XORLBL, 1));
@@ -709,23 +720,37 @@ ninval(CONSZ off, int fsz, NODE *p)
 		u.l = (long double)FCAST(p->n_dcon)->fp;
 #if defined(HOST_BIG_ENDIAN)
 		/* XXX probably broken on most hosts */
-		printf("\t.long\t0x%x,0x%x,0x%x,0\n", u.i[2], u.i[1], u.i[0]);
+		{
+			uint32_t data[4] = { (uint32_t)u.i[2], (uint32_t)u.i[1], (uint32_t)u.i[0], 0 };
+			x86asm_data(asm_ctx, DATA_DWORD, data, 4);
+		}
 #else
-		printf("\t.long\t0x%x,0x%x,0x%x,0\n", u.i[0], u.i[1],
-		    u.i[2] & 0xffff);
+		{
+			uint32_t data[4] = { (uint32_t)u.i[0], (uint32_t)u.i[1], (uint32_t)(u.i[2] & 0xffff), 0 };
+			x86asm_data(asm_ctx, DATA_DWORD, data, 4);
+		}
 #endif
 		break;
 	case DOUBLE:
 		u.d = (double)FCAST(p->n_dcon)->fp;
 #if defined(HOST_BIG_ENDIAN)
-		printf("\t.long\t0x%x,0x%x\n", u.i[1], u.i[0]);
+		{
+			uint32_t data[2] = { (uint32_t)u.i[1], (uint32_t)u.i[0] };
+			x86asm_data(asm_ctx, DATA_DWORD, data, 2);
+		}
 #else
-		printf("\t.long\t0x%x,0x%x\n", u.i[0], u.i[1]);
+		{
+			uint32_t data[2] = { (uint32_t)u.i[0], (uint32_t)u.i[1] };
+			x86asm_data(asm_ctx, DATA_DWORD, data, 2);
+		}
 #endif
 		break;
 	case FLOAT:
 		u.f = (float)FCAST(p->n_dcon)->fp;
-		printf("\t.long\t0x%x\n", u.i[0]);
+		{
+			uint32_t data = (uint32_t)u.i[0];
+			x86asm_data(asm_ctx, DATA_DWORD, &data, 1);
+		}
 		break;
 	default:
 		return 0;
@@ -794,6 +819,9 @@ defzero(struct symtab *sp)
 	int al;
 	OFFSZ off;
 	char *name;
+	char labelbuf[32];
+
+	if (!asm_ctx) return;
 
 	name = getexname(sp);
 	off = tsize(sp->stype, sp->sdf, sp->sap);
@@ -801,29 +829,26 @@ defzero(struct symtab *sp)
 	off /= SZCHAR;
 	al = talign(sp->stype, sp->sap)/SZCHAR;
 
+	/* Get symbol name or label */
+	if (sp->slevel == 0) {
+		snprintf(labelbuf, sizeof(labelbuf), "%s", name);
+	} else {
+		snprintf(labelbuf, sizeof(labelbuf), LABFMT, sp->soffset);
+	}
+
 #ifdef MACHOABI
 	if (sp->sclass == STATIC) {
+		/* Mach-O uses .zerofill for static BSS - keep as printf for now */
 		al = ispow2(al);
-		printf("\t.zerofill __DATA,__bss,");
-		if (sp->slevel == 0) {
-			printf("%s", name);
-		} else
-			printf(LABFMT, sp->soffset);
-		printf(",%lld,%d\n", off, al);
+		printf("\t.zerofill __DATA,__bss,%s,%lld,%d\n", labelbuf, off, al);
 	} else {
-		printf("\t.comm %s,0%llo,%d\n", name, off, al);
+		x86asm_comm(asm_ctx, labelbuf, off, al);
 	}
 #else
 	if (sp->sclass == STATIC) {
-		if (sp->slevel == 0) {
-			printf("\t.local %s\n", name);
-		} else
-			printf("\t.local " LABFMT "\n", sp->soffset);
+		x86asm_local(asm_ctx, labelbuf);
 	}
-	if (sp->slevel == 0) {
-		printf("\t.comm %s,0%llo,%d\n", name, off, al);
-	} else
-		printf("\t.comm " LABFMT ",0%llo,%d\n", sp->soffset, off, al);
+	x86asm_comm(asm_ctx, labelbuf, off, al);
 #endif
 }
 
@@ -939,6 +964,17 @@ fixdef(struct symtab *sp)
 		sp->sap = attr_add(sp->sap, gcc_attr_parse(p));
 #endif
 		constructor = destructor = 0;
+	}
+
+	/* Handle Watcom pragma aux */
+	if (pragma_aux_pending.symbol != NULL &&
+	    strcmp(pragma_aux_pending.symbol, sp->sname) == 0 &&
+	    (sp->sclass != PARAM)) {
+		/* For amd64, pragma aux can specify calling conventions */
+		/* We accept the pragma but don't need to do much - just acknowledge it */
+		/* The register specifications would be used during code generation */
+		/* For now, we just clear the pending pragma aux */
+		pragma_aux_pending.symbol = NULL;
 	}
 }
 

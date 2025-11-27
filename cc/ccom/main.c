@@ -45,6 +45,7 @@ int r2debug, s2debug, t2debug, u2debug, x2debug;
 int gflag, kflag;
 int pflag, sflag;
 int sspflag;
+int sehflag;		/* Enable SEH (Structured Exception Handling) */
 int xscp, xssa, xtailcall, xtemps, xdeljumps, xdce, xinline, xccp, xgnu89, xgnu99;
 int xuchar;
 int freestanding;
@@ -117,6 +118,8 @@ fflags(char *str)
 		sspflag = flagval;
 	else if (strcmp(str, "stack-protector-all") == 0)
 		sspflag = flagval;
+	else if (strcmp(str, "seh") == 0)
+		sehflag = flagval;
 	else if (strncmp(str, "pack-struct", 11) == 0)
 		pragma_allpacked = (strlen(str) > 12 ? atoi(str+12) : 1);
 	else if (strcmp(str, "freestanding") == 0)

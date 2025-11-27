@@ -15,8 +15,9 @@ CFLAGS = @CFLAGS@ @ADD_CFLAGS@
 CPPFLAGS = @CPPFLAGS@ @ADD_CPPFLAGS@ -D_ISOC99_SOURCE \
 	-Dos_$(TARGOS) -Dmach_$(TARGMACH) \
 	-I$(srcdir) -I$(builddir) -I$(top_builddir) -I$(MIPDIR) -I$(MDIR) \
-	-I$(top_srcdir)/os/$(TARGOS) -I$(COMMONDIR)
-LIBS = @LIBS@
+	-I$(top_srcdir)/os/$(TARGOS) -I$(COMMONDIR) \
+	-I$(top_srcdir)/libx86asm
+LIBS = @LIBS@ -L$(top_builddir)/libx86asm -lx86asm
 LDFLAGS = @LDFLAGS@
 LEX = @LEX@
 LFLAGS =
@@ -53,12 +54,28 @@ all: $(DEST)
 OBJS=	builtins.o cgram.o code.o common.o compat.o dwarf.o external.o	\
 	gcc_compat.o init.o inline.o local.o local2.o main.o strtodg.o	\
 	match.o optim.o optim2.o order.o pftn.o reader.o softfloat.o	\
-	regs.o scan.o stabs.o symtabs.o table.o trees.o unicode.o
+	regs.o scan.o stabs.o symtabs.o table.o trees.o unicode.o	\
+	debugsym.o debugsym_types.o debugsym_integration.o debugsym_lang.o \
+	debugsym_dwarf.o debugsym_codeview.o debugsym_coff.o		\
+	debugsym_stabs.o debugsym_dbx.o debugsym_borland.o debugsym_watcom.o \
+	debugsym_hll.o debugsym_hpsom.o debugsym_vms.o			\
+	debugsym_macos.o debugsym_atari.o debugsym_amiga.o debugsym_acorn.o \
+	debugsym_aout.o debugsym_macho.o debugsym_omf.o			\
+	debugsym_pdb.o debugsym_ctf.o debugsym_btf.o debugsym_plan9.o debugsym_tads.o \
+	debugsym_nlm.o debugsym_symbian.o debugsym_palmos.o debugsym_vxworks.o
 
 OBJS0=  builtins.o cgram.o code.o common.o compat.o dwarf.o external.o	\
 	gcc_compat.o init.o inline.o local.o main.o             	\
 	optim.o pftn.o softfloat.o strtodg.o				\
-	scan.o stabs.o symtabs.o trees.o unicode.o
+	scan.o stabs.o symtabs.o trees.o unicode.o			\
+	debugsym.o debugsym_types.o debugsym_integration.o debugsym_lang.o \
+	debugsym_dwarf.o debugsym_codeview.o debugsym_coff.o		\
+	debugsym_stabs.o debugsym_dbx.o debugsym_borland.o debugsym_watcom.o \
+	debugsym_hll.o debugsym_hpsom.o debugsym_vms.o			\
+	debugsym_macos.o debugsym_atari.o debugsym_amiga.o debugsym_acorn.o \
+	debugsym_aout.o debugsym_macho.o debugsym_omf.o			\
+	debugsym_pdb.o debugsym_ctf.o debugsym_btf.o debugsym_plan9.o debugsym_tads.o \
+	debugsym_nlm.o debugsym_symbian.o debugsym_palmos.o debugsym_vxworks.o
 
 OBJS1=  common2.o compat.o external.o           			\
 	local2.o main2.o                				\
@@ -197,6 +214,96 @@ trees.o: $(srcdir)/trees.c
 
 unicode.o: $(COMMONDIR)/unicode.c
 	$(CC) $(CF0) $(CFLAGS) $(CPPFLAGS) -c -o $@ $(COMMONDIR)/unicode.c
+
+debugsym.o: $(srcdir)/debugsym.c
+	$(CC) $(CF0) $(CFLAGS) $(CPPFLAGS) -c -o $@ $(srcdir)/debugsym.c
+
+debugsym_dwarf.o: $(srcdir)/debugsym_dwarf.c
+	$(CC) $(CF0) $(CFLAGS) $(CPPFLAGS) -c -o $@ $(srcdir)/debugsym_dwarf.c
+
+debugsym_codeview.o: $(srcdir)/debugsym_codeview.c
+	$(CC) $(CF0) $(CFLAGS) $(CPPFLAGS) -c -o $@ $(srcdir)/debugsym_codeview.c
+
+debugsym_coff.o: $(srcdir)/debugsym_coff.c
+	$(CC) $(CF0) $(CFLAGS) $(CPPFLAGS) -c -o $@ $(srcdir)/debugsym_coff.c
+
+debugsym_stabs.o: $(srcdir)/debugsym_stabs.c
+	$(CC) $(CF0) $(CFLAGS) $(CPPFLAGS) -c -o $@ $(srcdir)/debugsym_stabs.c
+
+debugsym_dbx.o: $(srcdir)/debugsym_dbx.c
+	$(CC) $(CF0) $(CFLAGS) $(CPPFLAGS) -c -o $@ $(srcdir)/debugsym_dbx.c
+
+debugsym_borland.o: $(srcdir)/debugsym_borland.c
+	$(CC) $(CF0) $(CFLAGS) $(CPPFLAGS) -c -o $@ $(srcdir)/debugsym_borland.c
+
+debugsym_watcom.o: $(srcdir)/debugsym_watcom.c
+	$(CC) $(CF0) $(CFLAGS) $(CPPFLAGS) -c -o $@ $(srcdir)/debugsym_watcom.c
+
+debugsym_types.o: $(srcdir)/debugsym_types.c
+	$(CC) $(CF0) $(CFLAGS) $(CPPFLAGS) -c -o $@ $(srcdir)/debugsym_types.c
+
+debugsym_integration.o: $(srcdir)/debugsym_integration.c
+	$(CC) $(CF0) $(CFLAGS) $(CPPFLAGS) -c -o $@ $(srcdir)/debugsym_integration.c
+
+debugsym_lang.o: $(srcdir)/debugsym_lang.c
+	$(CC) $(CF0) $(CFLAGS) $(CPPFLAGS) -c -o $@ $(srcdir)/debugsym_lang.c
+
+debugsym_hll.o: $(srcdir)/debugsym_hll.c
+	$(CC) $(CF0) $(CFLAGS) $(CPPFLAGS) -c -o $@ $(srcdir)/debugsym_hll.c
+
+debugsym_hpsom.o: $(srcdir)/debugsym_hpsom.c
+	$(CC) $(CF0) $(CFLAGS) $(CPPFLAGS) -c -o $@ $(srcdir)/debugsym_hpsom.c
+
+debugsym_vms.o: $(srcdir)/debugsym_vms.c
+	$(CC) $(CF0) $(CFLAGS) $(CPPFLAGS) -c -o $@ $(srcdir)/debugsym_vms.c
+
+debugsym_macos.o: $(srcdir)/debugsym_macos.c
+	$(CC) $(CF0) $(CFLAGS) $(CPPFLAGS) -c -o $@ $(srcdir)/debugsym_macos.c
+
+debugsym_atari.o: $(srcdir)/debugsym_atari.c
+	$(CC) $(CF0) $(CFLAGS) $(CPPFLAGS) -c -o $@ $(srcdir)/debugsym_atari.c
+
+debugsym_amiga.o: $(srcdir)/debugsym_amiga.c
+	$(CC) $(CF0) $(CFLAGS) $(CPPFLAGS) -c -o $@ $(srcdir)/debugsym_amiga.c
+
+debugsym_acorn.o: $(srcdir)/debugsym_acorn.c
+	$(CC) $(CF0) $(CFLAGS) $(CPPFLAGS) -c -o $@ $(srcdir)/debugsym_acorn.c
+
+debugsym_aout.o: $(srcdir)/debugsym_aout.c
+	$(CC) $(CF0) $(CFLAGS) $(CPPFLAGS) -c -o $@ $(srcdir)/debugsym_aout.c
+
+debugsym_macho.o: $(srcdir)/debugsym_macho.c
+	$(CC) $(CF0) $(CFLAGS) $(CPPFLAGS) -c -o $@ $(srcdir)/debugsym_macho.c
+
+debugsym_omf.o: $(srcdir)/debugsym_omf.c
+	$(CC) $(CF0) $(CFLAGS) $(CPPFLAGS) -c -o $@ $(srcdir)/debugsym_omf.c
+
+debugsym_pdb.o: $(srcdir)/debugsym_pdb.c
+	$(CC) $(CF0) $(CFLAGS) $(CPPFLAGS) -c -o $@ $(srcdir)/debugsym_pdb.c
+
+debugsym_ctf.o: $(srcdir)/debugsym_ctf.c
+	$(CC) $(CF0) $(CFLAGS) $(CPPFLAGS) -c -o $@ $(srcdir)/debugsym_ctf.c
+
+debugsym_btf.o: $(srcdir)/debugsym_btf.c
+	$(CC) $(CF0) $(CFLAGS) $(CPPFLAGS) -c -o $@ $(srcdir)/debugsym_btf.c
+
+debugsym_plan9.o: $(srcdir)/debugsym_plan9.c
+	$(CC) $(CF0) $(CFLAGS) $(CPPFLAGS) -c -o $@ $(srcdir)/debugsym_plan9.c
+
+debugsym_tads.o: $(srcdir)/debugsym_tads.c
+	$(CC) $(CF0) $(CFLAGS) $(CPPFLAGS) -c -o $@ $(srcdir)/debugsym_tads.c
+
+debugsym_nlm.o: $(srcdir)/debugsym_nlm.c
+	$(CC) $(CF0) $(CFLAGS) $(CPPFLAGS) -c -o $@ $(srcdir)/debugsym_nlm.c
+
+debugsym_symbian.o: $(srcdir)/debugsym_symbian.c
+	$(CC) $(CF0) $(CFLAGS) $(CPPFLAGS) -c -o $@ $(srcdir)/debugsym_symbian.c
+
+debugsym_palmos.o: $(srcdir)/debugsym_palmos.c
+	$(CC) $(CF0) $(CFLAGS) $(CPPFLAGS) -c -o $@ $(srcdir)/debugsym_palmos.c
+
+debugsym_vxworks.o: $(srcdir)/debugsym_vxworks.c
+	$(CC) $(CF0) $(CFLAGS) $(CPPFLAGS) -c -o $@ $(srcdir)/debugsym_vxworks.c
 
 #
 # round 3: build $(DEST)

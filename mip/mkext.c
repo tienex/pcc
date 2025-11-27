@@ -350,47 +350,58 @@ if (bitsz == 64) {
 	if (greg > bitsz)
 		printf("%d regs in class G (max %d)\n", greg, bitsz), rval++;
 
-	fprintf(fc, "static int amap[MAXREGS][NUMCLASS] = {\n");
+	fprintf(fc, "static %s amap[MAXREGS][NUMCLASS] = {\n", bitary);
 	for (i = 0; i < MAXREGS; i++) {
-		int ba, bb, bc, bd, r, be, bf, bg;
+		long ba, bb, bc, bd, be, bf, bg;
+		int r;
 		ba = bb = bc = bd = be = bf = bg = 0;
-		if (rstatus[i] & SAREG) ba = (1 << regclassmap[0][i]);
-		if (rstatus[i] & SBREG) bb = (1 << regclassmap[1][i]);
-		if (rstatus[i] & SCREG) bc = (1 << regclassmap[2][i]);
-		if (rstatus[i] & SDREG) bd = (1 << regclassmap[3][i]);
-		if (rstatus[i] & SEREG) be = (1 << regclassmap[4][i]);
-		if (rstatus[i] & SFREG) bf = (1 << regclassmap[5][i]);
-		if (rstatus[i] & SGREG) bg = (1 << regclassmap[6][i]);
+		if (rstatus[i] & SAREG) ba = ((long)1 << regclassmap[0][i]);
+		if (rstatus[i] & SBREG) bb = ((long)1 << regclassmap[1][i]);
+		if (rstatus[i] & SCREG) bc = ((long)1 << regclassmap[2][i]);
+		if (rstatus[i] & SDREG) bd = ((long)1 << regclassmap[3][i]);
+		if (rstatus[i] & SEREG) be = ((long)1 << regclassmap[4][i]);
+		if (rstatus[i] & SFREG) bf = ((long)1 << regclassmap[5][i]);
+		if (rstatus[i] & SGREG) bg = ((long)1 << regclassmap[6][i]);
 		for (j = 0; roverlay[i][j] >= 0; j++) {
 			r = roverlay[i][j];
 			if (rstatus[r] & SAREG)
-				ba |= (1 << regclassmap[0][r]);
+				ba |= ((long)1 << regclassmap[0][r]);
 			if (rstatus[r] & SBREG)
-				bb |= (1 << regclassmap[1][r]);
+				bb |= ((long)1 << regclassmap[1][r]);
 			if (rstatus[r] & SCREG)
-				bc |= (1 << regclassmap[2][r]);
+				bc |= ((long)1 << regclassmap[2][r]);
 			if (rstatus[r] & SDREG)
-				bd |= (1 << regclassmap[3][r]);
+				bd |= ((long)1 << regclassmap[3][r]);
 			if (rstatus[r] & SEREG)
-				be |= (1 << regclassmap[4][r]);
+				be |= ((long)1 << regclassmap[4][r]);
 			if (rstatus[r] & SFREG)
-				bf |= (1 << regclassmap[5][r]);
+				bf |= ((long)1 << regclassmap[5][r]);
 			if (rstatus[r] & SGREG)
-				bg |= (1 << regclassmap[6][r]);
+				bg |= ((long)1 << regclassmap[6][r]);
 		}
-		fprintf(fc, "\t/* %d */{ 0x%x", i, ba);
-		if (NUMCLASS > 1) fprintf(fc, ",0x%x", bb);
-		if (NUMCLASS > 2) fprintf(fc, ",0x%x", bc);
-		if (NUMCLASS > 3) fprintf(fc, ",0x%x", bd);
-		if (NUMCLASS > 4) fprintf(fc, ",0x%x", be);
-		if (NUMCLASS > 5) fprintf(fc, ",0x%x", bf);
-		if (NUMCLASS > 6) fprintf(fc, ",0x%x", bg);
+		if (bitsz == 64) {
+			fprintf(fc, "\t/* %d */{ 0x%lx", i, ba);
+			if (NUMCLASS > 1) fprintf(fc, ",0x%lx", bb);
+			if (NUMCLASS > 2) fprintf(fc, ",0x%lx", bc);
+			if (NUMCLASS > 3) fprintf(fc, ",0x%lx", bd);
+			if (NUMCLASS > 4) fprintf(fc, ",0x%lx", be);
+			if (NUMCLASS > 5) fprintf(fc, ",0x%lx", bf);
+			if (NUMCLASS > 6) fprintf(fc, ",0x%lx", bg);
+		} else {
+			fprintf(fc, "\t/* %d */{ 0x%x", i, (int)ba);
+			if (NUMCLASS > 1) fprintf(fc, ",0x%x", (int)bb);
+			if (NUMCLASS > 2) fprintf(fc, ",0x%x", (int)bc);
+			if (NUMCLASS > 3) fprintf(fc, ",0x%x", (int)bd);
+			if (NUMCLASS > 4) fprintf(fc, ",0x%x", (int)be);
+			if (NUMCLASS > 5) fprintf(fc, ",0x%x", (int)bf);
+			if (NUMCLASS > 6) fprintf(fc, ",0x%x", (int)bg);
+		}
 		fprintf(fc, " },\n");
 	}
 	fprintf(fc, "};\n");
 
-	fprintf(fh, "int aliasmap(int class, int regnum);\n");
-	fprintf(fc, "int\naliasmap(int class, int regnum)\n{\n");
+	fprintf(fh, "%s aliasmap(int class, int regnum);\n", bitary);
+	fprintf(fc, "%s\naliasmap(int class, int regnum)\n{\n", bitary);
 	fprintf(fc, "	return amap[regnum][class-1];\n}\n");
 
 	/* routines to convert back from color to regnum */
@@ -401,13 +412,9 @@ if (bitsz == 64) {
 	if (ereg > mx) mx = ereg;
 	if (freg > mx) mx = freg;
 	if (greg > mx) mx = greg;
-	if (mx > (int)(sizeof(int)*8)-1) {
+	if (mx > bitsz-1) {
 		printf("too many regs in a class, use two classes instead\n");
-#ifdef HAVE_C99_FORMAT
-		printf("%d > %zu\n", mx, (sizeof(int)*8)-1);
-#else
-		printf("%d > %d\n", mx, (int)(sizeof(int)*8)-1);
-#endif
+		printf("%d > %d\n", mx, bitsz-1);
 		rval++;
 	}
 	fprintf(fc, "static int rmap[NUMCLASS][%d] = {\n", mx);

@@ -1,0 +1,12 @@
+; Test IMUL - IMUL (PDP-10)
+; Expected: Operation IMUL
+
+	.PSECT	CODE
+
+START:
+	IMUL
+	HALT
+
+DATA:	.WORD	0
+
+	.END

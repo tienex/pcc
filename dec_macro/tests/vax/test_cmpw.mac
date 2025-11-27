@@ -1,0 +1,11 @@
+; Test CMPW - CMPW operation (VAX)
+
+	.PSECT	CODE
+
+START:
+	CMPW	R1,R2
+	HALT
+
+DATA:	.WORD	0
+
+	.END

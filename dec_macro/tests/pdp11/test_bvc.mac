@@ -1,0 +1,11 @@
+; Test BVC - BVC operation (PDP-11)
+
+	.PSECT	CODE
+
+START:
+	BVC	R1,R2
+	HALT
+
+DATA:	.WORD	0
+
+	.END

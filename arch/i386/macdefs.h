@@ -55,7 +55,13 @@
 #define SZLONG		32
 #define SZSHORT		16
 #define SZLONGLONG	64
-#define SZPOINT(t)	32
+
+/*
+ * Pointer sizes depend on memory model for i386.
+ * Small model (default): 32-bit near pointers
+ * Large model: 48-bit far pointers (16-bit selector + 32-bit offset)
+ */
+#define SZPOINT(t)	((mcmodel & MCI386_LARGE) ? 48 : 32)
 
 /*
  * Alignment constraints
@@ -441,16 +447,31 @@ int xasmconstregs(char *);
 struct stub {
 	struct { struct stub *q_forw, *q_back; } link;
 	char *name;
-};    
+};
 extern struct stub stublist;
 extern struct stub nlplist;
 void addstub(struct stub *list, char *name);
 #endif
 
+/* libx86asm context for assembly generation */
+struct x86asm_ctx;
+typedef struct x86asm_ctx x86asm_ctx_t;
+extern x86asm_ctx_t *asm_ctx;
+
 /* -m flags */
 extern int msettings;
 #define	MI386	0x001
 #define	MI486	0x002
+
+/*
+ * Memory model flags for i386.
+ * Small model (default): 32-bit near pointers (flat memory model)
+ * Large model: 48-bit far pointers (selector:offset for segmented addressing)
+ */
+#define	MCI386_SMALL	0x0100
+#define	MCI386_LARGE	0x0200
+#define	MCI386_ALL	(MCI386_SMALL|MCI386_LARGE)
+extern int mcmodel;
 #define	MI586	0x004
 #define	MI686	0x008
 #define	MCPUMSK	0x00f

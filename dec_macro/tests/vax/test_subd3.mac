@@ -1,0 +1,11 @@
+; Test SUBD3 - SUBD3 operation (VAX)
+
+	.PSECT	CODE
+
+START:
+	SUBD3	R1,R2,R3
+	HALT
+
+DATA:	.WORD	0
+
+	.END

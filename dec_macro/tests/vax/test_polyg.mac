@@ -1,0 +1,11 @@
+; Test POLYG - POLYG operation (VAX)
+
+	.PSECT	CODE
+
+START:
+	POLYG	R1,R2
+	HALT
+
+DATA:	.WORD	0
+
+	.END

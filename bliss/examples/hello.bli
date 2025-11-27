@@ -1,0 +1,45 @@
+!
+! Hello World in BLISS
+!
+! This is a simple BLISS program that demonstrates
+! basic module structure and routine definitions
+!
+
+MODULE hello =
+BEGIN
+
+!
+! External routine to print a message
+! In a real implementation, this would link to the runtime library
+!
+EXTERNAL ROUTINE print_message;
+
+!
+! Main routine
+!
+GLOBAL ROUTINE main : NOVALUE =
+BEGIN
+    ! Print hello world message
+    print_message()
+END;
+
+!
+! Print a message to the output
+!
+ROUTINE print_message : NOVALUE =
+BEGIN
+    ! In a complete implementation, this would use
+    ! BLISS character string primitives (CH$xxx) or
+    ! link to C library functions
+
+    ! For now, this is a placeholder showing
+    ! BLISS routine structure
+    LITERAL message_text = 'Hello, BLISS World!';
+
+    ! This would call runtime library I/O functions
+    ! bliss_puts(message_text);
+    ! bliss_putcrlf();
+END;
+
+END
+ELUDOM

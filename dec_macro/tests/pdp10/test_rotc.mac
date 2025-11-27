@@ -1,0 +1,15 @@
+; Test ROTC - Rotate Combined (PDP-10)
+; Expected: AC1:AC2 rotated, CC updated
+
+	.PSECT	CODE
+
+START:
+	MOVEI 1,0123456
+	MOVEI 2,0654321
+	MOVEI 3,4
+	ROTC	1,2
+	HALT
+
+DATA:	.WORD	0
+
+	.END

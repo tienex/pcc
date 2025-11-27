@@ -1,0 +1,11 @@
+; Test MOVG - MOVG operation (VAX)
+
+	.PSECT	CODE
+
+START:
+	MOVG	R1,R2
+	HALT
+
+DATA:	.WORD	0
+
+	.END

@@ -1,0 +1,13 @@
+; Test MOVEM - Move to Memory (PDP-10)
+; Expected: DATA = AC1
+
+	.PSECT	CODE
+
+START:
+	MOVEI 1,777
+	MOVEM	1,DATA
+	HALT
+
+DATA:	.WORD	0
+
+	.END

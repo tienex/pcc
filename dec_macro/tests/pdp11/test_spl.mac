@@ -1,0 +1,11 @@
+; Test SPL - SPL operation (PDP-11)
+
+	.PSECT	CODE
+
+START:
+	SPL	R1,R2
+	HALT
+
+DATA:	.WORD	0
+
+	.END

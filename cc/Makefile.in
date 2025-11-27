@@ -5,9 +5,23 @@
 
 @SET_MAKE@
 
-ALL_SUBDIRS=	cc cpp ccom cxxcom
+C_SUBDIRS=	cc cpp ccom
+CXX_SUBDIRS=	cxxcom
+ALL_SUBDIRS=	$(C_SUBDIRS) $(CXX_SUBDIRS)
 DIST_SUBDIRS=	$(ALL_SUBDIRS) driver
 
+# C-only build (stage 0 bootstrap)
+all-c install-c clean-c:
+	@target=`echo $@ | sed 's/-c//'`; \
+	for subdir in $(C_SUBDIRS); do \
+		_nextdir_=$${_thisdir_+$$_thisdir_/}$$subdir; \
+		echo "===> $$_nextdir_"; \
+		(_thisdir_=$$_nextdir_; export _thisdir_; cd $$subdir && \
+		    exec $(MAKE) $(MFLAGS) $$target) || exit $$?; \
+		echo "<=== $$_nextdir_"; \
+	done
+
+# Full build (all languages)
 all install clean:
 	@for subdir in $(ALL_SUBDIRS); do \
 		_nextdir_=$${_thisdir_+$$_thisdir_/}$$subdir; \

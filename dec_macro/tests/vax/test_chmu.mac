@@ -1,0 +1,11 @@
+; Test CHMU - CHMU operation (VAX)
+
+	.PSECT	CODE
+
+START:
+	CHMU	R1,R2
+	HALT
+
+DATA:	.WORD	0
+
+	.END

@@ -222,6 +222,15 @@ typedef struct node {
 #define	FUNARG	57
 #define	ADDROF	58
 
-#define	MAXOP	58
+/*
+ * Structured Exception Handling (SEH) nodes.
+ */
+#define	TRYBLOCK	59	/* __try block */
+#define	EXCEPT		60	/* __except clause */
+#define	FINALLY		61	/* __finally clause */
+#define	LEAVE		62	/* __leave statement */
+#define	EXCEPTEXPR	63	/* __except filter expression */
+
+#define	MAXOP	63
 
 #endif

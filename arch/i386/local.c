@@ -26,6 +26,7 @@
 
 
 #include "pass1.h"
+#include "x86asm.h"
 
 #undef NIL
 #define	NIL NULL
@@ -460,14 +461,16 @@ clocal(P1ND *p)
 #endif
 
 #ifdef PECOFFABI
-			if (attr_find(q->sap, ATTR_i386_SDLLINDIRECT))
+			if (attr_find(q->sap, ATTR_I386_DLLINDIRECT))
 				p = import(p);
 #endif
 #ifdef GCC_COMPAT
 			if ((ap = attr_find(q->sap,
 			    GCC_ATYP_VISIBILITY)) != NULL &&
-			    strcmp(ap->sarg(0), "hidden") == 0)
-				printf(PRTPREF "\t.hidden %s\n", getsoname(q));
+			    strcmp(ap->sarg(0), "hidden") == 0) {
+				if (asm_ctx)
+					x86asm_hidden(asm_ctx, getsoname(q));
+			}
 #endif
 			if (kflag == 0)
 				break;
@@ -1052,49 +1055,48 @@ defzero(struct symtab *sp)
 	int off;
 	int al;
 	char *name;
+	char labelbuf[32];
+
+	if (!asm_ctx) return;
 
 	name = getexname(sp);
 	al = talign(sp->stype, sp->sap)/SZCHAR;
 	off = (int)tsize(sp->stype, sp->sdf, sp->sap);
 	SETOFF(off,SZCHAR);
 	off /= SZCHAR;
-#if defined(MACHOABI) || defined(PECOFFABI)/* && binutils>2.20 */
-	al = ispow2(al);
-	if (sp->sclass == STATIC) {
-		if (sp->slevel == 0)
-			printf(PRTPREF "\t.lcomm %s,0%o,%d\n", name, off, al);
-		else
-			printf(PRTPREF "\t.lcomm  " LABFMT ",0%o,%d\n", sp->soffset, off, al);
-	} else {
-		if (sp->slevel == 0)
-			printf(PRTPREF "\t.comm %s,0%o,%d\n", name, off, al);
-		else
-			printf(PRTPREF "\t.comm  " LABFMT ",0%o,%d\n", sp->soffset, off, al);
-	}
-#elif defined(ELFABI)
+
 #ifdef GCC_COMPAT
 	if (attr_find(sp->sap, GCC_ATYP_WEAKREF) != NULL)
 		return;
 #endif
-	if (sp->sclass == STATIC) {
-		if (sp->slevel == 0) {
-			printf(PRTPREF "\t.local %s\n", name);
-		} else
-			printf(PRTPREF "\t.local " LABFMT "\n", sp->soffset);
+
+	/* Get symbol name or label */
+	if (sp->slevel == 0) {
+		/* Named symbol */
+		snprintf(labelbuf, sizeof(labelbuf), "%s", name);
+	} else {
+		/* Numbered label */
+		snprintf(labelbuf, sizeof(labelbuf), LABFMT, sp->soffset);
 	}
-	if (sp->slevel == 0)
-		printf(PRTPREF "\t.comm %s,0%o,%d\n", name, off, al);
-	else
-		printf(PRTPREF "\t.comm  " LABFMT ",0%o,%d\n", sp->soffset, off, al);
+
+#if defined(MACHOABI) || defined(PECOFFABI)
+	al = ispow2(al);
+	if (sp->sclass == STATIC) {
+		x86asm_lcomm(asm_ctx, labelbuf, off, al);
+	} else {
+		x86asm_comm(asm_ctx, labelbuf, off, al);
+	}
+#elif defined(ELFABI)
+	if (sp->sclass == STATIC) {
+		x86asm_local(asm_ctx, labelbuf);
+	}
+	x86asm_comm(asm_ctx, labelbuf, off, al);
 #else
-	if (attr_find(sp->sap, GCC_ATYP_WEAKREF) != NULL)
-		return;
-	if (sp->slevel == 0)
-		printf(PRTPREF "\t.%scomm %s,0%o\n",
-			sp->sclass == STATIC ? "l" : "", name, off);
-	else
-		printf(PRTPREF "\t.%scomm  " LABFMT ",0%o\n", 
-			sp->sclass == STATIC ? "l" : "", sp->soffset, off);
+	if (sp->sclass == STATIC) {
+		x86asm_lcomm(asm_ctx, labelbuf, off, 0);
+	} else {
+		x86asm_comm(asm_ctx, labelbuf, off, 0);
+	}
 #endif
 }
 
@@ -1179,58 +1181,62 @@ fixdef(struct symtab *sp)
 				wr = ap->sarg(0);
 			}
 		}
-		if (wr == NULL)
-			printf(PRTPREF "\t.weak %s\n", sn);
-		else
-			printf(PRTPREF "\t.weakref %s,%s\n", sn, wr);
+		if (asm_ctx) {
+			if (wr == NULL)
+				x86asm_weak(asm_ctx, sn);
+			else
+				x86asm_weakref(asm_ctx, sn, wr);
+		}
 	} else
 #endif
 	    if ((ap = attr_find(sp->sap, GCC_ATYP_ALIAS)) != NULL) {
-		char *an = ap->sarg(0);	 
-		char *v;
+		char *an = ap->sarg(0);
 		char *sn = getsoname(sp);
 
-		v = attr_find(sp->sap, GCC_ATYP_WEAK) ? "weak" : "globl";
-		printf(PRTPREF "\t.%s %s\n", v, sn);
-		printf(PRTPREF "\t.set %s,%s\n", sn, an);
-	}	
+		if (asm_ctx) {
+			if (attr_find(sp->sap, GCC_ATYP_WEAK))
+				x86asm_weak(asm_ctx, sn);
+			else
+				x86asm_label(asm_ctx, sn, 1);  /* .globl */
+			x86asm_set(asm_ctx, sn, an);
+		}
+	}
 #endif
 	if (alias != NULL && (sp->sclass != PARAM)) {
 		char *name = getexname(sp);
-		printf(PRTPREF "\t.globl %s\n", name);
-		printf(PRTPREF "%s = ", name);
-		printf("%s\n", exname(alias));
+		if (asm_ctx) {
+			x86asm_label(asm_ctx, name, 1);  /* .globl */
+			x86asm_set(asm_ctx, name, exname(alias));
+		}
 		alias = NULL;
 	}
 	if ((constructor || destructor) && (sp->sclass != PARAM)) {
+		if (asm_ctx) {
 #if defined(ELFABI)
-		printf(PRTPREF "\t.section .%ctors,\"aw\",@progbits\n",
-		    constructor ? 'c' : 'd');
+			x86asm_segment(asm_ctx, constructor ? SEG_CTORS : SEG_DTORS, NULL);
 #elif defined(PECOFFABI)
-		printf(PRTPREF "\t.section .%ctors,\"w\"\n",
-		    constructor ? 'c' : 'd');
+			printf(PRTPREF "\t.section .%ctors,\"w\"\n",
+			    constructor ? 'c' : 'd');
 #elif defined(MACHOABI)
-		if (kflag) {
-			if (constructor)
-				printf(PRTPREF "\t.mod_init_func\n");
-			else
-				printf(PRTPREF "\t.mod_term_func\n");
-		} else {
-			if (constructor)
-				printf(PRTPREF "\t.constructor\n");
-			else
-				printf(PRTPREF "\t.destructor\n");
-		}
+			if (kflag) {
+				x86asm_segment(asm_ctx, constructor ? SEG_MOD_INIT_FUNC : SEG_MOD_TERM_FUNC, NULL);
+			} else {
+				if (constructor)
+					x86asm_directive(asm_ctx, "constructor", NULL);
+				else
+					x86asm_directive(asm_ctx, "destructor", NULL);
+			}
 #elif defined(AOUTABI)
-		uerror("constructor/destructor are not supported for this target");
+			uerror("constructor/destructor are not supported for this target");
 #endif
-		printf(PRTPREF "\t.p2align 2\n");
-		printf(PRTPREF "\t.long %s\n", exname(sp->sname));
+			x86asm_p2align(asm_ctx, 1);  /* 2^1 = 2 bytes */
+			printf(PRTPREF "\t.long %s\n", exname(sp->sname));
 #if defined(ELFABI)
-		printf(PRTPREF "\t.previous\n");
+			x86asm_previous(asm_ctx);
 #else
-		printf(PRTPREF "\t.text\n");
+			x86asm_segment(asm_ctx, SEG_TEXT, NULL);
 #endif
+		}
 		constructor = destructor = 0;
 	}
 #ifdef PECOFFABI
@@ -1239,6 +1245,17 @@ fixdef(struct symtab *sp)
 		dllindirect = 0;
 	}
 #endif
+
+	/* Handle Watcom pragma aux */
+	if (pragma_aux_pending.symbol != NULL &&
+	    strcmp(pragma_aux_pending.symbol, sp->sname) == 0 &&
+	    (sp->sclass != PARAM)) {
+		/* For i386, pragma aux can specify calling conventions */
+		/* We accept the pragma but don't need to do much - just acknowledge it */
+		/* The register specifications would be used during code generation */
+		/* For now, we just clear the pending pragma aux */
+		pragma_aux_pending.symbol = NULL;
+	}
 }
 
 /*

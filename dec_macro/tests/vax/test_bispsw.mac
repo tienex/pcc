@@ -1,0 +1,11 @@
+; Test BISPSW - BISPSW operation (VAX)
+
+	.PSECT	CODE
+
+START:
+	BISPSW	R1,R2
+	HALT
+
+DATA:	.WORD	0
+
+	.END

@@ -222,7 +222,7 @@ static const char * const crtdir_list_values1[] = {
     "=/usr/lib", NULL
 };
 static const char * const crtdir_list_values2[] = {
-    "=/usr/lib64", "=/usr/lib/gcc/x86_64-linux-gnu/4.4", NULL
+    "=/usr/lib64", GCCLIBDIR, NULL
 };
 static const struct platform_specific crtdir_list[] = {
     { ARCH_I386, OS_NETBSD, crtdir_list_values0 },
@@ -231,7 +231,7 @@ static const struct platform_specific crtdir_list[] = {
 };
 
 static const char * const stdlib_list_values0[] = {
-    "-L/usr/lib/gcc/x86_64-linux-gnu/4.4", NULL
+    "-L" GCCLIBDIR, NULL
 };
 static const char * const stdlib_list_values1[] = {
     "-lgcc", "--as-needed", "-lgcc_s", "--no-as-needed",
@@ -317,4 +317,33 @@ init_platform_specific(const char *os_name, const char *arch_name)
 	compiler = COMPILER;
 	assembler = ASSEMBLER;
 	linker = LINKER;
+
+	/* Add portable C11/C23 libraries if needed */
+#if defined(NEED_LIBUNICODE) || defined(NEED_LIBTHREAD) || defined(NEED_LIBSTDBIT) || defined(NEED_LIBCKDINT) || defined(NEED_LIBDECIMAL)
+	/* Add library directory for portable C11/C23 libraries */
+#ifdef LIBDIR
+	/* Use configured alternate library directory */
+	strlist_append(&early_linker_flags, "-L" LIBDIR);
+#endif
+#endif
+
+#ifdef NEED_LIBUNICODE
+	strlist_append(&stdlib_flags, "-lunicode");
+#endif
+#ifdef NEED_LIBTHREAD
+	strlist_append(&stdlib_flags, "-lthread");
+	/* libthread wraps pthread on POSIX, so link pthread too */
+	strlist_append(&stdlib_flags, "-lpthread");
+#endif
+#ifdef NEED_LIBSTDBIT
+	strlist_append(&stdlib_flags, "-lstdbit");
+#endif
+#ifdef NEED_LIBCKDINT
+	strlist_append(&stdlib_flags, "-lckdint");
+#endif
+#ifdef NEED_LIBDECIMAL
+	strlist_append(&stdlib_flags, "-ldecimal");
+	/* libdecimal uses math functions like sqrt, pow */
+	strlist_append(&stdlib_flags, "-lm");
+#endif
 }

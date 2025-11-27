@@ -1,0 +1,113 @@
+!
+! Vector (Array) operations in BLISS
+!
+! Demonstrates:
+! - Vector declarations
+! - Block vectors
+! - Vector subscripting
+! - INCR loops
+! - DECR loops
+!
+
+MODULE vector_ops =
+BEGIN
+
+!
+! Initialize a vector with sequential values
+!
+GLOBAL ROUTINE init_vector(vec, size) : NOVALUE =
+BEGIN
+    LOCAL i;
+
+    INCR i FROM 0 TO .size - 1 DO
+        vec[.i] = .i * 10
+END;
+
+!
+! Sum all elements in a vector
+!
+GLOBAL ROUTINE sum_vector(vec, size) =
+BEGIN
+    LOCAL sum;
+    LOCAL i;
+
+    sum = 0;
+
+    INCR i FROM 0 TO .size - 1 DO
+        sum = .sum + .vec[.i];
+
+    .sum
+END;
+
+!
+! Find maximum value in vector
+!
+GLOBAL ROUTINE max_vector(vec, size) =
+BEGIN
+    LOCAL max_val;
+    LOCAL i;
+
+    max_val = .vec[0];
+
+    INCR i FROM 1 TO .size - 1 DO
+    BEGIN
+        IF .vec[.i] GTR .max_val
+        THEN
+            max_val = .vec[.i]
+    END;
+
+    .max_val
+END;
+
+!
+! Reverse a vector in place
+!
+GLOBAL ROUTINE reverse_vector(vec, size) : NOVALUE =
+BEGIN
+    LOCAL i;
+    LOCAL j;
+    LOCAL temp;
+
+    i = 0;
+    j = .size - 1;
+
+    WHILE .i LSS .j DO
+    BEGIN
+        ! Swap elements
+        temp = .vec[.i];
+        vec[.i] = .vec[.j];
+        vec[.j] = .temp;
+
+        i = .i + 1;
+        j = .j - 1
+    END
+END;
+
+!
+! Main routine
+!
+GLOBAL ROUTINE main =
+BEGIN
+    ! Declare a block vector of 10 elements
+    LOCAL data : BLOCKVECTOR[10];
+    LOCAL total;
+    LOCAL maximum;
+
+    ! Initialize vector
+    init_vector(data, 10);
+
+    ! Calculate sum
+    total = sum_vector(data, 10);
+
+    ! Find maximum
+    maximum = max_vector(data, 10);
+
+    ! Reverse the vector
+    reverse_vector(data, 10);
+
+    ! Return the maximum value
+    .maximum
+END;
+
+END
+ELUDOM

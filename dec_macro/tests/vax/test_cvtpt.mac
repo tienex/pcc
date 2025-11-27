@@ -1,0 +1,11 @@
+; Test CVTPT - CVTPT operation (VAX)
+
+	.PSECT	CODE
+
+START:
+	CVTPT	R1,R2
+	HALT
+
+DATA:	.WORD	0
+
+	.END

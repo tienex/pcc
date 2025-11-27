@@ -62,6 +62,7 @@ static void pragma(void);
 static int dotfile;
 int notype, parbal, inattr, parlvl, nodinit, inoso;
 int kwdecode(struct symtab *s);
+int objc_keyword(char *kw);
 
 #define	CPP_IDENT 	2
 #define	CPP_LINE 	3
@@ -90,6 +91,20 @@ extern void yyset_lineno (int);
 %}
 
 %%
+
+@{UL}({UL}|{D})*	{ 	int i;
+			char *kw = yytext + 1; /* skip @ */
+
+			/* Check for Objective-C keywords */
+			if ((i = objc_keyword(kw)) > 0)
+				return i;
+
+			/* Not a keyword, treat as @ followed by identifier */
+			unput(yytext[yyleng-1]);
+			for (i = yyleng-2; i > 0; i--)
+				unput(yytext[i]);
+			return OBJC_AT;
+		}
 
 {UL}({UL}|{D})*	{ 	struct symtab *s;
 			int i = 0;
@@ -136,6 +151,18 @@ extern void yyset_lineno (int);
 0[xX]{H}+"."{P}{FS}?	{ yylval.flt = fhexcon(yytext); return(C_FCON); }
 0[xX]{H}+{P}{FS}?	{ yylval.flt = fhexcon(yytext); return(C_FCON); }
 
+@\"(\\.|[^\\"])*\"	{ yylval.strp = yytext; return OBJC_STRING; }
+@0[xX]{H}+{IS}?		{ yylval.nodep = cvtdig(16); return(C_ICON); }
+@0{D}+{IS}?		{ yylval.nodep = cvtdig(8); return(C_ICON); }
+@0[bB]{B}+{IS}?		{ yylval.nodep = cvtdig(2); return(C_ICON); }
+@{D}+{IS}?		{ yylval.nodep = cvtdig(10); return(C_ICON); }
+@{D}+{E}{FS}?		{ yylval.flt = floatcon(yytext + 1); return(C_FCON); }
+@{D}*"."{D}+({E})?{FS}?	{ yylval.flt = floatcon(yytext + 1); return(C_FCON); }
+@{D}+"."{D}*({E})?{FS}?	{ yylval.flt = floatcon(yytext + 1); return(C_FCON); }
+@'(\\.|[^\\'])*'	{ yylval.nodep = charcon(); return(C_ICON); }
+@"("			{ return OBJC_BOXED; }
+@"["			{ return OBJC_ARRAY_START; }
+@"{"			{ return OBJC_DICT_START; }
 {US}?\"(\\.|[^\\"])*\"	{ yylval.strp = yytext; return C_STRING; }
 
 "..."			{ return(C_ELLIPSIS); }
@@ -190,6 +217,7 @@ extern void yyset_lineno (int);
 "^"			{ return('^'); }
 "|"			{ return('|'); }
 "?"			{ if (doing_init) nodinit++; return('?'); }
+"@"			{ return OBJC_AT; }
 ^#pragma[ \t].*		{ pragma(); }
 ^#ident[ \t].*		{ control(CPP_IDENT); }
 ^#line[ \t].*		{ control(CPP_LINE); }
@@ -201,7 +229,7 @@ extern void yyset_lineno (int);
 
 %%
 
-int lineno, issyshdr;
+int issyshdr;
 
 int
 yywrap(void)
@@ -218,7 +246,11 @@ struct keywords {
 	char *name;
 	int cword, wclass;
 } keywords[] = {
+	{ "__except", C_EXCEPT, DEFKW },
+	{ "__finally", C_FINALLY, DEFKW },
 	{ "__func__", 0, KWFUNC },
+	{ "__leave", C_LEAVE, DEFKW },
+	{ "__try", C_TRY, DEFKW },
 	{ "_Alignas", C_ALIGNAS, DEFKW },
 	{ "_Alignof", C_ALIGNOF, DEFKW },
 	{ "_Atomic", C_ATOMIC, DEFKW },
@@ -235,6 +267,7 @@ struct keywords {
 	{ "do", C_DO, DEFKW },
 	{ "double", DOUBLE, C_TYPE },
 	{ "else", C_ELSE, DEFKW },
+	{ "__float128", LDOUBLE, C_TYPE },
 	{ "enum", C_ENUM, KWNOT },
 	{ "extern", EXTERN, C_CLASS },
 	{ "float", FLOAT, C_TYPE },
@@ -264,6 +297,13 @@ struct keywords {
 	{ "void", VOID, C_TYPE },
 	{ "volatile", VOL, C_QUALIFIER },
 	{ "while", C_WHILE, DEFKW },
+	{ "id", OBJC_ID, C_TYPE },
+	{ "Class", OBJC_CLASS, C_TYPE },
+	{ "SEL", OBJC_SEL, C_TYPE },
+	{ "__strong", ARC_STRONG, C_QUALIFIER },
+	{ "__weak", ARC_WEAK, C_QUALIFIER },
+	{ "__unsafe_unretained", ARC_UNSAFE, C_QUALIFIER },
+	{ "__autoreleasing", ARC_AUTORELEASING, C_QUALIFIER },
 };
 	
 
@@ -330,6 +370,54 @@ kwdecode(struct symtab *s)
 		cerror("keyword %s not found", kw->name);
 	}
 	return kw->wclass;
+}
+
+/* Objective-C keywords */
+struct objc_keywords {
+	char *name;
+	int token;
+} objc_keywords[] = {
+	{ "interface", OBJC_INTERFACE },
+	{ "implementation", OBJC_IMPLEMENTATION },
+	{ "protocol", OBJC_PROTOCOL },
+	{ "end", OBJC_END },
+	{ "class", OBJC_CLASS },
+	{ "public", OBJC_PUBLIC },
+	{ "private", OBJC_PRIVATE },
+	{ "protected", OBJC_PROTECTED },
+	{ "package", OBJC_PACKAGE },
+	{ "selector", OBJC_SELECTOR },
+	{ "encode", OBJC_ENCODE },
+	{ "property", OBJC_PROPERTY },
+	{ "synthesize", OBJC_SYNTHESIZE },
+	{ "dynamic", OBJC_DYNAMIC },
+	{ "optional", OBJC_OPTIONAL },
+	{ "required", OBJC_REQUIRED },
+	{ "try", OBJC_TRY },
+	{ "catch", OBJC_CATCH },
+	{ "finally", OBJC_FINALLY },
+	{ "throw", OBJC_THROW },
+	{ "synchronized", OBJC_SYNCHRONIZED },
+	/* Boolean literals */
+	{ "YES", OBJC_YES },
+	{ "NO", OBJC_NO },
+	/* ARC bridging casts */
+	{ "__bridge", ARC_BRIDGE },
+	{ "__bridge_retained", ARC_BRIDGE_RETAINED },
+	{ "__bridge_transfer", ARC_BRIDGE_TRANSFER },
+	{ NULL, 0 }
+};
+
+int
+objc_keyword(char *kw)
+{
+	int i;
+
+	for (i = 0; objc_keywords[i].name; i++) {
+		if (strcmp(kw, objc_keywords[i].name) == 0)
+			return objc_keywords[i].token;
+	}
+	return 0;
 }
 
 #ifdef notdef
@@ -836,6 +924,90 @@ bad:
 int pragma_allpacked;
 int pragma_packed, pragma_aligned;
 
+/* Watcom pragma aux support - struct defined in pass1.h */
+struct pragma_aux_info pragma_aux_pending;
+
+/* Calling convention definitions */
+#define MAX_CALLING_CONVENTIONS 64
+
+struct calling_convention {
+	char *name;        /* Convention name */
+	char *parm_regs;   /* Parameter register list */
+	char *value_reg;   /* Return value register */
+	char *modify_regs; /* Modified register list */
+	int is_caller;     /* Caller cleans stack */
+};
+
+static struct calling_convention calling_conventions[MAX_CALLING_CONVENTIONS];
+static int num_calling_conventions = 0;
+
+/* Function to register a calling convention */
+static void
+register_calling_convention(const char *name, const char *parm_regs,
+                            const char *value_reg, const char *modify_regs,
+                            int is_caller)
+{
+	if (num_calling_conventions >= MAX_CALLING_CONVENTIONS)
+		return;
+
+	calling_conventions[num_calling_conventions].name = tmpstrdup(name);
+	calling_conventions[num_calling_conventions].parm_regs =
+	    parm_regs ? tmpstrdup(parm_regs) : NULL;
+	calling_conventions[num_calling_conventions].value_reg =
+	    value_reg ? tmpstrdup(value_reg) : NULL;
+	calling_conventions[num_calling_conventions].modify_regs =
+	    modify_regs ? tmpstrdup(modify_regs) : NULL;
+	calling_conventions[num_calling_conventions].is_caller = is_caller;
+	num_calling_conventions++;
+}
+
+/* Function to find a calling convention */
+static struct calling_convention *
+find_calling_convention(const char *name)
+{
+	int i;
+
+	for (i = 0; i < num_calling_conventions; i++) {
+		if (strcmp(calling_conventions[i].name, name) == 0)
+			return &calling_conventions[i];
+	}
+	return NULL;
+}
+
+/* Initialize predefined calling conventions */
+static void
+init_calling_conventions(void)
+{
+	static int initialized = 0;
+
+	if (initialized)
+		return;
+	initialized = 1;
+
+	/* x86 calling conventions */
+#if defined(mach_i386) || defined(mach_amd64) || defined(mach_i86)
+	/* cdecl: caller cleanup, parameters on stack right-to-left */
+	register_calling_convention("__cdecl", NULL, "eax", "eax ecx edx", 1);
+
+	/* stdcall: callee cleanup, parameters on stack right-to-left */
+	register_calling_convention("__stdcall", NULL, "eax", "eax ecx edx", 0);
+
+	/* fastcall: first two params in ECX/EDX, rest on stack, callee cleanup */
+	register_calling_convention("__fastcall", "ecx edx", "eax", "eax ecx edx", 0);
+
+	/* thiscall: this in ECX, rest on stack, callee cleanup (C++) */
+	register_calling_convention("__thiscall", "ecx", "eax", "eax ecx edx", 0);
+
+	/* vectorcall: uses vector registers, x64 only */
+	register_calling_convention("__vectorcall", "ecx edx", "eax", "eax ecx edx", 0);
+#endif
+
+	/* Generic conventions */
+	register_calling_convention("_System", NULL, NULL, NULL, 0);
+	register_calling_convention("_Optlink", NULL, NULL, NULL, 1);
+	register_calling_convention("_Syscall", NULL, NULL, NULL, 0);
+}
+
 static int
 pragmas_weak(char *str)
 {
@@ -970,6 +1142,601 @@ pragmas_stdc(char *t)
 	return 0; /* Just ignore */
 }
 
+/*
+ * Watcom pragma comment - embed comments/directives in object file
+ * Syntax: #pragma comment(type, "string")
+ */
+static int
+pragmas_comment(char *t)
+{
+	char *type, *str;
+
+	if (eat('('))
+		return 1;
+
+	type = pragtok(NULL);
+	if (type == NULL)
+		return 1;
+
+	/* Common types: lib, linker, compiler, user */
+	if (eat(','))
+		return 1;
+
+	str = pragtok(NULL);
+	/* String parsing would go here - for now just accept it */
+
+	eat(')');
+	return 0; /* Silently accept */
+}
+
+/*
+ * Watcom pragma message - print message during compilation
+ * Syntax: #pragma message("text")
+ */
+static int
+pragmas_message(char *t)
+{
+	char *msg = NULL;
+	char *tok;
+
+	if (eat('('))
+		return 1;
+
+	/* Collect everything until closing paren as the message */
+	tok = ps;
+	while (*ps && *ps != ')')
+		ps++;
+
+	if (ps > tok) {
+		size_t len = ps - tok;
+		msg = malloc(len + 1);
+		if (msg) {
+			strncpy(msg, tok, len);
+			msg[len] = '\0';
+			/* Remove surrounding quotes if present */
+			if (msg[0] == '"' && msg[len-1] == '"') {
+				msg[len-1] = '\0';
+				fprintf(stderr, "#pragma message: %s\n", msg + 1);
+			} else {
+				fprintf(stderr, "#pragma message: %s\n", msg);
+			}
+			free(msg);
+		}
+	}
+
+	eat(')');
+	return 0;
+}
+
+/*
+ * Watcom pragma warning - control warning messages
+ * Syntax: #pragma warning(push|pop|disable|enable : num...)
+ */
+static int
+pragmas_warning(char *t)
+{
+	char *tok;
+
+	if (eat('('))
+		return 1;
+
+	tok = pragtok(NULL);
+	if (tok == NULL)
+		return 1;
+
+	/* Handle push, pop, disable, enable */
+	if (strcmp(tok, "push") == 0 || strcmp(tok, "pop") == 0) {
+		/* Accept but don't implement warning stack */
+	} else if (strcmp(tok, "disable") == 0 || strcmp(tok, "enable") == 0) {
+		/* Would process warning numbers after : */
+		if (*ps == ':') {
+			ps++;
+			/* Skip warning numbers */
+			while (pragtok(NULL) != NULL && *ps != ')')
+				;
+		}
+	}
+
+	while (*ps && *ps != ')')
+		ps++;
+	eat(')');
+	return 0;
+}
+
+/*
+ * Watcom pragma once - include file only once
+ * Syntax: #pragma once
+ */
+static int
+pragmas_once(char *t)
+{
+	/* This would need integration with the preprocessor */
+	/* For now, just accept it silently */
+	return 0;
+}
+
+/*
+ * Watcom pragma intrinsic - use intrinsic function implementations
+ * Syntax: #pragma intrinsic(func1, func2, ...)
+ */
+static int
+pragmas_intrinsic(char *t)
+{
+	char *func;
+
+	if (eat('('))
+		return 1;
+
+	/* Collect function names */
+	while ((func = pragtok(NULL)) != NULL && *func != ')') {
+		if (*func == ',')
+			continue;
+		/* Would mark function as intrinsic */
+	}
+
+	return 0;
+}
+
+/*
+ * Watcom pragma function - disable intrinsic for specified functions
+ * Syntax: #pragma function(func1, func2, ...)
+ */
+static int
+pragmas_function(char *t)
+{
+	char *func;
+
+	if (eat('('))
+		return 1;
+
+	/* Collect function names */
+	while ((func = pragtok(NULL)) != NULL && *func != ')') {
+		if (*func == ',')
+			continue;
+		/* Would disable intrinsic for function */
+	}
+
+	return 0;
+}
+
+/*
+ * Watcom pragma code_seg/data_seg - control segment placement
+ * Syntax: #pragma code_seg("name") or #pragma data_seg("name")
+ */
+static int
+pragmas_segment(char *t)
+{
+	char *seg_name = NULL;
+
+	if (eat('('))
+		return 1;
+
+	seg_name = pragtok(NULL);
+	/* Would control segment for subsequent code/data */
+
+	eat(')');
+	return 0;
+}
+
+/*
+ * Watcom pragma alloc_text - allocate function to specific text segment
+ * Syntax: #pragma alloc_text(segment, function)
+ */
+static int
+pragmas_alloc_text(char *t)
+{
+	char *segment, *function;
+
+	if (eat('('))
+		return 1;
+
+	segment = pragtok(NULL);
+	if (segment == NULL)
+		return 1;
+
+	if (eat(','))
+		return 1;
+
+	function = pragtok(NULL);
+	/* Would place function in specified segment */
+
+	eat(')');
+	return 0;
+}
+
+/*
+ * Watcom pragma inline_depth - set inline expansion depth
+ * Syntax: #pragma inline_depth(n)
+ */
+static int
+pragmas_inline_depth(char *t)
+{
+	char *depth;
+
+	if (eat('('))
+		return 1;
+
+	depth = pragtok(NULL);
+	/* Would control inline depth */
+
+	eat(')');
+	return 0;
+}
+
+/*
+ * Watcom pragma inline_recursion - enable/disable recursive inlining
+ * Syntax: #pragma inline_recursion(on|off)
+ */
+static int
+pragmas_inline_recursion(char *t)
+{
+	char *setting;
+
+	if (eat('('))
+		return 1;
+
+	setting = pragtok(NULL);
+	/* Would control recursive inlining */
+
+	eat(')');
+	return 0;
+}
+
+/*
+ * Watcom pragma auto_inline - enable/disable automatic inlining
+ * Syntax: #pragma auto_inline(on|off)
+ */
+static int
+pragmas_auto_inline(char *t)
+{
+	char *setting;
+
+	if (eat('('))
+		return 1;
+
+	setting = pragtok(NULL);
+	/* Would control auto inlining */
+
+	eat(')');
+	return 0;
+}
+
+/*
+ * Watcom pragma enum - control enum size
+ * Syntax: #pragma enum int|minimum|original|pop
+ */
+static int
+pragmas_enum(char *t)
+{
+	char *setting = pragtok(NULL);
+
+	if (setting == NULL)
+		return 1;
+
+	/* Accept int, minimum, original, pop */
+	if (strcmp(setting, "int") == 0) {
+		/* Force enum to int size */
+	} else if (strcmp(setting, "minimum") == 0) {
+		/* Use minimum required size */
+	} else if (strcmp(setting, "original") == 0) {
+		/* Restore original setting */
+	} else if (strcmp(setting, "pop") == 0) {
+		/* Pop enum setting from stack */
+	}
+
+	return 0;
+}
+
+/*
+ * Watcom pragma read_only_file - mark file as read-only
+ * Syntax: #pragma read_only_file
+ */
+static int
+pragmas_read_only_file(char *t)
+{
+	/* Mark current file as read-only for dependencies */
+	return 0;
+}
+
+/*
+ * Watcom pragma library - specify library to link
+ * Syntax: #pragma library("libname")
+ */
+static int
+pragmas_library(char *t)
+{
+	char *libname;
+
+	if (eat('('))
+		return 1;
+
+	libname = pragtok(NULL);
+	/* Would add library to linker command */
+
+	eat(')');
+	return 0;
+}
+
+/*
+ * Watcom pragma include_alias - create include file alias
+ * Syntax: #pragma include_alias("alias", "realfile")
+ */
+static int
+pragmas_include_alias(char *t)
+{
+	char *alias, *real;
+
+	if (eat('('))
+		return 1;
+
+	alias = pragtok(NULL);
+	if (alias == NULL)
+		return 1;
+
+	if (eat(','))
+		return 1;
+
+	real = pragtok(NULL);
+	/* Would create preprocessor alias */
+
+	eat(')');
+	return 0;
+}
+
+/*
+ * Watcom pragma error - emit error message
+ * Syntax: #pragma error "message"
+ */
+static int
+pragmas_error(char *t)
+{
+	char *msg = NULL;
+	char *tok;
+
+	/* Collect everything as the error message */
+	tok = ps;
+	while (*ps && *ps != '\n' && *ps != '\r')
+		ps++;
+
+	if (ps > tok) {
+		size_t len = ps - tok;
+		msg = malloc(len + 1);
+		if (msg) {
+			strncpy(msg, tok, len);
+			msg[len] = '\0';
+			/* Remove surrounding quotes if present */
+			char *start = msg;
+			char *end = msg + len - 1;
+			while (*start == ' ' || *start == '\t') start++;
+			while (end > start && (*end == ' ' || *end == '\t')) end--;
+			if (*start == '"' && *end == '"') {
+				end--;
+				start++;
+				*++end = '\0';
+			}
+			uerror("#pragma error: %s", start);
+			free(msg);
+		}
+	}
+
+	return 0;
+}
+
+/*
+ * Watcom pragma disable_message - disable specific warning/error
+ * Syntax: #pragma disable_message(num1, num2, ...)
+ */
+static int
+pragmas_disable_message(char *t)
+{
+	char *num;
+
+	if (eat('('))
+		return 1;
+
+	/* Collect message numbers */
+	while ((num = pragtok(NULL)) != NULL && *num != ')') {
+		if (*num == ',')
+			continue;
+		/* Would disable message number */
+	}
+
+	return 0;
+}
+
+/*
+ * Watcom pragma enable_message - re-enable specific warning/error
+ * Syntax: #pragma enable_message(num1, num2, ...)
+ */
+static int
+pragmas_enable_message(char *t)
+{
+	char *num;
+
+	if (eat('('))
+		return 1;
+
+	/* Collect message numbers */
+	while ((num = pragtok(NULL)) != NULL && *num != ')') {
+		if (*num == ',')
+			continue;
+		/* Would enable message number */
+	}
+
+	return 0;
+}
+
+/*
+ * Watcom pragma extref - external reference
+ * Syntax: #pragma extref symbol
+ */
+static int
+pragmas_extref(char *t)
+{
+	char *symbol = pragtok(NULL);
+
+	if (symbol == NULL)
+		return 1;
+
+	/* Would create external reference */
+	return 0;
+}
+
+/*
+ * Watcom pragma aux - defines calling conventions and register usage
+ * Syntax: #pragma aux symbol [parm [reg...]] [value [reg]] [modify [reg...]] [caller]
+ *         #pragma aux (convention) function_name
+ *         #pragma aux convention_name parm [...] value [...] modify [...] caller
+ */
+static int
+pragmas_aux(char *t)
+{
+	char *tok;
+	struct calling_convention *cc;
+	char *convention_name = NULL;
+	int is_defining_convention = 0;
+
+	/* Initialize calling conventions on first use */
+	init_calling_conventions();
+
+	/* Clear previous pragma aux info */
+	pragma_aux_pending.symbol = NULL;
+	pragma_aux_pending.parm_regs = NULL;
+	pragma_aux_pending.value_reg = NULL;
+	pragma_aux_pending.modify_regs = NULL;
+	pragma_aux_pending.is_caller = 0;
+
+	/* Get symbol name or convention reference */
+	tok = pragtok(NULL);
+	if (tok == NULL)
+		return 1; /* Error: no symbol name */
+
+	/* Check for calling convention application: #pragma aux (convention) function */
+	if (*tok == '(') {
+		char *conv_name = pragtok(NULL);
+		if (conv_name == NULL)
+			return 1;
+
+		cc = find_calling_convention(conv_name);
+		if (cc == NULL) {
+			werror("unknown calling convention: %s", conv_name);
+			return 1;
+		}
+
+		if (eat(')'))
+			return 1;
+
+		/* Get function name */
+		tok = pragtok(NULL);
+		if (tok == NULL)
+			return 1;
+
+		/* Apply calling convention to function */
+		pragma_aux_pending.symbol = tmpstrdup(tok);
+		pragma_aux_pending.parm_regs = cc->parm_regs ? tmpstrdup(cc->parm_regs) : NULL;
+		pragma_aux_pending.value_reg = cc->value_reg ? tmpstrdup(cc->value_reg) : NULL;
+		pragma_aux_pending.modify_regs = cc->modify_regs ? tmpstrdup(cc->modify_regs) : NULL;
+		pragma_aux_pending.is_caller = cc->is_caller;
+
+		return 0;
+	}
+
+	pragma_aux_pending.symbol = tmpstrdup(tok);
+
+	/* Check if this is a calling convention definition (starts with __ or _) */
+	if ((tok[0] == '_' && tok[1] == '_') || (tok[0] == '_' && isupper((int)tok[1]))) {
+		is_defining_convention = 1;
+		convention_name = tmpstrdup(tok);
+	}
+
+	/* Parse optional keywords */
+	while ((tok = pragtok(NULL)) != NULL) {
+		if (strcmp(tok, "parm") == 0) {
+			/* Parse parameter registers: parm [reg1] [reg2] ... */
+			char regbuf[256] = "";
+			tok = pragtok(NULL);
+			if (tok && *tok == '[') {
+				/* Collect register list until we find something that's not a register spec */
+				while ((tok = pragtok(NULL)) != NULL) {
+					if (*tok == ']') {
+						continue; /* Skip closing bracket */
+					}
+					if (*tok == '[') {
+						continue; /* Skip opening bracket */
+					}
+					/* Check if this is a keyword for next section */
+					if (strcmp(tok, "value") == 0 || strcmp(tok, "modify") == 0 ||
+					    strcmp(tok, "caller") == 0) {
+						/* Put it back by backing up ps */
+						ps -= strlen(tok);
+						break;
+					}
+					/* Accumulate register name */
+					if (regbuf[0])
+						strcat(regbuf, " ");
+					strcat(regbuf, tok);
+				}
+				if (regbuf[0])
+					pragma_aux_pending.parm_regs = tmpstrdup(regbuf);
+			}
+		} else if (strcmp(tok, "value") == 0) {
+			/* Parse return value register: value [reg] */
+			tok = pragtok(NULL);
+			if (tok && *tok == '[') {
+				tok = pragtok(NULL);
+				if (tok && *tok != ']') {
+					pragma_aux_pending.value_reg = tmpstrdup(tok);
+				}
+				/* Skip closing bracket if present */
+				tok = pragtok(NULL);
+			}
+		} else if (strcmp(tok, "modify") == 0) {
+			/* Parse modified registers: modify [reg1 reg2 ...] */
+			char regbuf[256] = "";
+			tok = pragtok(NULL);
+			if (tok && *tok == '[') {
+				while ((tok = pragtok(NULL)) != NULL) {
+					if (*tok == ']')
+						break;
+					if (*tok == '[')
+						continue;
+					if (regbuf[0])
+						strcat(regbuf, " ");
+					strcat(regbuf, tok);
+				}
+				if (regbuf[0])
+					pragma_aux_pending.modify_regs = tmpstrdup(regbuf);
+			}
+		} else if (strcmp(tok, "caller") == 0) {
+			pragma_aux_pending.is_caller = 1;
+		} else if (strcmp(tok, "routine") == 0) {
+			pragma_aux_pending.is_caller = 0;
+		} else if (strcmp(tok, "loadds") == 0) {
+			/* loadds keyword - just accept it */
+		} else if (strcmp(tok, "export") == 0) {
+			/* export keyword - just accept it */
+		} else if (*tok == '=') {
+			/* Inline assembly - skip the rest */
+			break;
+		}
+		/* Ignore other unknown keywords */
+	}
+
+	/* If this is a calling convention definition, register it */
+	if (is_defining_convention && convention_name) {
+		register_calling_convention(
+			convention_name,
+			pragma_aux_pending.parm_regs,
+			pragma_aux_pending.value_reg,
+			pragma_aux_pending.modify_regs,
+			pragma_aux_pending.is_caller
+		);
+		/* Don't clear pragma_aux_pending so it can still apply to next symbol */
+	}
+
+	return 0; /* Success */
+}
+
 struct pragmas {
 	char *name;
 	int (*fun)(char *);
@@ -978,6 +1745,28 @@ struct pragmas {
 	{ "packed", pragmas_alpack },
 	{ "aligned", pragmas_alpack },
 	{ "rename", pragmas_unsupp },
+	{ "aux", pragmas_aux },
+	/* Watcom pragmas */
+	{ "comment", pragmas_comment },
+	{ "message", pragmas_message },
+	{ "warning", pragmas_warning },
+	{ "once", pragmas_once },
+	{ "intrinsic", pragmas_intrinsic },
+	{ "function", pragmas_function },
+	{ "code_seg", pragmas_segment },
+	{ "data_seg", pragmas_segment },
+	{ "alloc_text", pragmas_alloc_text },
+	{ "inline_depth", pragmas_inline_depth },
+	{ "inline_recursion", pragmas_inline_recursion },
+	{ "auto_inline", pragmas_auto_inline },
+	{ "enum", pragmas_enum },
+	{ "read_only_file", pragmas_read_only_file },
+	{ "library", pragmas_library },
+	{ "include_alias", pragmas_include_alias },
+	{ "error", pragmas_error },
+	{ "disable_message", pragmas_disable_message },
+	{ "enable_message", pragmas_enable_message },
+	{ "extref", pragmas_extref },
 #ifdef GCC_COMPAT
 	{ "GCC", pragmas_gcc },
 #endif

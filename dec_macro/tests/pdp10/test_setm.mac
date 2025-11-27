@@ -1,0 +1,12 @@
+; Test SETM - SETM (PDP-10)
+; Expected: Operation SETM
+
+	.PSECT	CODE
+
+START:
+	SETM
+	HALT
+
+DATA:	.WORD	0
+
+	.END

@@ -1,0 +1,13 @@
+; Test LDB - Load Byte (PDP-10)
+; Expected: AC2 = byte from STRING, CC updated
+
+	.PSECT	CODE
+
+START:
+	MOVEI 1,BYTEPTR
+	LDB	2,STRING
+	HALT
+
+DATA:	.WORD	0
+
+	.END

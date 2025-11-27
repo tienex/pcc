@@ -1,0 +1,11 @@
+; Test PUSHW - PUSHW operation (VAX)
+
+	.PSECT	CODE
+
+START:
+	PUSHW	R1,R2
+	HALT
+
+DATA:	.WORD	0
+
+	.END

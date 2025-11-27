@@ -1,0 +1,12 @@
+; Test SETOI - Set to Ones Immediate (PDP-10)
+; Expected: AC1 = -1 (all 1s)
+
+	.PSECT	CODE
+
+START:
+	SETOI	1,0
+	HALT
+
+DATA:	.WORD	0
+
+	.END

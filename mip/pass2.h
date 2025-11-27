@@ -347,7 +347,7 @@ extern	char *rnames[];
 
 extern int classmask(int), tclassmask(int);
 extern void cmapinit(void);
-extern int aliasmap(int adjclass, int regnum);
+extern long aliasmap(int adjclass, int regnum);
 extern int regK[];
 #define	CLASSA	1
 #define	CLASSB	2

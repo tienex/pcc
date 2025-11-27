@@ -1,0 +1,15 @@
+; Test CAME - Compare AC with Memory, skip if Equal (PDP-10)
+; Expected: Compare AC1 with DATA, skip if AC1 = DATA
+
+	.PSECT	CODE
+
+START:
+	MOVEI 1,100
+	MOVEI 2,100
+	MOVEM 2,DATA
+	CAME	1,DATA
+	HALT
+
+DATA:	.WORD	0
+
+	.END

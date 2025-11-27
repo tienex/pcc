@@ -1,0 +1,11 @@
+; Test SUBD2 - SUBD2 operation (VAX)
+
+	.PSECT	CODE
+
+START:
+	SUBD2	R1,R2
+	HALT
+
+DATA:	.WORD	0
+
+	.END

@@ -50,7 +50,15 @@
 #define SZLONG		32
 #define SZSHORT		16
 #define SZLONGLONG	64	/* Doesn't work usefully yet */
-#define SZPOINT(t)	16	/* FIXME: 32 for large model work */
+
+/*
+ * Pointer sizes depend on memory model.
+ * For function pointers, size depends on code model.
+ * For data pointers, size depends on data model.
+ */
+#define SZPOINT(t)	(ISFTN(DECREF(t)) ? \
+			 ((mcmodel & (MCMEDIUM|MCLARGE|MCHUGE)) ? 32 : 16) : \
+			 ((mcmodel & (MCCOMPACT|MCLARGE|MCHUGE)) ? 32 : 16))
 
 /*
  * Alignment constraints
@@ -300,10 +308,29 @@ int COLORMAP(int c, int *r);
 #define	SMTWO		(MAXSPECIAL+8)	/* exactly minus two */
 
 /*
+ * Memory model flags for i86.
+ * These define the memory model used for compilation:
+ * - Tiny: code+data in single 64KB segment (CS=DS=SS), 16-bit pointers
+ * - Small: separate code/data segments, 16-bit pointers
+ * - Medium: far code (32-bit), near data (16-bit)
+ * - Compact: near code (16-bit), far data (32-bit)
+ * - Large: far code and data (32-bit pointers)
+ * - Huge: like large with normalized pointers
+ */
+#define	MCTINY		00100
+#define	MCSMALL		00200
+#define	MCMEDIUM	00400
+#define	MCCOMPACT	01000
+#define	MCLARGE		02000
+#define	MCHUGE		04000
+#define	MCALL		(MCTINY|MCSMALL|MCMEDIUM|MCCOMPACT|MCLARGE|MCHUGE)
+extern int mcmodel;
+
+/*
  * i86-specific symbol table flags.
  */
 #define	SSECTION	SLOCAL1
-#define SSTDCALL	SLOCAL2	
+#define SSTDCALL	SLOCAL2
 #define SDLLINDIRECT	SLOCAL3
 
 /*
@@ -315,6 +342,11 @@ int COLORMAP(int c, int *r);
 
 #define	HAVE_WEAKREF
 #define	TARGET_FLT_EVAL_METHOD	2	/* all as long double */
+
+/* libx86asm context for assembly generation */
+struct x86asm_ctx;
+typedef struct x86asm_ctx x86asm_ctx_t;
+extern x86asm_ctx_t *asm_ctx;
 
 /*
  * Extended assembler macros.

@@ -6,6 +6,9 @@
 /* Using a.out ABI */
 #undef AOUTABI
 
+/* Define default assembly output format */
+#undef ASM_FORMAT
+
 /* Define path to alternate assembler */
 #undef ASSEMBLER
 
@@ -18,11 +21,23 @@
 /* Define path to alternate compiler */
 #undef COMPILER
 
+/* Define to 1 if using 'alloca.c'. */
+#undef C_ALLOCA
+
+/* Enable DWARF debugging output */
+#undef DWARF
+
 /* Using ECOFF ABI */
 #undef ECOFFABI
 
 /* Using ELF ABI */
 #undef ELFABI
+
+/* Define to 1 if you have 'alloca', as a function or macro. */
+#undef HAVE_ALLOCA
+
+/* Define to 1 if <alloca.h> works. */
+#undef HAVE_ALLOCA_H
 
 /* Define to 1 if printf supports C99 size specifiers */
 #undef HAVE_C99_FORMAT
@@ -42,17 +57,23 @@
 /* Define to 1 if you have the <malloc.h> header file. */
 #undef HAVE_MALLOC_H
 
-/* Define to 1 if you have the <memory.h> header file. */
-#undef HAVE_MEMORY_H
-
 /* Define to 1 if you have the `mkstemp' function. */
 #undef HAVE_MKSTEMP
 
 /* Define to 1 if you have the `snprintf' function. */
 #undef HAVE_SNPRINTF
 
+/* Define to 1 if you have the <stdbit.h> header file. */
+#undef HAVE_STDBIT_H
+
+/* Define to 1 if you have the <stdckdint.h> header file. */
+#undef HAVE_STDCKDINT_H
+
 /* Define to 1 if you have the <stdint.h> header file. */
 #undef HAVE_STDINT_H
+
+/* Define to 1 if you have the <stdio.h> header file. */
+#undef HAVE_STDIO_H
 
 /* Define to 1 if you have the <stdlib.h> header file. */
 #undef HAVE_STDLIB_H
@@ -81,6 +102,12 @@
 /* Define to 1 if you have <sys/wait.h> that is POSIX.1 compatible. */
 #undef HAVE_SYS_WAIT_H
 
+/* Define to 1 if you have the <threads.h> header file. */
+#undef HAVE_THREADS_H
+
+/* Define to 1 if you have the <uchar.h> header file. */
+#undef HAVE_UCHAR_H
+
 /* Define to 1 if you have the <unistd.h> header file. */
 #undef HAVE_UNISTD_H
 
@@ -99,6 +126,9 @@
 /* Define alternate standard lib directory */
 #undef LIBDIR
 
+/* Use libvmf. */
+#undef LIBVMF
+
 /* Define path to alternate linker */
 #undef LINKER
 
@@ -107,6 +137,18 @@
 
 /* Define target Multi-Arch path */
 #undef MULTIARCH_PATH
+
+/* Define if portable libckdint should be linked */
+#undef NEED_LIBCKDINT
+
+/* Define if portable libstdbit should be linked */
+#undef NEED_LIBSTDBIT
+
+/* Define if portable libthread should be linked */
+#undef NEED_LIBTHREAD
+
+/* Define if portable libunicode should be linked */
+#undef NEED_LIBUNICODE
 
 /* Define to the address where bug reports for this package should be sent. */
 #undef PACKAGE_BUGREPORT
@@ -141,13 +183,23 @@
 /* Define path to alternate preprocessor */
 #undef PREPROCESSOR
 
+/* The size of `int *', as computed by sizeof. */
+#undef SIZEOF_INT_P
+
 /* Enable STABS debugging output */
 #undef STABS
 
-/* Enable DWARF debugging output */
-#undef DWARF
+/* If using the C implementation of alloca, define if you know the
+   direction of stack growth for your system; otherwise it will be
+   automatically deduced at runtime.
+	STACK_DIRECTION > 0 => grows toward higher addresses
+	STACK_DIRECTION < 0 => grows toward lower addresses
+	STACK_DIRECTION = 0 => direction of growth unknown */
+#undef STACK_DIRECTION
 
-/* Define to 1 if you have the ANSI C header files. */
+/* Define to 1 if all of the C90 standard headers exist (not just the ones
+   required in a freestanding environment). This macro is provided for
+   backward compatibility; new code need not use it. */
 #undef STDC_HEADERS
 
 /* Define alternate standard include directory */
@@ -159,26 +211,20 @@
 /* Define if target defaults to LITTLE endian */
 #undef TARGET_LITTLE_ENDIAN
 
+/* Target string */
+#undef TARGSTR
+
 /* Enable thread-local storage (TLS). */
 #undef TLS
 
 /* Version string */
 #undef VERSSTR
 
-/* Target string */
-#undef TARGSTR
-
 /* Size of wide-character type in chars */
 #undef WCHAR_SIZE
 
 /* Type to use for wide characters */
 #undef WCHAR_TYPE
-
-/* determine whether 16, 32 or 64 bit host */
-#undef SIZEOF_INT_P
-
-/* Compile for use of libvmf */
-#undef LIBVMF
 
 /* Define WORDS_BIGENDIAN to 1 if your processor stores words with the most
    significant byte first (like Motorola and SPARC, unlike Intel). */
@@ -195,3 +241,6 @@
 /* Define to 1 if `lex' declares `yytext' as a `char *' by default, not a
    `char[]'. */
 #undef YYTEXT_POINTER
+
+/* Define to `unsigned int' if <sys/types.h> does not define. */
+#undef size_t

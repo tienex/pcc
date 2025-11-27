@@ -1,0 +1,14 @@
+; Test IDPB - Increment and Deposit Byte (PDP-10)
+; Expected: Deposit AC2, increment byte pointer
+
+	.PSECT	CODE
+
+START:
+	MOVEI 2,0101
+	MOVEI 1,BYTEPTR
+	IDPB	2,DEST
+	HALT
+
+DATA:	.WORD	0
+
+	.END

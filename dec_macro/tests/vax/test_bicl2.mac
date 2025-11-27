@@ -1,0 +1,11 @@
+; Test BICL2 - BICL2 operation (VAX)
+
+	.PSECT	CODE
+
+START:
+	BICL2	R1,R2
+	HALT
+
+DATA:	.WORD	0
+
+	.END

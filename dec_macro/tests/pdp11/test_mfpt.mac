@@ -1,0 +1,11 @@
+; Test MFPT - MFPT operation (PDP-11)
+
+	.PSECT	CODE
+
+START:
+	MFPT	R1,R2
+	HALT
+
+DATA:	.WORD	0
+
+	.END

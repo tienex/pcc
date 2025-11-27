@@ -1,0 +1,11 @@
+; Test BGTRU - BGTRU operation (VAX)
+
+	.PSECT	CODE
+
+START:
+	BGTRU	R1,R2
+	HALT
+
+DATA:	.WORD	0
+
+	.END

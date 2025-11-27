@@ -99,6 +99,7 @@ extern void yyset_lineno (int);
 "_Bool"			{ 	return resw(BOOL, C_TYPE); }
 "break"			{ return(C_BREAK); }
 "case"			{ return(C_CASE); }
+"catch"			{ return(CXX_CATCH); }
 "char"			{ 	return resw(CHAR, C_TYPE); }
 "class"			{ yylval.intval = CLNAME; notype=1; return(C_STRUCT); }
 "_Complex"		{ 	return resw(COMPLEX, C_TYPE); }
@@ -135,6 +136,9 @@ extern void yyset_lineno (int);
 "struct"		{ yylval.intval = STNAME; notype=1; return(C_STRUCT); }
 "switch"		{ return(C_SWITCH); }
 "template"		{ return(CXX_TEMPLATE); }
+"this"			{ return(CXX_THIS); }
+"throw"			{ return(CXX_THROW); }
+"try"			{ return(CXX_TRY); }
 "typedef"		{ 	return resw(TYPEDEF, C_CLASS); }
 "typename"		{ return(CXX_TYPENAME); }
 "union"			{ yylval.intval = UNAME; notype=1; return(C_STRUCT); }
@@ -223,8 +227,13 @@ L?\"(\\.|[^\\"])*\"	{ yylval.strp = yytext; return C_STRING; }
 
 %%
 
-int lineno, issyshdr;
+int issyshdr;
 char *ftitle = "<stdin>";
+
+/* Watcom pragma aux support - struct defined in pass1.h */
+struct pragma_aux_info pragma_aux_pending;
+int pragma_allpacked;
+int pragma_packed, pragma_aligned;
 
 static int
 namechk(void)

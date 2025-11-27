@@ -26,6 +26,7 @@
 
 
 #include "pass1.h"
+#include "x86asm.h"
 
 /*	this file contains code which is dependent on the target machine */
 
@@ -399,22 +400,37 @@ ninval(CONSZ off, int fsz, NODE *p)
 		u.l = (long double)p->n_dcon;
 #if defined(HOST_BIG_ENDIAN)
 		/* XXX probably broken on most hosts */
-		printf("\t.long\t0x%x,0x%x,0x%x\n", u.i[2], u.i[1], u.i[0]);
+		{
+			uint32_t data[3] = { (uint32_t)u.i[2], (uint32_t)u.i[1], (uint32_t)u.i[0] };
+			x86asm_data(asm_ctx, DATA_DWORD, data, 3);
+		}
 #else
-		printf("\t.long\t%d,%d,%d\n", u.i[0], u.i[1], u.i[2] & 0177777);
+		{
+			uint32_t data[3] = { (uint32_t)u.i[0], (uint32_t)u.i[1], (uint32_t)(u.i[2] & 0177777) };
+			x86asm_data(asm_ctx, DATA_DWORD, data, 3);
+		}
 #endif
 		break;
 	case DOUBLE:
 		u.d = (double)p->n_dcon;
 #if defined(HOST_BIG_ENDIAN)
-		printf("\t.long\t0x%x,0x%x\n", u.i[1], u.i[0]);
+		{
+			uint32_t data[2] = { (uint32_t)u.i[1], (uint32_t)u.i[0] };
+			x86asm_data(asm_ctx, DATA_DWORD, data, 2);
+		}
 #else
-		printf("\t.long\t%d,%d\n", u.i[0], u.i[1]);
+		{
+			uint32_t data[2] = { (uint32_t)u.i[0], (uint32_t)u.i[1] };
+			x86asm_data(asm_ctx, DATA_DWORD, data, 2);
+		}
 #endif
 		break;
 	case FLOAT:
 		u.f = (float)p->n_dcon;
-		printf("\t.long\t%d\n", u.i[0]);
+		{
+			uint32_t data = (uint32_t)u.i[0];
+			x86asm_data(asm_ctx, DATA_DWORD, &data, 1);
+		}
 		break;
 	default:
 		return 0;
@@ -482,14 +498,22 @@ defzero(struct symtab *sp)
 	int al;
 	char *name;
 
+	if (!asm_ctx) return;
+
 	if ((name = sp->soname) == NULL)
 		name = exname(sp->sname);
 	al = talign(sp->stype, sp->sap)/SZCHAR;
 	off = (int)tsize(sp->stype, sp->sdf, sp->sap);
 	SETOFF(off,SZCHAR);
 	off /= SZCHAR;
-	printf("\t.align %d\n", al);
-	printf("%s:\t.blkb %d\n", name, off);
+	x86asm_align(asm_ctx, al);
+	x86asm_label(asm_ctx, name, 0);
+	/* Use directive for .blkb (block bytes) */
+	{
+		char directive[32];
+		snprintf(directive, sizeof(directive), "%d", off);
+		x86asm_directive(asm_ctx, "blkb", directive);
+	}
 }
 
 static int stdcall;
@@ -554,9 +578,9 @@ fixdef(struct symtab *sp)
 			}
 		}
 		if (wr == NULL)
-			printf("\t.weak %s\n", sn);
+			x86asm_weak(asm_ctx, sn);
 		else
-			printf("\t.weakref %s,%s\n", sn, wr);
+			x86asm_weakref(asm_ctx, sn, wr);
 	} else
 #endif
 	    if ((ap = attr_find(sp->sap, GCC_ATYP_ALIAS)) != NULL) {
@@ -564,31 +588,48 @@ fixdef(struct symtab *sp)
 		char *sn = sp->soname ? sp->soname : sp->sname; 
 		char *v;
 
-		v = attr_find(sp->sap, GCC_ATYP_WEAK) ? "weak" : "globl";
-		printf("\t.%s %s\n", v, sn);
-		printf("\t.set %s,%s\n", sn, an);
+		if (attr_find(sp->sap, GCC_ATYP_WEAK))
+			x86asm_weak(asm_ctx, sn);
+		x86asm_set(asm_ctx, sn, an);
 	}	
 #endif
 	if (alias != NULL && (sp->sclass != PARAM)) {
 		char *name;
 		if ((name = sp->soname) == NULL)
 			name = exname(sp->sname);
-		printf("\t.globl %s\n", name);
-		printf("%s = ", name);
-		printf("%s\n", exname(alias));
+		x86asm_set(asm_ctx, name, exname(alias));
 		alias = NULL;
 	}
 	if ((constructor || destructor) && (sp->sclass != PARAM)) {
-		printf("\t.section .%ctors,\"w\"\n",
+		char section_name[32];
+		snprintf(section_name, sizeof(section_name), ".%ctors",
 		    constructor ? 'c' : 'd');
-		printf("\t.p2align 2\n");
-		printf("\t.long %s\n", exname(sp->sname));
-		printf("\t.previous\n");
+		x86asm_segment(asm_ctx, SEG_TEXT, section_name);  /* Use custom section */
+		x86asm_p2align(asm_ctx, 2);
+		/* TODO: Need to output .long symbol reference - may need x86asm_data_ref() */
+		fprintf(stdout, "\t.long %s\n", exname(sp->sname));
+		x86asm_previous(asm_ctx);
 		constructor = destructor = 0;
 	}
 	if (stdcall && (sp->sclass != PARAM)) {
 		sp->sflags |= SSTDCALL;
 		stdcall = 0;
+	}
+
+	/* Handle Watcom pragma aux */
+	if (pragma_aux_pending.symbol != NULL &&
+	    strcmp(pragma_aux_pending.symbol, sp->sname) == 0 &&
+	    (sp->sclass != PARAM)) {
+		/* For i86, we primarily care about caller vs callee cleanup */
+		/* Watcom default is callee cleanup unless 'caller' is specified */
+		if (pragma_aux_pending.is_caller) {
+			/* Caller cleanup - this is like cdecl, so don't set SSTDCALL */
+		} else {
+			/* Callee cleanup - this is like stdcall */
+			sp->sflags |= SSTDCALL;
+		}
+		/* Clear the pending pragma aux */
+		pragma_aux_pending.symbol = NULL;
 	}
 }
 

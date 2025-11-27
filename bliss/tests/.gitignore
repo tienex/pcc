@@ -1,0 +1,4 @@
+# Compiled test binaries
+test_runtime_*
+*.o
+*.a
