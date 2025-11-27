@@ -1,0 +1,29 @@
+/* Array demonstration in PL/I */
+
+ARRAY_DEMO: PROCEDURE OPTIONS(MAIN);
+    DECLARE NUMBERS(10) FIXED BINARY(31);
+    DECLARE I FIXED BINARY(31);
+    DECLARE SUM FIXED BINARY(31) INITIAL(0);
+    DECLARE AVG FLOAT BINARY(24);
+
+    /* Initialize array */
+    DO I = 1 TO 10;
+        NUMBERS(I) = I * I;  /* Squares */
+    END;
+
+    /* Calculate sum */
+    DO I = 1 TO 10;
+        SUM = SUM + NUMBERS(I);
+    END;
+
+    AVG = SUM / 10.0;
+
+    PUT SKIP LIST('Array values:');
+    DO I = 1 TO 10;
+        PUT SKIP LIST('NUMBERS(', I, ') = ', NUMBERS(I));
+    END;
+
+    PUT SKIP LIST('Sum: ', SUM);
+    PUT SKIP LIST('Average: ', AVG);
+
+END ARRAY_DEMO;

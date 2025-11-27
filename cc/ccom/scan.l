@@ -381,7 +381,7 @@ struct objc_keywords {
 	{ "implementation", OBJC_IMPLEMENTATION },
 	{ "protocol", OBJC_PROTOCOL },
 	{ "end", OBJC_END },
-	{ "class", OBJC_CLASS },
+	{ "class", OBJC_CLASS_KEYWORD },
 	{ "public", OBJC_PUBLIC },
 	{ "private", OBJC_PRIVATE },
 	{ "protected", OBJC_PROTECTED },

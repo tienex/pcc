@@ -1,0 +1,70 @@
+#	$Id$
+#
+# Makefile.in for libpli - PL/I runtime library
+#
+VPATH=@srcdir@
+srcdir=@srcdir@
+top_srcdir=@top_srcdir@
+top_builddir=@top_builddir@
+CC = @CC@
+AR = ar
+RANLIB = @RANLIB@
+CFLAGS = @CFLAGS@ @ADD_CFLAGS@
+CPPFLAGS = @CPPFLAGS@ @ADD_CPPFLAGS@ -I$(srcdir) -I$(top_builddir)
+INSTALL = @INSTALL@
+INSTALL_DATA = @INSTALL_DATA@
+
+prefix = @prefix@
+exec_prefix = @exec_prefix@
+libdir = @libdir@
+includedir = @includedir@
+
+OBJS=	pli_io.o pli_math.o pli_string.o pli_memory.o pli_array.o \
+	pli_convert.o pli_startup.o pli_plm.o pli_conditions.o
+
+LIB=libpli.a
+
+all: $(LIB)
+
+$(LIB): $(OBJS)
+	$(AR) rv $@ $(OBJS)
+	$(RANLIB) $@
+
+pli_io.o: $(srcdir)/pli_io.c $(srcdir)/pli_runtime.h
+	$(CC) $(CFLAGS) $(CPPFLAGS) -c $(srcdir)/pli_io.c
+
+pli_math.o: $(srcdir)/pli_math.c $(srcdir)/pli_runtime.h
+	$(CC) $(CFLAGS) $(CPPFLAGS) -c $(srcdir)/pli_math.c
+
+pli_string.o: $(srcdir)/pli_string.c $(srcdir)/pli_runtime.h
+	$(CC) $(CFLAGS) $(CPPFLAGS) -c $(srcdir)/pli_string.c
+
+pli_memory.o: $(srcdir)/pli_memory.c $(srcdir)/pli_runtime.h
+	$(CC) $(CFLAGS) $(CPPFLAGS) -c $(srcdir)/pli_memory.c
+
+pli_array.o: $(srcdir)/pli_array.c $(srcdir)/pli_runtime.h
+	$(CC) $(CFLAGS) $(CPPFLAGS) -c $(srcdir)/pli_array.c
+
+pli_convert.o: $(srcdir)/pli_convert.c $(srcdir)/pli_runtime.h
+	$(CC) $(CFLAGS) $(CPPFLAGS) -c $(srcdir)/pli_convert.c
+
+pli_startup.o: $(srcdir)/pli_startup.c $(srcdir)/pli_runtime.h
+	$(CC) $(CFLAGS) $(CPPFLAGS) -c $(srcdir)/pli_startup.c
+
+pli_plm.o: $(srcdir)/pli_plm.c $(srcdir)/pli_runtime.h
+	$(CC) $(CFLAGS) $(CPPFLAGS) -c $(srcdir)/pli_plm.c
+
+pli_conditions.o: $(srcdir)/pli_conditions.c $(srcdir)/pli_runtime.h
+	$(CC) $(CFLAGS) $(CPPFLAGS) -c $(srcdir)/pli_conditions.c
+
+install: $(LIB)
+	test -z "$(DESTDIR)$(libdir)" || mkdir -p "$(DESTDIR)$(libdir)"
+	test -z "$(DESTDIR)$(includedir)" || mkdir -p "$(DESTDIR)$(includedir)"
+	$(INSTALL_DATA) $(LIB) $(DESTDIR)$(libdir)
+	$(INSTALL_DATA) $(srcdir)/pli_runtime.h $(DESTDIR)$(includedir)
+
+clean:
+	rm -f $(OBJS) $(LIB)
+
+distclean: clean
+	rm -f Makefile

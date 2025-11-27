@@ -1,0 +1,8 @@
+/* Simple Hello World program in PL/I */
+
+HELLO: PROCEDURE OPTIONS(MAIN);
+    DECLARE MESSAGE CHARACTER(20) VARYING INITIAL('Hello, World!');
+
+    PUT SKIP LIST(MESSAGE);
+
+END HELLO;

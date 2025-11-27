@@ -1,0 +1,46 @@
+/* String manipulation test */
+
+STRING_TEST: PROCEDURE OPTIONS(MAIN);
+    DECLARE S1 CHARACTER(50);
+    DECLARE S2 CHARACTER(50);
+    DECLARE S3 CHARACTER(100);
+    DECLARE POS FIXED BINARY(31);
+    DECLARE LEN FIXED BINARY(31);
+
+    PUT SKIP LIST('=== String Function Tests ===');
+    PUT SKIP;
+
+    /* Test INDEX */
+    S1 = 'The quick brown fox';
+    POS = INDEX(S1, 'quick');
+    PUT SKIP LIST('INDEX("The quick brown fox", "quick") = ', POS);
+
+    POS = INDEX(S1, 'slow');
+    PUT SKIP LIST('INDEX("The quick brown fox", "slow") = ', POS);
+
+    /* Test LENGTH */
+    LEN = LENGTH(S1);
+    PUT SKIP LIST('LENGTH("The quick brown fox") = ', LEN);
+
+    /* Test SUBSTR */
+    S2 = SUBSTR(S1, 5, 5);
+    PUT SKIP LIST('SUBSTR("The quick brown fox", 5, 5) = "', S2, '"');
+
+    /* Test concatenation */
+    S3 = S1 || ' jumps';
+    PUT SKIP LIST('Concatenation result: "', S3, '"');
+
+    /* Test TRIM */
+    S1 = 'Hello World    ';
+    S2 = TRIM(S1);
+    PUT SKIP LIST('TRIM("Hello World    ") = "', S2, '"');
+
+    /* Test REPEAT */
+    S1 = 'ABC';
+    S2 = REPEAT(S1, 3);
+    PUT SKIP LIST('REPEAT("ABC", 3) = "', S2, '"');
+
+    PUT SKIP;
+    PUT SKIP LIST('=== String tests completed ===');
+
+END STRING_TEST;

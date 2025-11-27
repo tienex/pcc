@@ -1,0 +1,12 @@
+/* Simple PL/I test program */
+TEST: PROCEDURE OPTIONS(MAIN);
+    DECLARE X FIXED;
+    DECLARE Y FIXED;
+    DECLARE Z FIXED;
+
+    X = 10;
+    Y = 20;
+    Z = X + Y;
+
+    PUT SKIP LIST('Result:', Z);
+END TEST;

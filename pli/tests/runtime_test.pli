@@ -1,0 +1,73 @@
+/* Comprehensive runtime library test */
+/* This program tests various PL/I runtime functions */
+
+RUNTIME_TEST: PROCEDURE OPTIONS(MAIN);
+    DECLARE I FIXED BINARY(31);
+    DECLARE X FLOAT BINARY(53);
+    DECLARE S CHARACTER(50) VARYING;
+    DECLARE RESULT FIXED BINARY(31);
+
+    /* Test I/O */
+    PUT SKIP LIST('=== PL/I Runtime Library Test ===');
+    PUT SKIP;
+
+    /* Test arithmetic functions */
+    PUT SKIP LIST('Testing arithmetic functions:');
+    I = -5;
+    RESULT = ABS(I);
+    PUT SKIP LIST('ABS(-5) = ', RESULT);
+
+    X = 4.7;
+    RESULT = CEIL(X);
+    PUT SKIP LIST('CEIL(4.7) = ', RESULT);
+
+    RESULT = FLOOR(X);
+    PUT SKIP LIST('FLOOR(4.7) = ', RESULT);
+
+    RESULT = MAX(10, 20);
+    PUT SKIP LIST('MAX(10, 20) = ', RESULT);
+
+    RESULT = MOD(17, 5);
+    PUT SKIP LIST('MOD(17, 5) = ', RESULT);
+
+    /* Test trigonometric functions */
+    PUT SKIP;
+    PUT SKIP LIST('Testing trigonometric functions:');
+    X = SQRT(16.0);
+    PUT SKIP LIST('SQRT(16.0) = ', X);
+
+    X = SIN(0.0);
+    PUT SKIP LIST('SIN(0.0) = ', X);
+
+    X = COS(0.0);
+    PUT SKIP LIST('COS(0.0) = ', X);
+
+    /* Test string functions */
+    PUT SKIP;
+    PUT SKIP LIST('Testing string functions:');
+
+    S = 'Hello, World!';
+    RESULT = LENGTH(S);
+    PUT SKIP LIST('LENGTH("Hello, World!") = ', RESULT);
+
+    RESULT = INDEX('Hello, World!', 'World');
+    PUT SKIP LIST('INDEX("Hello, World!", "World") = ', RESULT);
+
+    /* Test mathematical functions */
+    PUT SKIP;
+    PUT SKIP LIST('Testing mathematical functions:');
+
+    X = EXP(1.0);
+    PUT SKIP LIST('EXP(1.0) = ', X);
+
+    X = LOG(2.71828);
+    PUT SKIP LIST('LOG(2.71828) = ', X);
+
+    X = LOG10(100.0);
+    PUT SKIP LIST('LOG10(100.0) = ', X);
+
+    /* Test complete */
+    PUT SKIP;
+    PUT SKIP LIST('=== All tests completed ===');
+
+END RUNTIME_TEST;

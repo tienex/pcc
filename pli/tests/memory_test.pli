@@ -1,0 +1,44 @@
+/* Memory management test */
+
+MEMORY_TEST: PROCEDURE OPTIONS(MAIN);
+    DECLARE PTR POINTER;
+    DECLARE SIZE FIXED BINARY(31);
+    DECLARE ALLOC_STATUS FIXED BINARY(31);
+
+    PUT SKIP LIST('=== Memory Management Tests ===');
+    PUT SKIP;
+
+    /* Test ALLOCATE */
+    PUT SKIP LIST('Allocating 100 bytes...');
+    ALLOCATE SIZE(100) SET(PTR);
+
+    IF PTR ^= NULL THEN DO;
+        PUT SKIP LIST('Allocation successful');
+
+        /* Test SIZE function */
+        SIZE = SIZE(PTR);
+        PUT SKIP LIST('SIZE(ptr) = ', SIZE);
+
+        /* Test ALLOCATION function */
+        ALLOC_STATUS = ALLOCATION(PTR);
+        PUT SKIP LIST('ALLOCATION(ptr) = ', ALLOC_STATUS);
+
+        /* Test ADDR function */
+        PUT SKIP LIST('Address: ', ADDR(PTR));
+
+        /* Test FREE */
+        PUT SKIP LIST('Freeing memory...');
+        FREE PTR;
+
+        /* Verify freed */
+        ALLOC_STATUS = ALLOCATION(PTR);
+        PUT SKIP LIST('After FREE, ALLOCATION(ptr) = ', ALLOC_STATUS);
+    END;
+    ELSE DO;
+        PUT SKIP LIST('Allocation failed!');
+    END;
+
+    PUT SKIP;
+    PUT SKIP LIST('=== Memory tests completed ===');
+
+END MEMORY_TEST;

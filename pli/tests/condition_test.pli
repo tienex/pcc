@@ -1,0 +1,45 @@
+/* Condition handling test */
+
+CONDITION_TEST: PROCEDURE OPTIONS(MAIN);
+    DECLARE X FIXED BINARY(31);
+    DECLARE Y FIXED BINARY(31);
+    DECLARE RESULT FIXED BINARY(31);
+
+    /* Define ON-unit for ZERODIVIDE */
+    ON ZERODIVIDE BEGIN;
+        PUT SKIP LIST('ZERODIVIDE condition raised!');
+        PUT SKIP LIST('ONCODE = ', ONCODE());
+        RESULT = 0;
+    END;
+
+    /* Define ON-unit for ERROR */
+    ON ERROR BEGIN;
+        PUT SKIP LIST('ERROR condition raised!');
+        PUT SKIP LIST('ONCODE = ', ONCODE());
+    END;
+
+    PUT SKIP LIST('=== Condition Handling Tests ===');
+    PUT SKIP;
+
+    /* Test normal division */
+    X = 10;
+    Y = 2;
+    RESULT = X / Y;
+    PUT SKIP LIST('10 / 2 = ', RESULT);
+
+    /* Test division by zero (should raise ZERODIVIDE) */
+    PUT SKIP;
+    PUT SKIP LIST('Testing division by zero...');
+    X = 10;
+    Y = 0;
+    RESULT = X / Y;  /* This should trigger ZERODIVIDE */
+    PUT SKIP LIST('Result after ZERODIVIDE: ', RESULT);
+
+    /* Revert condition */
+    REVERT ZERODIVIDE;
+    PUT SKIP LIST('ZERODIVIDE condition reverted');
+
+    PUT SKIP;
+    PUT SKIP LIST('=== Condition tests completed ===');
+
+END CONDITION_TEST;

@@ -139,7 +139,7 @@
 %token	OBJC_IMPLEMENTATION
 %token	OBJC_PROTOCOL
 %token	OBJC_END
-%token	OBJC_CLASS
+%token	OBJC_CLASS_KEYWORD
 %token	OBJC_PUBLIC
 %token	OBJC_PRIVATE
 %token	OBJC_PROTECTED
@@ -331,7 +331,7 @@ struct savseh {
 		attribute_list attr_spec_list attr_var /* COMPAT_GCC */
 
 %type <g>	gen_ass_list gen_assoc
-%type <strp>	string C_STRING GCC_DESIG svstr
+%type <strp>	string C_STRING GCC_DESIG svstr OBJC_STRING
 %type <rp>	str_head
 %type <symp>	xnfdeclarator clbrace enum_head
 
@@ -1404,7 +1404,7 @@ cast_type:	   specifier_qualifier_list {
 
 /* Objective-C grammar rules */
 objc_class_declaration:
-		   OBJC_AT OBJC_CLASS objc_class_list ';'
+		   OBJC_AT OBJC_CLASS_KEYWORD objc_class_list ';'
 		;
 
 objc_class_list:   C_NAME
