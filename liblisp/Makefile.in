@@ -1,0 +1,57 @@
+#	$Id$
+#
+# Makefile.in for Common LISP runtime library
+#
+VPATH=@srcdir@
+srcdir=@srcdir@
+top_srcdir=@top_srcdir@
+top_builddir=@top_builddir@
+prefix=@prefix@
+exec_prefix=@exec_prefix@
+libdir=@libdir@
+includedir=@includedir@
+
+CC=@CC@
+AR=@AR@
+RANLIB=@RANLIB@
+CFLAGS=@CFLAGS@ @ADD_CFLAGS@
+CPPFLAGS=@CPPFLAGS@ @ADD_CPPFLAGS@ -I$(top_builddir) -I$(top_srcdir)
+
+INSTALL=@INSTALL@
+INSTALL_DATA=@INSTALL_DATA@
+
+TARGET=liblisp.a
+OBJS=memory.o \
+     list.o \
+     arithmetic.o \
+     io.o \
+     predicates.o \
+     util.o
+
+all: $(TARGET)
+
+$(TARGET): $(OBJS)
+	$(AR) rc $@ $(OBJS)
+	$(RANLIB) $@
+
+.c.o:
+	$(CC) $(CPPFLAGS) $(CFLAGS) -c $<
+
+memory.o: memory.c liblisp.h
+list.o: list.c liblisp.h
+arithmetic.o: arithmetic.c liblisp.h
+io.o: io.c liblisp.h
+predicates.o: predicates.c liblisp.h
+util.o: util.c liblisp.h
+
+install: all
+	$(INSTALL) -d $(DESTDIR)$(libdir)
+	$(INSTALL_DATA) $(TARGET) $(DESTDIR)$(libdir)/$(TARGET)
+	$(INSTALL) -d $(DESTDIR)$(includedir)
+	$(INSTALL_DATA) liblisp.h $(DESTDIR)$(includedir)/liblisp.h
+
+clean:
+	rm -f $(OBJS) $(TARGET)
+
+distclean: clean
+	rm -f Makefile
