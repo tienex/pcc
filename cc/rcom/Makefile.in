@@ -1,0 +1,136 @@
+#	$Id$
+#
+# Makefile.in for rcom (Ruby compiler)
+#
+VPATH=@srcdir@
+srcdir=@srcdir@
+top_srcdir=@top_srcdir@
+builddir=@builddir@
+top_builddir=@top_builddir@
+CC = @CC@
+EXEEXT = @EXEEXT@
+BINPREFIX = @BINPREFIX@
+CC_FOR_BUILD = @CC_FOR_BUILD@
+CFLAGS = @CFLAGS@ @ADD_CFLAGS@
+CPPFLAGS = @CPPFLAGS@ @ADD_CPPFLAGS@ -D_ISOC99_SOURCE \
+	-Dos_$(TARGOS) -Dmach_$(TARGMACH) \
+	-I$(srcdir) -I$(builddir) -I$(top_builddir) -I$(MIPDIR) -I$(MDIR) \
+	-I$(top_srcdir)/os/$(TARGOS) -I$(COMMONDIR) \
+	-I$(top_srcdir)/cc/ccom -I$(top_srcdir)/libx86asm
+LIBS = @LIBS@ -L$(top_builddir)/libx86asm -lx86asm
+LDFLAGS = @LDFLAGS@
+LEX = @LEX@
+LFLAGS =
+LEX_OUTPUT_ROOT = @LEX_OUTPUT_ROOT@
+YACC = @YACC@
+YFLAGS = @YFLAGS@
+TARGOS = @targos@
+TARGOSVER = @targosver@
+TARGMACH = @targmach@
+prefix = @prefix@
+exec_prefix = @exec_prefix@
+libexecdir = @libexecdir@
+datarootdir = @datarootdir@
+mandir = @mandir@
+INSTALL = @INSTALL@
+INSTALL_PROGRAM = @INSTALL_PROGRAM@
+INSTALL_DATA = @INSTALL_DATA@
+RCOM=$(BINPREFIX)rcom$(EXEEXT)
+
+MDIR=$(top_srcdir)/arch/$(TARGMACH)
+MIPDIR=$(top_srcdir)/mip
+COMMONDIR=$(top_srcdir)/common
+CCOMDIR=$(top_srcdir)/cc/ccom
+
+DEST=@RUBYCCNAMES@
+MANPAGE=$(BINPREFIX)rcom
+MKEXT=mkext$(EXEEXT)
+
+all: $(DEST)
+
+OBJS=	cgram.o scan.o main.o trees.o symtabs.o pftn.o init.o \
+	$(CCOMDIR)/code.o $(MIPDIR)/common.o $(COMMONDIR)/compat.o \
+	$(MIPDIR)/external.o $(MDIR)/local.o $(MDIR)/local2.o \
+	$(MIPDIR)/match.o $(MIPDIR)/optim.o $(MIPDIR)/optim2.o \
+	$(MDIR)/order.o $(MIPDIR)/reader.o $(COMMONDIR)/softfloat.o \
+	$(MIPDIR)/regs.o $(MDIR)/table.o $(COMMONDIR)/unicode.o \
+	$(COMMONDIR)/strtodg.o
+
+LOBJS=	mkext.lo common.lo table.lo
+
+HDRS=	$(srcdir)/pass1.h $(MIPDIR)/pass2.h $(MIPDIR)/manifest.h	\
+	$(MDIR)/macdefs.h $(MIPDIR)/node.h $(COMMONDIR)/compat.h	\
+	$(COMMONDIR)/unicode.h
+
+#
+# round 1: generate external.[ch], cgram.[ch] & scan.c
+#
+
+$(LOBJS): $(HDRS)
+
+mkext.lo: $(MIPDIR)/mkext.c
+	$(CC_FOR_BUILD) $(CFLAGS) $(CPPFLAGS) -DMKEXT -c -o $@ $(MIPDIR)/mkext.c
+
+common.lo: $(MIPDIR)/common.c
+	$(CC_FOR_BUILD) $(CFLAGS) $(CPPFLAGS) -DMKEXT -c -o $@ $(MIPDIR)/common.c
+
+table.lo: $(MDIR)/table.c
+	$(CC_FOR_BUILD) $(CFLAGS) $(CPPFLAGS) -DMKEXT -c -o $@ $(MDIR)/table.c
+
+$(MKEXT): $(LOBJS)
+	$(CC_FOR_BUILD) $(LDFLAGS) -o $@ $(LOBJS)
+
+external.c external.h: $(MKEXT)
+	./$(MKEXT)
+
+cgram.c cgram.h: $(srcdir)/cgram.y
+	$(YACC) $(YFLAGS) -d $(srcdir)/cgram.y
+	mv -f y.tab.c cgram.c
+	mv -f y.tab.h cgram.h
+
+scan.c: $(srcdir)/scan.l cgram.h
+	$(LEX) $(LFLAGS) $(srcdir)/scan.l
+	mv -f $(LEX_OUTPUT_ROOT).c scan.c
+
+#
+# round 2: compile
+#
+
+$(OBJS): $(HDRS) external.h
+
+cgram.o: cgram.c
+	$(CC) $(CFLAGS) $(CPPFLAGS) -c -o $@ cgram.c
+
+scan.o: scan.c
+	$(CC) $(CFLAGS) $(CPPFLAGS) -c -o $@ scan.c
+
+main.o: $(srcdir)/main.c
+	$(CC) $(CFLAGS) $(CPPFLAGS) -c -o $@ $(srcdir)/main.c
+
+trees.o: $(srcdir)/trees.c
+	$(CC) $(CFLAGS) $(CPPFLAGS) -c -o $@ $(srcdir)/trees.c
+
+symtabs.o: $(srcdir)/symtabs.c
+	$(CC) $(CFLAGS) $(CPPFLAGS) -c -o $@ $(srcdir)/symtabs.c
+
+pftn.o: $(srcdir)/pftn.c
+	$(CC) $(CFLAGS) $(CPPFLAGS) -c -o $@ $(srcdir)/pftn.c
+
+init.o: $(srcdir)/init.c
+	$(CC) $(CFLAGS) $(CPPFLAGS) -c -o $@ $(srcdir)/init.c
+
+$(RCOM): $(OBJS)
+	$(CC) $(LDFLAGS) -o $@ $(OBJS) $(LIBS)
+
+install: all
+	test -z "$(DESTDIR)$(libexecdir)" || mkdir -p "$(DESTDIR)$(libexecdir)"
+	$(INSTALL_PROGRAM) $(RCOM) $(DESTDIR)$(libexecdir)
+
+clean:
+	rm -f $(OBJS) $(LOBJS) cgram.c cgram.h scan.c external.c external.h
+	rm -f $(MKEXT) $(RCOM)
+
+distclean: clean
+	rm -f Makefile
+
+.PHONY: all install clean distclean
