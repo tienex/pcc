@@ -1,0 +1,76 @@
+#	$Id$
+#
+# Makefile.in for CHILL compiler (chcom)
+#
+VPATH=@srcdir@
+srcdir=@srcdir@
+top_srcdir=@top_srcdir@
+top_builddir=@top_builddir@
+prefix = @prefix@
+exec_prefix = @exec_prefix@
+bindir = @bindir@
+libexecdir = @libexecdir@
+datarootdir = @datarootdir@
+mandir = @mandir@
+CC = @CC@
+EXEEXT = @EXEEXT@
+TARGOS = @targos@
+TARGMACH = @targmach@
+YACC = @YACC@
+LEX = @LEX@
+CFLAGS = @CFLAGS@ @ADD_CFLAGS@
+CPPFLAGS = @CPPFLAGS@ @ADD_CPPFLAGS@ \
+	-I$(srcdir) -I$(top_builddir) \
+	-I$(top_srcdir)/mip -I$(top_srcdir)/common \
+	-DLIBEXECDIR=\"$(libexecdir)\" \
+	-Dmach_$(TARGMACH) -Dos_$(TARGOS)
+LIBS = @LIBS@
+LDFLAGS = @LDFLAGS@
+INSTALL = @INSTALL@
+INSTALL_PROGRAM = @INSTALL_PROGRAM@
+INSTALL_DATA = @INSTALL_DATA@
+
+OBJS=	main.o symtab.o modes.o builtins.o \
+	codegen.o scan.o cgram.o
+
+DEST=chcom$(EXEEXT)
+
+all: $(DEST)
+
+$(DEST): $(OBJS)
+	$(CC) $(LDFLAGS) $(OBJS) -o $@ $(LIBS)
+
+scan.c: $(srcdir)/scan.l
+	$(LEX) -t $(srcdir)/scan.l > scan.c
+
+cgram.c y.tab.h: $(srcdir)/cgram.y
+	$(YACC) -d $(srcdir)/cgram.y
+	mv y.tab.c cgram.c
+
+scan.o: scan.c y.tab.h pass1.h
+	$(CC) $(DEFS) $(CPPFLAGS) $(CFLAGS) -c scan.c
+
+cgram.o: cgram.c pass1.h
+	$(CC) $(DEFS) $(CPPFLAGS) $(CFLAGS) -c cgram.c
+
+main.o: $(srcdir)/main.c pass1.h
+	$(CC) $(DEFS) $(CPPFLAGS) $(CFLAGS) -c $(srcdir)/main.c
+
+symtab.o: $(srcdir)/symtab.c pass1.h
+	$(CC) $(DEFS) $(CPPFLAGS) $(CFLAGS) -c $(srcdir)/symtab.c
+
+modes.o: $(srcdir)/modes.c pass1.h
+	$(CC) $(DEFS) $(CPPFLAGS) $(CFLAGS) -c $(srcdir)/modes.c
+
+builtins.o: $(srcdir)/builtins.c pass1.h
+	$(CC) $(DEFS) $(CPPFLAGS) $(CFLAGS) -c $(srcdir)/builtins.c
+
+install: all
+	test -z "$(DESTDIR)$(libexecdir)" || mkdir -p "$(DESTDIR)$(libexecdir)"
+	$(INSTALL_PROGRAM) $(DEST) $(DESTDIR)$(libexecdir)
+
+clean:
+	rm -f $(OBJS) $(DEST) scan.c cgram.c y.tab.h y.tab.c
+
+distclean: clean
+	rm -f Makefile
