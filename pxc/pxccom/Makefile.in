@@ -1,0 +1,89 @@
+#	$Id$
+#
+# Makefile.in for Xbase++ compiler (pxccom)
+#
+VPATH=@srcdir@
+srcdir=@srcdir@
+top_srcdir=@top_srcdir@
+top_builddir=@top_builddir@
+prefix = @prefix@
+exec_prefix = @exec_prefix@
+bindir = @bindir@
+libexecdir = @libexecdir@
+datarootdir = @datarootdir@
+mandir = @mandir@
+CC = @CC@
+EXEEXT = @EXEEXT@
+TARGOS = @targos@
+TARGMACH = @targmach@
+YACC = @YACC@
+LEX = @LEX@
+CFLAGS = @CFLAGS@ @ADD_CFLAGS@
+CPPFLAGS = @CPPFLAGS@ @ADD_CPPFLAGS@ \
+	-I$(srcdir) -I$(top_builddir) \
+	-I$(top_srcdir)/mip -I$(top_srcdir)/common \
+	-DLIBEXECDIR=\"$(libexecdir)\" \
+	-Dmach_$(TARGMACH) -Dos_$(TARGOS)
+LIBS = @LIBS@
+LDFLAGS = @LDFLAGS@
+INSTALL = @INSTALL@
+INSTALL_PROGRAM = @INSTALL_PROGRAM@
+INSTALL_DATA = @INSTALL_DATA@
+
+OBJS=	main.o symtab.o types.o tree.o builtins.o \
+	codegen.o semantic.o preprocessor.o \
+	scan.o xgram.o
+
+DEST=pxccom$(EXEEXT)
+
+all: $(DEST)
+
+$(DEST): $(OBJS)
+	$(CC) $(LDFLAGS) $(OBJS) -o $@ $(LIBS)
+
+scan.c: $(srcdir)/scan.l
+	$(LEX) -t $(srcdir)/scan.l > scan.c
+
+xgram.c y.tab.h: $(srcdir)/xgram.y
+	$(YACC) -d $(srcdir)/xgram.y
+	mv y.tab.c xgram.c
+
+scan.o: scan.c y.tab.h pass1.h
+	$(CC) $(DEFS) $(CPPFLAGS) $(CFLAGS) -c scan.c
+
+xgram.o: xgram.c pass1.h
+	$(CC) $(DEFS) $(CPPFLAGS) $(CFLAGS) -c xgram.c
+
+main.o: $(srcdir)/main.c pass1.h
+	$(CC) $(DEFS) $(CPPFLAGS) $(CFLAGS) -c $(srcdir)/main.c
+
+symtab.o: $(srcdir)/symtab.c pass1.h
+	$(CC) $(DEFS) $(CPPFLAGS) $(CFLAGS) -c $(srcdir)/symtab.c
+
+types.o: $(srcdir)/types.c pass1.h
+	$(CC) $(DEFS) $(CPPFLAGS) $(CFLAGS) -c $(srcdir)/types.c
+
+tree.o: $(srcdir)/tree.c pass1.h
+	$(CC) $(DEFS) $(CPPFLAGS) $(CFLAGS) -c $(srcdir)/tree.c
+
+builtins.o: $(srcdir)/builtins.c pass1.h
+	$(CC) $(DEFS) $(CPPFLAGS) $(CFLAGS) -c $(srcdir)/builtins.c
+
+codegen.o: $(srcdir)/codegen.c pass1.h
+	$(CC) $(DEFS) $(CPPFLAGS) $(CFLAGS) -c $(srcdir)/codegen.c
+
+semantic.o: $(srcdir)/semantic.c pass1.h
+	$(CC) $(DEFS) $(CPPFLAGS) $(CFLAGS) -c $(srcdir)/semantic.c
+
+preprocessor.o: $(srcdir)/preprocessor.c pass1.h
+	$(CC) $(DEFS) $(CPPFLAGS) $(CFLAGS) -c $(srcdir)/preprocessor.c
+
+install: all
+	test -z "$(DESTDIR)$(libexecdir)" || mkdir -p "$(DESTDIR)$(libexecdir)"
+	$(INSTALL_PROGRAM) $(DEST) $(DESTDIR)$(libexecdir)
+
+clean:
+	rm -f $(OBJS) $(DEST) scan.c xgram.c y.tab.h y.tab.c
+
+distclean: clean
+	rm -f Makefile
