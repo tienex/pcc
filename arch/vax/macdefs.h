@@ -114,6 +114,12 @@ typedef long long OFFSZ;
 #define TARGET_ENDIAN TARGET_LE
 #define	UNALIGNED_ACCESS
 
+/*
+ * Floating-point format definitions for softfloat library.
+ * VAX uses F- and D-float format (not IEEE).
+ */
+#define FDFLOAT		/* Use native VAX F- and D-float format */
+
 /* we want prtree included */
 # define STDPRTREE
 

@@ -97,8 +97,8 @@ typedef struct node {
 		void *_dcon;
 #if 0
 #ifdef SOFTFLOAT
-#ifdef FDFLOAT
-		/* To store F- or D-floats */
+#if defined(FDFLOAT) || defined(PDP10FLOAT)
+		/* To store F- or D-floats (VAX) or PDP-10 floats */
 		struct softfloat {
 			unsigned short fd1, fd2, fd3, fd4;
 		} _dcon;

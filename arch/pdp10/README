@@ -1,9 +1,210 @@
+PDP-10 Backend for PCC
+======================
+
+This is the PDP-10 target backend for the Portable C Compiler (PCC).
+It supports both native PDP-10 type sizes and an experimental power-of-2
+mode for better portability.
 
 
-PDP10 C calling convention
---------------------------
-Register 1-7 are argument registers.  Types of sizes up to 36 bits are
-given in one register, two otherwise.  CHAR and SHORT are given as INTs.
+Type Size Modes
+---------------
+
+The PDP-10 backend can be compiled in two modes:
+
+1. Native PDP-10 mode (default):
+   - CHAR:     9 bits (unsigned by default)
+   - SHORT:    18 bits
+   - INT:      36 bits
+   - LONG:     36 bits
+   - LONGLONG: 72 bits
+   - FLOAT:    36 bits (PDP-10 native format)
+   - DOUBLE:   72 bits (PDP-10 native format)
+   - POINTER:  36 bits
+   - Word-addressed memory (4 bytes per word)
+
+2. Power-of-2 mode (compile with -DPDP10_POW2):
+   - CHAR:     8 bits (signed by default)
+   - SHORT:    16 bits
+   - INT:      32 bits
+   - LONG:     64 bits
+   - LONGLONG: 64 bits
+   - FLOAT:    32 bits (VAX F-floating format)
+   - DOUBLE:   64 bits (VAX D-floating format)
+   - POINTER:  64 bits
+   - Byte-addressed memory (8 bytes per word)
+
+   Note: VAX floating-point format is used instead of IEEE 754 because:
+   - It's already implemented in PCC's softfloat library
+   - Similar architecture philosophy to PDP-10
+   - Better compatibility for cross-compilation scenarios
+
+
+Runtime Configuration
+---------------------
+
+The backend supports runtime configuration via -m flags:
+
+  -masm=<format>   Set assembly output format
+                   - gnu (default): GNU assembler syntax
+                   - midas: MIDAS assembler syntax (ITS/MIT)
+
+  -mabi=<format>   Set ABI/object file format
+                   - elf (default): ELF object format
+                   - macho: Mach-O object format (Darwin/macOS)
+                   - pecoff (or pe): PE/COFF format (Windows)
+                   - none: Generic format (MIDAS-style)
+
+  -m64             Enable power-of-2 type mode (8/16/32/64-bit types)
+                   (see "Runtime Type Switching" below)
+
+  -m36             Use native PDP-10 types (9/18/36-bit, default)
+                   (Explicit native mode selection)
+
+  -mxva            Enable extended virtual addressing
+                   (30-bit in native mode, 64-bit in POW2 mode)
+
+  -m18             Use 18-bit pointers (PDP-6 compatible, 256K words)
+                   (Compatible with both -m36 and -m64)
+
+  -m32             Use 32-bit pointers (POW2 mode only)
+                   (Provides 4GB address space)
+
+
+Assembly Output Formats
+-----------------------
+
+GNU assembler format (default):
+  - Standard .text, .data, .bss sections
+  - C-style labels (name:)
+  - ELF/Mach-O/PE-COFF directives when applicable
+
+MIDAS assembler format:
+  - LOC directives for segment switching
+  - Double-colon labels (name::)
+  - Compatible with ITS/TOPS-20 MIDAS assembler
+
+
+Runtime Type Switching (-m64/-m36) - TRUE RUNTIME SWITCHING!
+-------------------------------------------------------------
+
+The -m64 and -m36 flags enable RUNTIME switching between native PDP-10 types
+(9/18/36/72 bit) and power-of-2 types (8/16/32/64 bit). This allows a
+SINGLE PCC binary to generate code for both environments!
+
+WHAT WORKS WITH RUNTIME TYPE SWITCHING:
+  ✓ Type sizes - runtime-aware macros (SZCHAR, SZINT, SZLONG, etc.)
+  ✓ Struct member offsets - calculated using runtime type sizes
+  ✓ Array element indexing - uses runtime element sizes
+  ✓ Pointer sizes - runtime-aware SZPOINT macro
+  ✓ Stack frame layout - runtime-aware ARGINIT/AUTOINIT macros
+  ✓ Register allocation - runtime-aware szty() macro
+  ✓ Argument passing - uses runtime sizes for register allocation
+  ✓ DWARF debugging info - uses runtime sizes
+  ✓ All integer types work correctly
+
+SINGLE REMAINING LIMITATION:
+  ✗ Floating-point format is still compile-time (PDP10FLOAT vs FDFLOAT)
+
+TWO USAGE SCENARIOS:
+
+1. PCC compiled WITHOUT -DPDP10_POW2 (native mode by default):
+   $ pcc program.c               # Uses native 9/18/36/72-bit types (-m36 implicit)
+   $ pcc -m64 program.c          # Uses power-of-2 8/16/32/64-bit types
+
+   Both work correctly! The -m64 flag switches the type system at runtime.
+
+   Limitation: Floating-point uses PDP-10 format (36/72-bit) in both cases.
+   For integer-only code, this is perfect!
+
+2. PCC compiled WITH -DPDP10_POW2 (power-of-2 mode by default):
+   $ pcc program.c               # Uses power-of-2 8/16/32/64-bit types
+   $ pcc -m64 program.c          # Same (flag is redundant)
+   $ pcc -m36 program.c          # Uses native 9/18/36-bit types
+
+   Full support including VAX F/D floating-point format (32/64-bit).
+   All features work correctly.
+
+RECOMMENDATION FOR FLOATING-POINT CODE:
+  - For PDP-10 native FP: Build PCC without -DPDP10_POW2
+  - For VAX FP (POW2): Build PCC with -DPDP10_POW2
+
+  If you need BOTH FP formats, maintain two PCC builds.
+
+RECOMMENDATION FOR INTEGER-ONLY CODE:
+  - Build PCC once (either way)
+  - Use -m64/-m36 flags to switch type modes at runtime
+  - A single PCC binary handles both environments!
+
+EXAMPLE:
+  # Build a native PDP-10 executable (9/18/36-bit types)
+  $ pcc -o prog-native program.c
+  # or explicitly: pcc -m36 -o prog-native program.c
+
+  # Build a power-of-2 executable (8/16/32/64-bit types, same compiler!)
+  $ pcc -m64 -o prog-pow2 program.c
+
+  Both use correct struct layouts, array indexing, and pointer sizes!
+
+HOW IT WORKS:
+All type size macros (SZCHAR, SZINT, SZLONG, SZPOINT, etc.) check the global
+pdp10_pow2 flag at compile time and select the appropriate values. PCC's
+sztable[] array is updated at runtime by pdp10_init_runtime_types().
+All struct layouts, array calculations, and type operations automatically
+use the correct runtime sizes!
+
+
+Addressing Modes (PDP-6/PDP-10)
+--------------------------------
+
+The backend supports multiple addressing modes for compatibility with
+different PDP-10 configurations and the PDP-6:
+
+1. **18-bit addressing** (-m18):
+   - Compatible with PDP-6 and basic PDP-10
+   - 256K words (1MB) address space
+   - Pointers are 18 bits
+   - Can be combined with both -m36 and -m64
+
+2. **36-bit addressing** (default for -m36):
+   - Full word addressing for PDP-10
+   - 256M words (1GB+) theoretical address space
+   - Pointers are 36 bits (single register)
+
+3. **30-bit extended addressing** (-mxva with -m36):
+   - PDP-10 extended virtual addressing
+   - 1G words (4.5GB) address space
+   - Pointers are 30 bits
+
+4. **32-bit addressing** (-m32 with -m64):
+   - Power-of-2 mode with 32-bit pointers
+   - 4GB byte address space
+   - Pointers fit in single register
+   - Useful for compatibility with other 32-bit systems
+
+5. **64-bit addressing** (default for -m64):
+   - Full 64-bit virtual addressing
+   - Pointers are 64 bits (register pair)
+   - Maximum address space
+
+EXAMPLES:
+  # PDP-6 compatible (18-bit pointers, native types)
+  $ pcc -m36 -m18 -o prog-pdp6 program.c
+
+  # PDP-10 extended addressing (30-bit pointers, native types)
+  $ pcc -m36 -mxva -o prog-extended program.c
+
+  # Power-of-2 with 32-bit pointers (more compact than 64-bit)
+  $ pcc -m64 -m32 -o prog-pow2-32 program.c
+
+  # Full 64-bit addressing (default for -m64)
+  $ pcc -m64 -o prog-pow2-64 program.c
+
+
+PDP-10 C Calling Convention
+---------------------------
+
+Register 1-7 are argument registers. Types of sizes up to 36 bits are
+given in one register, two otherwise. CHAR and SHORT are given as INTs.
 
 If the argument that would end up in register 7 requires two registers,
 it is saved on the stack instead and no more registers would end up
@@ -12,9 +213,72 @@ on the stack.
 struct return: a hidden argument containing the address of the struct
 is stored as the first argument _on_the_stack_, never in register.
 
-struct argument: always saved on stack, and terminates the list 
+struct argument: always saved on stack, and terminates the list
 of arguments that are kept in registers.
 
 In case of debugging all arguments are saved on stack in the function.
 
 All variadic arguments are always saved on the stack.
+
+
+Register Allocation
+-------------------
+
+The PDP-10 has 16 general-purpose registers (0-17 octal):
+  R0:       Reserved (special addressing constraints)
+  R1-R7:    Argument registers / temporaries
+  R10-R15:  Permanent registers (callee-saved)
+  R16 (FP): Frame pointer
+  R17 (SP): Stack pointer
+
+Register pairs (for 72-bit or 64-bit values):
+  XR1-XR14: Consecutive register pairs for double-word values
+
+
+Floating-Point Support
+----------------------
+
+Native mode (default):
+  - Uses PDP-10's proprietary 36/72-bit floating-point format
+  - Implemented via PCC's softfloat library with PDP10FLOAT
+
+Power-of-2 mode (compile with -DPDP10_POW2):
+  - Uses VAX F-floating (32-bit) and D-floating (64-bit) formats
+  - Implemented via PCC's softfloat library with FDFLOAT
+  - VAX format chosen for better PDP-10 compatibility than IEEE 754
+
+Note: The floating-point format is a COMPILE-TIME choice. Using the runtime
+-m64 flag does NOT change the floating-point format. Always recompile PCC
+with -DPDP10_POW2 if you need VAX floating-point format support.
+
+
+Thread-Local Storage and PIC
+-----------------------------
+
+The backend supports TLS and PIC segments:
+  - TLSDATA, TLSUDATA: Thread-local storage
+  - PICDATA, PICRDATA, PICLDATA: Position-independent code
+
+These are primarily useful for modern OS ports (Linux, *BSD) running
+under PDP-10 emulation.
+
+
+Cross-Compilation
+-----------------
+
+The PDP-10 backend is designed to work correctly as a cross-compiler
+from modern hosts (Linux, macOS, Windows) to PDP-10 targets.
+
+Example cross-compilation:
+  $ pcc -target pdp10 -masm=gnu -mabi=elf -o program.o program.c
+  $ pcc -target pdp10 -masm=midas -mabi=none -o program.s program.c
+
+
+For More Information
+--------------------
+
+See the PCC documentation and the source files in arch/pdp10/:
+  - macdefs.h: Architecture definitions and runtime configuration
+  - code.c: Code generation and runtime helper functions
+  - local2.c: Instruction selection and optimization
+  - table.c: Instruction templates

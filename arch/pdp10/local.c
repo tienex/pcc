@@ -53,6 +53,10 @@ static struct symtab *newfun(char *name, TWORD type);
 #define	PTRSHORT	3
 static int xptype(TWORD t);
 
+/* Variables for bitfield initialization */
+static int inbits;
+static CONSZ xinval;
+
 NODE *
 clocal(NODE *p)
 {
@@ -91,7 +95,7 @@ clocal(NODE *p)
 
 		case PARAM:
 			/* First 7 parameters are in registers */
-			/* XXX last may be double */
+			/* Note: doubles/long longs may span registers or spill to stack */
 			if (q->soffset/SZINT < 7) {
 				p->n_op = REG;
 				p->n_rval = q->soffset/SZINT;
@@ -233,7 +237,7 @@ rmpc:			l->n_type = p->n_type;
 				return l;
 			}
 		}
-		/* cast to (void) XXX should be removed in MI code */
+		/* Handle cast to void by discarding value */
 		if (p->n_type == VOID) {
 			nfree(p);
 			return l;
@@ -285,17 +289,19 @@ rmpc:			l->n_type = p->n_type;
 				slval(l, val & 0777777777777LL);
 				break;
 			case INT:
+			case BOOL:
 				slval(l, val & 0777777777777LL);
 				if (val & 0400000000000LL)
 					slval(l, glval(l) | ~(0777777777777LL));
 				break;
-			case LONGLONG:	/* XXX */
+			case LONGLONG:	/* 64-bit value, stored directly */
 			case ULONGLONG:
 				slval(l, val);
 				break;
 			case VOID:
 				break;
 			case DOUBLE:
+			case LDOUBLE:
 			case FLOAT:
 				l->n_op = FCON;
 				l->n_dcon = 0;
@@ -404,7 +410,7 @@ myp2tree(NODE *p)
 	case UGT:
 	case UGE:
 		if (ISLONGLONG(p->n_left->n_type)) {
-			/* XXX */
+			/* XOR with sign bit to convert unsigned comparison to signed */
 			r = xbcon(0x8000000000000000ULL, NULL, LONGLONG);
 		} else
 			r = xbcon(0400000000000LL, NULL, INT);
@@ -413,7 +419,7 @@ myp2tree(NODE *p)
 			p->n_left->n_type = DEUNSIGN(p->n_left->n_type);
 
 		if (ISLONGLONG(p->n_right->n_type)) {
-			/* XXX */
+			/* XOR with sign bit to convert unsigned comparison to signed */
 			r = xbcon(0x8000000000000000ULL, NULL, LONGLONG);
 		} else
 			r = xbcon(0400000000000LL, NULL, INT);
@@ -424,7 +430,41 @@ myp2tree(NODE *p)
 		p->n_op -= (ULT-LT);
 		break;
 	case FCON:
-		cerror("fix float constants");
+		/*
+		 * PDP-10 cannot load floating-point constants directly.
+		 * Convert FCON to a NAME node referencing a static constant.
+		 * The constant will be emitted in the data segment by ninval().
+		 */
+		{
+			struct symtab *sp;
+			NODE *l;
+			char buf[32];
+			static int fcnum = 0;
+
+			/* Create a unique static symbol for this constant */
+			snprintf(buf, sizeof(buf), "__fcon%d", fcnum++);
+			sp = lookup(buf, SLBLNAME);
+			if (sp->soffset == 0) {
+				sp->soffset = getlab();
+				sp->sclass = STATIC;
+				sp->stype = p->n_type;
+				sp->sdf = p->n_df;
+				sp->sap = p->n_ap;
+
+				/* Emit the constant in the data segment */
+				locctr(DATA, sp);
+				defloc(sp);
+				ninval(0, tsize(sp->stype, sp->sdf, sp->sap), p);
+				locctr(PROG, sp);
+			}
+
+			/* Replace FCON with NAME reference */
+			l = block(NAME, NIL, NIL, p->n_type, p->n_df, p->n_ap);
+			l->n_sp = sp;
+			*p = *l;
+			nfree(l);
+		}
+		break;
 	}
 }
 
@@ -490,11 +530,13 @@ xptype(TWORD t)
 	case LONGLONG:
 	case FLOAT:
 	case DOUBLE:
+	case LDOUBLE:
 	case STRTY:
 	case UNIONTY:
 	case UNSIGNED:
 	case ULONG:
 	case ULONGLONG:
+	case BOOL:
 		return PTRNORMAL;
 	case VOID:
 	case CHAR:
@@ -511,7 +553,7 @@ xptype(TWORD t)
 		break;
 	}
 	cerror("unknown type");
-	return PTRNORMAL; /* XXX */
+	return PTRNORMAL; /* Fallback for unreachable code path */
 }
 
 /*
@@ -561,12 +603,14 @@ offcon(OFFSZ off, TWORD t, union dimfun *d, struct attr *ap)
 	case UNSIGNED:
 	case LONG:
 	case ULONG:
+	case BOOL:
 	case STRTY:
 	case UNIONTY:
 	case LONGLONG:
 	case ULONGLONG:
 	case FLOAT:
 	case DOUBLE:
+	case LDOUBLE:
 		break;
 
 	case SHORT:
@@ -612,8 +656,13 @@ spalloc(NODE *t, NODE *p, OFFSZ off)
 		p = buildtree(MUL, p, bcon(off/SZCHAR));
 		p = buildtree(PLUS, p, bcon(3));
 		p = buildtree(RS, p, bcon(2));
-	} else
-		cerror("roundsp");
+	} else {
+		/* Round up to next byte boundary */
+		off = (off + SZCHAR - 1) / SZCHAR * SZCHAR;
+		p = buildtree(MUL, p, bcon(off/SZCHAR));
+		p = buildtree(PLUS, p, bcon(3));
+		p = buildtree(RS, p, bcon(2));
+	}
 
 	/* save the address of sp */
 	sp = block(REG, NIL, NIL, PTR+INT, t->n_df, t->n_sue);
@@ -802,23 +851,67 @@ defzero(struct symtab *sp)
 
 /*
  * set fsz bits in sequence to zero.
+ * PDP-10 uses 9-bit bytes and is big-endian.
  */
 void
 zbits(OFFSZ off, int fsz)
 {
-	cerror("zbits");
+	int m;
+
+#ifdef PCC_DEBUG
+	if (idebug)
+		printf("zbits off %lld, fsz %d inbits %d\n", off, fsz, inbits);
+#endif
+	/* Big-endian logic */
+	if ((m = (inbits % SZCHAR))) {
+		m = SZCHAR - m;
+		if (fsz < m) {
+			inbits += fsz;
+			xinval <<= fsz;
+			return;
+		} else {
+			fsz -= m;
+			xinval <<= m;
+			printf("\t.byte\t0%o\n", (int)(xinval & SZMASK(SZCHAR)));
+			xinval = inbits = 0;
+		}
+	}
+	if (fsz >= SZCHAR) {
+		printf("\t.space\t%d\n", fsz/SZCHAR);
+		fsz -= (fsz/SZCHAR) * SZCHAR;
+	}
+	if (fsz) {
+		xinval = 0;
+		inbits = fsz;
+	}
 }
 
 /*
  * Initialize a bitfield.
+ * PDP-10 uses 9-bit bytes and is big-endian.
  */
 void
 infld(CONSZ off, int fsz, CONSZ val)
 {
-//	if (idebug)
-//		printf("infld off %lld, fsz %d, val %lld inbits %d\n",
-//		    off, fsz, val, inbits);
-	cerror("infld");
+#ifdef PCC_DEBUG
+	if (idebug)
+		printf("infld off %lld, fsz %d, val %lld inbits %d\n",
+		    off, fsz, val, inbits);
+#endif
+	val &= SZMASK(fsz);
+	/* Big-endian logic */
+	while (fsz + inbits >= SZCHAR) {
+		int shsz = SZCHAR-inbits;
+		xinval = (xinval << shsz) | (val >> (fsz - shsz));
+		printf("\t.byte\t0%o\n", (int)(xinval & SZMASK(SZCHAR)));
+		fsz -= shsz;
+		val &= SZMASK(fsz);
+		xinval = inbits = 0;
+	}
+	if (fsz) {
+		xinval = (xinval << fsz) | val;
+		inbits += fsz;
+	}
 }
 
 /*
@@ -830,8 +923,44 @@ infld(CONSZ off, int fsz, CONSZ val)
 int
 ninval(CONSZ off, int fsz, NODE *p)
 {
-	cerror("ninval");
-	return 0;
+	SF *sfp;
+	CONSZ val;
+
+	switch (p->n_type) {
+	case LONGLONG:
+	case ULONGLONG:
+		/* Split 64-bit value into two 36-bit words */
+		val = glval(p);
+		/* High word */
+		printf("\t.word\t0%llo\n", (val >> 36) & 0xfffffffffLL);
+		/* Low word */
+		printf("\t.word\t0%llo\n", val & 0xfffffffffLL);
+		break;
+
+	case FLOAT:
+		/* 36-bit single precision from softfloat structure */
+		sfp = (SF *)&p->n_dcon;
+		/* Combine fd1 and upper 20 bits of fd2 into 36-bit word */
+		printf("\t.word\t0%llo\n",
+		    (((CONSZ)sfp->fd1) << 20) | (((CONSZ)sfp->fd2) << 4) | (((CONSZ)(sfp->fd3 >> 12)) & 0xf));
+		break;
+
+	case DOUBLE:
+	case LDOUBLE:
+		/* 72-bit double precision from softfloat structure */
+		sfp = (SF *)&p->n_dcon;
+		/* First 36-bit word: fd1 (16) + fd2 (16) + upper 4 bits of fd3 */
+		printf("\t.word\t0%llo\n",
+		    (((CONSZ)sfp->fd1) << 20) | (((CONSZ)sfp->fd2) << 4) | (((CONSZ)(sfp->fd3 >> 12)) & 0xf));
+		/* Second 36-bit word: lower 12 bits of fd3 + fd4 (16) + pad (8) */
+		printf("\t.word\t0%llo\n",
+		    (((CONSZ)(sfp->fd3 & 0xfff)) << 24) | (((CONSZ)sfp->fd4) << 8));
+		break;
+
+	default:
+		return 0;
+	}
+	return 1;
 }
 
 

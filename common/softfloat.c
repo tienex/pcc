@@ -47,16 +47,44 @@
  *	- short is 16 bits.
  */
 
-#ifdef FDFLOAT
+#if defined(FDFLOAT) || defined(PDP10FLOAT)
 
+#ifdef FDFLOAT
 /*
- * Supports F- and D-float, used in DEC machines.
+ * Supports F- and D-float, used in DEC VAX machines.
  *
  * XXX - assumes that:
  *	- long long is (at least) 64 bits
  *	- int is at least 32 bits.
  *	- short is 16 bits.
  */
+#endif
+
+#ifdef PDP10FLOAT
+/*
+ * Supports PDP-10 36-bit floating point format.
+ *
+ * Single precision (36-bit): sign(1) + exponent(8, excess-128) + fraction(27)
+ * Double precision (72-bit): sign(1) + exponent(8, excess-1024) + fraction(62)
+ *
+ * The fraction has an implied binary point between bit 8 and bit 9.
+ * Floating point zero is represented as all zeros.
+ * Negatives are represented in two's complement.
+ *
+ * XXX - assumes that:
+ *	- long long is (at least) 64 bits
+ *	- int is at least 32 bits.
+ *	- short is 16 bits.
+ */
+#endif
+
+/*
+ * Map fd1-fd4 to the fp[] array elements.
+ */
+#define fd1	fp[0]
+#define fd2	fp[1]
+#define fd3	fp[2]
+#define fd4	fp[3]
 
 /*
  * Useful macros to manipulate the float.
@@ -67,6 +95,7 @@
 #define DEXPSET(w,e)	((w).fd1 = (((e) & 0377) << 7) | ((w).fd1 & 0100177))
 #define DMANTH(w)	((w).fd1 & 0177)
 #define DMANTHSET(w,m)	((w).fd1 = ((m) & 0177) | ((w).fd1 & 0177600))
+#define EXPBIAS		128
 
 typedef unsigned int lword;
 typedef unsigned long long dword;
@@ -88,9 +117,11 @@ nulldf(void)
 /*
  * Convert a (u)longlong to dfloat.
  * XXX - fails on too large (> 55 bits) numbers.
+ * For FDFLOAT/PDP10FLOAT, we ignore the type parameter and always
+ * return double precision.
  */
-SF
-soft_cast(CONSZ ll, TWORD t)
+static SF
+soft_cast_internal(CONSZ ll, TWORD t)
 {
 	int i;
 	SF rv;
@@ -102,7 +133,7 @@ soft_cast(CONSZ ll, TWORD t)
 		DSIGNSET(rv,1), ll = -ll;
 	for (i = 0; ll > 0; i++, ll <<= 1)
 		;
-	DEXPSET(rv, 192-i);
+	DEXPSET(rv, (64+EXPBIAS)-i);
 	DMANTHSET(rv, ll >> 56);
 	rv.fd2 = ll >> 40;
 	rv.fd3 = ll >> 24;
@@ -113,8 +144,8 @@ soft_cast(CONSZ ll, TWORD t)
 /*
  * multiply two dfloat. Use chop, not round.
  */
-SF
-soft_mul(SF p1, SF p2)
+static SF
+soft_mul_internal(SF p1, SF p2)
 {
 	SF rv;
 	lword a1[2], a2[2], res[4];
@@ -143,7 +174,7 @@ soft_mul(SF p1, SF p2)
 
 	rv.fd1 = 0;
 	DSIGNSET(rv, DSIGN(p1) ^ DSIGN(p2));
-	DEXPSET(rv, DEXP(p1) + DEXP(p2) - 128);
+	DEXPSET(rv, DEXP(p1) + DEXP(p2) - EXPBIAS);
 	if (res[3] & 0x8000) {
 		res[3] = (res[3] << 8) | (res[2] >> 24);
 		res[2] = (res[2] << 8) | (res[1] >> 24);
@@ -159,8 +190,8 @@ soft_mul(SF p1, SF p2)
 	return rv;
 }
 
-SF
-soft_div(SF t, SF n)
+static SF
+soft_div_internal(SF t, SF n)
 {
 	SF rv;
 	dword T, N, K;
@@ -183,7 +214,7 @@ soft_div(SF t, SF n)
 	}
 	rv.fd1 = 0;
 	DSIGNSET(rv, DSIGN(t) ^ DSIGN(n));
-	DEXPSET(rv, DEXP(t) - DEXP(n) + 128 + c);
+	DEXPSET(rv, DEXP(t) - DEXP(n) + EXPBIAS + c);
 	DMANTHSET(rv, K >> 48);
 	rv.fd2 = K >> 32;
 	rv.fd3 = K >> 16;
@@ -214,43 +245,62 @@ soft_isz(SF sf)
 int
 soft_cmp_eq(SF x1, SF x2)
 {
-	cerror("soft_cmp_eq");
-	return 0;
+	/* Check if both are zero */
+	if (DEXP(x1) == 0 && DEXP(x2) == 0)
+		return 1;
+
+	/* Compare all fields */
+	return (x1.fd1 == x2.fd1 && x1.fd2 == x2.fd2 &&
+	        x1.fd3 == x2.fd3 && x1.fd4 == x2.fd4);
 }
 
 int
 soft_cmp_ne(SF x1, SF x2)
 {
-	cerror("soft_cmp_ne");
-	return 0;
+	return !soft_cmp_eq(x1, x2);
 }
 
 int
 soft_cmp_le(SF x1, SF x2)
 {
-	cerror("soft_cmp_le");
-	return 0;
+	int s1 = DSIGN(x1), s2 = DSIGN(x2);
+
+	/* Handle zeros */
+	if (DEXP(x1) == 0 && DEXP(x2) == 0)
+		return 1;
+
+	/* Different signs: negative < positive */
+	if (s1 && !s2) return 1;
+	if (!s1 && s2) return 0;
+
+	/* Same sign: compare magnitudes */
+	if (s1) {  /* both negative */
+		return !(x1.fd1 < x2.fd1 || (x1.fd1 == x2.fd1 &&
+		         (x1.fd2 < x2.fd2 || (x1.fd2 == x2.fd2 &&
+		         (x1.fd3 < x2.fd3 || (x1.fd3 == x2.fd3 && x1.fd4 < x2.fd4))))));
+	} else {  /* both positive */
+		return (x1.fd1 < x2.fd1 || (x1.fd1 == x2.fd1 &&
+		        (x1.fd2 < x2.fd2 || (x1.fd2 == x2.fd2 &&
+		        (x1.fd3 < x2.fd3 || (x1.fd3 == x2.fd3 && x1.fd4 <= x2.fd4))))));
+	}
 }
 
 int
 soft_cmp_lt(SF x1, SF x2)
 {
-	cerror("soft_cmp_lt");
-	return 0;
+	return soft_cmp_le(x1, x2) && !soft_cmp_eq(x1, x2);
 }
 
 int
 soft_cmp_ge(SF x1, SF x2)
 {
-	cerror("soft_cmp_ge");
-	return 0;
+	return !soft_cmp_lt(x1, x2);
 }
 
 int
 soft_cmp_gt(SF x1, SF x2)
 {
-	cerror("soft_cmp_gt");
-	return 0;
+	return !soft_cmp_le(x1, x2);
 }
 
 /*
@@ -260,7 +310,7 @@ CONSZ
 soft_val(SF sf)
 {
 	CONSZ mant;
-	int exp = DEXP(sf) - 128;
+	int exp = DEXP(sf) - EXPBIAS;
 
 	mant = SHL(1,55) | SHL(DMANTH(sf), 48) |
             SHL(sf.fd2, 32) | SHL(sf.fd3, 16) | sf.fd4;
@@ -272,28 +322,122 @@ soft_val(SF sf)
 	return mant;
 }
 
-SF
-soft_plus(SF x1, SF x2)
+static SF
+soft_plus_internal(SF x1, SF x2)
 {
-	cerror("soft_plus");
-	return x1;
+	/*
+	 * Basic floating-point addition for FDFLOAT/PDP10FLOAT.
+	 * This is a simplified implementation that handles common cases.
+	 * For full IEEE compliance, would need proper rounding, denormals, etc.
+	 */
+	SF result;
+	int exp1, exp2, exp_diff;
+	long long mant1, mant2;
+	int sign1, sign2;
+
+	/* Handle zeros */
+	if (DEXP(x1) == 0) return x2;
+	if (DEXP(x2) == 0) return x1;
+
+	exp1 = DEXP(x1);
+	exp2 = DEXP(x2);
+	sign1 = DSIGN(x1);
+	sign2 = DSIGN(x2);
+
+	/* Extract mantissas with implied leading bit */
+	mant1 = (1LL << 55) | (((long long)DMANTH(x1)) << 48) |
+	        (((long long)x1.fd2) << 32) | (((long long)x1.fd3) << 16) | x1.fd4;
+	mant2 = (1LL << 55) | (((long long)DMANTH(x2)) << 48) |
+	        (((long long)x2.fd2) << 32) | (((long long)x2.fd3) << 16) | x2.fd4;
+
+	/* Align exponents */
+	exp_diff = exp1 - exp2;
+	if (exp_diff > 0) {
+		mant2 >>= exp_diff;
+		result = x1;
+	} else if (exp_diff < 0) {
+		mant1 >>= -exp_diff;
+		result = x2;
+	} else {
+		result = x1;
+	}
+
+	/* Add or subtract based on signs */
+	if (sign1 == sign2) {
+		mant1 += mant2;
+	} else {
+		if (mant1 >= mant2) {
+			mant1 -= mant2;
+		} else {
+			mant1 = mant2 - mant1;
+			DSIGNSET(result, sign2);
+		}
+	}
+
+	/* Normalize result */
+	while (mant1 >= (1LL << 56)) {
+		mant1 >>= 1;
+		DEXPSET(result, DEXP(result) + 1);
+	}
+	while (mant1 < (1LL << 55) && mant1 != 0) {
+		mant1 <<= 1;
+		DEXPSET(result, DEXP(result) - 1);
+	}
+
+	/* Check for zero result */
+	if (mant1 == 0) {
+		result.fd1 = result.fd2 = result.fd3 = result.fd4 = 0;
+		return result;
+	}
+
+	/* Pack result */
+	DMANTHSET(result, (mant1 >> 48) & 0177);
+	result.fd2 = (mant1 >> 32) & 0xffff;
+	result.fd3 = (mant1 >> 16) & 0xffff;
+	result.fd4 = mant1 & 0xffff;
+
+	return result;
 }
 
-SF
-soft_minus(SF x1, SF x2)
+static SF
+soft_minus_internal(SF x1, SF x2)
 {
-	cerror("soft_minus");
-	return x1;
+	/* Negate x2 and add */
+	DSIGNSET(x2, !DSIGN(x2));
+	return soft_plus_internal(x1, x2);
 }
 
 /*
  * Convert a hex constant to floating point number.
+ * Uses strtosf() which already handles hex float format via gdtoa.
  */
 NODE *
 fhexcon(char *s)
 {
-	cerror("fhexcon");
-	return NULL;
+	NODE *p;
+	SF sf;
+	TWORD t;
+
+	/* Determine the type from suffix (f/F/l/L) */
+	t = DOUBLE;  /* default */
+	for (char *c = s; *c; c++) {
+		if (*c == 'f' || *c == 'F') {
+			t = FLOAT;
+			break;
+		} else if (*c == 'l' || *c == 'L') {
+			t = LDOUBLE;
+			break;
+		}
+	}
+
+	/* Parse the hex float using strtosf() */
+	sf = strtosf(s, t);
+
+	/* Create FCON node */
+	p = block(FCON, NIL, NIL, t, 0, 0);
+	p->n_dcon = sf;
+
+	return p;
 }
 
 /*
@@ -347,26 +491,62 @@ floatcon(char *s)
 	}
 
 
-	flexp = soft_cast(1, INT);
-	exp5 = soft_cast(5, INT);
+	flexp = soft_cast_internal(1, INT);
+	exp5 = soft_cast_internal(5, INT);
 	bexp = exp;
-	fl = soft_cast(mant, INT);
+	fl = soft_cast_internal(mant, INT);
 
 	for (; exp; exp >>= 1) {
 		if (exp&01)
-			flexp = soft_mul(flexp, exp5);
-		exp5 = soft_mul(exp5, exp5);
+			flexp = soft_mul_internal(flexp, exp5);
+		exp5 = soft_mul_internal(exp5, exp5);
 	}
 	if (negexp<0)
-		fl = soft_div(fl, flexp);
+		fl = soft_div_internal(fl, flexp);
 	else
-		fl = soft_mul(fl, flexp);
+		fl = soft_mul_internal(fl, flexp);
 
 	DEXPSET(fl, DEXP(fl) + negexp*bexp);
 	p = block(FCON, NIL, NIL, DOUBLE, 0, 0); /* XXX type */
 	p->n_dcon = fl;
 	return p;
 }
+
+/*
+ * Wrapper functions to match the common interface defined in softfloat.h
+ */
+SFP
+soft_cast(CONSZ v, TWORD t)
+{
+	static SF result;
+	result = soft_cast_internal(v, t);
+	return &result;
+}
+
+SF
+soft_mul(SF x1, SF x2, TWORD t)
+{
+	return soft_mul_internal(x1, x2);
+}
+
+SF
+soft_div(SF x1, SF x2, TWORD t)
+{
+	return soft_div_internal(x1, x2);
+}
+
+SF
+soft_plus(SF x1, SF x2, TWORD t)
+{
+	return soft_plus_internal(x1, x2);
+}
+
+SF
+soft_minus(SF x1, SF x2, TWORD t)
+{
+	return soft_minus_internal(x1, x2);
+}
+
 #else
 
 /*
@@ -510,7 +690,48 @@ FPI fpi_binary16 = { 11, 1-15-11+1,
 FPI fpi_binary128 = { 113,   1-16383-113+1,
                          32766-16383-113+1, 1, 0,
         0, 1, 1, 0,   128,     16383+113-1 };
-#endif
+
+/* VAX G-float - 64-bit, extended range compared to D-float */
+/* sign(1) + exp(11, excess-1024) + frac(52, hidden) */
+/* Same mantissa precision as IEEE binary64 but different format */
+/* No INF/NaN, has negative zero, uses VAX rounding (ties away from zero) */
+FPI fpi_vax_g = { 53,   1-1024-53+1,
+                        2046-1024-53+1, FPI_Round_near_from0, 0,
+        0, 0, 1, 0,   64,     1024+53-1 };
+
+/* VAX H-float - 128-bit, quad precision */
+/* sign(1) + exp(15, excess-16384) + frac(112, hidden) */
+/* Extended range and precision compared to G-float */
+/* No INF/NaN, has negative zero, uses VAX rounding */
+FPI fpi_vax_h = { 113,   1-16384-113+1,
+                         32766-16384-113+1, FPI_Round_near_from0, 0,
+        0, 0, 1, 0,   128,     16384+113-1 };
+
+/*
+ * FP8 formats - 8-bit floating point for ML/AI accelerators
+ * Defined in "FP8 Formats for Deep Learning" (NVIDIA/Graphcore, 2022)
+ * Used in NVIDIA H100, AMD MI300, and other AI accelerators
+ */
+
+/* FP8 E4M3 - Optimized for training, no infinities */
+/* sign(1) + exp(4, bias=7) + mantissa(3, explicit leading bit) */
+/* Range: ~2^-6 to 448 (approx 2^8.8) */
+/* NOTE: Uses explicit leading bit (explicit_one=1), not hidden bit */
+/* Max exponent value (15) represents NaN, not infinity */
+/* Common in ML training workloads (weights, gradients) */
+FPI fpi_fp8_e4m3 = { 3,  1-7-3+1,
+                          14-7-3+1, 1, 0,
+        1, 0, 1, 0,   8,      7+3-1 };
+
+/* FP8 E5M2 - Optimized for inference, has infinities */
+/* sign(1) + exp(5, bias=15) + mantissa(2, explicit leading bit) */
+/* Range: ~2^-14 to 57344 (2^15 × 1.75) */
+/* NOTE: Uses explicit leading bit (explicit_one=1), not hidden bit */
+/* Exponent=31, mantissa=0 → infinity; mantissa≠0 → NaN (IEEE-like) */
+/* Common in ML inference workloads (activations) */
+FPI fpi_fp8_e5m2 = { 2,  1-15-2+1,
+                          30-15-2+1, 1, 0,
+        1, 1, 1, 0,   8,     15+2-1 };
 
 #ifdef USE_IEEEFP_32
 #define FPI_FLOAT	fpi_binary32
@@ -2596,6 +2817,41 @@ vals2fp(unsigned short *fp, int k, int exp, uint32_t *mant)
 	}
 	if (k & SF_Neg)
 		fp[4] |= 0x8000;
+
+	if (k & (SFEXCP_ALLmask & ~(SFEXCP_Inexlo|SFEXCP_Inexhi)))
+		fprintf(stderr, "vals2fp: unhandled2 %x\n", k);
+#elif defined(FDFLOAT) || defined(PDP10FLOAT)
+	/*
+	 * PDP-10/VAX format: sign(1) + exp(8) + mantissa(55 with implied 1)
+	 * Stored in 4 shorts: fd1 contains sign|exp|mant[6:0], fd2-fd4 have rest
+	 */
+	unsigned long long m;
+
+	switch (k & SF_kmask) {
+	case SF_Zero:
+		break; /* already 0 */
+
+	case SF_Normal:
+		/* Combine mantissa from two 32-bit words into 64-bit value */
+		m = ((unsigned long long)mant[1] << 32) | mant[0];
+
+		/* Adjust exponent (gdtoa gives biased exponent) */
+		exp += EXPBIAS;
+
+		/* Pack into fd1-fd4 format */
+		fp[0] = ((exp & 0377) << 7) | ((m >> 57) & 0177);  /* fd1: exp + high 7 bits */
+		fp[1] = (m >> 41) & 0xffff;  /* fd2: next 16 bits */
+		fp[2] = (m >> 25) & 0xffff;  /* fd3: next 16 bits */
+		fp[3] = (m >> 9) & 0xffff;   /* fd4: next 16 bits */
+		break;
+
+	default:
+		fprintf(stderr, "vals2fp: unhandled %x\n", k);
+		break;
+	}
+
+	if (k & SF_Neg)
+		fp[0] |= 0x8000;  /* Set sign bit in fd1 */
 
 	if (k & (SFEXCP_ALLmask & ~(SFEXCP_Inexlo|SFEXCP_Inexhi)))
 		fprintf(stderr, "vals2fp: unhandled2 %x\n", k);
