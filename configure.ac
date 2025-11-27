@@ -157,6 +157,20 @@ case "$target_os" in
 	altlibdir="c:/mingw/lib"
 	;;
 
+    clr*|dotnet*|msil*)
+	# Microsoft CLR / .NET Framework target
+	# Generates ILASM (CIL/MSIL) for the Common Language Runtime
+	targos=clr
+	abi=ilasm
+	wchar_type=USHORT
+	# Default to i386 for CLR metadata, can override with --target=x86_64-clr
+	case "$target_cpu" in
+	    i?86) targmach=clr ;;
+	    x86_64) targmach=clr ;;  # CLR64 mode
+	    *) targmach=clr ;;  # Default CLR (32-bit)
+	esac
+	;;
+
    minix*)
         targos=minix
         targosver=`uname -v` 
